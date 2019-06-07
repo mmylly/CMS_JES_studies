@@ -1,0 +1,224 @@
+Authors:
+ Toni Mäkelä (github: makelat)
+Based on the gen_handle package by Hannu Siikonen (github: errai-)
+README updated 3.4.2016
+
+#1) INTRODUCTION
+#2) FOLDER DESCRIPTIONS
+#3) INSTALLATION INSTRUCTIONS
+
+
+#1) INTRODUCTION
+This is a collection of data analysis and simulation tools used for reproducing the D0 flavour-depentent jet energy correction factors. Developed under Helsinki Institute of Physics. Due to being based on H. Siikonen's package, these folders contain also files not directly used in the D0 studies but that are included for compatibility with gen_handle and ease of possible future development.
+
+Link to the github repository:
+    https://github.com/makelat/D0_JES_studies
+
+Note: while building the sources, the number 'N' of parallel processes in 'make -jN'
+should be chosen wisely. E.g. for an 8-core processor N=6 can be a good choice.
+
+#2) FOLDER DESCRIPTIONS
+For the folders relevant to the D0 studies.
+
+pythia6, pythia8, herwig7, greedy_pythia6, greedy_pythia8, greedy_herwig7
+(originally by H. Siikonen; greedy_pythia6 and greedy_herwig7 developed further by T. Mäkelä):
+    Simulation tools for generating particle data with pythia6, pythia8 and Herwig7. 
+    These serve as "handles" to operate the three generators via a similar interface
+    and a unified process.
+    Note: for the D0 studies, only P6 and H7 were utilized, so P8 may not be up 
+          to date.
+
+outputsToProcess (T. Mäkelä)
+    Contains a script that can be used to uniformize generator output tuples, which may 
+    initially have slightly different structure (essentially leave out all unnecessary 
+    parts if some generator provides extraneous vectors to the tuple that are not present 
+    in others).
+
+responseAnalysis (T. Mäkelä D0 stuff):
+    Software to perform a jet response analysis of the various tuples produced by
+    the generators (and processed within outputsToProcess if need be). The generator 
+    output files are to be inserted into the input_ROOT_files folder and their names
+    are to be added to the D0JES.h header file (search "files.push_back" to find the 
+    functionality for this within the header file) 
+    - Running the program is described in main.cpp
+    - Run settings are mostly included as members of the D0JES class in D0JES.h,
+      but some are also listed in D0JES.C at the beginning of the D0JES::Loop function
+    - Main functionalities in D0JES.C:
+      * Loop: go through all events and their particles and jets in a tuple,
+              find pT-balance profiles, F profiles etc. as a result
+      * MultiLoop: multithreading for Loop. Instantiates one thread per tuple,
+                   process e.g. gamma+jet and dijet samples simultaneously for
+                   the same run
+      * FitGN: fit to pT-balance profiles using the Gauss-Newton method. Makes
+               use of analytic results, as the fitting procedure in the single-particle 
+               response-based reconstruction method involves going through all particles
+               in all events to obtain a chi^2 at a single point in parameter space and
+               numerical stencils would require several evaluations at neighbouring points.
+               Writes output to fitOutput.txt.
+      * plotPT: plot pT-balance profiles. See also plotSepPT(), which plots data and MC 
+                levels to different canvases.
+      * flavCorr: find and plot flavour-dependent jet energy correction factors Fcorr,
+                  which can be utilized in further analyses e.g. those of the top mass.
+
+#3) INSTALLATION
+
+Installation instructions for various softwares that are needed for the simulations.
+Some of the installations need to be done in the correct order, so that dependencies work correctly.
+The steps are given in a chronological order, but some steps can be skipped.
+
+ #0] Misc operations
+
+ -These can be done before/after the installations; these are generally important for obtaining working code.
+
+ In .bashrc (or similar), add:
+     export LD_LIBRARY_PATH = $LD_LIBRARY_PATH:"installdir"/lib:"pythia6Dir":"jetscriptsDir"/lhc_simulations/lib
+
+ Before continuing, any pre-existing installations should be eliminated completely or made compatible with the
+ new installation structures.
+
+ #] HepMC2[.06.09]
+
+ Preliminary:
+     export CFLAGS='-march=native -O2'
+     export CXXFLAGS='-march=native -O2 -std=c++11'
+
+ Run:
+     ./configure --with-momentum=GEV --with-length=MM --prefix="installdir"
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ NOTE:
+
+ HEPMC 3 will be brought in with Run 3.
+ There exists also a package called ProMC but it has not been taken into common usage yet.
+
+ #] Fastjet3[.3.0]
+
+ Preliminary:
+     export CFLAGS_OPT='-march=native -O2'
+     export CXXFLAGS_OPT='-march=native -O2 -std=c++11'
+
+ Run:
+     ./configure --prefix="installdir" --enable-d0runiicone
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ #] fjcontrib-1[.027]
+
+ Run:
+     ./configure --prefix="installdir" --fastjet-config="installdir"/bin/fastjet-config CXXFLAGS='-march=native -O2 -std=c++11'
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ #] LHAPDF 6[.2.0]
+
+ Preliminary:
+     export CFLAGS_OPT='-march=native -O2'
+     export CXXFLAGS_OPT='-march=native -O2'
+
+ Note: on lxplus this requires definition of the Boost location.
+ Run:
+     ./configure --prefix="installdir"
+
+ Run:
+     make -jN
+
+ Run:
+     make install
+
+ Remarks:
+     -May require redhat-rpm-config to be installed.
+
+ #] Pythia6[.4.28]
+
+     Fetch http://home.fnal.gov/~rhatcher/build_pythia6.sh.
+     The files pyevwt.f and pyrand.f might need to be replaced (this needs to be done in the script).
+     Only thus event weighting and such will be performed as desired.
+
+ #] ROOT 6[.06.04]
+
+ Preliminary:
+     export CLINGCXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+     export CFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+     export CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+     export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+
+
+ Dropped out: -D_GLIBCXX_USE_CXX11_ABI=0
+ Run:
+     ./configure --prefix=/home/hannu/Cern/install --with-clang --enable-cxx14 --with-pythia6-libdir=/home/hannu/Cern/install/lib --disable-pythia8 --cflags='-march=native' --cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -march=native -O2'
+
+ Run:
+     make -jN
+
+ In .bashrc, add:
+     source "rootDir"/bin/thisroot.sh
+
+ Remarks:
+     -Note that pythia8 is not linked with root, since this will lead to inconveniences.
+     -Apparently root is developed using clang; it is not currently compatible with newest gcc versions.
+     -The ABI-tag causes issues even in clang, we need to set this ABI-macro to zero everywhere.
+     -Having or not having pythia8 explicitly linked for root should not be an issue. TPythia8 can be a convenient and
+      fast way to access pythia8 features, but it also removes some of the agility of the plain pythia8.
+
+ #] Pythia8[.2.26]
+
+ Run:
+     ./configure --prefix="installdir" --enable-64bit --enable-shared --with-gzip --with-boost --with-fastjet3="installdir" --with-hepmc2="installdir" --with-lhapdf6="installdir" --cxx-common="-O2 -fPIC"
+
+Run:
+     make -jN
+
+Run:
+     make install
+
+In .bashrc, write:
+     export PYTHIA8=/usr/local
+     export PYTHIA8DATA=/share/Pythia8/xmldoc
+
+ #] ThePEG 2[.0.2] (dependency: fastjet, optional dependency: LHAPDF)
+
+Run:
+ ./configure --with-lhapdf=$HOME/Cern/install --with-hepmc=$HOME/Cern/install --with-fastjet=$HOME/Cern/install --prefix=$HOME/Cern/install
+ -Basic configuration. Check for errors.
+
+Run:
+ make -jN
+
+Run:
+ sudo make install
+ -Copies the installation under /usr/local
+
+Remarks:
+ A majority of the functionality of Herwig++ is based on ThePEG (Toolkit for High Energy Physics Event Generation).
+ ThePEG offers generic structures for particles, events etc. and its documentation is essential in daily life.
+ Herwig++ is just some sugar on the top to make the simulator software complete.
+
+ #] HERWIG7[.0.2] (dependencies: fastjet, thepeg)
+
+Run:
+ ./configure --prefix=$HOME/Cern/install --with-thepeg=$HOME/Cern/install --with-thepeg=$HOME/Cern/install --with-fastjet=$HOME/Cern/install --with-madgraph=$HOME/Cern/sources/MG5_aMC_v2_4_2 --with-gosam=$HOME/Cern/install
+ -Basic configuration, check for errors.
+
+Run:
+ make -jN
+ -Basic installation.
+
+Run:
+ sudo make install
+ -Copies the installation under /usr/local
+
+Remarks:
+ Herwig is used with commands like 'Herwig++ run'.

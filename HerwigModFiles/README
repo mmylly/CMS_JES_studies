@@ -1,0 +1,5 @@
+When Herwig7 has been installed using the bootstrap script, just copy the file 
+in this folder into the appropriate place by:
+
+sudo cp EventGenerator.h /home/user/install/herwig7/include/ThePEG/Repository/
+

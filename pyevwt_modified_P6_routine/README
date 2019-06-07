@@ -1,0 +1,12 @@
+The file in this folder allows for pThat weighting. Here are the installation instructions:
+
+After installing Pythia 6 using R. Hatcher's script:
+1) remove pyevwt.o and pyrand.o from pythia6/v6_428/src and
+2) remove all in pythia6/v6_428/lib (the place where libPythia6.so is).
+3) Throw the file in this folder into pythia6/v6_428/src
+4) run R. Hatcher's script again. 
+
+N.B. Linking this installation with ROOT requires care!
+     If ROOT is installed with cmake, introduce the pythia6 path variable
+     (see cmake commands and variables in the ROOT webpages). 
+

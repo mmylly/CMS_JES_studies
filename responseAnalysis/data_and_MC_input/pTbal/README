@@ -1,0 +1,13 @@
+The values in these folders have been extracted from the D0 run II JES paper and the analysis notes for run IIa and IIb. Under pT bal, the columns are:
+
+E'	pTtag/pTprobe (=pT-bal. response)	pTtag/pTprobe uncertainty
+...	...					...
+...	...					...
+
+for data. For MC, there are no uncertainties so the last column is left out.
+Under MPF, the columns are:
+
+E'	MPF jet response
+...	...
+...	...
+

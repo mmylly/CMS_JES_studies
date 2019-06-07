@@ -1,0 +1,40 @@
+    /* Pythia 6 speciality: do the gamma/muon/top analysis before the complete particle loop. The actions include:
+       - Step 0: Meta info
+       - Step 1: Sanity checks: many of these affect the program logic fatally, so we might throw errors.
+       - Step 2: Clear some lists that might be needed in Step 3
+       - Step 3: Saving actions for the photon/muons/ttbar leptons. */
+
+    // Step 0: Deduction of particle indices in Pythia6:
+    /* General:
+            1-2: incoming particles (e.g. protons)
+            3-4: incoming partons of the hard interaction
+            5-6: a copy of the incoming partons of the hard interaction
+            7-8: outgoing partons/particles of the hard interaction
+       QCD events (mode 0, 1):
+            No need for further actions: the partons 7-8 are the ones we are interested in
+       Gamma+jets events (mode 2):
+            7 or 8: the hard interaction photon
+            9: a showering phase copy of the hard interaction photon
+       Zmumu+jets events (mode 3):
+            7 or 8: the hard interaction Z
+            9-10: muons produced in the Z decay
+            11: a showering phase copy of the Z
+            12-13: showering phase copies of the Z decay muons
+       TTbar events (mode 4):
+            7-8: the tops, these won't be useful
+            9,11: the b partons from top decay
+            10,12: the W's from top decay
+            13-16: the W decay products
+            17-18: showering phase copies of the W's
+            19-20 (or further down): showering phase copies of a leptonic W decay
+
+        Things to consider:
+            - The particles/partons 1-8 hold pre-showering info and do not include "daughter" info linking to the showering phase particles
+            - Hence, if we want to look e.g. for the final-state photon in gamma+jets events, we need to find the photon which has the
+              idx 7/8 photon listed as its "mother"
+            - We can only produce generic ttbar events: selection of lepton+jets events requires us to reject events with two hadronic or leptonics W's
+            - In the lepton+jets events the lepton is sometimes actually a tau, which decays before reaching the detector
+            - The first stage of the decay produces a tau neutrino and a W: the W can decay hadronically or leptonically
+            - We exclude events with a hadronic tau decay, as this decay mode fails to produce a lepton (e/mu) to the final state
+    */
+
