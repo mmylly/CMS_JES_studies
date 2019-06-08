@@ -75,16 +75,16 @@ namespace cfg {
     constexpr bool DOUnCorrLepton = false;
 
     /* Specific settings for D0 studies (uncomment if to be used), all cuts not used but left for reference */
-    constexpr bool DOD0      = true;  // General D0 settings (energy & so on)
-    constexpr bool DOD0RIIC  = true;  // Usage of D0 RunII Cone
-    constexpr bool BEnriched = false; // Produce a b-jet enriched sample?
-    constexpr bool EtaCut    = false;  // Demand min amount of |eta|<0.4 jets
-    constexpr bool PtCut     = false; // Reject events w/ high-pT extra jets
-    constexpr bool PSCut     = false; // Use prtn lvl phase-space eta cut
+    //constexpr bool DOD0      = true;  // General D0 settings (energy & so on)
+    //constexpr bool DOD0RIIC  = true;  // Usage of D0 RunII Cone
+    //constexpr bool BEnriched = false; // Produce a b-jet enriched sample?
+    //constexpr bool EtaCut    = false;  // Demand min amount of |eta|<0.4 jets
+    //constexpr bool PtCut     = false; // Reject events w/ high-pT extra jets
+    //constexpr bool PSCut     = false; // Use prtn lvl phase-space eta cut
 
     /* Usage of final-state particles */
     #define STORE_PRTCLS            // Do we store the final state particles?
-    constexpr bool StoreNIJ=false;  // Store particles not in jets (NIJ), REQUIRES STORE_PRTCLS
+    constexpr bool StoreNIJ = false;  // Store particles not in jets (NIJ), REQUIRES STORE_PRTCLS
 
     /* Switches for turning off things (normally these are not used) */
     constexpr bool NoMPI = false;
@@ -95,8 +95,8 @@ namespace cfg {
     constexpr double GhostCoeff = pow(10,-18);
     /* Length/Timescale deciding which particles decay */
     constexpr double CTau = 10.0; //c*tau in millimeters
-    constexpr double RCone = DOD0 ? 0.5 : 0.4;
-    constexpr double Energy = DOD0 ? 1960 : 13000;
+    constexpr double RCone = 0.4;
+    constexpr double Energy = 13000;
 
     /* Photon isolation parameters (gamma+jets) */
     constexpr double GammaDR  = 0.1;
@@ -124,12 +124,12 @@ namespace cfg {
     constexpr double NuisanceEta = 5.0;
 
     /* Threshold for PtCut (D0 studies) */
-    constexpr double JetPtThres = 11;
+    constexpr double JetPtThres = 11; // Toni added same value as in Hannu's code
 
     /* Pt limit to be used while checking the isolation vs. nearby jets */
     constexpr double MinJetVisiblePt = 15.0;
     /* Pt limit to be used for fastjet clustering. */
-    constexpr double MinJetClustPt   = 6.0;
+    constexpr double MinJetClustPt   = 6.0; // In Hannu's code it's 4.0
 
     constexpr unsigned Seeds[] = {
         840744607,431166825, 11489507,859341684,719632152,384411333, 90405435,297596781,
@@ -247,7 +247,7 @@ protected:
     #endif
     void                PartonAdd(unsigned prt, char jetid = -1);
     void                PartonAdd(unsigned prt, char jetid, char tag, int ptnid = -1, int ownid = -1);
-    void                EMclusterAdd(fastjet::PseudoJet pj);
+    void                EMclusterAdd(fastjet::PseudoJet pj); // Toni added
     void                JetAdd(unsigned jet);
 
     void                PartonAppend(fastjet::PseudoJet p4, unsigned prt, int tag, int ptnid = -1, int ownid = -1);
@@ -271,7 +271,7 @@ protected:
     /* Process isolation conditions */
     bool                IsolationProc();
     /* Isolation for e.g. photons */
-    bool                IsolationPhotons(int iprt, fastjet::PseudoJet &ipart, fastjet::PseudoJet &EMcluster);
+    bool                IsolationPhotons(int iprt, fastjet::PseudoJet &ipart, fastjet::PseudoJet &EMcluster); // Toni added last parameter.
     bool                IsolationMuons  (int iprt, fastjet::PseudoJet &ipart);
     bool                IsolationLeptons(int iprt, fastjet::PseudoJet &ipart);
     /* Check the eta-phi distance of isolated objects to jets. */
@@ -308,7 +308,7 @@ protected:
 
     /* A handy handle */
     TLorentzVector      TLorentzify(unsigned prt);
-    TLorentzVector      TLorentzify(fastjet::PseudoJet pj);
+    TLorentzVector      TLorentzify(fastjet::PseudoJet pj); // Toni has added
     /* Another handy handle */
     fastjet::PseudoJet  PseudoJettify(unsigned prt);
     fastjet::PseudoJet  PseudoJettify(TLorentzVector p4);
@@ -420,7 +420,7 @@ protected:
     /* What we know to be the hard process (HP photon) from P6 output */
     fastjet::PseudoJet    mGamma;
     /* The highest pT EM-cluster i.e. photon candidate as seen by a detector*/
-    fastjet::PseudoJet    mEM;
+    fastjet::PseudoJet    mEM; // Toni added
 
     vector<PartonHolder>  mPartonInfo;
 
