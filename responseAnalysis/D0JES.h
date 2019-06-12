@@ -87,9 +87,9 @@ public :
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
   // Declaration of leaf types
-  Float_t         weight;		// 
+  Float_t         weight;		// Event weight
   //Particle lvl
-  vector<unsigned char> *prtcl_jet;	// Particles in jet index
+  vector<unsigned char> *prtcl_jet;	// Jet which particle belongs to 0 - highest pT
   vector<int>     *prtcl_pdgid;		// Particle ID - anti
   vector<float>   *prtcl_pt;		// Particle pT
   vector<float>   *prtcl_eta;		// Pseudorapidity
@@ -103,7 +103,7 @@ public :
   vector<float>   *prtclnij_phi;
   vector<float>   *prtclnij_e;
   #endif
-  //Parton lvl
+  //Parton lvl - used for jet tagging and 
   vector<char>    *prtn_jet;		// Jet originated parton?
   vector<int>     *prtn_pdgid;		// Parton ID
   vector<char>    *prtn_tag;		// Tag object original parton?
@@ -111,7 +111,7 @@ public :
   vector<float>   *prtn_eta;		// -- 
   vector<float>   *prtn_phi;		// --
   vector<float>   *prtn_e;		//
-  vector<float>   *prtn_dr;		//? 
+  vector<float>   *prtn_dr;		// not used
   vector<float>   *jet_pt;		// Gen jets
   vector<float>   *jet_eta;		//
   vector<float>   *jet_phi;		//
@@ -158,6 +158,7 @@ public :
   TBranch        *b_met;
 
   double R_cone;//Jet algorithm cone radius
+
   //Tensors to contain response function parameters
   //  1st index: (0) runIIa or or default D0 style runIIb* (1) runIIb*-P20ToP17
   //  2nd index: |eta| region. 32 entries for this index
@@ -173,6 +174,7 @@ public :
   vector<vector<vector<double>>> params_gam;	//photon //3rd index 6 entries
   vector<vector<vector<double>>> params_pi;	//pion
   vector<vector<vector<double>>> params_p;	//proton
+
   //For storing D0 dijet / EM+jet data points and errors
   static int const nD0data = 10;	//#Data points available from D0
   static int const nEpochs = 4;		//#Epochs in run IIa and IIb altogether

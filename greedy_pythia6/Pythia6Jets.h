@@ -74,16 +74,20 @@ namespace cfg {
     /* Do we add uncorrected momentum values for signal leptons (idx 3)? */
     constexpr bool DOUnCorrLepton = false;
 
-    /* Specific settings for D0 studies (uncomment if to be used), all cuts not used but left for reference */
-    //constexpr bool DOD0      = true;  // General D0 settings (energy & so on)
-    //constexpr bool DOD0RIIC  = true;  // Usage of D0 RunII Cone
-    //constexpr bool BEnriched = false; // Produce a b-jet enriched sample?
-    //constexpr bool EtaCut    = false;  // Demand min amount of |eta|<0.4 jets
-    //constexpr bool PtCut     = false; // Reject events w/ high-pT extra jets
-    //constexpr bool PSCut     = false; // Use prtn lvl phase-space eta cut
+    /* Specific settings for D0 studies (uncomment if to be used), 
+	all cuts not used but left for reference */
+    // Toni has added these vv confirm
+    constexpr bool DOD0      = false; // General D0 settings (energy & so on)
+    constexpr bool DOD0RIIC  = false; // Usage of D0 RunII Cone
+    constexpr bool BEnriched = false; // Produce a b-jet enriched sample?
+    constexpr bool EtaCut    = false; // Demand min amount of |eta|<0.4 jets
+    constexpr bool PtCut     = false; // Reject events w/ high-pT extra jets
+    constexpr bool PSCut     = false; // Use prtn lvl phase-space eta cut
+    // Toni has added these ^^
 
     /* Usage of final-state particles */
-    #define STORE_PRTCLS            // Do we store the final state particles?
+    #define STORE_PRTCLS              // Do we store the final state particles?
+				      // Toni has this uncommented, Hannu not
     constexpr bool StoreNIJ = false;  // Store particles not in jets (NIJ), REQUIRES STORE_PRTCLS
 
     /* Switches for turning off things (normally these are not used) */
@@ -95,8 +99,8 @@ namespace cfg {
     constexpr double GhostCoeff = pow(10,-18);
     /* Length/Timescale deciding which particles decay */
     constexpr double CTau = 10.0; //c*tau in millimeters
-    constexpr double RCone = 0.4;
-    constexpr double Energy = 13000;
+    constexpr double RCone = 0.4; // 0.5 in D0
+    constexpr double Energy = 13000; // 1960 in D0
 
     /* Photon isolation parameters (gamma+jets) */
     constexpr double GammaDR  = 0.1;
@@ -104,8 +108,8 @@ namespace cfg {
     constexpr double GammaPt  = 30;
     constexpr double GammaEta = 2.1;
     /* Tag photon close to central region for JES studies */
-    constexpr double GammaEtaD0Max = 1.0;
-    constexpr double GammaPtD0Min  = 7.0;
+    constexpr double GammaEtaD0Max = 1.0; // Toni added
+    constexpr double GammaPtD0Min  = 7.0; // these lines.
 
     /* Muon isolation parameters (Zmumu+jets) */
     constexpr double MuonDR  = 0.1;
@@ -129,7 +133,7 @@ namespace cfg {
     /* Pt limit to be used while checking the isolation vs. nearby jets */
     constexpr double MinJetVisiblePt = 15.0;
     /* Pt limit to be used for fastjet clustering. */
-    constexpr double MinJetClustPt   = 6.0; // In Hannu's code it's 4.0
+    constexpr double MinJetClustPt   = 4.0; // 6.0; // In Hannu's code it's 4.0
 
     constexpr unsigned Seeds[] = {
         840744607,431166825, 11489507,859341684,719632152,384411333, 90405435,297596781,

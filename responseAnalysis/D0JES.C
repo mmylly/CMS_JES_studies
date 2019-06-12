@@ -66,6 +66,7 @@ void D0JES::Loop()
                                      94.0,  107.0, 130.0, 160.0, 205.0, 310.0,
                                      385.0, 470.0, 550.0                     };
 
+  // CMS, should have R_cone = 0.4
   string Rcone = "R_{cone}=";	//R_cone info in string form
   Rcone += (ReadName.find("R07")!=string::npos ? "0.7, " : "0.5, ");
   R_cone = (ReadName.find("R07")!=string::npos ? 0.7 : 0.5);
@@ -82,7 +83,7 @@ void D0JES::Loop()
   string XS_Str="";
   if (!GetStrangeB()) XS_Str=" (no #Xi, #Sigma)";
   EpTitle+=XS_Str;  ETitle+=XS_Str;  MPFTitle+=XS_Str;  EpMPFTitle +=XS_Str;
-  //Time scale:
+  //Time scale: // C_tau -> 10mm
   string ctauStr;
   if      (ReadName.find("ct3mm")  !=string::npos) ctauStr = ", c#tau=0.3 cm";
   else if (ReadName.find("ct10mm") !=string::npos) ctauStr = ", c#tau=1 cm";
@@ -334,7 +335,7 @@ void D0JES::Loop()
   vector<TLorentzVector> jetsEM;//Jet 4-vectors reco'd as EM-objects
   vector<TLorentzVector> jetsEMD;//^ always reco'd w/ D0 default SPR
   vector<TLorentzVector> jets_d;//Always default IIa-stylre reco (as the above)
-  vector<double> Fden;		//F denominator:   sum_j R_i^MC   E_i^g
+  vector<double> Fden;		//F denominator:   sum_j R_j^MC   E_j^g
   vector<double> Fnum;		//F numerator:     sum_i R_i^data E_i^g
   vector<double> Fnum101;	//ALT F numerator: sum_i R_i^MC'  E_i^g
   double F,F101;		//Temps to store F values for the probe jet
@@ -2689,7 +2690,7 @@ void D0JES::plotD0() {
 } //plotD0
 //-----------------------------------------------------------------------------
 //A function to calculate the MC hadron response R 
-//  D0 single-particle response parameterss for different particles & eta 
+//  D0 single-particle response parameters for different particles & eta 
 //  regions extracted from D0 analysis notes 6143 and 6368.
 //  Note that IIb parameters are identical for all epochs b1, b2 and b3-4.
 //Params:	id		Particle PDGID
@@ -2716,8 +2717,8 @@ void D0JES::Response(int id, double pseudorap, double energy, double pT,
                      vector<double>& retEM                                  )
 {
   //Init
-  vector<bool> zero = {false,false};	//Return zero responses (run index-wise)
-  bool pTm[2] = {false,true};	//Hadron pT cut at m_h (true) or 0.3 GeV (false)
+  vector<bool> zero = {false,false}; //Return zero responses (run index-wise)
+  bool pTm[2] = {false,true};	     //Hadron pT cut at m_h (true) or 0.3 GeV (false)
   double R_temp;
   int PDG = abs(id);
 

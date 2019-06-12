@@ -15,7 +15,7 @@ INCLUDE := $(INCLUDE) -I.
 # Parameter vals:
 NUM_EVT := 30000
 MODE := 2
-NUM_PROC := 2
+NUM_PROC := 1
 START_IDX := 0
 
 #all: gpythia8 pythia8 pythia6 libHerwigTree.so jetanalysis ptcut

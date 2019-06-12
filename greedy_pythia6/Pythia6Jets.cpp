@@ -308,8 +308,8 @@ void Pythia6Jets::EventLoop()
         if (!ParticleLoop()     ) continue;
         if (!IsolationProc()    ) continue;
         if (!JetLoop()          ) continue;
-        if (!IsolationFromJets()) continue; 
-	// Toni had if (!cfg::DOD0 and !IsolationFromJets()) continue;
+        if (!cfg::DOD0 and !IsolationFromJets()) continue; 
+	// Toni added(!cfg::DOD0 and !IsolationFromJets()) continue;
 
         mTree->Fill();
 
@@ -455,7 +455,7 @@ bool Pythia6Jets::InitEvent()
     mPPhi.   clear();
     mPE.     clear();
     mDR.     clear();
-    mPartons.clear(); //Toni aded
+    mPartons.clear(); //Toni added
 
     /* These can be utilized in the rejection routines. */
     mPartonInfo.clear();
@@ -705,8 +705,8 @@ bool Pythia6Jets::ProcessParticle(unsigned prt)
                     ++mONuCount;
                 }
             }
-        }
-
+        } // try: } else if (cfg::StoreNIJ or Absent(prt)) {
+	
         if (cfg::StoreNIJ or Absent(prt)) { //Absent==false if prt in mSpecialIndices
 
             /* Special particles ignored, unless we are using Toni's special processing. */
@@ -714,6 +714,7 @@ bool Pythia6Jets::ProcessParticle(unsigned prt)
              * by a particle detector, such as the CMS or D0. */
             mJetInputs.push_back(part);
 
+	    // try: if (!cfg::StoreNIJ) {
             /* Add particles for isolation studies! */
             if (part.pt() > cfg::NuisancePt and fabs(part.eta()) < cfg::NuisanceEta) {
                 if (mMode==2) {        /* All nice photons. */
@@ -745,6 +746,7 @@ bool Pythia6Jets::JetLoop()
     int bJets = 0;     // #b-jets
     int eta04Jets = 0; // Jets in |eta|<0.4
 
+    // try: != -> <
     for (unsigned jet = 0; jet!=mSortedJets.size(); ++jet) { // Toni changed from < to !=
         JetAdd(jet);   // Refills mJetParts with mSortedJets[jet] constituents
         if (cfg::EtaCut and fabs(mSortedJets[jet].eta())<0.4) ++eta04Jets;
@@ -792,7 +794,7 @@ bool Pythia6Jets::JetLoop()
         if (cfg::EtaCut and (fabs(mSortedJets[0].eta()) > 0.4 or
                              fabs(mSortedJets[1].eta()) > 0.4   )) return false;
 
-    } else if (mMode==2) {
+    } else if (mMode==2) { // try: prints here
         //Check if one of the two leading jets is the tag photon
         if (                         mEM.delta_R(mSortedJets[0]) < 0.2) jet0isGamma = true;
         if (mSortedJets.size()>1 and mEM.delta_R(mSortedJets[1]) < 0.2) jet1isGamma = true;
@@ -1359,7 +1361,7 @@ bool Pythia6Jets::LeptonAdd()
     return true;
 } // LeptonAdd
 
-#ifdef STORE_PRTCLS 
+#ifdef STORE_PRTCLS
 /* Adding final-state particles */
 void Pythia6Jets::ParticleAdd(unsigned prt, char jetid)
 {
@@ -1414,7 +1416,7 @@ void Pythia6Jets::PartonAdd(unsigned prt, char jetid, char tag, int ptnid, int o
 
 void Pythia6Jets::PartonAdd(unsigned int prt, char jetid)
 {
-//    assert(prt < mPartonInfo.size() and jetid < (char) mSortedJets.size()); // Hannu's
+//  try:  assert(prt < mPartonInfo.size() and jetid < (char) mSortedJets.size()); // Hannu's
     assert(prt < mPartonInfo.size() and ((jetid < 0) or (unsigned) jetid < mSortedJets.size()));
 
     mPJetId.push_back(jetid                        );
@@ -1426,12 +1428,12 @@ void Pythia6Jets::PartonAdd(unsigned int prt, char jetid)
     mPEta.push_back(  mPartonInfo[prt].p4.eta()    );
     mPPhi.push_back(  mPartonInfo[prt].p4.phi_std());
     // Uniformize phi values between TLorentzVector and PseudoJet
-    // mPPhi.push_back(mPartonInfo[prt].p4.phi() - (mPartonInfo[prt].p4.phi()>fastjet::pi ? 2*fastjet::pi : 0));
+    // mPPhi.push_back(mPartonInfo[prt].p4.phi() - (mPartonInfo[prt].p4.phi()>fastjet::pi ? 2*fastjet::pi : 0)); // Hannu's
     mPE.push_back(    mPartonInfo[prt].p4.e()      );
     mDR.push_back(jetid<0 ? -1.0 : mPartonInfo[prt].p4.delta_R(mSortedJets[jetid]));
 } // PartonAdd
 
-// Toni has added this funtion
+// Toni has added this function
 /* Since detectors see photons as EM-clusters, we form a small cone around an 
  * isolated photon, add all EM 4-vec.s to it and store as an emulated cluster.*/
 void Pythia6Jets::EMclusterAdd(fastjet::PseudoJet pj)
@@ -1453,9 +1455,8 @@ void Pythia6Jets::JetAdd(unsigned jet)
     mJPt.push_back( mSortedJets[jet].pt()     );
     mJEta.push_back(mSortedJets[jet].eta()    );
     mJPhi.push_back(mSortedJets[jet].phi_std());
-    // Hannu has this:
     // Uniformize phi values between TLorentzVector and PseudoJet
-    // mJPhi.push_back(mSortedJets[jet].phi() - (mSortedJets[jet].phi()>fastjet::pi ? 2*fastjet::pi : 0));
+    // mJPhi.push_back(mSortedJets[jet].phi() - (mSortedJets[jet].phi()>fastjet::pi ? 2*fastjet::pi : 0)); Hannu's
     mJE.push_back(  mSortedJets[jet].e()      );
     /* Start messing around with jet constituents */
     mJetParts.clear();
@@ -1547,7 +1548,7 @@ inline TLorentzVector Pythia6Jets::TLorentzify(unsigned int prt)
     return TLorentzVector(mPythia->GetP(prt,1),mPythia->GetP(prt,2),mPythia->GetP(prt,3),mPythia->GetP(prt,4));
 }
 
-// Toni add this
+// Toni added this
 inline TLorentzVector Pythia6Jets::TLorentzify(fastjet::PseudoJet pj)
 {
     TLorentzVector ret;
