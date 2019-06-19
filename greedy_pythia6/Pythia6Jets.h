@@ -61,7 +61,7 @@ namespace cfg {
     constexpr bool Debug        = false; // Mostly print some specific info
     constexpr bool DebugPartons = false; // Print parton info
     constexpr bool DebugList    = false; // Print whole event
-    constexpr bool DebugStat    = false; // Print event statistics
+    constexpr bool DebugStat    = true; // Print event statistics
 
     /* Generic flags and settings */
     constexpr int P6Tune   = 2;     // 0: Z2*, 1: CMS CUEP6S1, 2: Tevatron TuneA
@@ -133,7 +133,7 @@ namespace cfg {
     /* Pt limit to be used while checking the isolation vs. nearby jets */
     constexpr double MinJetVisiblePt = 15.0;
     /* Pt limit to be used for fastjet clustering. */
-    constexpr double MinJetClustPt   = 4.0; // 6.0; // In Hannu's code it's 4.0
+    constexpr double MinJetClustPt   = 4.0; // In Toni's code it's 6.0
 
     constexpr unsigned Seeds[] = {
         840744607,431166825, 11489507,859341684,719632152,384411333, 90405435,297596781,
@@ -275,7 +275,7 @@ protected:
     /* Process isolation conditions */
     bool                IsolationProc();
     /* Isolation for e.g. photons */
-    bool                IsolationPhotons(int iprt, fastjet::PseudoJet &ipart, fastjet::PseudoJet &EMcluster); // Toni added last parameter.
+    bool                IsolationPhotons(int iprt, fastjet::PseudoJet &ipart); // Toni has one more parameter related to EMclustering
     bool                IsolationMuons  (int iprt, fastjet::PseudoJet &ipart);
     bool                IsolationLeptons(int iprt, fastjet::PseudoJet &ipart);
     /* Check the eta-phi distance of isolated objects to jets. */

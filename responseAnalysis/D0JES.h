@@ -106,7 +106,7 @@ public :
   //Parton lvl - used for jet tagging and 
   vector<char>    *prtn_jet;		// Jet originated parton?
   vector<int>     *prtn_pdgid;		// Parton ID
-  vector<char>    *prtn_tag;		// Tag object original parton?
+  vector<char>    *prtn_tag;		// 
   vector<float>   *prtn_pt;		// pT of the parton
   vector<float>   *prtn_eta;		// -- 
   vector<float>   *prtn_phi;		// --
@@ -410,7 +410,7 @@ D0JES::D0JES(TTree *tree, string toRead) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
   if (tree == 0) {	//No pointer to a tree given
-
+    // toRead = "P6_dijet_D0rIIc_R05_ct10mm_30000";
     if (toRead != "") ReadName = toRead;
     else {
       //Add here all the files one should be able to study

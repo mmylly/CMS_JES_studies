@@ -14,7 +14,7 @@ int main() {
   // 2: FindFJtoMC
   // 3: Fit
   // 4: run many samples and produce their plots at once
-  int mode = 1;
+  int mode = 4;
 
   vector<string> runs = {"RunIIb1","RunIIb2","RunIIb34"};
   
@@ -39,12 +39,14 @@ int main() {
       d.FitGN();
       break;
     case 4 :
-      for (int run=1; run!=2; ++run) {
+      //for (int run=1; run!=2; ++run) {
         for (int XS=1; XS!=2; ++XS) {
-          d.flavCorr(true, 1, 1, 1, 2, run, 1, XS);
-          d.plotPT(1, 1, 1, 2, run, 1, XS,false,false);
+          //d.flavCorr(true, 1, 1, 1, 2, run, 1, XS);
+          d.flavCorr(true, 1, 1, 1, 2, 2, 1, XS);
+          //d.plotPT(1, 1, 1, 2, run, 1, XS,false,false);
+          d.plotPT(1, 1, 1, 2, 2, 1, XS,false,false);
         }
-      }
+      //}
       break;
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }

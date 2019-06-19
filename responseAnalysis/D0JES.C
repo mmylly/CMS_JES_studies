@@ -505,7 +505,6 @@ void D0JES::Loop()
     }
   } else for (long l=0; l != nentries; ++l) passedCuts.push_back(false);
 
-
   //Loop Tree entries = events
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
 
@@ -570,12 +569,13 @@ void D0JES::Loop()
 
     int gPDG=-22;  int gTAG=-2; //Gamma ID and tag, init to EM-cluster values 
     if (inSubDir=="can_repr_pprplots_photon_tag_2/") {gPDG=22;  gTAG=2;}
-
     if (studyMode == 2) {
 
       //It has prtn_tag==2 in gamma+jet case.
       i_tag = -137;	//This value wont be changed if gamma not found
       for (int a=0; a!= prtn_tag->size(); ++a) {
+        // Find highest parton level pT *prtn_pt)[a] and store it to prtnPt
+        // mark that index as i_tag = a.
         if ((*prtn_tag)[a]   == gTAG &&
             (*prtn_pdgid)[a] == gPDG &&
             (*prtn_pt)[a]    >  prtnPt ) {prtnPt=(*prtn_pt)[a];  i_tag=a;}
@@ -587,7 +587,6 @@ void D0JES::Loop()
 
       //Fast gen lvl cuts, more strict reco lvl cuts below
       if (fabs(tag.Eta())>eta_gamma || tag.Pt()<pTmin_gamma) continue;
-
       Response(PDG,tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                1, 0, 1,  false, false, true,  resp, resp_f, respEM       );
       p4g_tag  = tag;
@@ -595,7 +594,7 @@ void D0JES::Loop()
       p4EMDtag = tag*respEM[0];	//Always reco w/ default SPR-parameters
       p4r_tag  = tag*respEM[0];
       p4f_tag  = tag*respEM[(GetrunIIb() ? 1:0)];
-
+      
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
@@ -605,7 +604,7 @@ void D0JES::Loop()
     //Note that only the 2 leading jets are likely to be probe or tag candidates
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
-      JI = (*prtcl_jet)[i];	//Which jet this particle belongs to
+      JI = (*prtcl_jet)[i];	                        //Which jet this particle belongs to
       PDG = abs((*prtcl_pdgid)[i]);
       p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i],	//Current prtcl 4-vec
                       (*prtcl_phi)[i],(*prtcl_e)[i]  );
@@ -616,24 +615,24 @@ void D0JES::Loop()
 
       //Reconstruct jets
       //jets_g[ JI] += (PDG==13||!fidCuts(PDG,(*prtcl_pt)[i])?0:1)*p4;//Gen lvl
-      jets_g[ JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;       //Gen lvl
+      jets_g[ JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;           //Gen lvl
       jets_r[ JI] += p4*resp[(GetrunIIb() && GetP20ToP17() ? 1:0)];   //MC reco
       jets_d[ JI] += p4*resp[0];				      //default
-      jets_f[ JI] += p4*resp_f[(GetrunIIb() ? 1:0)]; //Fit reco always w/ MC'
+      jets_f[ JI] += p4*resp_f[(GetrunIIb() ? 1:0)];                  //Fit reco always w/ MC'
       jetsEM[ JI] += p4*respEM[(GetrunIIb() && GetP20ToP17() ? 1:0)]; //EM reco
-      jetsEMD[JI] += p4*respEM[0]; //EM reco always w/ D0 default SPR
+      jetsEMD[JI] += p4*respEM[0];                                    //EM reco always w/ D0 def. SPR
 
       Fnum[JI]   += resp_f[(GetrunIIb() ? 1:0)]*p4.E();
       Fnum101[JI]+= resp[(GetrunIIb() ? 1:0)]*p4.E();
       Fden[JI]   += resp[0]*p4.E(); //F denominator reco'd w/ default params
 
       //Hadrons in jets: check what is left in HCAL
-      if (PDG>99 && (GetStrangeB() || !isStrangeB(PDG))) {
+      if (PDG>99 && (GetStrangeB() || !isStrangeB(PDG))) {	// Hadrons
         //1/4 of E_jet to coarse HCAL.
         f_CH[JI] += resp[0]*0.25*p4.E();
         //1/2 of E_jet to EMCALroot 
         f_EM[JI] += resp[0]*0.5*p4.E();
-      } else if (PDG==20 || PDG==22 || PDG==11 || PDG==13) {
+      } else if (PDG==20 || PDG==22 || PDG==11 || PDG==13) {	// EM-interactive
         f_EM[JI] += resp[0]*p4.E();
       }
 
@@ -641,12 +640,12 @@ void D0JES::Loop()
       // may produce monstrous jets even with R=0.5)
       p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI],	//Gen jet 4-vec
                        (*jet_phi)[JI],(*jet_e)[JI]  );
-      if (p4.DeltaR(p4j)<0.5) {
+      if (p4.DeltaR(p4j)<0.5) { // Should this be changed to 0.4 as in CMS?
         f_05[JI] += resp[0]*p4.E();
       }
 
       //Find derivatives of hadron (PDG>100) responses for 2 leading jets
-      //Most likely probe candidates are the jets w/ idices 0 or 1. Thus to
+      //Most likely probe candidates are the jets w/ indices 0 or 1. Thus to
       //save time, we only calculate the first 2 jets' derivatives.
       //Rare cases with i_probe>1 are calculated separately at a later stage. 
       if (PDG>99 && JI<2) {
@@ -679,7 +678,6 @@ void D0JES::Loop()
     }
 
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
-
     #ifdef NIJ
 
     if (Getverbose()) cout<<"Reconstructing particles not in jets"<<endl;
@@ -802,7 +800,7 @@ void D0JES::Loop()
           fabs(jets_r[0].Pt())  > pTmin_probe          &&
           f_05[0] > f_05jetMin                         &&
           f_EM[0] < f_EMjetMax && f_EM[0] > f_EMjetMin &&
-          f_CH[0]<f_CHjetMax                             ) probe_0 = true;
+          f_CH[0] < f_CHjetMax                           ) probe_0 = true;
       if (fabs(jets_r[1].Eta()) < eta_tag              &&
           fabs(jets_r[1].Pt())  > pTmin_tag            &&
           f_EM[1]               > f_EMtagMin             ) tag_1 = true;
@@ -903,8 +901,7 @@ void D0JES::Loop()
 
     //Loop all particles associated with jets
     for (unsigned int i=0; i!=(GetcontHistos() ? prtcl_pdgid->size():0); ++i) {
-
-      JI = (*prtcl_jet)[i]; 
+      JI = (*prtcl_jet)[i];
 
       //See if ptcl belongs to the studied jet(s)
       if (JI==i_probe || (repeat && JI==i_tag)) {
@@ -988,6 +985,7 @@ void D0JES::Loop()
 
       //Jet energy estimator: E' = p_T_tag cosh(eta_probe) and pT'.
       //- Jet direction change in reconstruction is usually negligible, though.
+      
       Ep   = p4EM_tag.Pt()*cosh(probe.Eta());
       pTp  = p4EM_tag.Pt();
 
@@ -1007,6 +1005,7 @@ void D0JES::Loop()
       //The x- and y-term sums in the derivatives of pTprobe/pTtag
       dA_X=dAjetsX[i_probe];  dB_X=dBjetsX[i_probe];  dC_X=dCjetsX[i_probe];
       dA_Y=dAjetsY[i_probe];  dB_Y=dBjetsY[i_probe];  dC_Y=dCjetsY[i_probe];
+
       //Derivatives of the nominator in F factors
       dAfTMP = (jets_f[i_probe].X()*dA_X + jets_f[i_probe].Y()*dA_Y)/
                  (p4EM_tag.Pt()*jets_f[i_probe].Pt());
@@ -1336,7 +1335,7 @@ void D0JES::FindFJtoMC() {
   TF1* fr;
 
   //Correction factors from FastJet gen lvl to MC reco level
-  //TProfile2D params: name,title, nbinsx,xlow,xup, nbinsy,ylow,yup, opts.
+  //TProfile2D params: name, title, nbinsx, xlow, xup, nbinsy, ylow, yup, opts.
   TProfile2D* FJtoMC_b  = new TProfile2D("b", "", 12,20,200, 8, 0,2.5, "");
   TProfile2D* FJtoMC_lq = new TProfile2D("lq","", 18,20,200, 25, 0,2.5, "");
   TProfile2D* FJtoMC_b_no_nu  = new TProfile2D("b_no_nu","",
@@ -1362,7 +1361,6 @@ void D0JES::FindFJtoMC() {
 
     //Study the leading jet (in a loop for ease of extending to more if need be)
     for (int ijet = 0; ijet != min(1,int(jet_e->size())); ++ijet) {
-
       //Reinit
       jet_r.SetPtEtaPhiE(0,0,0,0);        jet_g.SetPtEtaPhiE(0,0,0,0);
       jet_g_no_nu.SetPtEtaPhiE(0,0,0,0);  Fnum=0;    Fden=0;
@@ -1377,7 +1375,7 @@ void D0JES::FindFJtoMC() {
           Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,
                    true,1,0,1,true,false,false,R_MC,R_FIT,R_EM       );
           jet_r += R_MC[0]*p4;
-          if (isNeutrino(PDG)) jet_g_no_nu += p4;
+          if (isNeutrino(PDG)) jet_g_no_nu += p4; //gen lvl 4-mom for neutrinos
           Fnum += R_MC[(GetrunIIb() ? 1:0)]*p4.E();
           Fden += R_MC[0]*p4.E();
 	}
@@ -1386,20 +1384,18 @@ void D0JES::FindFJtoMC() {
       //Find correction factor from FastJet jets to avg. MC-reco jets.
       jet_g.SetPtEtaPhiE((*jet_pt)[0], (*jet_eta)[0],  //FJ-lvl gen jet
                          (*jet_phi)[0],(*jet_e)[0]  );
-      jet_g_no_nu = jet_g - jet_g_no_nu; 
+      jet_g_no_nu = jet_g - jet_g_no_nu; //gen lvl 4-mom w/o/ neutrinos
 
       //Loop partons to find jet flavour
       for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
         //prtn_tag=0 for outgoing hard process partons
         if ((*prtn_jet)[j]==0 && (*prtn_tag)[j]==0) {
           if (abs((*prtn_pdgid)[j])<5) {		//lq-jets
-            //lq-jets
             FJtoMC_lq->Fill(jet_g.Pt(),jet_g.Eta(),
                        Fnum*jet_r.Pt()/(Fden*jet_g.Pt()),             weight);
             FJtoMC_lq_no_nu->Fill(jet_g_no_nu.Pt(),jet_g_no_nu.Eta(),
                              Fnum*jet_r.Pt()/(Fden*jet_g_no_nu.Pt()), weight);
           } else if (abs((*prtn_pdgid)[j])==5) {	//b-jets
-            //b-jets
             FJtoMC_b->Fill(jet_g.Pt(),jet_g.Eta(),
                       Fnum*jet_r.Pt()/(Fden*jet_g.Pt()),              weight);
             FJtoMC_b_no_nu->Fill(jet_g_no_nu.Pt(),jet_g_no_nu.Eta(),
@@ -1407,7 +1403,6 @@ void D0JES::FindFJtoMC() {
           }
         } //Find hard process partons
       } //Loop partons
-
     } //Loop jets
   } //Loop events
 
@@ -1474,7 +1469,7 @@ bool D0JES::fidCuts(int id, double pT) {
 //-----------------------------------------------------------------------------
 //Check if this particle is a neutrino
 //Param:	id	The particle's PDGDID
-//Returns true if the particle is a Xi, Sigma or Omega^-
+//Returns true if the particle is a nu_e, nu_mu, nu_tau
 bool D0JES::isNeutrino(int id) {
   int PDG = abs(id);
   switch (PDG) {
@@ -1647,7 +1642,7 @@ void D0JES::FitGN()
 {
 
   //Fix some fit parameters to ineffective values. Set to false in D0 studies,
-  //  but implemented here for reference
+  //but implemented here for reference
   bool fixA = false;  bool fixB = false;  bool fixC = false;
 
   //Ensure first that at least some fitting functionality is enabled
@@ -1683,6 +1678,7 @@ void D0JES::FitGN()
   //Init
   unsigned int nIter = 0;	//Stepper to count #iterations
   int const dim = (fixA?0:1) + (fixB?0:1) + (fixC?0:1);
+
   if (dim==0) {cout << "ERROR: all fit parameters fixed" << endl;  return;}
 
   //Fit constraint scale factors: 1/pow(desiredStdDev,2). 0=ineffective
@@ -1737,17 +1733,19 @@ void D0JES::FitGN()
       gjERv2.push_back(pow(gjERII[dataForRun][i],2));
     }
   }
+
   //Handles to the above data and uncertainty vectors to enable sample indexing
   vector<vector<double>> D0v;   D0v.push_back( djD0v );  D0v.push_back( gjD0v );
   vector<vector<double>> ERv2;  ERv2.push_back(djERv2);  ERv2.push_back(gjERv2);
 
   //#D.O.F. for chi^2 normalization -- non-rigorous, but D0 apparently did this
-  //  #D.O.F.="Number of data points to fit to - number of free fit parameters"
+  //  #D.O.F.="Number of data points to fit to minus number of free fit parameters"
   double n_dof = (GetgjFitting() ? (double) nD0data : 0)
                 +(GetdjFitting() ? (double) nD0data : 0) - (double) dim
                 +(fixA || fabs(LA)>0.01 ? 1:0)  //Constrained param.s are not...
                 +(fixB || fabs(LB)>0.01 ? 1:0)  //...free, hence they do not...
                 +(fixC || fabs(LC)>0.01 ? 1:0); //...contribute to "-dim"
+
   if (n_dof<1) {cout << "ERROR: #D.O.F. < 1 in FitGN" << endl;  return;}
 
   cout<<"Inverses of D0 data unertainties squared, weigh LSQ sum terms:"<<endl;
@@ -1776,6 +1774,7 @@ void D0JES::FitGN()
             +LB*pow(ABC.GetMatrixArray()[iB],   2)/n_dof  //...default values:
             +LC*pow(ABC.GetMatrixArray()[iC]-1, 2)/n_dof; //  (A,B,C)=(1,0,1)
     cout << "Constraint contributions to chi2: " << chi2 << endl;
+
     for (int i=0; i!=dim*dim; ++i) H[i]=0;
     if (!fixA) {dijet->SetA(   ABC.GetMatrixArray()[iA]);
                 gammajet->SetA(ABC.GetMatrixArray()[iA]);
@@ -1791,7 +1790,7 @@ void D0JES::FitGN()
                 H[dim*iC+iC]+=2*LC;                        }
 
     //Calculate new values
-    if (GetdjFitting() && GetgjFitting()) MultiLoop(dijet, gammajet,false);
+    if (GetdjFitting() && GetgjFitting()) MultiLoop(dijet, gammajet, false);
     else if (GetdjFitting()) dijet->Loop();
     else                     gammajet->Loop();
   
@@ -1853,7 +1852,9 @@ void D0JES::FitGN()
 
     //Update parameter values for new iteration
     step = Hinv*grad;
+
     ABC -= step;
+
     cout << "Step length: " << sqrt(step.Norm2Sqr())
          << " (" << sqrt((Hinv*grad).Norm2Sqr()) << ")" << endl;
 
@@ -3191,9 +3192,9 @@ void D0JES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
   string num   = "1000000";	//Default #events
   //string num_b = "100000";	//0.1M #events in b-enriched sample
   string num_b = "1000000";	//1M #events in b-enriched sample
-  cout << "#Events (1) 1M (2) 2M" << endl;
+  cout << "#Events (1) 1M (2) 30k" << endl;
   while (Nevt<1 || Nevt>2) cin >> Nevt;
-  if (Nevt==2) num = "2000000";  
+  if (Nevt==2) num = "30000";  
 
   //Choose run
   cout << "Choose run II epoch (1) IIa (2) IIb1 (3) IIb2 (4) IIb3-4" << endl;

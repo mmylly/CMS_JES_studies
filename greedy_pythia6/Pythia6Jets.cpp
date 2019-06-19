@@ -308,7 +308,7 @@ void Pythia6Jets::EventLoop()
         if (!ParticleLoop()     ) continue;
         if (!IsolationProc()    ) continue;
         if (!JetLoop()          ) continue;
-        if (!cfg::DOD0 and !IsolationFromJets()) continue; 
+        if (!cfg::DOD0 and !IsolationFromJets()) continue;
 	// Toni added(!cfg::DOD0 and !IsolationFromJets()) continue;
 
         mTree->Fill();
@@ -859,7 +859,6 @@ bool Pythia6Jets::JetLoop()
         if (mPartonInfo[prt].used) continue;
         PartonAdd(prt,-1);
     }
-
     return true;
 } // JetLoop
 
@@ -923,9 +922,8 @@ bool Pythia6Jets::IsolationFromJets()
  *            - JES study photons: https://arxiv.org/abs/1312.6873v1 */
 inline bool Pythia6Jets::IsolationProc()
 {
-    if (mMode==2) {
-
-        /* Go through the photons in the event, see if they are isolated */ 	// Toni
+    /*if (mMode==2) {
+        // Go through the photons in the event, see if they are isolated // 	// Toni
         bool isIso=false;							// has
         int nIsolated = 0;	//#Isolated photons found			// added 
         fastjet::PseudoJet EMcl(0,0,0,0);					// these
@@ -939,27 +937,31 @@ inline bool Pythia6Jets::IsolationProc()
                 ++nIsolated;							// added
                 PartonAdd(gm.second,-1,-1); //Store isolated photon w/ tag -1	// also 
                 EMclusterAdd(EMcl);         //^as EM-cluster			// these
+		cout << "EMcl.pt()" << EMcl.pt() << endl;
+		cout << "mEM.pt()" << mEM.pt() << endl;
                 if (EMcl.pt()>mEM.pt()) mEM=EMcl;				// lines
             }									// .
-        }									// .
+        }									// .					
         if (nIsolated!=1) return false;	//Demand exactly 1 isol. EM-cluster...	// .
         if (fabs(mEM.eta()) > 1.0) return false; //...in the central region	// .
 
+    } */ // changed this to the same as in Hannu's code for CMS
+    if (mMode==2) {
+        for (auto &gm : mGammas) {
+            mIsolation.push_back(IsolationPhotons(gm.second,gm.first));
+            PartonAdd(gm.second,-1,6);
+	}
     } else if (mMode==3) {
-
         for (auto &mu : mMuons) {
             mIsolation.push_back(IsolationMuons(mu.second,mu.first));
             PartonAdd(mu.second,-1,6);
         }
-
     } else if (mMode==4) {
-
         /* Adding Isolation monitoring for all present charged particles */
         for (auto &ch : mChargeds) {
             mIsolation.push_back(IsolationLeptons(ch.second,ch.first));
             PartonAdd(ch.second,-1,6);
         }
-
     }
 
     return true;
@@ -969,22 +971,21 @@ inline bool Pythia6Jets::IsolationProc()
  * The prefix 'i' stands for isolation (i.e. the particle which we study),
  * EMcluster: store here an emulated EM-cluster "as seen by a detector".
  */
-bool Pythia6Jets::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart, fastjet::PseudoJet& EMcluster) // Toni has added this last parameter
+
+
+
+//bool Pythia6Jets::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart, fastjet::PseudoJet& EMcluster) // Toni has added this last parameter
+bool Pythia6Jets::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart)
 {
-    // This if is quite different in Toni's and Hannus implementation vv
     if (cfg::DOD0) { /* D0 JES style algorithm (implemented on gen lvl) */
-
         /* Kinematic basic cuts for the particle to-be-isolated: */
-	// Hannu: if (abs(ipart.eta()) > 1.0 or ipart.pt() < 7.0) return false;
-        if (ipart.pt() < 7.0) return false;
+        if (abs(ipart.eta()) > 1.0 or ipart.pt() < 7.0) return false;
 
-        double max_pTsum = 1.0; //Max charged particle p_T sum [GeV]			// new
-        double E_tot03   = 0.0; //Stepper to sum all ptcl E within R<0.3 cone
-        double E_tot04   = 0.0; //             -||-                R<0.4 cone
-        double E_EM02    = 0.0; //Stepper to sum EM  ptcl E within R<0.2 cone
-        double E_EM03    = 0.0; //             -||-                R<0.3 EM-cluster
-        double pTsum     = 0.0; //Stepper to sum track p_T within 0.05<R<0.7 // earlier R<0.4
-        double R_EMcl    = 0.4; //Radius around gamma contributing to EM-cluster	// new
+        double E_tot03             = 0.0; /* Stepper to sum all ptcl E within     R<0.3 cone */
+        double E_tot04             = 0.0; /*              -||-                    R<0.4 cone */
+        double E_EM02              = 0.0; /* Stepper to sum EM  ptcl E within     R<0.2 cone */
+        double E_EM03              = 0.0; /*              -||-                    R<0.3 EM clus. */
+        double pTsum               = 0.0; /* Stepper to sum track p_T within 0.05<R<0.4. */
 
         /* Adding the photon to-be-studied. */
         E_tot03 += ipart.e();
@@ -992,45 +993,33 @@ bool Pythia6Jets::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart, fastjet:
         E_EM02  += ipart.e();
         E_EM03  += ipart.e();
 
-        /* Gamma is detected as an EM-cluster. Construct this by adding nearby	
-         * particles to gamma. Save this at prtn lvl w/ unphysical PDGID -22. */
-        EMcluster = ipart;							
-										
-        // part: a pseudojet, prt: corresponding index				
         for (auto &part : mJetInputs) {
-
             int prt = part.user_index();
             if (prt<0 or prt==iprt) continue; /* Skip ghosts and the current particle */
 
-            double dR = ipart.delta_R(part);	/* Distance to this photon */
-            // Toni added these vv
-            int absid = abs(mPythia->GetK(prt,2)); 	
-            bool ischarged = IsCharged(absid);		
-
-            //Scalar p_T sum of charged tracks within 0.05<R<0.7 with p_T>0.4 GeV
-            if (IsCharged(absid) and part.pt()>0.4 and dR>0.05 and dR<0.7) pTsum += part.pt();
-
-            /* For charged particles & photons the coefficient is one and for other neutrals 0.5. */
-            double EMcoeff = (ischarged or absid == 22) ? 1.0 : 0.5;
-            if (dR < R_EMcl) EMcluster += EMcoeff*part;
-            
+            double dR = ipart.delta_R(part);
             if (dR < 0.4) {
+                int absid = abs(mPythia->GetK(prt,2));
+                bool ischarged = IsCharged(absid);
+
+                if (ischarged and part.pt() > 0.5 and dR > 0.05) pTsum += part.pt();
+
                 E_tot04 += part.e();
                 if (dR<0.3) {
+                    /* For charged particles & photons the coefficient is one and for other neutrals 0.5. */
+                    double EMcoeff = (ischarged or absid == 22) ? 1.0 : 0.5;
+
                     E_tot03            +=         part.e();
                     E_EM03             += EMcoeff*part.e();
                     if (dR<0.2) E_EM02 += EMcoeff*part.e();
                 }
             }
         }
-	// ^^
 
         /* Pseudorapidity, p_T, etc. limits for isolated photon. Note: these are quite harsh limits. */
-        return (E_tot04-E_EM02)/E_EM02 < 0.07        /* fiso      in the D0 language */
-        and    E_EM03/E_tot03          > 0.96        /* fEM       in the D0 language */
-        and    pTsum                   < max_pTsum;  /* sum pttrk in the D0 language */
-	// max_pTsum = 1.0, in Hannus code it is 2.5
-
+        return (E_tot04-E_EM02)/E_EM02 < 0.07 /* fiso      in the D0 language */
+           and E_EM03/E_tot03          > 0.96 /* fEM       in the D0 language */
+           and pTsum                   < 2.5; /* sum pttrk in the D0 language */
     } else { /* CMS STYLE ALGORITHM */
         double EdR = 0;
 
@@ -1433,7 +1422,8 @@ void Pythia6Jets::PartonAdd(unsigned int prt, char jetid)
     mDR.push_back(jetid<0 ? -1.0 : mPartonInfo[prt].p4.delta_R(mSortedJets[jetid]));
 } // PartonAdd
 
-// Toni has added this function
+// Toni has added this function, not used at the moment
+
 /* Since detectors see photons as EM-clusters, we form a small cone around an 
  * isolated photon, add all EM 4-vec.s to it and store as an emulated cluster.*/
 void Pythia6Jets::EMclusterAdd(fastjet::PseudoJet pj)
