@@ -358,7 +358,7 @@ bool Pythia8Jets::ProcessParticle(unsigned prt)
         fastjet::PseudoJet part = PseudoJettify(prt);
         part.set_user_index(prt);
 
-        //ParticleAdd(prt,-1);
+        ParticleAdd(prt,-1);
         if (id==12||id==14||id==16) {
             mMetVect += part;
             //mPJetInputs.push_back(part);
@@ -392,7 +392,7 @@ bool Pythia8Jets::JetLoop()
                 PartonAdd(prt,jet);
                 mPartonInfo[prt].used = true;
             } else {
-                //ParticleAdd(prt,jet);
+                ParticleAdd(prt,jet);
                 continue;
             }
         }

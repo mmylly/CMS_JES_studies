@@ -30,8 +30,8 @@ ISR=True
 FSR=True
 MPI=True
 
-#weighted=True
-weighted=False
+weighted=True # Tonilla oli False
+#weighted=False
 
 #print "Initializing pythia8:"
 
