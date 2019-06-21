@@ -7,10 +7,46 @@
 /// @date 17.7.2018 (Fixed particle adding -Toni Mäkelä, tmakela \@GitLab)
 /////////////////////////////////////////////////////////////////////
 
+/** @mainpage A handle for saving Herwig 7 events into ROOT trees
+ *
+ * The files HerwigTree.h and HerwigTree.cpp provide a general analysis handle for Herwig 7.
+ * The generic settings-file greedy_settings.h and the Herwig-specific settings file settings.py
+ * are used for configuring the run. Some of the settings given in the former file may be redundant
+ * in the specific case of Herwig7 (such as CTAU) and these are configured in the settings.py file.
+ * Most of the settings within the files are expert options, and the standard user does not need
+ * to change these. The settings within the setting.py file are more likely in need of alteration,
+ * than the ones found in greedy_settings.h.
+ *
+ * @section A Modes of operation:
+ * These are the values accepted by the parameter mMode of the class HerwigTree.
+ *
+ *     0: Generic events
+ *         - Normal QCD production for general studies
+ *
+ *     1: Dijet events
+ *         - Normal QCD production with dijet-specific settings
+ *
+ *     2: Photon+Jet events
+ *         - Photon+Jet production
+ *
+ *     3: Zmumu+Jet events
+ *         - Z+Jet production with a Z -> mumu setting
+ *
+ *     4: Ttbarlepton+jet events
+ *         - Ttbar production with WW -> qqbarllbar
+ *
+ *     5: Ttbarlepton+jet events @POWHEG
+ *         - Ttbar production with WW -> qqbarllbar
+ *
+ *     6: Ttbarlepton+jet events @MADGRAPH5aMC\@NLO
+ *         - Ttbar production with WW -> qqbarllbar
+ *
+ * */
+
 #ifndef HERWIGTREE_H
 #define HERWIGTREE_H
 
-/* Herwig stuff */
+/** Herwig stuff */
 #include "ThePEG/Handlers/AnalysisHandler.h"
 #include "ThePEG/EventRecord/Event.h"
 #include "ThePEG/EventRecord/Particle.h"
@@ -26,7 +62,7 @@
 #include "ThePEG/Persistency/PersistentOStream.h"
 #include "ThePEG/Persistency/PersistentIStream.h"
 
-/* ROOT stuff */
+/** ROOT stuff */
 #include "TROOT.h"
 #include "TChain.h"
 #include "TTree.h"
@@ -39,23 +75,7 @@
 #include "TVector2.h"
 #include "TBranch.h"
 
-#include "../generic/help_functions.h"
-#include "../events/PrtclEvent.h"
-
-/* stdlib */
-#include <iostream>
-#include <cstdlib>
-#include <cassert>
-#include <cmath>
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <stdexcept>
-#include <iterator>
-#include <typeinfo>
-
-/* Fastjet */
+/** Fastjet */
 #include "fastjet/config.h"
 #include "fastjet/ClusterSequence.hh"
 #include "fastjet/Selector.hh"
@@ -63,118 +83,22 @@
 #include "fastjet/D0RunIIConePlugin.hh"
 #include "fastjet/internal/numconsts.hh"
 
-using std::string;
-using std::vector;
-using std::pair;
-using std::map;
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::runtime_error;
+#include "../generic/help_functions.h"
+#include "../greedy_settings.h"
 
-// Configuration settings (the program is short enough to define them simply here)
-namespace cfg {
-    /* Debugging tools */
-    constexpr bool Debug        = false; // Mostly print some specific info
-    constexpr bool DebugPartons = false; // Print parton info
-    constexpr bool DebugGViz    = false; // Print graphviz event info
+/** @namespace settings
+ * @brief A python-based script for generating a Herwig7 settings file. */
 
-    /* Generic flags and settings */
-    constexpr bool CutMode = true;  // For PTD and Sigma2: do we apply detector-like cuts
+/** @namespace ThePEG
+ * @brief ThePEG is the basic infrastructure, on which Herwig7 is built.
+ *
+ * For further information, the user should refer to ThePEG documentation in the internet. */
 
-    /* Do we add corrected momentum values for partons (idx 1)? */
-    constexpr bool DOCorrParton   = false;
-    /* Do we add uncorrected momentum values for signal leptons (idx 3)? */
-    constexpr bool DOUnCorrLepton = false;
-
-    /* Specific settings for Toni's D0 studies (uncomment if to be used) */
-    constexpr bool DOD0      = true;  // General D0 settings (energy & so on)
-    constexpr bool DOD0RIIC  = true;  // Usage of D0 RunII Cone
-    constexpr bool BEnriched = false;  // Produce a b-jet enriched sample?
-    constexpr bool EtaCut    = false; // Demand min amount of |eta|<0.4 jets
-    constexpr bool PtCut     = false; // Reject events w/ high-pT extra jets
-    constexpr bool PSCut     = false; // Use prtn lvl phase-space eta cut
-
-    /* Usage of final-state particles */
-    #define STORE_PRTCLS             // Do we store the final state particles?
-    constexpr bool StoreNIJ = true;  // Store particles not in jets (NIJ), REQUIRES STORE_PRTCLS
-
-    /* Coefficient for scaling the momentum of "ghosts" */
-    constexpr double GhostCoeff = pow(10,-18);
-
-    constexpr double RCone = DOD0 ? 0.5 : 0.4;
-
-    /* Tag photon cuts for JES studies */
-    constexpr double GammaEtaD0Max = 1.0;
-    constexpr double GammaPtD0Min  = 7.0;
-
-    /* Photon isolation parameters (gamma+jets) */
-    constexpr double GammaDR  = 0.1;
-    constexpr double GammaLim = 0.1;
-    constexpr double GammaPt  = 30;
-    constexpr double GammaEta = 2.1;
-
-    /* Muon isolation parameters (Zmumu+jets) */
-    constexpr double MuonDR  = 0.1;
-    constexpr double MuonLim = 0.1;
-    constexpr double MuonPt  = 30;
-    constexpr double MuonEta = 2.1;
-
-    /* Lepton isolation parameters (ttbarlepton+jets) */
-    constexpr double ElDR = 0.3;
-    constexpr double MuDR = 0.4;
-    constexpr double ElLim = 0.12; /* Loose version: 0.20 */
-    constexpr double MuLim = 0.15; /* Loose version: 0.25 */
-    /* Worst case kind of cuts for bonus leptons */
-    constexpr double LeptPt = 5;
-    constexpr double LeptEta = 2.4;
-
-    /* General limits for "nuisance leptons/photons" that are taken into account for isolation. */
-    constexpr double NuisancePt  = 7.0;
-    constexpr double NuisanceEta = 5.0;
-
-    /* Threshold for PtCut (D0 studies) */
-    constexpr double JetPtThres = 11;
-
-    /* Pt limit to be used while checking the isolation vs. nearby jets */
-    constexpr double MinJetVisiblePt = 15.0;
-    /* Pt limit to be used for fastjet clustering. */
-    constexpr double MinJetClustPt   = 6.0;
-
-}
-
-/////////////////////////////////////////////////////////////////////
-/// A struct for storing parton information
-/////////////////////////////////////////////////////////////////////
-struct PartonHolder {
-/// Parton four momentum.
-    fastjet::PseudoJet p4;
-/// Parton pdg id.
-    int id;
-/// The reason for which the parton was saved.
-/// - 0: ME Parton
-/// - 1: ME Parton with final-state momentum
-/// - 2: ME Lepton or photon
-/// - 3: ME Lepton or photon with final-state momentum
-/// - 4: Descendant of ME parton
-/// - 5: Descendant of ME parton with final-state momentum
-/// - 6: Subjects for isolation (photons or leptons)
-/// - 7: bottom neutrinos
-/// - 8: Other neutrinos
-/// - 9: Ghost bottom hadrons
-    char tag;
-/// The index of the parent parton in the program flow (0 if no parent).
-    int ptnid;
-/// The index of the current parton in the program flow.
-    int ownid;
-/// Indicate whether the parton is already in the use of a jet.
-    bool used;
-};
-
-
-
+/** @brief The standard Herwig7 namespace.
+ *
+ * The analysis class needs to operate within it.
+ * For further information, the user should refer to Herwig7 documentation in the internet. */
 namespace Herwig {
-
 
 using namespace ThePEG;
 
@@ -182,44 +106,31 @@ bool IsLastInShower(const Particle & p) {
     return p.children().size() > 1 and p.children()[0]->id() != p.id() and p.children()[1]->id() != p.id();
 }
 
+/** @brief A custom selector to be used with Herwig7. Not used, here for future reference.
+ *
+ * Usage:\n
+ * > tcParticleSet partons;\n
+ * > event->select(inserter(partons), ThePEG::ParticleSelector<TTBar>());\n
+ * > for (auto it = partons.begin(); it != partons.end(); ++it)
+ * > cout << "parton " << (*it)->number() << " " << (*it)->id() << endl;\n*/
 struct TTBar {
-    static bool AllCollisions() {return false;}
-    static bool AllSteps() {return true;}
-    static bool FinalState() {return false;}
-    static bool Intermediate() {return true;}
-    static bool Check(const Particle &p) {return abs(p.id())== ParticleID::t and IsLastInShower(p);}
+    static bool AllCollisions() { return false; }
+    static bool AllSteps()      { return true;  }
+    static bool FinalState()    { return false; }
+    static bool Intermediate()  { return true; }
+    static bool Check(const Particle &p) { return abs(p.id())== abs(ParticleID::t) and IsLastInShower(p); }
 };
 
-/////////////////////////////////////////////////////////////////////
-/// Class structure for storing Herwig7 particle data into trees.
-///
-/// Modes of operation:
-///
-///     0: Generic events
-///         - Normal QCD production for general studies
-///
-///     1: Dijet events
-///         - Normal QCD production with dijet-specific settings
-///
-///     2: Photon+Jet events
-///         - Photon+Jet production
-///
-///     3: Zmumu+Jet events
-///         - Z+Jet production with a Z -> mumu setting
-///
-///     4: Ttbarlepton+jet events
-///         - Ttbar production with WW -> qqbarllbar
-///
-///     5: Ttbarlepton+jet events \@POWHEG
-///         - Ttbar production with WW -> qqbarllbar
-///
-///     6: Ttbarlepton+jet events \@MADGRAPH5aMC\@NLO
-///         - Ttbar production with WW -> qqbarllbar
-/////////////////////////////////////////////////////////////////////
+/** @brief The main class handle for the Herwig7 analysis.
+ *
+ * Inherits from AnalysisHandler, and some structures need to follow structures according to this.
+ * Our own class methods start with a capital letter and those given by Herwig7 with a lower case letter. */
 class HerwigTree: public AnalysisHandler {
 
 public:
-
+    /** @name Methods visible to the outside. */
+    //@{
+    /** @brief Constructor does literally nothing. See doinitrun(). */
     HerwigTree() {}
 
     /** Analyze a given Event.
@@ -231,9 +142,11 @@ public:
 
     /** Standard Init function, called exactly once. */
     static void Init() { static ClassDocumentation<HerwigTree> documentation("The HerwigTree class is intended for saving gen-level data into tree structures."); }
+    //@}
 
 protected:
-
+    /** @name Standard logistics. */
+    //@{
     virtual IBPtr clone() const { return new_ptr(*this); }
     virtual IBPtr fullclone() const { return new_ptr(*this); }
 
@@ -241,8 +154,9 @@ protected:
     virtual void doinitrun();
     /** Finishing (close files etc.). */
     virtual void dofinish();
+    //@}
 
-    /** @name Fragmentation of the analysis process. */
+    /** @name Fragmentation of the analysis chain. */
     //@{
     /** Clear storages etc. before analysis */
     void Initialize();
@@ -309,6 +223,12 @@ protected:
       * @param quarkId The Quark Id to study (1,2,3,4,5) .
       * @return -1 when the given hadron is not of the given flavor, 1 when there is a daughter and 0 when not. */
     int IsExcitedHadronState(const tPPtr& part, int quarkId) const;
+
+    /** Substracts one from the event counter.
+     * To be called only just before "return", if we escape the analysis loop before the event is saved. */
+    void Repeat() {
+        if (!generator()->repeatEvent()) throw runtime_error("Repeating events does not work.");
+    }
     //@}
 
     /** @name Functions for adding stuff to be saved */
@@ -344,7 +264,6 @@ protected:
 
     /** @name Miscellaneous helper functions */
     //@{
-
     /** Cuts for jet property calculations. */
     void                Cuts();
     /** Fragmentation function calculation. */
@@ -399,6 +318,8 @@ protected:
     //@}
 private:
 
+    /** @name Functions request by Herwig logistics, no real value here. */
+    //@{
     /** The static object used to initialize the description of this class. */
     static NoPIOClassDescription<HerwigTree> initHerwigTree;
 
@@ -409,12 +330,7 @@ private:
      * @param part The given t parton.
      * @param lvl The level of nesting (starts at 1). */
     vector<tPPtr> Probe(tPPtr part, int lvl=1) const;
-
-    /* To be called only just before "return". */
-    void Repeat() {
-        if (!generator()->repeatEvent())
-            throw runtime_error("Repeating events does not work.");
-    }
+    //@}
 
 protected:
 
@@ -450,19 +366,23 @@ protected:
     float                        mWeight;
     float                        mPtHat;
     vector<float>                mIsolation;
-    /* Particle level for the particles within jets. */
+    /** @name Particle level for the particles within jets. */
+    //@{
     vector<unsigned char>        mJetId;
     vector<int>                  mPDGID;
     vector<float>                mPt;
     vector<float>                mEta;
     vector<float>                mPhi;
     vector<float>                mE;
+    //@}
     /* Particle level for the particles not in jets (nij). */
+    //@{
     vector<int>                  mNIJPDGID;
     vector<float>                mNIJPt;
     vector<float>                mNIJEta;
     vector<float>                mNIJPhi;
     vector<float>                mNIJE;
+    //@}
     /* Parton level. */
     vector<char>                 mPJetId;
     vector<int>                  mPPtnId;
@@ -508,12 +428,14 @@ protected:
     unsigned                     mHardProcCount;
     unsigned                     mCounter;
 
+    int                                   mLeptonFriend;
+    /** @name Containers for objects that are tested for isolation. */
+    //@{
     vector<pair<fastjet::PseudoJet,int>>  mGammas;
     vector<pair<fastjet::PseudoJet,int>>  mChargeds;
     vector<pair<fastjet::PseudoJet,int>>  mMuons;
-    int                                   mLeptonFriend;
+    //@}
 
-    fastjet::PseudoJet           mGamma; // Prompt photon in gamma+jets events
     //@}
 };
 
@@ -650,6 +572,7 @@ inline void HerwigTree::doinitrun()
     }
 }
 
+/** Operations to be performed as the run is finished. */
 inline void HerwigTree::dofinish()
 {
     AnalysisHandler::dofinish();
@@ -662,10 +585,6 @@ inline void HerwigTree::dofinish()
 
     cerr << "Total cross-section: " << generator()->integratedXSec()/picobarn << " pm " << generator()->integratedXSecErr()/picobarn << " pb." << endl;
     cerr << "Passed cross-section: " << (generator()->integratedXSec()/picobarn)*(mSelWgt/mTotWgt) << " pm " << (generator()->integratedXSecErr()/picobarn)*(mSelWgt/mTotWgt) << " pb." << endl;
-//     cerr << mPythia.info.nSelected() << endl;
-//     cerr << "Passed cross-section: " << mPythia.info.sigmaLHEF(0)*(mSelWgt/mTotWgt) << endl;
-//     cerr << "Passed cross-section: " << (mSelWgt/mPythia.info.nSelected()) << endl;
-//     cerr << "Testing " << mPythia.info.sigmaLHEF(0) << endl;
 
     cerr << "Possible errors:" << endl;
     for (auto &err : mErrorList) {
@@ -677,9 +596,8 @@ inline void HerwigTree::dofinish()
     if (mCounter != 0) cerr << "Non-zero counter value: " << mCounter << endl;
 }
 
+/** Definition of the static class description member. */
 NoPIOClassDescription<HerwigTree> HerwigTree::initHerwigTree;
-// Definition of the static class description member.
-
 }
 
 

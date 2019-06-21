@@ -2,5 +2,12 @@
 Code for handling monte carlo generators
 ========================================
 
-See INSTALL for further instructions and setting up the environment.
-This software package was produced by starting with the entire gen_handle package by H. Siikonen and adding the D0 studies in the midst of that. See INSTALL for further information on contributions. However, the whole package has been uploaded here for completeness. 
+See INSTALL for further instructions for setting up the environment.
+
+TODO
+====
+
+- Flavour analysis has to be fixed, this was modified to get QCDAware working
+- Herwig 7 has not been tested properly yet
+- POWHEG and Madgraph maybe needing attention, this is difficult and time-consuming
+- Sherpa; no flat tuples are possible so this has to be done in a sliced format

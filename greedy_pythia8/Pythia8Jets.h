@@ -8,18 +8,6 @@
 #ifndef PYTHIA8JETS
 #define PYTHIA8JETS
 
-/* Stdlib header file for input and output. */
-#include <iostream>
-#include <cstdlib>
-#include <cassert>
-#include <cmath>
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <stdexcept>
-#include <iterator>
-
 /* Header file to access Pythia 8 program elements. */
 #include "Pythia8/Pythia.h"
 #include "Pythia8Plugins/FastJet3.h"
@@ -43,32 +31,15 @@
 #include "fastjet/ClusterSequence.hh"
 #include "fastjet/Selector.hh"
 #include "fastjet/tools/GridMedianBackgroundEstimator.hh"
+#include "fastjet/D0RunIIConePlugin.hh"
 #include "fastjet/internal/numconsts.hh"
 
 /* scripts */
+#include "../greedy_settings.h"
 #include "../generic/help_functions.h"
 #include "../events/PrtclEvent.h"
 
 using namespace Pythia8;
-using std::string;
-using std::vector;
-using std::pair;
-using std::map;
-using std::cout;
-using std::endl;
-using std::cerr;
-using std::runtime_error;
-
-
-struct PartonHolder {
-    fastjet::PseudoJet p4;
-    int id;
-    char tag;
-    int ptnid;
-    int ownid;
-    bool used;
-};
-
 
 /* A selector class to speed up lepton+ selection in ttbar */
 class TTBarSelector : public UserHooks
@@ -81,14 +52,22 @@ public:
     virtual bool canVetoProcessLevel() { return true; }
 
     /* Returns true, if the event is vetoed (i.e. amount of hard proc leptons != 2) */
-    virtual bool doVetoProcessLevel(Event& process);
+    virtual bool doVetoProcessLevel(Event& process) {
+        unsigned leptons = 0;
+        for (unsigned prt = 0; prt!=process.size(); ++prt) {
+            if (process[prt].statusAbs() == 23 and process[prt].isLepton()) ++leptons;
+        }
+
+        if (leptons != 2) return true;
+        return false;
+    }
 };
 
 /////////////////////////////////////////////////////////////////////
 /// Class structure for storing Pythia8 particle data into trees.
 ///
 /// Modes of operation:
-/// 
+///
 ///     0: Generic events
 ///         - Normal QCD production for general studies
 ///
@@ -122,9 +101,7 @@ public:
 
     /* Run settings are provided through the initializer */
     Pythia8Jets(string settings, string fileName, int mode);
-    Pythia8Jets() :
-                    mEvent(mPythia.event),
-                    mInitialized(false)
+    Pythia8Jets() : mEvent(mPythia.event), mInitialized(false)
     {
         cerr << "Pythia8Jets is intended to be used only with the non-default initializer" << endl;
     }
@@ -132,15 +109,11 @@ public:
        and such stuff well, but there is a ton of memory leaks that result
        already from ROOT 'being there'. At least the software runs - but the
        memory leaks and ROOT style pointer handling are regrettable. */
-    ~Pythia8Jets() {
-        //if (mMode==6) {
-            //delete mMatching;
-            //delete mMerging;
-        //}
-    }
+    ~Pythia8Jets() {}
 
 protected:
-
+    /** @name Functions for adding stuff to be saved */
+    //@{
     /* A handle for adding particle information */
     void                ParticleAdd(unsigned prt, char jetid);
     void                PartonAdd(unsigned prt, char jetid, char tag, int ptnid = -1, int ownid = -1);
@@ -148,7 +121,7 @@ protected:
     void                JetAdd(unsigned jet, int spoil = 0);
 
     void                PartonAppend(fastjet::PseudoJet p4, unsigned prt, char tag, int ptnid=-1, int ownid = -1);
-    //void                PartonAppend(fastjet::PseudoJet p4, unsigned prt, int tag);
+    //@}
 
     /* A handy handle */
     TLorentzVector      TLorentzify(unsigned prt);
@@ -157,16 +130,22 @@ protected:
     fastjet::PseudoJet  PseudoJettify(TLorentzVector p4);
 
 
-    /* Add a possibility for per event pre-processing */
+    /** Add a possibility for per event pre-processing. */
     virtual void        PreProcess() {}
-    /* Loop over particles within an event: returns true if event is to be saved */
+    /** Loop over particles within an event.
+     * @return true if event is to be saved. */
     bool                ParticleLoop();
-    /* The logic within particleloop. */
+    /** The logic within particleloop.
+     * @return true if event is to be saved. */
     bool                ProcessParticle(unsigned prt);
     /* A custom phase within ProcessParticle */
     virtual int         CustomProcess(unsigned prt) { return 2; }
-    /* Allow an event type based veto */
-    virtual bool        Veto() { return false; }
+    /** Allow an event type based veto.
+     * @return true*/
+    virtual bool        IsolationProc() { return true; }
+    /** Check the eta-phi distance of isolated objects to jets.
+     * @return true if everything went ok. */
+    bool IsolationFromJets();
     /* Allow an event type based parton processing */
     virtual int         PartonProc(unsigned prt) { return 0; }
     /* Jet clustering routines */
@@ -248,16 +227,17 @@ protected:
     char                         mNuC;
     char                         mNuLept;
     char                         mNuOther;
-    char                         mInfo;
-    float                        mWeight;
     UserHooks                   *mMatching;
     amcnlo_unitarised_interface *mMerging;
     PowhegHooks                 *mPowheg;
     bool                         mDoMatching;
     bool                         mDoMerging;
+
+    char                         mInfo;
+    float                        mWeight;
     float                        mPtHat;
-    vector<float>                mIsolation;
     /* Particle level. */
+    vector<float>         mIsolation;
     vector<unsigned char> mJetId;
     vector<int>           mPDGID;
     vector<float>         mPt;
@@ -358,7 +338,7 @@ protected:
     /* Gammajet specific particle logic */
     virtual int CustomProcess(unsigned prt);
     /* Gammajet veto for isolation */
-    virtual bool Veto();
+    virtual bool IsolationProc();
 };
 
 
@@ -384,7 +364,7 @@ protected:
     /* Zmumujet specific particle logic */
     virtual int CustomProcess(unsigned prt);
     /* Z+jet veto for isolation */
-    virtual bool Veto();
+    virtual bool IsolationProc();
 };
 
 
@@ -413,7 +393,7 @@ protected:
     /* ttbarjet specific particle logic */
     virtual int CustomProcess(unsigned prt);
     /* ttbarjet veto for isolation */
-    virtual bool Veto();
+    virtual bool IsolationProc();
     /* W parton extract */
     virtual int PartonProc(unsigned prt);
 };

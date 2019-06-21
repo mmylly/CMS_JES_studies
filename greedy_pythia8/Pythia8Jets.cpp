@@ -2,22 +2,6 @@
 #include "Pythia8Plugins/CombineMatchingInput.h"
 //#include "Pythia8Plugins/aMCatNLOHooks.h"
 
-bool TTBarSelector::doVetoProcessLevel(Event& process)
-{
-    unsigned leptons = 0;
-    for (unsigned prt = 0; prt!=process.size(); ++prt) {
-        if (process[prt].statusAbs() == 23 && process[prt].isLepton())
-            ++leptons;
-    }
-
-    if (leptons != 2)
-        return true;
-    return false;
-}
-
-
-
-
 Pythia8Jets::Pythia8Jets(string settings, string fileName, int mode) :
     mEvent(mPythia.event),
     mInitialized(true),
@@ -176,11 +160,13 @@ void Pythia8Jets::EventLoop()
         if (mWeight == 0) continue;
         PreProcess();
         if (!ParticleLoop()) continue;
-        if (Veto()) continue;
+        if (!IsolationProc()) continue;
         if (!JetLoop()) continue;
         mSelWgt += mWeight;
         //cout << mEvtNo << endl;
 
+        //mPythia.event.list();
+        //PrintEvent();
         mTree->Fill();
 
         ++mEvtNo;
@@ -202,7 +188,7 @@ void Pythia8Jets::EventLoop()
         cerr << "Passed cross-section: " << (mSelWgt/mPythia.info.nSelected()) << endl;
         cerr << "Testing " << mPythia.info.sigmaLHEF(0) << endl;
     }
-    
+
     cerr << "Possible errors:" << endl;
     for (auto &err : mErrorList)
         cerr << "Error: " << err.first << " weight of total cross section: " << err.second/mTotWgt << endl;
@@ -247,8 +233,6 @@ bool Pythia8Jets::ParticleLoop()
     mSigma2.clear();
 
     mJetInputs.clear();
-    //mNJetInputs.clear();
-    //mPJetInputs.clear();
     mSortedJets.clear();
     mJetParts.clear();
     mCutJetParts.clear();
@@ -275,10 +259,10 @@ bool Pythia8Jets::ParticleLoop()
     mMet = mMetVect.perp();
 
     /* Sanity checks (ROOT produces a segfault when the error is launched) */
-    if (   (mMode<4 && mHardProcCount!=2)
-        || (mMode==2 && mSpecialIndices.size()!=1)
-        || (mMode==3 && mSpecialIndices.size()!=2)
-        || (mMode==4 && mHardProcCount!=4) )
+    if (   (mMode<4  and mHardProcCount!=2)
+        or (mMode==2 and mSpecialIndices.size()!=1)
+        or (mMode==3 and mSpecialIndices.size()!=2)
+        or (mMode==4 and mHardProcCount!=4) )
     {
         mEvent.list();
         cout << "Hard proc count: " << mHardProcCount << " Special indices size: " << mSpecialIndices.size() << endl;
@@ -294,17 +278,14 @@ void Pythia8Jets::PartonDescend(unsigned prt)
     /* NLO-level partons (tree). */
     for (auto &dtr : mEvent[prt].daughterList()) {
         unsigned truth = OptimalParton(dtr);
-        if (mEvent[truth].pT()<4)
-            continue;
+        if (mEvent[truth].pT()<4) continue;
         mNAncestry.push_back(truth);
         /* Slightly corrected: */
-        if (!mEvent[truth].isHadron())
-            PartonAppend(PseudoJettify(truth),truth,4,prt,truth);
+        if (!mEvent[truth].isHadron()) PartonAppend(PseudoJettify(truth),truth,4,prt,truth);
         /* Corrected: */
         //bool dimmy;
         //PartonAppend(PseudoJettify(LastParton(truth,dimmy)),truth,5,prt,truth);
-        if (mEvent[truth].isParton())
-            PartonDescend(truth);
+        if (mEvent[truth].isParton()) PartonDescend(truth);
     }
 }
 
@@ -317,14 +298,18 @@ bool Pythia8Jets::ProcessParticle(unsigned prt)
         if (stat==23) { /* Hard process activities. */
             ++mHardProcCount;
             /** Save hard process outgoing partons with and without a corrected momentum. **/
+            /* Uncorrected */
+            //int ptnid = PartonProc(prt); // Find out if W is the father
+            //PartonAppend(PseudoJettify(prt),prt,0,ptnid,prt);
             /* Slightly corrected: */
             prt = OptimalParton(prt);
-            int ptnid = PartonProc(prt);
+            int ptnid = PartonProc(prt); // Find out if W is the father
             PartonAppend(PseudoJettify(prt),prt,0,ptnid,prt);
             mAncestry.push_back(prt);
             /* Corrected: */
+            //int ptnid = PartonProc(prt); // Find out if W is the father
             //bool dummy;
-            //PartonAppend(PseudoJettify(LastParton(prt,dummy)),prt,1,ptnid,prt);
+            //PartonAppend(PseudoJettify(LastParton(prt,dummy)),prt,0,ptnid,prt);
 
             PartonDescend(prt);
         }
@@ -332,12 +317,9 @@ bool Pythia8Jets::ProcessParticle(unsigned prt)
         //if (stat==71 || stat==72) {
         //    fastjet::PseudoJet part = PseudoJettify(prt);
         //    part.set_user_index(prt);
-        //    //mPJetInputs.push_back(part);
         //}
 
-        /* Let b-partons go */
-        if (mEvent[prt].idAbs()!=5)
-            return true;
+        if (mEvent[prt].idAbs()!=5) return true; /* Let b-partons go */
     }
 
     /* A process type -dependent custom process */
@@ -357,17 +339,13 @@ bool Pythia8Jets::ProcessParticle(unsigned prt)
         int id = mEvent[prt].idAbs();
         fastjet::PseudoJet part = PseudoJettify(prt);
         part.set_user_index(prt);
-
-        ParticleAdd(prt,-1);
-        if (id==12||id==14||id==16) {
+        
+        //ParticleAdd(prt,-1); // uncommented
+        
+        if (id==12 or id==14 or id==16) {
             mMetVect += part;
-            //mPJetInputs.push_back(part);
-            //mNJetInputs.push_back(part);
         } else if (Absent(prt)) {
             mJetInputs.push_back(part);
-            //mNJetInputs.push_back(part);
-            //if (mEvent[prt].isLepton() || mEvent[prt].id()==22)
-            //    mPJetInputs.push_back(part);
         }
     }
 
@@ -392,7 +370,9 @@ bool Pythia8Jets::JetLoop()
                 PartonAdd(prt,jet);
                 mPartonInfo[prt].used = true;
             } else {
-                ParticleAdd(prt,jet);
+                // #ifdef STORE_PRTCLS // can add this like in Pythia6Jets.cpp
+                ParticleAdd(prt,jet); // uncommented
+                // #endif
                 continue;
             }
         }
@@ -416,7 +396,7 @@ bool Pythia8Jets::JetLoop()
 void Pythia8Jets::ParticleAdd(unsigned prt, char jetid)
 {
     int pdgid = mEvent[prt].id();
-    if (pdgid==22 && GammaChecker(prt)) pdgid = 20;
+    if (pdgid==22 and GammaChecker(prt)) pdgid = 20;
 
     mJetId.push_back(jetid);
     mPDGID.push_back(pdgid);
@@ -450,7 +430,7 @@ void Pythia8Jets::PartonAdd(unsigned prt, char jetid)
     mPTag.push_back(mPartonInfo[prt].tag);
     mPPt.push_back(mPartonInfo[prt].p4.pt());
     mPEta.push_back(mPartonInfo[prt].p4.eta());
-    // Uniformize phi values between mEvent and PseudoJet
+    // Uniformize phi values between TLorentzVector and PseudoJet
     mPPhi.push_back(mPartonInfo[prt].p4.phi() - (mPartonInfo[prt].p4.phi()>fastjet::pi ? 2*fastjet::pi : 0));
     mPE.push_back(mPartonInfo[prt].p4.e());
     mDR.push_back(jetid<0 ? -1.0 : mPartonInfo[prt].p4.delta_R(mSortedJets[jetid]));
@@ -460,7 +440,8 @@ void Pythia8Jets::JetAdd(unsigned jet, int spoil)
 {
     mJPt.push_back(mSortedJets[jet].pt());
     mJEta.push_back(mSortedJets[jet].eta());
-    mJPhi.push_back(mSortedJets[jet].phi());
+    // Uniformize phi values between TLorentzVector and PseudoJet
+    mJPhi.push_back(mSortedJets[jet].phi() - (mSortedJets[jet].phi()>fastjet::pi ? 2*fastjet::pi : 0));
     mJE.push_back(mSortedJets[jet].e());
     /* Start messing around with jet constituents */
     mJetParts = sorted_by_pt(mSortedJets[jet].constituents());
@@ -480,7 +461,6 @@ void Pythia8Jets::PartonAppend(fastjet::PseudoJet p4, unsigned prt, char tag, in
     p4 *= mGhostCoeff;
     p4.set_user_index(-mPartonInfo.size());
     mJetInputs.push_back(p4);
-    //mPJetInputs.push_back(p4);
 }
 
 
@@ -598,36 +578,35 @@ inline void P8GammajetTree::PreProcess()
     mGammas.clear();
 }
 
-inline bool P8GammajetTree::Veto()
+inline bool P8GammajetTree::IsolationProc()
 {
-    vector<double> E_dR(mGammas.size(),0);
-    for (auto &part : mJetInputs) {
-        if (part.user_index()<0)
-            continue;
-        for (unsigned i = 0; i < mGammas.size(); ++i) {
-            double dR = mGammas[i].first.delta_R(part);
+    for (auto &gm : mGammas) {
+        double EdR = 0;
+
+        for (auto &part : mJetInputs) {
+            if (part.user_index()<0) continue;
+
+            double dR = gm.first.delta_R(part);
             if (dR < mGammaDR)
-                E_dR[i] += part.e();
+                EdR += part.e();
         }
-    }
 
-    for (unsigned i = 0; i < mGammas.size(); ++i) {
-        float isolation = E_dR[i]/mGammas[i].first.e();
+        float isolation = EdR/gm.first.e();
         mIsolation.push_back(isolation);
-        PartonAdd(mGammas[i].second,-1,6);
+        PartonAdd(gm.second,-1,6);
     }
 
-    return false;
+    return true;
 }
 
 
 inline int P8GammajetTree::CustomProcess(unsigned prt)
 {
     if (mEvent[prt].idAbs()==22) {
-        if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==23)
+        if (mSpecialIndices.size()==0 and mEvent[prt].statusAbs()==23)
             return (GammaAdd(prt) ? 1 : 0);
 
-        /* Save all nice gammas for isolation */
+        /* Save all nice gammas for isolation (incl. signal photon) */
         if (mEvent[prt].isFinal()) {
             auto part = PseudoJettify(prt);
             if (mEvent[prt].pT()>mGammaPt)
@@ -677,39 +656,37 @@ inline void P8ZmumujetTree::PreProcess()
     mMuons.clear();
 }
 
-inline bool P8ZmumujetTree::Veto()
+inline bool P8ZmumujetTree::IsolationProc()
 {
-    vector<double> E_dR(mMuons.size(),0);
-    for (auto &part : mJetInputs) {
-        if (part.user_index()<0)
-            continue;
-        for (unsigned i = 0; i < mMuons.size(); ++i) {
-            double dR = mMuons[i].first.delta_R(part);
+    for (auto &mu : mMuons) {
+        double EdR = 0;
+
+        for (auto &part : mJetInputs) {
+            if (part.user_index()<0) continue;
+
+            double dR = mu.first.delta_R(part);
             if (dR < mMuonDR)
-                E_dR[i] += part.e();
+                EdR += part.e();
         }
-    }
 
-    for (unsigned i = 0; i < mMuons.size(); ++i) {
-        float isolation = E_dR[i]/mMuons[i].first.e();
+        float isolation = EdR/mu.first.e();
         mIsolation.push_back(isolation);
-        PartonAdd(mMuons[i].second,-1,6);
+        PartonAdd(mu.second,-1,6);
     }
 
-    return false;
+    return true;
 }
 
 
 /* This is based on an assumption made about status codes - there are safeguards in muonadd. */
 inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 {
-    if (mSpecialIndices.size()==0 && mEvent[prt].statusAbs()==22 && mEvent[prt].idAbs()==23)
+    if (mSpecialIndices.size()==0 and mEvent[prt].statusAbs()==22 && mEvent[prt].idAbs()==23)
         return MuonAdd(prt);
 
-    if (mEvent[prt].idAbs()==13 && mEvent[prt].isFinal()) {
+    if (mEvent[prt].idAbs()==13 and mEvent[prt].isFinal()) {
         auto part = PseudoJettify(prt);
-        if (mEvent[prt].pT()>mMuonPt)
-            mMuons.push_back(std::make_pair(part,prt));
+        if (mEvent[prt].pT()>mMuonPt) mMuons.push_back(std::make_pair(part,prt));
     }
 
     return 2;
@@ -718,12 +695,10 @@ inline int P8ZmumujetTree::CustomProcess(unsigned prt)
 
 bool P8ZmumujetTree::MuonAdd(unsigned prt)
 {
-    if (mSpecialIndices.size()!=0)
-        throw std::logic_error("Only muons are monitored in Z+jets events.");
+    if (mSpecialIndices.size()!=0) throw std::logic_error("Only muons are monitored in Z+jets events.");
 
     // Catch the latest version of the Z boson
-    while (mEvent[mEvent[prt].daughter1()].idAbs()==23)
-            prt = mEvent[prt].daughter1();
+    while (mEvent[mEvent[prt].daughter1()].idAbs()==23) prt = mEvent[prt].daughter1();
 
     for (int daughter : mEvent[prt].daughterList()) {
         if (mEvent[daughter].idAbs()==13) {
@@ -783,40 +758,35 @@ inline int P8ttbarjetTree::PartonProc(unsigned prt) {
     return -1;
 }
 
-inline bool P8ttbarjetTree::Veto()
+inline bool P8ttbarjetTree::IsolationProc()
 {
-    vector<double> E_dR(mChargeds.size(),0);
-    vector<double> leptonDR;
-
+    /* Adding Isolation monitoring for all present charged particles */
     for (auto &ch : mChargeds) {
-        double dR = mEvent[ch.second].idAbs()==11 ? mElDR : mMuDR;
-        leptonDR.push_back(dR);
-    }
+        double EdR = 0;
 
-    for (auto &part : mJetInputs) {
-        if (part.user_index()<0)
-            continue;
-        for (unsigned i = 0; i < mChargeds.size(); ++i) {
-            double dR = mChargeds[i].first.delta_R(part);
-            if (dR < leptonDR[i])
-                E_dR[i] += part.e();
+        double dRlim = mEvent[ch.second].idAbs()==11 ? mElDR : mMuDR;
+        for (auto &part : mJetInputs) {
+            if (part.user_index()<0)
+                continue;
+
+            double dR = ch.first.delta_R(part);
+            if (dR < dRlim) EdR += part.e();
         }
-    }
 
-    for (unsigned i = 0; i < mChargeds.size(); ++i) {
-        float isolation = E_dR[i]/mChargeds[i].first.e();
+        // Appending the isolation info & charged particle info
+        float isolation = EdR/ch.first.e();
         mIsolation.push_back(isolation);
-        PartonAdd(mChargeds[i].second,-1,6);
+        PartonAdd(ch.second,-1,6);
     }
 
-    return false;
+    return true;
 }
 
 
 inline int P8ttbarjetTree::CustomProcess(unsigned prt)
 {
     /* Add the W's */
-    if (mEvent[prt].statusAbs()==22 && mEvent[prt].idAbs()==24) {
+    if (mEvent[prt].statusAbs()==22 and mEvent[prt].idAbs()==24) {
         prt = OptimalParton(prt);
         int nextW = prt;
         bool leptonic = false, hadronic = false;
@@ -829,8 +799,7 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
                 if (mEvent[truth].idAbs()==24)
                     nextW = truth;
                 else if (mEvent[truth].idAbs()==22) {
-                    if (mEvent[truth].pT()>0.1)
-                        photons.push_back(truth);
+                    if (mEvent[truth].pT()>0.1) photons.push_back(truth);
                 } else if (mEvent[truth].isLepton()) {
                     leptonic = true;
                 } else if (mEvent[truth].idAbs()<6) {
@@ -839,19 +808,18 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
                     throw runtime_error(Form("W decays into unkown stuff! %d",mEvent[truth].id()));
             }
         }
-        for (auto &gamma : photons)
-            PartonAdd(gamma,(char)-1,(char)2,prt,gamma);
+        for (auto &gamma : photons) PartonAdd(gamma,(char)-1,(char)2,prt,gamma);
         mWs.push_back(prt);
         if (leptonic and hadronic)
             throw runtime_error("W has both leptons and hadrons!");
         else if (leptonic) {
             mLeptonFriend = prt;
             PartonAdd(prt,(char)-1,(char)2,-1,prt);
-        } else if (hadronic) { // Cluster the hadronic W
+        } else if (hadronic) // Cluster the hadronic W
             PartonAppend(PseudoJettify(prt),prt,(char)2,-1,prt);
-        } else
+        else
             throw runtime_error("W has no hadrons nor leptons!");
-        
+
         return 1;
     }
 
@@ -870,10 +838,10 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
             return state;
         }
 
-        if (mEvent[prt].isFinal() && Absent(prt)) {
+        if (mEvent[prt].isFinal() and Absent(prt)) {
             /* Neutrinos vs. charged leptons. */
             int id = mEvent[prt].idAbs();
-            if (id==12 || id==14 || id==16) {
+            if (id==12 or id==14 or id==16) {
                 // Neutrino catcher
                 bool trial = false;
                 for (auto &b : mBs) {
@@ -901,9 +869,8 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
                         ++mNuC;
                     else if (mEvent[moth].isLepton())
                         ++mNuLept;
-                    else {
+                    else
                         ++mNuOther;
-                    }
                     ++mBNuCount;
                     PartonAdd(prt,-1,7);
                 } else {
@@ -914,9 +881,8 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
                         ++mNuOC;
                     else if (mEvent[moth].isLepton())
                         ++mNuOLept;
-                    else {
+                    else
                         ++mNuOOther;
-                    }
                     PartonAdd(prt,-1,8);
                     ++mONuCount;
                 }
@@ -936,10 +902,9 @@ inline int P8ttbarjetTree::CustomProcess(unsigned prt)
 
 bool P8ttbarjetTree::LeptonAdd(unsigned prt, int parent)
 {
-    /* Charged lepton input: find a final-state charged lepton. */
     int type = mEvent[prt].idAbs()%2;
     if (type) {
-        /* Charged leptons */
+        /* Charged lepton input: find a final-state charged lepton. */
 
         /* Save a raw charged lepton*/
         PartonAdd(prt, (char)-1, 2,parent, prt);
@@ -952,7 +917,6 @@ bool P8ttbarjetTree::LeptonAdd(unsigned prt, int parent)
         while (!mEvent[prt].isFinal()) {
             auto prevprt = prt;
             for (int &daughter : mEvent[prevprt].daughterList()) {
-                int dType = mEvent[daughter].idAbs()%2;
                 if (mEvent[daughter].isHadron()) {
                     prt = 0;
                     break;
@@ -961,6 +925,7 @@ bool P8ttbarjetTree::LeptonAdd(unsigned prt, int parent)
                     if (mEvent[didx].pT()>0.1)
                         PartonAdd(didx,-1,'\2',parent,didx);
                 } else if (mEvent[daughter].isLepton()) {
+                    int dType = mEvent[daughter].idAbs()%2;
                     if (dType==1) {
                         /* Charged lepton kept */
                         prt = daughter;
@@ -978,6 +943,7 @@ bool P8ttbarjetTree::LeptonAdd(unsigned prt, int parent)
             } else if (prt == prevprt) {
                 /* Check if stuck in a loop*/
                 AddMessage("Lepton loop stuck!",mWeight);
+                //throw std::logic_error("Lepton loop stuck!");
                 return false;
             }
         }
@@ -1045,34 +1011,47 @@ unsigned int Pythia8Jets::OptimalParton(unsigned int prt)
 /* Corrected parton momentum (fine 62 & 63 have a contrast to FS partons 71 and 72) */
 TLorentzVector Pythia8Jets::LastParton(unsigned prt, bool &prev_stop)
 {
-    if (mEvent[prt].statusAbs() == 62 || mEvent[prt].statusAbs() == 63 || mEvent[prt].isFinal() || mEvent[prt].idAbs() > 69) {
-        prev_stop = true;
+    if (mEvent[prt].statusAbs() == 62 or mEvent[prt].statusAbs() == 63 or (mEvent[prt].isFinal() and mEvent[prt].idAbs()<69)) {
+        if (mEvent[prt].motherList().size()!=1) {
+            cout << "HOX! Rogue parton " << mEvent[prt].status() << " " << mEvent[prt].id()
+                 << " with " << mEvent[prt].motherList().size() << " mothers!" << endl;
+            for (auto &moth : mEvent[prt].motherList()) cout << " " << mEvent[moth].status();
+            cout << endl;
+        }
+        // This is the optimal stage to stop momentum calculation
         return TLorentzify(prt);
+    } else if (mEvent[prt].statusAbs() >= 70 or mEvent[prt].idAbs() > 69 or mEvent[prt].isFinal()) {
+        // Detect when a daughter is overstepping boundaries and stop summation
+        prev_stop = true;
+        return TLorentzVector();
     }
-
+    if (mEvent[prt].motherList().size()!=1) {
+        cout << "HOX! Rogue parton " << mEvent[prt].status() << " " << mEvent[prt].id()
+             << " with " << mEvent[prt].motherList().size() << " mothers!" << endl;
+        for (auto &moth : mEvent[prt].motherList()) cout << " " << mEvent[moth].status();
+        cout << endl;
+    }
     // stop: detect if even one of the daughters is beyond final state
     bool stop = false;
     TLorentzVector cumulator;
     for (auto &daughter : mEvent.daughterList(prt)) {
         cumulator += LastParton(daughter,stop);
-        if (stop)
-            return TLorentzify(prt);
+        if (stop) return TLorentzify(prt);
     }
 
     return cumulator;
 }
 
-/* Corrected parton momentum (contrast to FS partons 71 and 72) */
+/* Corrected parton momentum: same as LastParton, but only proceed a given amount of levels. */
 TLorentzVector Pythia8Jets::NextParton(unsigned prt, unsigned lvl)
 {
-    if (mEvent[prt].statusAbs() == 62 || mEvent[prt].statusAbs() == 63 || mEvent[prt].isFinal())
+    if (mEvent[prt].statusAbs() == 62 or mEvent[prt].statusAbs() == 63 or mEvent[prt].isFinal())
         return TLorentzify(prt);
 
     while (mEvent.daughterList(prt).size()==1)
         prt = mEvent[prt].daughter1();
 
-    if (lvl==0)
-        return TLorentzify(prt);
+    if (lvl==0) return TLorentzify(prt);
 
     TLorentzVector cumulator;
     for (auto &daughter : mEvent.daughterList(prt)) {

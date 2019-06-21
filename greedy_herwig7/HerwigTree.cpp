@@ -2,7 +2,7 @@
 using namespace Herwig;
 using namespace ThePEG;
 
-/* STRUCTURES FOR STORING NECESSARY PARTICLE DATA ACCORDING TO THE EVENT TYPE: */
+/** STRUCTURES FOR STORING NECESSARY PARTICLE DATA ACCORDING TO THE EVENT TYPE: */
 
 #ifdef STORE_PRTCLS
 /* The danish number system is very complicated, so better just divide by GeV */
@@ -12,18 +12,18 @@ void HerwigTree::ParticleAdd(const tPPtr& part, char jetid)
     if (pdgid==22 and GammaChecker(part)) pdgid = 20;
 
     if (jetid >= 0) { // Associated with jets
-        mJetId.push_back(jetid                      );
-        mPDGID.push_back(pdgid                      );
-        mPt.push_back(   part->momentum().perp()/GeV);
-        mEta.push_back(  part->momentum().eta()     );
-        mPhi.push_back(  part->momentum().phi()     );
-        mE.push_back(    part->momentum().e()/GeV   );
+        mJetId.push_back(jetid);
+        mPDGID.push_back(pdgid);
+        mPt.push_back(part->momentum().perp()/GeV);
+        mEta.push_back(part->momentum().eta());
+        mPhi.push_back(part->momentum().phi());
+        mE.push_back(part->momentum().e()/GeV);
     } else { // No jet association
-        mNIJPDGID.push_back(pdgid                      );
-        mNIJPt.push_back(   part->momentum().perp()/GeV);
-        mNIJEta.push_back(  part->momentum().eta()     );
-        mNIJPhi.push_back(  part->momentum().phi()     );
-        mNIJE.push_back(    part->momentum().e()/GeV   );
+        mNIJPDGID.push_back(pdgid);
+        mNIJPt.push_back(part->momentum().perp()/GeV);
+        mNIJEta.push_back(part->momentum().eta());
+        mNIJPhi.push_back(part->momentum().phi());
+        mNIJE.push_back(part->momentum().e()/GeV);
     }
 } // ParticleAdd
 #endif
@@ -31,16 +31,16 @@ void HerwigTree::ParticleAdd(const tPPtr& part, char jetid)
 /* The danish number system is very complicated, so better just divide by GeV */
 void HerwigTree::PartonAdd(const tPPtr& part, char jetid, char tag, int ptnid, int ownid)
 {
-    mPJetId.push_back(jetid                      );
-    mPPtnId.push_back(ptnid                      );
-    mPOwnId.push_back(ownid                      );
-    mPTag.push_back(  tag                        );
-    mPPDGID.push_back(part->id()                 );
-    mPPt.push_back(   part->momentum().perp()/GeV);
-    mPEta.push_back(  part->momentum().eta()     );
-    mPPhi.push_back(  part->momentum().phi()     );
-    mPE.push_back(    part->momentum().e()/GeV   );
-    mDR.push_back(    -1                         );
+    mPJetId.push_back(jetid);
+    mPPtnId.push_back(ptnid);
+    mPOwnId.push_back(ownid);
+    mPTag.push_back(tag);
+    mPPDGID.push_back(part->id());
+    mPPt.push_back(part->momentum().perp()/GeV);
+    mPEta.push_back(part->momentum().eta());
+    mPPhi.push_back(part->momentum().phi());
+    mPE.push_back(part->momentum().e()/GeV);
+    mDR.push_back(-1);
 } // PartonAdd
 
 void HerwigTree::PartonAdd(unsigned num, char jetid)
@@ -61,10 +61,10 @@ void HerwigTree::PartonAdd(unsigned num, char jetid)
 
 void HerwigTree::JetAdd(unsigned jet, int spoil)
 {
-    mJPt.push_back( mSortedJets[jet].pt() );
+    mJPt.push_back(mSortedJets[jet].pt());
     mJEta.push_back(mSortedJets[jet].eta());
     mJPhi.push_back(mSortedJets[jet].phi());
-    mJE.push_back(  mSortedJets[jet].e()  );
+    mJE.push_back(mSortedJets[jet].e());
     if (spoil==0) {
         /* Start messing around with jet constituents */
         mJetParts = sorted_by_pt(mSortedJets[jet].constituents());
@@ -98,7 +98,6 @@ void HerwigTree::Initialize()
     mEta.clear();
     mPhi.clear();
     mE.clear();
-    /* Particle lvl for particles not in jets (nij) */
     mNIJPDGID.clear();
     mNIJPt.clear();
     mNIJEta.clear();
@@ -214,7 +213,7 @@ bool HerwigTree::IsolationProc()
     }
 
     return true;
-} // IsolationProc
+} // Veto
 
 /* Notation: (i)prt the index of a particle, (i)part the corresponding PseudoJet.
  * The prefix 'i' stands for isolation (i.e. the particle which we study). */
@@ -224,13 +223,11 @@ bool HerwigTree::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart)
         /* Kinematic basic cuts for the particle to-be-isolated: */
         if (abs(ipart.eta()) > 1.0 or ipart.pt() < 7.0) return false;
 
-        //To simplify, the isolation is checked at gen lvl, no reconstruction
-        double max_pTsum           = 1.0; /* Max charged particle p_T sum [GeV] */
         double E_tot03             = 0.0; /* Stepper to sum all ptcl E within     R<0.3 cone */
         double E_tot04             = 0.0; /*              -||-                    R<0.4 cone */
         double E_EM02              = 0.0; /* Stepper to sum EM  ptcl E within     R<0.2 cone */
         double E_EM03              = 0.0; /*              -||-                    R<0.3 EM clus. */
-        double pTsum               = 0.0; /* Stepper to sum track p_T within 0.05<R<0.7. */
+        double pTsum               = 0.0; /* Stepper to sum track p_T within 0.05<R<0.4. */
 
         /* Adding the photon to-be-studied. */
         E_tot03 += ipart.e();
@@ -242,17 +239,18 @@ bool HerwigTree::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart)
             int prt = part.user_index();
             if (prt<0 or prt==iprt) continue; /* Skip ghosts and the current particle */
 
-            double dR = ipart.delta_R(part);	//Distance to this photon
-            int absId = abs(mFinals[prt]->id());
-            bool ischarged = IsCharged(absId);
-
-            if (ischarged and part.pt() > 0.4 and dR > 0.05 and dR < 0.7) pTsum += part.pt();
-
+            double dR = ipart.delta_R(part);
             if (dR < 0.4) {
+                int absId = abs(mFinals[prt]->id());
+                bool ischarged = IsCharged(absId);
+
+                if (ischarged and part.pt() > 0.5 and dR > 0.05) pTsum += part.pt();
+
                 E_tot04 += part.e();
                 if (dR<0.3) {
                     /* For charged particles & photons the coefficient is one and for other neutrals 0.5. */
                     double EMcoeff = (ischarged or absId == 22) ? 1.0 : 0.5;
+
                     E_tot03            +=         part.e();
                     E_EM03             += EMcoeff*part.e();
                     if (dR<0.2) E_EM02 += EMcoeff*part.e();
@@ -263,9 +261,7 @@ bool HerwigTree::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart)
         /* Pseudorapidity, p_T, etc. limits for isolated photon. Note: these are quite harsh limits. */
         return (E_tot04-E_EM02)/E_EM02 < 0.07 /* fiso      in the D0 language */
         and E_EM03/E_tot03          > 0.96 /* fEM       in the D0 language */
-        and pTsum                   < max_pTsum /* sum pttrk in the D0 language */
-        and fabs(mGamma.eta())      < cfg::GammaEtaD0Max
-        and fabs(mGamma.pt())       < cfg::GammaPtD0Min;
+        and pTsum                   < 2.5; /* sum pttrk in the D0 language */
     } else { /* CMS STYLE ALGORITHM */
         double EdR = 0;
 
@@ -273,7 +269,7 @@ bool HerwigTree::IsolationPhotons(int iprt, fastjet::PseudoJet& ipart)
             int prt = part.user_index();
             if (prt<0 or prt==iprt) continue; /* Skip ghosts and the current particle */
 
-            double dR = ipart.delta_R(part);	//Distance to this photon
+            double dR = ipart.delta_R(part);
             if (dR < cfg::GammaDR) EdR += part.e();
         }
 
@@ -403,7 +399,6 @@ bool HerwigTree::IsolationLeptons(int iprt, fastjet::PseudoJet& ipart)
 } // IsolationLeptons
 
 
-
 bool HerwigTree::FinalState()
 {
     /* In ttbar events, we store the b hadrons (also intermediate) */
@@ -459,7 +454,6 @@ bool HerwigTree::FinalState()
              * by a particle detector, such as the CMS or D0. */
             mJetInputs.push_back(prt);
         }
-
     }
 
     return true;
@@ -475,14 +469,14 @@ bool HerwigTree::JetLoop()
     else if (mMode==2) { if (unsorted.size()==0) return false; }
     else if (mMode==3) { if (unsorted.size()==0) return false; }
     else if (mMode==4) { if (unsorted.size() <4) return false; }
-    mSortedJets = sorted_by_pt(unsorted);    //Sort jets by pT
+    mSortedJets = sorted_by_pt(unsorted);
 
-    int bJets = 0;     // #b-jets
-    int eta04Jets = 0; // Jets in |eta|<0.4
+    int bJets = 0;     /* #B jets */
+    int eta04Jets = 0; /* Jets in |eta|<0.4 */
 
-    for (unsigned jet = 0; jet!=mSortedJets.size(); ++jet) {
+    for (unsigned jet = 0; jet<mSortedJets.size(); ++jet) {
         JetAdd(jet);
-        if (cfg::EtaCut) if (fabs(mSortedJets[jet].eta())<0.4) ++eta04Jets;
+        if (cfg::EtaCut and fabs(mSortedJets[jet].eta())<0.4) ++eta04Jets;
         for (auto &part : mJetParts) {
             int prt = part.user_index();
             if (prt<0) {
@@ -503,26 +497,10 @@ bool HerwigTree::JetLoop()
 
     /* Require a min amount of jets in |eta|<0.4 for D0 JES studies
      * The minimum is at least 2 for dijet and 1 for gamma+jet */
-    // Also check that for back-to-back tag and probe candidates with delta_phi > 3.0
-    bool jet0isGamma=false, jet1isGamma=false; // Gamma+jet photon reco'd as a jet?
-    if (mMode==1) {
-        if (fabs(mSortedJets[0].phi_std() - mSortedJets[1].phi_std()) < 3.0) return false;
-        if (cfg::EtaCut and (fabs(mSortedJets[0].eta()) > 0.4 or fabs(mSortedJets[1].eta()) > 0.4)) return false;
-    } else if (mMode==2) {
-        //Check if one of the two leading jets is the tag photon
-        if      (mGamma.delta_R(mSortedJets[0]) < 0.2) jet0isGamma = true;
-        else if (mGamma.delta_R(mSortedJets[1]) < 0.2) jet1isGamma = true;
-        if (jet0isGamma) {
-            if (cfg::EtaCut and fabs(mSortedJets[1].eta())        > 0.4) return false;
-            if (fabs(mGamma.phi_std() - mSortedJets[1].phi_std()) < 3.0) return false;
-        } else if (jet1isGamma) {
-            if (cfg::EtaCut and fabs(mSortedJets[0].eta())        > 0.4) return false;
-            if (fabs(mGamma.phi_std() - mSortedJets[0].phi_std()) < 3.0) return false;
-        }
-    }
-    // Similar cuts for samples not used in D0 JES
     if (cfg::EtaCut) {
-        if      (mMode==3) { if (eta04Jets<1) return false; }
+        if      (mMode==1) { if (eta04Jets<2) return false; }
+        else if (mMode==2) { if (eta04Jets<1) return false; }
+        else if (mMode==3) { if (eta04Jets<1) return false; }
         else if (mMode==4) { if (eta04Jets<4) return false; }
     }
     /* Cut events with too high-pT excess jets:
@@ -530,12 +508,7 @@ bool HerwigTree::JetLoop()
      * (cutting reco'd jets, then asking the corresponding gen pT) */
     if (cfg::PtCut) {
         if      (mMode==1) { if (mSortedJets.size()>2 and mSortedJets[2].pt() > 11) return false; }
-        else if   (mMode==2) {
-            if (mSortedJets.size()>1) {
-                if ((jet0isGamma or  jet1isGamma) and mSortedJets[2].pt()>cfg::JetPtThres) return false;
-                if (!jet0isGamma and !jet1isGamma and mSortedJets[1].pt()>cfg::JetPtThres) return false;
-            }
-        }
+        else if (mMode==2) { if (mSortedJets.size()>1 and mSortedJets[1].pt() > 11) return false; }
         else if (mMode==3) { if (mSortedJets.size()>1 and mSortedJets[1].pt() > 11) return false; }
         else if (mMode==4) { if (mSortedJets.size()>4 and mSortedJets[4].pt() > 11) return false; }
     }
@@ -548,9 +521,9 @@ bool HerwigTree::JetLoop()
      *   separately from the particles associated with jets. */
     if (cfg::StoreNIJ) {
         vector<int> jetIndices = clustSeq.particle_jet_indices(mSortedJets);
-        for (unsigned int a=0; a!=jetIndices.size(); ++a) {
+        for (int a=0; a!=jetIndices.size(); ++a) {
             int prt = mJetInputs[a].user_index();
-            if (prt > 0 and jetIndices[a] == -1) ParticleAdd(mFinals[prt],-1);
+            if (prt > 0 and jetIndices[a] == -1) ParticleAdd(prt);
         }
     }
     #endif
@@ -588,7 +561,7 @@ bool HerwigTree::IsolationFromJets()
         for (unsigned midx = 0; midx < mMuons.size(); ++midx) {
             if (!mIsolation[midx]) continue; /* If this is non-isolated, don't bother. */
 
-                auto &mu = mMuons[midx].first;
+            auto &mu = mMuons[midx].first;
             for (auto &jet : mSortedJets) {
                 if (jet.pt() < cfg::MinJetVisiblePt) break;
                 if (mu.delta_R(jet) < 0.5) {
@@ -626,11 +599,6 @@ bool HerwigTree::HardProc()
     /* Counters and a storage for ttbar events */
     int bCount = 0, qCount = 0;
     vector<tPPtr> topLepts;
-
-    //tcParticleSet partos;
-    //event->select(inserter(partos), ThePEG::ParticleSelector<TTBar>());
-    //for (auto it = partos.begin(); it != partos.end(); ++it)
-    //    cout << "juu " << (*it)->number() << " " << (*it)->id() << endl;
 
     /* The hardest subprocess
         Hard process (method 1 - brings also the id 82 collimations)
@@ -701,7 +669,7 @@ bool HerwigTree::HardProc()
 
     /* ttbar events: seek lepton+jets (one w to leptons, one to quarks) */
     if (mMode>=4) {
-        if (bCount!=2 or qCount!=2 or topLepts.size()!=2) {
+        if ((bCount!=2 or qCount!=2 or topLepts.size()!=2)) {
             AddMessage("Non-semileptonic ttbar",mWeight);
             return false;
         }
@@ -733,7 +701,6 @@ bool HerwigTree::GammaAdd(tPPtr gamma)
     }
     mSpecialIndices.push_back(gamma->number());
     PartonAdd(gamma,-1,(char) 2);
-    mGamma = PseudoJettify(gamma);	//Store to a PseudoJet handle
     return true;
 }
 
@@ -1075,6 +1042,7 @@ int HerwigTree::IsExcitedHadronState(const tPPtr& part, int quarkId) const
 
     ParticleVector children = part->children();
     for (auto &child : part->children()) if (HadrFuncs::StatusCheck(quarkId, child->id())) return 1;
+
     return 0;
 }
 

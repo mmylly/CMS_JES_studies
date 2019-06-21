@@ -15,6 +15,17 @@ seeds=[840744607,431166825,11489507,859341684,719632152,384411333,90405435,29759
 # 3: CUETP8M2 from CMS         (NNPDF3.0LO)
 tune = 3
 
+# PtHat min and max should be chosen by the user, unless it's a ttbar event
+# Tranche 1:  80 - 320
+# Tranche 2: 180 - 420
+minPth = 20.0
+maxPth = 10000.0
+# PtHat weighting (in non-ttbar events)
+weighted=True
+
+# In ttbar events, the user should set the mass of top
+mTop=172.5
+
 # Hard coded PDF choice
 # 0: CTEQ6L1
 # 1: use the default
@@ -30,8 +41,6 @@ ISR=True
 FSR=True
 MPI=True
 
-weighted=True # Tonilla oli False
-#weighted=False
 
 #print "Initializing pythia8:"
 
@@ -93,56 +102,41 @@ f.write("ParticleDecays:allowPhotonRadiation = on\n");
 f.write("ParticleDecays:limitTau0=on\n")
 f.write("ParticleDecays:tau0Max=10.\n\n")
 
-if weighted:
-    f.write("! Event weighting\n")
-    # Tranche 1
-    #f.write("PhaseSpace:pTHatMin = 80.\n")
-    #f.write("PhaseSpace:pTHatMax = 320.\n\n")
-    # Tranche 2
-    #f.write("PhaseSpace:pTHatMin = 180.\n")
-    #f.write("PhaseSpace:pTHatMax = 420.\n\n")
-    f.write("PhaseSpace:bias2Selection = on\n")
-    f.write("PhaseSpace:bias2SelectionPow = 4.5\n")
-    f.write("PhaseSpace:bias2SelectionRef = 15.\n\n")
-
 f.write("! CM energy\n")
 if eScale==0:
     f.write("Beams:eCM = 8000.\n\n")
-    #print "    CMS energy 8 TeV"
 elif eScale==1:
     f.write("Beams:eCM = 13000.\n\n")
-    #print "    CMS energy 13 TeV"
 elif eScale==2:
     f.write("Beams:eCM = 1960.\n\n")
-    #print "    CMS energy 1.96 TeV"
 
-if mode==0:
-    f.write("HardQCD:all = on\n")
-    f.write("PhaseSpace:pTHatMin = 20.\n\n")
-if mode==1:
-    f.write("HardQCD:all = on\n")
-#    f.write("PhaseSpace:pTHatMin = 20.\n\n")
-    f.write("PhaseSpace:pTHatMin = 200.\n\n")
-if mode==2:
+if mode==0 or mode==1:
+    f.write("HardQCD:all = on\n\n")
+elif mode==2:
     f.write("PromptPhoton:qg2qgamma = on\n");
     f.write("PromptPhoton:qqbar2ggamma = on\n");
-    f.write("PromptPhoton:gg2ggamma = on\n");
-    f.write("PhaseSpace:pTHatMin = 20.\n\n");
-#    f.write("PhaseSpace:pTHatMin = 150.\n\n")
-#    f.write("PhaseSpace:pTHatMin = 200.\n\n");
-if mode==3:
+    f.write("PromptPhoton:gg2ggamma = on\n\n");
+elif mode==3:
     f.write("! Produce only Z0's\n");
     f.write("WeakZ0:gmZmode = 2\n");
     f.write("WeakBosonAndParton:qqbar2gmZg = on\n");
     f.write("WeakBosonAndParton:qg2gmZq  = on\n");
     f.write("23:onMode = off\n");
     f.write("23:7:onMode = on\n");
-    f.write("PhaseSpace:pTHatMin = 20.\n\n");
-    f.write("PhaseSpace:mHatMin = 75.\n");
-if mode==4:
+    f.write("PhaseSpace:mHatMin = 75.\n\n");
+elif mode==4:
     f.write("Top::gg2ttbar = on\n");
     f.write("Top::qqbar2ttbar = on\n");
-#    f.write("PhaseSpace:pTHatMin = 300.\n\n")
+    f.write("6:m0 = {}\n\n".format(mTop));
+
+if mode<4:
+    f.write("PhaseSpace:pTHatMin = {}\n".format(minPth))
+    f.write("PhaseSpace:pTHatMax = {}\n\n".format(maxPth))
+    if weighted:
+        f.write("! Event weighting\n")
+        f.write("PhaseSpace:bias2Selection = on\n")
+        f.write("PhaseSpace:bias2SelectionPow = 4.5\n")
+        f.write("PhaseSpace:bias2SelectionRef = 15.\n\n")
 
 if mode>0:
     f.write("Tune:preferLHAPDF = 2\n")

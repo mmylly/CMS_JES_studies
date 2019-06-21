@@ -1,6 +1,4 @@
-Authors:
- Toni Mäkelä (github: makelat)
-Based on the gen_handle package by Hannu Siikonen (github: errai-)
+Author Hannu Siikonen (github: errai-)
 README updated 3.4.2016
 
 #1) INTRODUCTION
@@ -9,56 +7,40 @@ README updated 3.4.2016
 
 
 #1) INTRODUCTION
-This is a collection of data analysis and simulation tools used for reproducing the D0 flavour-depentent jet energy correction factors. Developed under Helsinki Institute of Physics. Due to being based on H. Siikonen's package, these folders contain also files not directly used in the D0 studies but that are included for compatibility with gen_handle and ease of possible future development.
+This is a collection of data analysis and simulation tools used with the CMS
+project. Developed under Helsinki Institute of Physics, which contributes to
+the CMS project.
 
-Link to the github repository:
-    https://github.com/makelat/D0_JES_studies
+My master's thesis was done using this software:
+
+
+A direct link to the legacy github repository:
+    https://github.com/errai-/jetscripts
+
+A direct link to the current github repository:
+    https://gitlab.cern.ch/hsiikone/gen_handle
 
 Note: while building the sources, the number 'N' of parallel processes in 'make -jN'
 should be chosen wisely. E.g. for an 8-core processor N=6 can be a good choice.
 
 #2) FOLDER DESCRIPTIONS
-For the folders relevant to the D0 studies.
 
-pythia6, pythia8, herwig7, greedy_pythia6, greedy_pythia8, greedy_herwig7
-(originally by H. Siikonen; greedy_pythia6 and greedy_herwig7 developed further by T. Mäkelä):
-    Simulation tools for generating particle data with pythia6, pythia8 and Herwig7. 
-    These serve as "handles" to operate the three generators via a similar interface
-    and a unified process.
-    Note: for the D0 studies, only P6 and H7 were utilized, so P8 may not be up 
-          to date.
+data_analysis:
+    Tools for analyzing CMS jet data. Aim is to conveniently and quickly make plots
+    of different aspects.
+    Last updates in autumn 2014
 
-outputsToProcess (T. Mäkelä)
-    Contains a script that can be used to uniformize generator output tuples, which may 
-    initially have slightly different structure (essentially leave out all unnecessary 
-    parts if some generator provides extraneous vectors to the tuple that are not present 
-    in others).
+lhc_simulation:
+    Simulation tools for generating particle data with pythia6, pythia8 and Herwig++. 
+    A common jet sorting algorithm to turn the particle data into jet data.
 
-responseAnalysis (T. Mäkelä D0 stuff):
-    Software to perform a jet response analysis of the various tuples produced by
-    the generators (and processed within outputsToProcess if need be). The generator 
-    output files are to be inserted into the input_ROOT_files folder and their names
-    are to be added to the D0JES.h header file (search "files.push_back" to find the 
-    functionality for this within the header file) 
-    - Running the program is described in main.cpp
-    - Run settings are mostly included as members of the D0JES class in D0JES.h,
-      but some are also listed in D0JES.C at the beginning of the D0JES::Loop function
-    - Main functionalities in D0JES.C:
-      * Loop: go through all events and their particles and jets in a tuple,
-              find pT-balance profiles, F profiles etc. as a result
-      * MultiLoop: multithreading for Loop. Instantiates one thread per tuple,
-                   process e.g. gamma+jet and dijet samples simultaneously for
-                   the same run
-      * FitGN: fit to pT-balance profiles using the Gauss-Newton method. Makes
-               use of analytic results, as the fitting procedure in the single-particle 
-               response-based reconstruction method involves going through all particles
-               in all events to obtain a chi^2 at a single point in parameter space and
-               numerical stencils would require several evaluations at neighbouring points.
-               Writes output to fitOutput.txt.
-      * plotPT: plot pT-balance profiles. See also plotSepPT(), which plots data and MC 
-                levels to different canvases.
-      * flavCorr: find and plot flavour-dependent jet energy correction factors Fcorr,
-                  which can be utilized in further analyses e.g. those of the top mass.
+simulation_analysis:
+    A collection of scripts for turning simulated jet data into various plots.
+
+useful_structures:
+    A collection of useful small scripts and old code versions, which may come in
+    handy in certain circumstances.
+
 
 #3) INSTALLATION
 

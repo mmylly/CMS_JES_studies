@@ -11,30 +11,30 @@ seeds=[840744607,431166825,11489507,859341684,719632152,384411333,90405435,29759
 # 0: H7-UE-MMHT (default in Herwig 7)           (MMHT2014)
 # 1: CUETHS1 from CMS (pre-Herwig7)             (CTEQ6L1)
 # 2: CUETH_7_2 from CMS (pre-Herwig7)           (MSTW2008LO)
-tune = 1
+tune = 0
+
+# Kt min (i.e. pthat) should be chosen by the user, unless it's a ttbar event
+minKT=20.0
+# In ttbar events, the user should set the mass of top
+mTop=175.0
 
 # Hard coded PDF choice
 # 0: CTEQ6L1
 # 1: CT10
 # 2: MSTW2008LO
 # 3: default
-pdf = 0
+pdf = 3
 
 # CMS energy
-# 0: 8    TeV
-# 1: 13   TeV
-# 2: 1.96 TeV
-eScale = 2
-
-# Set ppbar=1 to produce ppbar collisions, otherwise pp
-ppbar = 1
+# 0: 8  TeV
+# 1: 13 TeV
+eScale = 1
 
 hepmc=False
 ISR=True
 FSR=True
 MPI=True
 
-#Weighting=False
 Weighting=True
 
 # Read run settings from command line parameters
@@ -92,36 +92,31 @@ f.write('set EventGenerator:MaxErrors 10000\n')
 f.write('set EventGenerator:EventHandler:StatLevel Full\n\n')
 
 f.write('# Make some particles stable, according to their nominal lifetimes\n')
-f.write('set /Herwig/Decays/DecayHandler:MaxLifeTime 10*mm\n\n') #Set ctau here
+f.write('set /Herwig/Decays/DecayHandler:MaxLifeTime 10*mm\n\n')
 
-f.write('####################\n')
-f.write('# Running parameters\n')
-f.write('####################\n\n')
+f.write('########################\n')
+f.write('# LHC running parameters\n')
+f.write('########################\n\n')
 
 f.write('# LHAPDF settings\n')
 f.write('cd /Herwig/Partons\n')
-if pdf!=3:
-    f.write('create ThePEG::LHAPDF customPDF ThePEGLHAPDF.so\n')
+#if pdf!=3:
+#    f.write('create ThePEG::LHAPDF customPDF ThePEGLHAPDF.so\n')
 
-if pdf==0:
-    f.write('set customPDF:PDFName cteq6l1\n')
-elif pdf==1:
-    f.write('set customPDF:PDFName CT10\n')
-elif pdf==2:
-    f.write('set customPDF:PDFName MSTW2008lo90cl\n')
+#if pdf==0:
+#    f.write('set customPDF:PDFName cteq6l1\n')
+#elif pdf==1:
+#    f.write('set customPDF:PDFName CT10\n')
+#elif pdf==2:
+#    f.write('set customPDF:PDFName MSTW2008lo90cl\n')
 
-if pdf!=3:
-    f.write('set customPDF:RemnantHandler /Herwig/Partons/HadronRemnants\n')
-    f.write('set /Herwig/Particles/p+:PDF customPDF\n')
-    f.write('set /Herwig/Particles/pbar-:PDF customPDF\n\n')
+#if pdf!=3:
+#    f.write('set customPDF:RemnantHandler /Herwig/Partons/HadronRemnants\n')
+#    f.write('set /Herwig/Particles/p+:PDF customPDF\n')
+#    f.write('set /Herwig/Particles/pbar-:PDF customPDF\n\n')
 
 f.write('# CM energy\n')
 f.write('read snippets/PPCollider.in\n')
-if ppbar==1:
-    f.write('##################################################\n')
-    f.write('# Tevatron physics parameters (override defaults) \n')
-    f.write('##################################################\n')
-    f.write('set /Herwig/Generators/EventGenerator:EventHandler:BeamB /Herwig/Particles/pbar-\n')
 if eScale==0:
     f.write('set /Herwig/Generators/EventGenerator:EventHandler:LuminosityFunction:Energy 8000.0*GeV\n\n')
 elif eScale==1:
@@ -134,37 +129,17 @@ if eScale==0:
     f.write('set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.0*GeV\n')
 elif eScale==1:
     f.write('set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV\n\n')
-#elif eScale==2:
-#    f.write('set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV\n\n')
 
 f.write('# ptHat min\n')
-if mode==1:
-#    f.write('set /Herwig/Cuts/JetKtCut:MinKT 20.0*GeV\n\n')
-    f.write('set /Herwig/Cuts/JetKtCut:MinKT 5.0*GeV\n\n')
-#The below should be 2*MinKT according to some tutorial, but QCDCuts not found
-#    f.write('set /Herwig/Cuts/QCDCuts:MHatMin 10.0*GeV\n\n')
-elif mode==2:
-    f.write('set /Herwig/Cuts/JetKtCut:MinKT 5.0*GeV\n\n')
-    f.write('set /Herwig/Cuts/PhotonKtCut:MaxEta 1\n\n') #NEW
-
-#    f.write('set /Herwig/Cuts/JetKtCut:MinKT 150.0*GeV\n\n')
-elif mode==3:
-    f.write('set /Herwig/Cuts/JetKtCut:MinKT 5.0*GeV\n\n') #Used to be 20.*GeV
+if mode==1 or mode==2 or mode==3:
+    f.write('set /Herwig/Cuts/JetKtCut:MinKT {}*GeV\n\n'.format(minKT))
 elif mode==4:
-#    f.write('set /Herwig/Cuts/JetKtCut:MinKT 30.0*GeV\n\n')
-    f.write('set /Herwig/Cuts/JetKtCut:MinKT 5.0*GeV\n\n')
+    f.write('set /Herwig/Particles/t:NominalMass {}*GeV\n'.format(mTop))
+    f.write('set /Herwig/Particles/tbar:NominalMass {}*GeV\n\n'.format(mTop))
 
 f.write('##############################################\n')
 f.write('# Matrix Elements for hadron-hadron collisions\n')
 f.write('##############################################\n\n')
-f.write('# Event weighting scheme\n')
-f.write('mkdir /Herwig/Weights\n')
-f.write('cd /Herwig/Weights\n')
-if Weighting:
-    f.write('create ThePEG::ReweightMinPT reweightMinPT ReweightMinPT.so\n')
-    f.write('set reweightMinPT:Power 4.5\n')
-    f.write('set reweightMinPT:Scale 5*GeV\n') #(pThat min) used to be 10*GeV
-    f.write('set reweightMinPT:OnlyColoured true\n\n')
 
 f.write('# Set matrix element settings\n')
 f.write('cd /Herwig/MatrixElements/\n')
@@ -181,7 +156,16 @@ elif mode==4:
     f.write('set MEHeavyQuark:QuarkType Top\n')
     f.write('set MEHeavyQuark:Process Pair\n')
     f.write('insert SubProcess:MatrixElements[0] MEHeavyQuark\n')
-if Weighting:
+
+if Weighting and mode<4:
+    f.write('# Event weighting scheme\n')
+    f.write('mkdir /Herwig/Weights\n')
+    f.write('cd /Herwig/Weights\n')
+    f.write('create ThePEG::ReweightMinPT reweightMinPT ReweightMinPT.so\n')
+    f.write('set reweightMinPT:Power 4.5\n')
+    f.write('set reweightMinPT:Scale 10*GeV\n')
+    f.write('set reweightMinPT:OnlyColoured true\n\n')
+    f.write('cd /Herwig/MatrixElements/\n')
     f.write('insert SubProcess:Preweights[0] /Herwig/Weights/reweightMinPT\n\n')
 #f.write('set /Herwig/UnderlyingEvent/MPIHandler:IdenticalToUE 0\n')
 

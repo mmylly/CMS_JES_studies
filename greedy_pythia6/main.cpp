@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         fileName += ".root";
 
         Pythia6Jets generatorHandle(nEvent, fileName, std::stoi(nameId),choiceId);
-        generatorHandle.EventLoop();	//Event generation, finding jets etc.
+        generatorHandle.EventLoop();
     } catch (std::exception&e) {
         cout << "An error occurred: " << e.what() << endl;
         return 0;

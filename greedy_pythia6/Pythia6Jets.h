@@ -34,115 +34,7 @@
 #ifndef PYTHIA6TREE
 #define PYTHIA6TREE
 
-// Generic c++
-#include <iostream>
-#include <cstdlib>
-#include <cassert>
-#include <cmath>
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <stdexcept>
-
-using std::string;
-using std::vector;
-using std::pair;
-using std::cout;
-using std::endl;
-using std::cerr;
-using std::runtime_error;
-using std::stoi;
-using std::map;
-
-// Configuration settings (the program is short enough to define them simply here)
-namespace cfg {
-    /* Debugging tools */
-    constexpr bool Debug        = false; // Mostly print some specific info
-    constexpr bool DebugPartons = false; // Print parton info
-    constexpr bool DebugList    = false; // Print whole event
-    constexpr bool DebugStat    = true; // Print event statistics
-
-    /* Generic flags and settings */
-    constexpr int P6Tune   = 2;     // 0: Z2*, 1: CMS CUEP6S1, 2: Tevatron TuneA
-    constexpr double TMass = 173.7; // Top mass for ttbar events
-    constexpr bool CutMode = true;  // For PTD and Sigma2: do we apply detector-like cuts
-    constexpr bool PthatW  = true;  // PtHat reweighting in other that ttbar events
-
-    /* Do we add corrected momentum values for partons (idx 1)? */
-    constexpr bool DOCorrParton   = false;
-    /* Do we add uncorrected momentum values for signal leptons (idx 3)? */
-    constexpr bool DOUnCorrLepton = false;
-
-    /* Specific settings for D0 studies (uncomment if to be used), 
-	all cuts not used but left for reference */
-    // Toni has added these vv confirm
-    constexpr bool DOD0      = false; // General D0 settings (energy & so on)
-    constexpr bool DOD0RIIC  = false; // Usage of D0 RunII Cone
-    constexpr bool BEnriched = false; // Produce a b-jet enriched sample?
-    constexpr bool EtaCut    = false; // Demand min amount of |eta|<0.4 jets
-    constexpr bool PtCut     = false; // Reject events w/ high-pT extra jets
-    constexpr bool PSCut     = false; // Use prtn lvl phase-space eta cut
-    // Toni has added these ^^
-
-    /* Usage of final-state particles */
-    #define STORE_PRTCLS              // Do we store the final state particles?
-				      // Toni has this uncommented, Hannu not
-    constexpr bool StoreNIJ = false;  // Store particles not in jets (NIJ), REQUIRES STORE_PRTCLS
-
-    /* Switches for turning off things (normally these are not used) */
-    constexpr bool NoMPI = false;
-    constexpr bool NoISR = false;
-    constexpr bool NoFSR = false;
-
-    /* Coefficient for scaling the momentum of "ghosts" */
-    constexpr double GhostCoeff = pow(10,-18);
-    /* Length/Timescale deciding which particles decay */
-    constexpr double CTau = 10.0; //c*tau in millimeters
-    constexpr double RCone = 0.4; // 0.5 in D0
-    constexpr double Energy = 13000; // 1960 in D0
-
-    /* Photon isolation parameters (gamma+jets) */
-    constexpr double GammaDR  = 0.1;
-    constexpr double GammaLim = 0.1;
-    constexpr double GammaPt  = 30;
-    constexpr double GammaEta = 2.1;
-    /* Tag photon close to central region for JES studies */
-    constexpr double GammaEtaD0Max = 1.0; // Toni added
-    constexpr double GammaPtD0Min  = 7.0; // these lines.
-
-    /* Muon isolation parameters (Zmumu+jets) */
-    constexpr double MuonDR  = 0.1;
-    constexpr double MuonLim = 0.1;
-    constexpr double MuonPt  = 30;
-    constexpr double MuonEta = 2.1;
-
-    /* Lepton isolation parameters (ttbarlepton+jets) */
-    constexpr double ElDR = 0.3;
-    constexpr double MuDR = 0.4;
-    constexpr double ElLim = 0.12; /* Loose version: 0.20 */
-    constexpr double MuLim = 0.15; /* Loose version: 0.25 */
-
-    /* General limits for "nuisance leptons/photons" that are taken into account for isolation. */
-    constexpr double NuisancePt  = 7.0;
-    constexpr double NuisanceEta = 5.0;
-
-    /* Threshold for PtCut (D0 studies) */
-    constexpr double JetPtThres = 11; // Toni added same value as in Hannu's code
-
-    /* Pt limit to be used while checking the isolation vs. nearby jets */
-    constexpr double MinJetVisiblePt = 15.0;
-    /* Pt limit to be used for fastjet clustering. */
-    constexpr double MinJetClustPt   = 4.0; // In Toni's code it's 6.0
-
-    constexpr unsigned Seeds[] = {
-        840744607,431166825, 11489507,859341684,719632152,384411333, 90405435,297596781,
-        620424940,829585206,350220548,862060943,865146589, 11119376,706126850,761335296,
-        286390445,408256820,447625541,368022699,281922559,852542479,509348179,175162098,
-        688006297,512118632,676751467,212155085,158795947, 68988051,258456879,625579469,
-        146828216,582720998,226158642,439232438,366169042,745702146,412672564,177882235
-    };
-}
+#include "../greedy_settings.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // An explanation of the particle indices found in Pythia6 (this has a rather rigid structure:    //
@@ -251,7 +143,6 @@ protected:
     #endif
     void                PartonAdd(unsigned prt, char jetid = -1);
     void                PartonAdd(unsigned prt, char jetid, char tag, int ptnid = -1, int ownid = -1);
-    void                EMclusterAdd(fastjet::PseudoJet pj); // Toni added
     void                JetAdd(unsigned jet);
 
     void                PartonAppend(fastjet::PseudoJet p4, unsigned prt, int tag, int ptnid = -1, int ownid = -1);
@@ -275,7 +166,7 @@ protected:
     /* Process isolation conditions */
     bool                IsolationProc();
     /* Isolation for e.g. photons */
-    bool                IsolationPhotons(int iprt, fastjet::PseudoJet &ipart); // Toni has one more parameter related to EMclustering
+    bool                IsolationPhotons(int iprt, fastjet::PseudoJet &ipart);
     bool                IsolationMuons  (int iprt, fastjet::PseudoJet &ipart);
     bool                IsolationLeptons(int iprt, fastjet::PseudoJet &ipart);
     /* Check the eta-phi distance of isolated objects to jets. */
@@ -312,7 +203,6 @@ protected:
 
     /* A handy handle */
     TLorentzVector      TLorentzify(unsigned prt);
-    TLorentzVector      TLorentzify(fastjet::PseudoJet pj); // Toni has added
     /* Another handy handle */
     fastjet::PseudoJet  PseudoJettify(unsigned prt);
     fastjet::PseudoJet  PseudoJettify(TLorentzVector p4);
@@ -391,7 +281,7 @@ protected:
     vector<float>         mEta;
     vector<float>         mPhi;
     vector<float>         mE;
-    /* Particle level for the particles not in jets (NIJ). */
+    /* Particle level for the particles not in jets (nij). */
     vector<int>           mNIJPDGID;
     vector<float>         mNIJPt;
     vector<float>         mNIJEta;
@@ -407,7 +297,7 @@ protected:
     vector<float>         mPEta;
     vector<float>         mPPhi;
     vector<float>         mPE;
-    vector<float>         mDR;		//DeltaR(jet, prtn belonging to the jet)
+    vector<float>         mDR;
     /* Jet level. */
     vector<float>         mJPt;
     vector<float>         mJEta;
@@ -420,11 +310,7 @@ protected:
     /* MET level. */
     float                 mMet;
     fastjet::PseudoJet    mMetVect;
-
-    /* What we know to be the hard process (HP photon) from P6 output */
     fastjet::PseudoJet    mGamma;
-    /* The highest pT EM-cluster i.e. photon candidate as seen by a detector*/
-    fastjet::PseudoJet    mEM; // Toni added
 
     vector<PartonHolder>  mPartonInfo;
 

@@ -1,0 +1,95 @@
+\hypertarget{struct_parton_holder}{}\section{Parton\+Holder Struct Reference}
+\label{struct_parton_holder}\index{Parton\+Holder@{Parton\+Holder}}
+
+
+A struct for storing parton information.  
+
+
+
+
+{\ttfamily \#include $<$help\+\_\+functions.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+fastjet\+::\+Pseudo\+Jet \hyperlink{struct_parton_holder_a1d8d83542f42beaf5defd588825dc454}{p4}
+\item 
+int \hyperlink{struct_parton_holder_a867f4b0ec369253b284062505adfed3d}{id}
+\item 
+char \hyperlink{struct_parton_holder_ad824ed477cfc7122a3e494a26c00efbf}{tag}
+\item 
+int \hyperlink{struct_parton_holder_a30bec5ed9a9b4852156edfaad7e44529}{ptnid}
+\item 
+int \hyperlink{struct_parton_holder_ada40785510773105d233d9f09efbe7ab}{ownid}
+\item 
+bool \hyperlink{struct_parton_holder_a551c1f417a4400ec700b91262b31776f}{used}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+A struct for storing parton information. 
+
+Definition at line 101 of file help\+\_\+functions.\+h.
+
+
+
+\subsection{Member Data Documentation}
+\index{Parton\+Holder@{Parton\+Holder}!id@{id}}
+\index{id@{id}!Parton\+Holder@{Parton\+Holder}}
+\subsubsection[{\texorpdfstring{id}{id}}]{\setlength{\rightskip}{0pt plus 5cm}int Parton\+Holder\+::id}\hypertarget{struct_parton_holder_a867f4b0ec369253b284062505adfed3d}{}\label{struct_parton_holder_a867f4b0ec369253b284062505adfed3d}
+Parton pdg id. 
+
+Definition at line 105 of file help\+\_\+functions.\+h.
+
+\index{Parton\+Holder@{Parton\+Holder}!ownid@{ownid}}
+\index{ownid@{ownid}!Parton\+Holder@{Parton\+Holder}}
+\subsubsection[{\texorpdfstring{ownid}{ownid}}]{\setlength{\rightskip}{0pt plus 5cm}int Parton\+Holder\+::ownid}\hypertarget{struct_parton_holder_ada40785510773105d233d9f09efbe7ab}{}\label{struct_parton_holder_ada40785510773105d233d9f09efbe7ab}
+The index of the current parton in the program flow. 
+
+Definition at line 121 of file help\+\_\+functions.\+h.
+
+\index{Parton\+Holder@{Parton\+Holder}!p4@{p4}}
+\index{p4@{p4}!Parton\+Holder@{Parton\+Holder}}
+\subsubsection[{\texorpdfstring{p4}{p4}}]{\setlength{\rightskip}{0pt plus 5cm}fastjet\+::\+Pseudo\+Jet Parton\+Holder\+::p4}\hypertarget{struct_parton_holder_a1d8d83542f42beaf5defd588825dc454}{}\label{struct_parton_holder_a1d8d83542f42beaf5defd588825dc454}
+Parton four momentum. 
+
+Definition at line 103 of file help\+\_\+functions.\+h.
+
+\index{Parton\+Holder@{Parton\+Holder}!ptnid@{ptnid}}
+\index{ptnid@{ptnid}!Parton\+Holder@{Parton\+Holder}}
+\subsubsection[{\texorpdfstring{ptnid}{ptnid}}]{\setlength{\rightskip}{0pt plus 5cm}int Parton\+Holder\+::ptnid}\hypertarget{struct_parton_holder_a30bec5ed9a9b4852156edfaad7e44529}{}\label{struct_parton_holder_a30bec5ed9a9b4852156edfaad7e44529}
+The index of the parent parton in the program flow (0 if no parent). 
+
+Definition at line 119 of file help\+\_\+functions.\+h.
+
+\index{Parton\+Holder@{Parton\+Holder}!tag@{tag}}
+\index{tag@{tag}!Parton\+Holder@{Parton\+Holder}}
+\subsubsection[{\texorpdfstring{tag}{tag}}]{\setlength{\rightskip}{0pt plus 5cm}char Parton\+Holder\+::tag}\hypertarget{struct_parton_holder_ad824ed477cfc7122a3e494a26c00efbf}{}\label{struct_parton_holder_ad824ed477cfc7122a3e494a26c00efbf}
+The reason for which the parton was saved.
+\begin{DoxyItemize}
+\item 0\+: ME Parton
+\item 1\+: ME Parton with final-\/state momentum
+\item 2\+: ME Lepton or photon
+\item 3\+: ME Lepton or photon with final-\/state momentum
+\item 4\+: Descendant of ME parton
+\item 5\+: Descendant of ME parton with final-\/state momentum
+\item 6\+: Subjects for isolation (photons or leptons)
+\item 7\+: bottom neutrinos
+\item 8\+: Other neutrinos
+\item 9\+: Ghost bottom hadrons 
+\end{DoxyItemize}
+
+Definition at line 117 of file help\+\_\+functions.\+h.
+
+\index{Parton\+Holder@{Parton\+Holder}!used@{used}}
+\index{used@{used}!Parton\+Holder@{Parton\+Holder}}
+\subsubsection[{\texorpdfstring{used}{used}}]{\setlength{\rightskip}{0pt plus 5cm}bool Parton\+Holder\+::used}\hypertarget{struct_parton_holder_a551c1f417a4400ec700b91262b31776f}{}\label{struct_parton_holder_a551c1f417a4400ec700b91262b31776f}
+Indicate whether the parton is already in the use of a jet. 
+
+Definition at line 123 of file help\+\_\+functions.\+h.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/work/hsiikone/development/gen\+\_\+handle/generic/\hyperlink{help__functions_8h}{help\+\_\+functions.\+h}\end{DoxyCompactItemize}

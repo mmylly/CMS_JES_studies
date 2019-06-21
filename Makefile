@@ -8,19 +8,17 @@ include config.mk
 .SECONDEXPANSION:
 .DELETE_ON_ERROR:
 .PHONY: all clean run_herwig pythia6 run_pythia6 pythia8 run_pythia8 jetanalysis ptcut
-VPATH= events:jetanalysis:lib:pythia6:pythia8:herwig:ptcut:greedy_pythia8:greedy_pythia6
+VPATH= events:jetanalysis:lib:pythia6:pythia8:herwig:ptcut:greedy_pythia8:greedy_pythia6:simple_pythia8
 
 INCLUDE := $(INCLUDE) -I.
 
 # Parameter vals:
-NUM_EVT := 1000
+NUM_EVT := 10000
 MODE := 3
 NUM_PROC := 1
 START_IDX := 0
 
-#all: gpythia8 pythia8 pythia6 libHerwigTree.so jetanalysis ptcut
 all: gpythia8 spythia8 pythia8 pythia6 libHerwigTree.so jetanalysis ptcut
-#all: pythia6 jetanalysis ptcut
 
 # Generic
 
@@ -152,12 +150,23 @@ gpythia8: greedy_pythia8/main.cpp gpythia8.o
 	cd greedy_pythia8 && $(CXX) main.cpp gpythia8.o -w -L../lib $(INCLUDE) \
 	$(CXXFLAGS) $(ROOT) $(PYTHIA8) $(FASTJET) -ldl -o gpythia8.exe
 
-gpythia8.o: Pythia8Jets.cpp
+gpythia8.o: Pythia8Jets.cpp greedy_settings.h
 	cd greedy_pythia8 && $(CXX) -c Pythia8Jets.cpp -L../lib \
 	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(PYTHIA8) -ldl -o $@
 
 run_gpythia8:
 	bash bash/gpythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC) $(START_IDX)
+
+spythia8: simple_pythia8/main.cpp spythia8.o
+	cd simple_pythia8 && $(CXX) main.cpp spythia8.o -w -L../lib $(INCLUDE) \
+	$(CXXFLAGS) $(ROOT) $(PYTHIA8) $(FASTJET) -ldl -o spythia8.exe
+
+spythia8.o: Pythia8Jets.cpp
+	cd simple_pythia8 && $(CXX) -c Pythia8Jets.cpp -L../lib \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(PYTHIA8) -ldl -o $@
+
+run_spythia8:
+	bash bash/spythia8.sh $(NUM_EVT) $(MODE) $(NUM_PROC) $(START_IDX)
 
 # Pythia6
 
@@ -188,26 +197,28 @@ run_gpythia6:
 
 # Herwig
 
-#libHerwigTree.so : HerwigTree.cpp HerwigTree.h libPrtclEvent.so
-#	cd herwig && $(CXX) -shared -fPIC HerwigTree.cpp \
-#	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o ../lib/$@
 libHerwigTree.so : HerwigTree.cpp HerwigTree.h libPrtclEvent.so
 	cd herwig && $(CXX) -shared -fPIC HerwigTree.cpp \
-	-L../lib -lPrtclEvent -isystem $(HERWIG) $(INCLUDE) $(ROOT) $(CXXFLAGS) $(LDFLAGS) -o $@
+	-L../lib -lPrtclEvent -isystem $(shell herwig-config --includedir) $(INCLUDE) $(ROOT_SAFE) $(CXXFLAGS) $(LDFLAGS) -o $@
 
 run_herwig:
 	bash bash/herwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
+libGHerwigTree.so : greedy_herwig7/HerwigTree.cpp greedy_herwig7/HerwigTree.h greedy_settings.h libPrtclEvent.so
+	cd greedy_herwig7 && $(CXX) -shared -fPIC HerwigTree.cpp \
+	-isystem $(shell herwig-config --includedir) $(FASTJET) $(INCLUDE) $(ROOT_SAFE) $(CXXFLAGS) $(LDFLAGS) -o $@
+
 run_gherwig7:
 	bash bash/gherwig.sh $(NUM_EVT) $(MODE) $(NUM_PROC)
 
-libGHerwigTree.so : greedy_herwig7/HerwigTree.cpp greedy_herwig7/HerwigTree.h libPrtclEvent.so
-	cd greedy_herwig7 && $(CXX) -shared -fPIC HerwigTree.cpp \
-	-L../lib -lPrtclEvent -isystem $(HERWIG) $(INCLUDE) $(ROOT) $(CXXFLAGS)  $(FASTJET) $(LDFLAGS) -o $@
+doc_gherwig7:
+	cd greedy_herwig7/doc && doxygen -u Doxyfile && doxygen Doxyfile
 
+test : Test.C libPrtclEvent.so
+	$(CXX) Test.C -Llib -lPrtclEvent \
+	$(INCLUDE) $(CXXFLAGS) -w $(ROOT) $(FASTJET) $(LDFLAGS) -ldl -o $@
 
 # Clean.
 clean:
 	rm -f *.log *.exe *.d *.so events/*.o jetsorting/*.o events/*Dct.* lib/* \
 	herwig/*log herwig/*run herwig/*out herwig/*tex
-
