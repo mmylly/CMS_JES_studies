@@ -340,8 +340,10 @@ bool Pythia8Jets::ProcessParticle(unsigned prt)
         fastjet::PseudoJet part = PseudoJettify(prt);
         part.set_user_index(prt);
         
-        //ParticleAdd(prt,-1); // uncommented
-        
+        #ifdef STORE_PRTCLS
+        if (cfg::StoreNIJ) ParticleAdd(prt,-1);
+        #endif
+
         if (id==12 or id==14 or id==16) {
             mMetVect += part;
         } else if (Absent(prt)) {
@@ -370,9 +372,9 @@ bool Pythia8Jets::JetLoop()
                 PartonAdd(prt,jet);
                 mPartonInfo[prt].used = true;
             } else {
-                // #ifdef STORE_PRTCLS // can add this like in Pythia6Jets.cpp
-                ParticleAdd(prt,jet); // uncommented
-                // #endif
+                #ifdef STORE_PRTCLS
+                ParticleAdd(prt,jet);
+                #endif
                 continue;
             }
         }

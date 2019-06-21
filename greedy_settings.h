@@ -78,7 +78,7 @@ namespace cfg {
     /** @name Usage of final-state particles */
     //@{
     /** Do we store the final state particles? */
-    //#define STORE_PRTCLS
+    #define STORE_PRTCLS
     /** Store particles not in jets (NIJ), REQUIRES STORE_PRTCLS */
     constexpr bool StoreNIJ = false;
     //@}
