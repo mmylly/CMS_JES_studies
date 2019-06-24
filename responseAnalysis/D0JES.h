@@ -72,9 +72,6 @@ public :
 
   /* Uncomment the subdirectory of input_ROOT_files to fetch input from */
   string inSubDir = "";
-  //string inSubDir = "can_repr_pprplots_photon_tag_2/";
-  //string inSubDir = "190318/";
-  //string inSubDir = "after_gen_handle_renov/";
 
   TTree* fChain;	//Pointer to the analyzed TTree or TChain
   Int_t  fCurrent;	//Current Tree number in a TChain

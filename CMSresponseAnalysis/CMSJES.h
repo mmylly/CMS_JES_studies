@@ -72,9 +72,6 @@ public :
 
   /* Uncomment the subdirectory of input_ROOT_files to fetch input from */
   string inSubDir = "";
-  //string inSubDir = "can_repr_pprplots_photon_tag_2/";
-  //string inSubDir = "190318/";
-  //string inSubDir = "after_gen_handle_renov/";
 
   TTree* fChain;	//Pointer to the analyzed TTree or TChain
   Int_t  fCurrent;	//Current Tree number in a TChain
@@ -172,6 +169,7 @@ public :
   static int const nD0data = 10;	//#Data points available from D0
   static int const nCMSdata = 10;	//#Data points available from CMS
   static int const nEpochs = 4;		//#Epochs in run IIa and IIb altogether
+  static int const nCMSEpochs = 1;	//#Epochs in CMS data
 
   //D0 pT-balance data points and errors. dj for dijet, gj for gamma+jet
   double djEpII[nEpochs][nD0data];
@@ -181,7 +179,7 @@ public :
   double gjD0II[nEpochs][nD0data];
   double gjERII[nEpochs][nD0data];
 
-  //CMS pT-balance data points and errors. dj for dijet, gj for gamma+jet, zj for Z+jet
+  //CMS pT-balance data points and errors zj for Z+jet
   double zjEp[nCMSdata];
   double zjCMS[nCMSdata];
   double zjER[nCMSdata];
@@ -207,6 +205,25 @@ public :
   double djMCEp_MPF[nD0MC_MPF];
   double djD0MC_MPF[nD0MC_MPF];
 
+
+  // Similar for CMS Z+jet with invented values
+  static int const nCMSMC = 13;	
+  double zjMCEpII[nCMSMC];	
+  double zjCMSMCII[nCMSMC];
+
+  static int const nCMSMC_MPF_R07=16;	//#MC MPF points R=0.7 from CMS
+  double zjCMSEp_MPF_R07[nCMSMC_MPF_R07];
+  double zjCMSMC_MPF_R07[nCMSMC_MPF_R07];
+
+  static int const nCMS_MPF_R07 = 11;  //#MC MPF data points available from CMS
+  double zjEp_MPF_R07[nCMS_MPF_R07];
+  double zjCMS_MPF_R07[nCMS_MPF_R07];
+
+  static int const nCMSMC_MPF=11;	//#MC MPF points from D0
+  double zjMCEp_MPF[nCMSMC_MPF];
+  double zjCMSMC_MPF[nCMSMC_MPF];
+
+
   //Flags etc. for changing calculation properties
   int const nABCvars=25;	//#Neighboring points to calculate respFit at
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
@@ -215,9 +232,10 @@ public :
   bool bEnrichedFiles = false;	//Use separate files for getting F^b_corr?
   bool contHistos = true;	//Produce probe particle content histograms
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
-  bool runIIa = true; 		//Use runIIa response parameters
+  bool runIIa = false; 		//Use runIIa response parameters
   bool runIIb = false;	 	//-||-runIIb -||-
-  bool P20ToP17	= true; 	//P20ToP17 params for MC-reco instead of default
+  bool runCMS = true;		//Use CMS parameters
+  bool P20ToP17	= false; 	//P20ToP17 params for MC-reco instead of default
   string run = "RunIIb34";	//... epoch to use
 
   bool StrangeB = true;		//Use Ansätze for strange baryon response
@@ -594,11 +612,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       } else if (ReadName.find("H7")!=string::npos) {
         A    = 1.23482;	B    = 0.0333262;	C    = 1.0047;
         Aer  = 0.0559627;	Ber  = 0.0321562;	Cer  = 0.0105726;
-        ABer = -0.00160909;	ACer = -7.75965e-05;	BCer = 0.00018794;
-      } else if (ReadName.find("P8")!=string::npos){
-        A    = 1.0;	B    = 0.0;	C    = 1.0;
-        Aer  = 0.05;	Ber  = 0.02;	Cer  = 0.01;
-        ABer = -0.001;	ACer = -0.0001;	BCer = 0.0001;        
+        ABer = -0.00160909;	ACer = -7.75965e-05;	BCer = 0.00018794;     
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
   } else if (runIIb) {
@@ -623,53 +637,17 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     } else {
       if (ReadName.find("P6")!=string::npos) {
         if (run == "RunIIb1") {
-/*
-          //P6 G-N: chi2/n_d0f=6.98874 RunIIb1-P20ToP17 sigma_C=0.01
-          A    =  1.44718;      B    = -0.132045;       C    = 1.00937;
-          Aer  =  0.0633509;    Ber  =  0.035115;       Cer  = 0.0070287;
-          ABer = -0.00208156;   ACer = -0.000135351;	BCer = 0.000150421;
-*/
-/*
-          //P6G-N: chi2/n_d0f=7.71008 RunIIb1-P20ToP17 190327 dijet tag.eta<0.4
-          A    = 1.41964;	B    =-0.12901;		C    = 1.00905;
-          Aer  = 0.0634915;	Ber  = 0.035804;	Cer  = 0.00703395;
-          ABer =-0.00212723;	ACer =-0.000134499;	BCer = 0.000152899;
-*/
           //P6 G-N: chi2/n_d0f=7.64468 RunIIb1-P20ToP17 tag.eta<0.4 C con. 0.015
           A    = 1.38622;	B    = -0.0965625;	C    = 1.0196;
           Aer  = 0.0620556;	Ber  = 0.0397675;	Cer  = 0.0104943;
           ABer = -0.00224026;	ACer = -0.000258386;	BCer = 0.000308332;
 
         } else if (run == "RunIIb2") {
-/*
-          //P6 G-N: chi2/n_d0f=9.19018 RunIIb2-P20ToP17 sigma_C=0.01
-          A    = 1.75924;      B    =-0.23483;        C    = 1.01171;
-          Aer  = 0.0714513;    Ber  = 0.0363645;      Cer  = 0.00700499;
-          ABer =-0.00245272;	ACer =-0.000219493;    BCer = 0.000178072;
-*/
-/*
-          //P6G-N: chi2/n_d0f=10.1442 RunIIb2-P20ToP17 190327 dijet tag.eta<0.4
-          A    = 1.75202;       B    =-0.241152;	C    = 1.01107;
-          Aer  = 0.0727587;	Ber  = 0.037401;	Cer  = 0.0070121;
-          ABer =-0.00257112;	ACer =-0.000225806;	BCer = 0.000183722;
-*/
           //P6 G-N: chi2/n_d0f=10.0504 RunIIb2-P20ToP17 tag.eta<0.4 C con. 0.015
           A    = 1.67477;	B    = -0.192474;	C    = 1.02349;
           Aer  = 0.0722089;	Ber  = 0.0424363;	Cer  = 0.0104384;
           ABer = -0.00285822;	ACer = -0.000419891;	BCer = 0.000359969;
         } else if (run == "RunIIb34") {
-/*
-          //P6 G-N: chi2/n_d0f=5.6846 RunIIb34-P20ToP17 sigma_C=0.01
-          A    =  1.68785;      B    = -0.214582;       C    = 1.00871;
-          Aer  =  0.0685093;    Ber  =  0.0357547;      Cer  = 0.00700611;
-          ABer = -0.00230188;   ACer = -0.000205659;    BCer = 0.000175358;
-*/
-/*
-          //P6 G-N: chi2/n_d0f=6.4696 RunIIb34-P20ToP17 190327 dijet tag.eta<0.4
-          A    = 1.6596;	B    =-0.213225;	C    = 1.00838;
-          Aer  = 0.0687585;	Ber  = 0.0364689;	Cer  = 0.00701444;
-          ABer =-0.00235616;	ACer =-0.000205617;	BCer = 0.000178719;
-*/
           //P6 G-N: chi2/n_d0f=6.41513 RunIIb34-P20ToP17 tag.eta<0.4 C con 0.015
           A    = 1.60543;	B    = -0.176375;	C    = 1.01797;
           Aer  = 0.0695504;	Ber  = 0.0423024;	Cer  = 0.0104403;
@@ -679,53 +657,17 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       } else if (ReadName.find("H7")!=string::npos) {
         /* H7 sigma_C = 0.01 */
         if (run == "RunIIb1") {
-/*
-          //H7G-N: chi2/n_d0f=3.51587 RunIIb1-P20ToP17
-          A    = 1.26877;	B    =-0.143465;	C    = 1.00265;
-          Aer  = 0.0648385;	Ber  = 0.0414433;	Cer  = 0.00705229;
-          ABer =-0.00250486;	ACer =-0.0001222;	BCer = 0.000171442;
-*/
-/*
-          //H7G-N: chi2/n_d0f=7.82295 RunIIb1-P20ToP17 190327 dijet tag.eta<0.4
-          A    = 1.08654;	B    =-0.0684344;	C    = 1.00327;
-          Aer  = 0.0568077;	Ber  = 0.0396991;	Cer  = 0.00705623;
-          ABer =-0.00208236;	ACer =-8.22724e-05;	BCer = 0.000155064;
-*/
           //H7 G-N: chi2/n_d0f=7.81315 RunIIb1-P20ToP17 tag.eta<0.4 C con 0.015
           A    = 1.07966;	B    = -0.0564157;	C    = 1.00719;
           Aer  = 0.0567488;	Ber  = 0.045132;	Cer  = 0.010559;
           ABer = -0.00225655;	ACer = -0.000172125;	BCer = 0.00033327;
         } else if (run == "RunIIb2") {
-/*
-          //H7G-N: chi2/n_d0f=5.15999 RunIIb2-P20ToP17
-          A    = 1.51114;	B    =-0.234668;	C    = 1.00358;
-          Aer  = 0.06988;	Ber  = 0.0417084;	Cer  = 0.00703734;
-          ABer =-0.0027265;	ACer =-0.000188845;	BCer = 0.00019768;
-*/
-/*
-          //H7G-N: chi2/n_d0f=10.2327 RunIIb2-P20ToP17 190327 dijet tag.eta<0.4
-          A    = 1.31592;	B    =-0.173279;	C    = 1.0036;
-          Aer  = 0.0626151;	Ber  = 0.0407405;	Cer  = 0.00704417;
-          ABer =-0.00236347;	ACer =-0.000148036;	BCer = 0.000187418;
-*/
           //H7 G-N: chi2/n_d0f=10.2183 RunIIb2-P20ToP17 tag.eta<0.4 C con 0.015
           A    = 1.29986;	B    = -0.156661;	C    = 1.00784;
           Aer  = 0.0643688;	Ber  = 0.0483232;	Cer  = 0.0105222;
           ABer = -0.0028136;	ACer = -0.000308217;	BCer = 0.000398856;
 
         } else if (run == "RunIIb34") {
-/*
-          //H7G-N: chi2/n_d0f=2.46422 RunIIb34-P20ToP17
-          A    = 1.40175;	B    =-0.18957;		C    = 1.00206;
-          Aer  = 0.0642744;	Ber  = 0.0396785;	Cer  = 0.00704051;
-          ABer =-0.00236792;	ACer =-0.000161143;	BCer = 0.000185885;
-*/
-/*
-          //H7G-N: chi2/n_d0f=6.09385 RunIIb34-P20ToP17 190327 dijet tag.eta<0.4
-          A    = 1.22079;	B    =-0.12888;		C    = 1.00236;
-          Aer  = 0.0574284;	Ber  = 0.0386396;	Cer  = 0.00704679;
-          ABer =-0.00203803;	ACer =-0.000122733;	BCer = 0.000175041;
-*/
           //H7 G-N: chi2/n_d0f=6.08783 RunIIb34-P20ToP17 tag.eta<0.4 C con 0.015
           A    = 1.21223;	B    = -0.11859;	C    = 1.00518;
           Aer  = 0.0591748;	Ber  = 0.0462266;	Cer  = 0.0105287;
@@ -733,7 +675,22 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
         }
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
-  } else cout << "\n\n\tERROR: neither run IIa nor IIb activated!\n\n" << endl;
+  } else if (runCMS) {
+    if      (useD0ABC       ) {A  =1.409;     B  =0.0017;      C  =0.9973;
+                               Aer=0.020468;  Ber=0.00710429;  Cer=0.0929739;}
+    //Initial guess to start fitting from
+    else if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
+                               Aer = 0.0;     Ber = 0.0;       Cer = 0.0;    }
+    //Default: use our A,B,C depending on generator
+    else {
+      if (ReadName.find("P8")!=string::npos) {
+        A    = 1.45399;	B    = 0.0115405;	C    = 1.00865;
+        Aer  = 0.0572361;	Ber  = 0.0287636;	Cer  = 0.0105337;
+        ABer = -0.00148885;	ACer = -0.000124997;	BCer = 0.000180898;
+        cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
+      } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
+    }
+  } else cout << "\n\n\tERROR: neither run IIa, IIb, nor runCMS activated!\n\n" << endl;
 } //Constructor
 //-----------------------------------------------------------------------------
 //Destructor

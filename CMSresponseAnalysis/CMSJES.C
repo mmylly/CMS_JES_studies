@@ -16,8 +16,8 @@ void CMSJES::Loop()
     cout << "File is for gamma+jet sample" << endl;
     studyMode = 2;
   } else if (ReadName.find("Zjet")!=string::npos) {
-    cout << "File is for Z+jet sample" << endl;
-    studyMode = 2;
+    studyMode = 3;
+    cout << "File is for Z+jet sample, with stydy mode: "<< studyMode << endl;
   } else {
     cout << "Error: File not for dijet, gamma+jet, or Z+jet sample! Exiting." << endl;
     return;
@@ -47,38 +47,26 @@ void CMSJES::Loop()
                                      385.0, 470.0, 550.0                     };
 
   // CMS, should have R_cone = 0.4
-  string Rcone = "R_{cone}=";	//R_cone info in string form
-  Rcone += (ReadName.find("R07")!=string::npos ? "0.7, " : "0.5, ");
-  R_cone = (ReadName.find("R07")!=string::npos ? 0.7 : 0.5);
+  string Rcone = "R_{cone}=0.4";	//R_cone info in string form
+  R_cone = 0.4;
 
-  string EpTitle = Rcone;     EpTitle    += (GetrunIIa() ? "RunIIa" : Getrun());
-  string ETitle = Rcone;      ETitle     += (GetrunIIa() ? "RunIIa" : Getrun());
-  string MPFTitle = Rcone;    MPFTitle   += (GetrunIIa() ? "RunIIa" : Getrun());
-  string EpMPFTitle = Rcone;  EpMPFTitle += (GetrunIIa() ? "RunIIa" : Getrun());
-  if (GetrunIIb() &&GetP20ToP17()) {
-    EpTitle  += "-P20ToP17";  ETitle     += "-P20ToP17";
-    MPFTitle += "-P20ToP17";  EpMPFTitle += "-P20ToP17";
-  }
+  string EpTitle = Rcone;     EpTitle    += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
+  string ETitle = Rcone;      ETitle     += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
+  string MPFTitle = Rcone;    MPFTitle   += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
+  string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
+
   //Was Xi & Sigma response Ansatz used:
   string XS_Str="";
   if (!GetStrangeB()) XS_Str=" (no #Xi, #Sigma)";
   EpTitle+=XS_Str;  ETitle+=XS_Str;  MPFTitle+=XS_Str;  EpMPFTitle +=XS_Str;
+
   //Time scale: // C_tau -> 10mm
   string ctauStr;
-  if      (ReadName.find("ct3mm")  !=string::npos) ctauStr = ", c#tau=0.3 cm";
-  else if (ReadName.find("ct10mm") !=string::npos) ctauStr = ", c#tau=1 cm";
-  else if (ReadName.find("ct25mm") !=string::npos) ctauStr = ", c#tau=2.5 cm";
-  else if (ReadName.find("ct50mm") !=string::npos) ctauStr = ", c#tau=5 cm";
-  else if (ReadName.find("ct100mm")!=string::npos) ctauStr = ", c#tau=10 cm";
+  ctauStr = ", c#tau=1 cm"; // Might have to change this
   EpTitle+=ctauStr;  ETitle+=ctauStr;  MPFTitle+=ctauStr;  EpMPFTitle+=ctauStr;
   //Jet algorithm
-  if (ReadName.find("D0rIIc")!=string::npos) {		//D0 run II cone
-    EpTitle  += ", D#oslash cone";  ETitle     += ", D#oslash cone";
-    MPFTitle += ", D#oslash cone";  EpMPFTitle += ", D#oslash cone";
-  } else if (ReadName.find("a-kT")!=string::npos) {	//Anti-k_T
-    EpTitle +=", anti-#font[12]{k}_{T}";  ETitle    +=", anti-#font[12]{k}_{T}";
-    MPFTitle+=", anti-#font[12]{k}_{T}";  EpMPFTitle+=", anti-#font[12]{k}_{T}";
-  }
+  EpTitle +=", anti-#font[12]{k}_{T}";  ETitle    +=", anti-#font[12]{k}_{T}";
+  MPFTitle+=", anti-#font[12]{k}_{T}";  EpMPFTitle+=", anti-#font[12]{k}_{T}";
 
   EpTitle += ";E' [GeV];p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prEp    = new TProfile("prEp", EpTitle.c_str(),      nbins-1,binsx);
@@ -111,10 +99,7 @@ void CMSJES::Loop()
           "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
   TH1D* FFa = new TH1D("FFa", ";#font[12]{p}_{T} [GeV];",nbins-1,binsx); //All
   string FFstackTitle;
-  if      (GetrunIIa()         ) FFstackTitle = "#font[132]{Run IIa}";
-  else if (Getrun()=="RunIIb1" ) FFstackTitle = "#font[132]{Run IIb1}";
-  else if (Getrun()=="RunIIb2" ) FFstackTitle = "#font[132]{Run IIb2}";
-  else if (Getrun()=="RunIIb34") FFstackTitle = "#font[132]{Run IIb3-4}";
+  FFstackTitle = "#font[132]{Run CMS}";
   FFstackTitle += ";#font[12]{E'} #font[132]{[GeV]}";
   FFstackTitle += ";#font[132]{Jet flavour fraction}";
   THStack* FFstack = new THStack("", FFstackTitle.c_str());
@@ -150,9 +135,6 @@ void CMSJES::Loop()
     Fstr[i][3] += "#font[12]{F}_{#font[132]{#font[12]{(u,d,s,c)}}}";
   }
   int nF=13;  int nFr=25;  double FL=15;  double FH=145;  double FHr=140;
-  if (GetuseD0ABC()) {	//Use similar binning as D0
-    nF=25;  nFr=25;  FL=17.5;  FH=142.5;  FHr=140;
-  }
   //As a function of E'
   TProfile* Fjet     = new TProfile("Fjet",    Fstr[0][0].c_str(), nF, FL,FH );
   TProfile* Fb       = new TProfile("Fb",      Fstr[0][1].c_str(), nF, FL,FH );
