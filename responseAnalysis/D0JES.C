@@ -1512,7 +1512,7 @@ void* loopHandle(void* D0JESToLoop) {
 //Call D0JES::Loop() for multiple samples in parallel
 //Params:	dj_in, gj_in	Ready-given D0JES objects for dijet...
 //				...and gamma+jet whose Loop to call
-//		fitPars		If true, take A,B,C from this D0JES object
+//		fitPars		If true, take A,B,C from the header file
 void D0JES::MultiLoop(D0JES* dj_in, D0JES* gj_in, bool fitPars) {
 
   //Input filenames to read
