@@ -1,13 +1,13 @@
-//Running D0JES as a ROOT macro is slow. To make things faster, write a script
+//Running CMSJES as a ROOT macro is slow. To make things faster, write a script
 //of what you want to do here. Then compile using:
-//  g++ -o runD0JES main.cpp D0JES.C D0JES.h `root-config --cflags --glibs`
+//  g++ -o runCMSJES main.cpp CMSJES.C CMSJES.h `root-config --cflags --glibs`
 //and run the script:
-//  ./runD0JES
+//  ./runCMSJES
 
-#include "D0JES.h"
+#include "CMSJES.h"
 
 int main() {
-  D0JES d;	//Init. This asks for a file, just choose once
+  CMSJES d;	//Init. This asks for a file, just choose once
   //Available modes
   // 0: Loop single sample
   // 1: MultiLoop (multithreading: similar gamma+jet and b-enriched samples)

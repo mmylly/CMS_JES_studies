@@ -1,0 +1,4 @@
+#!/bin/bash
+rm runCMSJES
+g++ -o runCMSJES main.cpp CMSJES.C CMSJES.h `root-config --cflags --glibs`
+./runCMSJES

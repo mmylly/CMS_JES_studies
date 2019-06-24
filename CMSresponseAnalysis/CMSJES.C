@@ -1,35 +1,12 @@
-#define D0JES_cxx
-#include "D0JES.h"
+#define CMSJES_cxx
+#include "CMSJES.h"
 
 //Created using ROOT TMakeClass
 
-void D0JES::Loop()
+void CMSJES::Loop()
 {
-//   In a ROOT session, you can do:
-//      root> .L D0JES.C
-//      root> D0JES r
-//      root> r.GetEntry(12); // Fill t data members with entry number 12
-//      root> r.Show();       // Show values of entry 12
-//      root> r.Show(16);     // Read and show values of entry 16
-//      root> r.Loop();       // Loop on all entries
-//
 
-//     This is the loop skeleton where:
-//    jentry is the global entry number in the chain
-//    ientry is the entry number in the current Tree
-//  Note that the argument to GetEntry must be:
-//    jentry for TChain::GetEntry
-//    ientry for TTree::GetEntry and TBranch::GetEntry
-//
-//       To read only selected branches, Insert statements like:
-// METHOD1:
-//    fChain->SetBranchStatus("*",0);  // disable all branches
-//    fChain->SetBranchStatus("branchname",1);  // activate branchname
-// METHOD2: replace line
-//    fChain->GetEntry(jentry);       //read all branches
-//by  b_branchname->GetEntry(ientry); //read only this branch
-
-  //greedy_pythia6 modes: 0=generic, 1=dijet, 2=gammajet, 3=Zjet, 4=ttbarjet
+  //greedy_pythia modes: 0=generic, 1=dijet, 2=gammajet, 3=Zjet, 4=ttbarjet
   //For now, check if dijet or gamma+jet sample file
   int studyMode = -1;
   if (ReadName.find("dijet")!=string::npos) {
@@ -38,8 +15,11 @@ void D0JES::Loop()
   } else if (ReadName.find("gammajet")!=string::npos) {
     cout << "File is for gamma+jet sample" << endl;
     studyMode = 2;
+  } else if (ReadName.find("Zjet")!=string::npos) {
+    cout << "File is for Z+jet sample" << endl;
+    studyMode = 2;
   } else {
-    cout << "Error: File not for dijet or gamma+jet sample! Exiting." << endl;
+    cout << "Error: File not for dijet, gamma+jet, or Z+jet sample! Exiting." << endl;
     return;
   }
 
@@ -47,7 +27,7 @@ void D0JES::Loop()
 
   Long64_t nentries = fChain->GetEntriesFast();
   //Output file
-  string outname = "./output_ROOT_files/D0JES_" + ReadName;
+  string outname = "./output_ROOT_files/CMSJES_" + ReadName;
   if (GetrunIIa()) outname += "_RunIIa";
   if (GetrunIIb()) outname = outname + "_" + Getrun();
   if (GetrunIIb() && GetP20ToP17()) outname += "-P20ToP17";
@@ -1280,19 +1260,19 @@ void D0JES::Loop()
 
   } //Particle composition histograms
 
-  //Save D0JES TTree
+  //Save CMSJES TTree
   fout->Write();
   fout->Close();
 
   //Free single-particle response functions from memory
   delete fr_mu;      delete fr_e;       delete fr_gam;     delete fr_h;
 
-} //D0JES::Loop
+} //CMSJES::Loop
 //-----------------------------------------------------------------------------
 //A function to find an average correction factor from gen jet (as output by
 //FastJet) level to MC-recontructed level.
 //  N.B. This function is intended to be used on dijet samples w/o/ eta cuts
-void D0JES::FindFJtoMC() {
+void CMSJES::FindFJtoMC() {
 
   Long64_t nbytes = 0, nb = 0;
   if (fChain == 0) return;
@@ -1323,7 +1303,7 @@ void D0JES::FindFJtoMC() {
   double Fden=0;			//F denominator: sum_j R_i^MC   E_i^g
   double Fnum=0;			//F numerator:   sum_i R_i^data E_i^g
   
-  //Response functions, see D0JES::Loop() for more info
+  //Response functions, see CMSJES::Loop() for more info
   TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x/0.75,[2]+[4]-1))",0,250);
   string Rgam = "0.25*[0]*( 1 + erf( (x + [1])/sqrt(2*[2]*[2]) ) )";
   Rgam +=               "*( 1 + erf( (x + [3])/sqrt(2*[4]*[4]) ) ) + [5]";
@@ -1439,7 +1419,7 @@ void D0JES::FindFJtoMC() {
 //Params:	id	Particle PDGID
 //		pT	
 //Returns: true if prtcl should be included in D0 prtcl lvl, false if not
-bool D0JES::fidCuts(int id, double pT) {
+bool CMSJES::fidCuts(int id, double pT) {
   int PDG = abs(id);
   if (isNeutrino(PDG)) return false;
   if (isStrangeB(PDG) && !GetStrangeB()) return false;
@@ -1470,7 +1450,7 @@ bool D0JES::fidCuts(int id, double pT) {
 //Check if this particle is a neutrino
 //Param:	id	The particle's PDGDID
 //Returns true if the particle is a nu_e, nu_mu, nu_tau
-bool D0JES::isNeutrino(int id) {
+bool CMSJES::isNeutrino(int id) {
   int PDG = abs(id);
   switch (PDG) {
     case 12 : return true;
@@ -1483,7 +1463,7 @@ bool D0JES::isNeutrino(int id) {
 //Check if this particle is one of those for which D0 had no response
 //Param:	id	The particle's PDGDID
 //Returns true if the particle is a Xi, Sigma or Omega^-
-bool D0JES::isStrangeB(int id) {
+bool CMSJES::isStrangeB(int id) {
   int PDG = abs(id);
   switch (PDG) {
     case 3112 : return true;
@@ -1500,48 +1480,48 @@ bool D0JES::isStrangeB(int id) {
 //MULTIPLE SAMPLE LOOPING FUNCTIONALITY
 //  For looping through multiple samples in parallel
 
-//A handle to call the Loop function of a given D0JES object within a thread, 
+//A handle to call the Loop function of a given CMSJES object within a thread, 
 //takes care of TThreads' "return value and arguments as (void*)" formalism
-void* loopHandle(void* D0JESToLoop) {
-  D0JES* respPtr;
-  respPtr = (D0JES*) D0JESToLoop;
+void* loopHandle(void* CMSJESToLoop) {
+  CMSJES* respPtr;
+  respPtr = (CMSJES*) CMSJESToLoop;
   respPtr->Loop();
   return 0;
 }
 
-//Call D0JES::Loop() for multiple samples in parallel
-//Params:	dj_in, gj_in	Ready-given D0JES objects for dijet...
+//Call CMSJES::Loop() for multiple samples in parallel
+//Params:	dj_in, gj_in	Ready-given CMSJES objects for dijet...
 //				...and gamma+jet whose Loop to call
-//		fitPars		If true, take A,B,C from this D0JES object
-void D0JES::MultiLoop(D0JES* dj_in, D0JES* gj_in, bool fitPars) {
+//		fitPars		If true, take A,B,C from this CMSJES object
+void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
 
   //Input filenames to read
   InputNameConstructor();
 
-  //Instantiate new D0JES objects to be run in parallel
-  D0JES* resp_dj;  D0JES* resp_gj;  D0JES* resp_dj_b;  D0JES* resp_gj_b;
+  //Instantiate new CMSJES objects to be run in parallel
+  CMSJES* resp_dj;  CMSJES* resp_gj;  CMSJES* resp_dj_b;  CMSJES* resp_gj_b;
 
   bool noInputGiven = true;
 
-  //Instantiate new D0JES objects where needed
-   if (dj_in && gj_in) {	//Use given dijet & gamma+jet D0JES objects
-    if (Getverbose()) cout<<"MultiLoop: using input D0JES objects"<<endl;
+  //Instantiate new CMSJES objects where needed
+   if (dj_in && gj_in) {	//Use given dijet & gamma+jet CMSJES objects
+    if (Getverbose()) cout<<"MultiLoop: using input CMSJES objects"<<endl;
     SetbEnrichedFiles(false);    
     resp_dj = dj_in;  resp_dj->SetbEnrichedFiles(false);
     resp_gj = gj_in;  resp_gj->SetbEnrichedFiles(false);
     noInputGiven = false;
   } else {	//No dijet & gamma+jet objects given
-    if (Getverbose()) cout<<"MultiLoop: Instantiating new D0JES objects"<<endl;
-    resp_dj = new D0JES(0,djFile);
-    resp_gj = new D0JES(0,gjFile);
+    if (Getverbose()) cout<<"MultiLoop: Instantiating new CMSJES objects"<<endl;
+    resp_dj = new CMSJES(0,djFile);
+    resp_gj = new CMSJES(0,gjFile);
     if (GetbEnrichedFiles()) {
-      resp_dj_b = new D0JES(0,djFile_b);
-      resp_gj_b = new D0JES(0,gjFile_b);
+      resp_dj_b = new CMSJES(0,djFile_b);
+      resp_gj_b = new CMSJES(0,gjFile_b);
     } 
   }
 
   //MultiLoop may be called from FitHandle, ensure fit params. are taken from 
-  //this D0JES object and not read from the header "as is"
+  //this CMSJES object and not read from the header "as is"
   if (fitPars) {
     resp_dj->SetABC(GetA(),GetB(),GetC());
     resp_gj->SetABC(GetA(),GetB(),GetC());
@@ -1580,16 +1560,16 @@ void D0JES::MultiLoop(D0JES* dj_in, D0JES* gj_in, bool fitPars) {
 //End MULTIPLE SAMPLE LOOPING FUNCTIONALITY
 
 //-----------------------------------------------------------------------------
-//Construct input filenames for functions using multiple D0JES 
+//Construct input filenames for functions using multiple CMSJES 
 //objects.
 //Properties are chosen based on the object doing this analysis, since the
-//D0JES objects instantiated in this function will have the same properties.
+//CMSJES objects instantiated in this function will have the same properties.
 // => The user cannot e.g. accidentally enter a file savename that would
 //    imply properties that are not really there.
 //Saves the filenames into the djFile, gjFile, djFile_b, gjFile_b strings 
-//belonging to this D0JES object.
+//belonging to this CMSJES object.
 
-void D0JES::InputNameConstructor() {
+void CMSJES::InputNameConstructor() {
 
   //Prevent overwriting existing filenames
   if (djFile!="" || gjFile!="" || djFile_b!="" || gjFile_b!="") return;
@@ -1626,7 +1606,7 @@ void D0JES::InputNameConstructor() {
     cout << "ERROR: fitting not supported for this file" << endl;
     return;
   }
-  //The resulting filenames. Suffix ".root" to be added in D0JES constructor
+  //The resulting filenames. Suffix ".root" to be added in CMSJES constructor
   djFile_b = djFile + "b-enriched_" + num;
   gjFile_b = gjFile + "b-enriched_" + num;
   djFile += num;
@@ -1638,7 +1618,7 @@ void D0JES::InputNameConstructor() {
 //In the D0 studies, the parameter C was constrained close to 1 by a penalty 
 //term in order to get physically meaningful fit results. Also other ways to
 //constrain the fit more (or in other ways) have been provided for reference
-void D0JES::FitGN()
+void CMSJES::FitGN()
 {
 
   //Fix some fit parameters to ineffective values. Set to false in D0 studies,
@@ -1669,8 +1649,8 @@ void D0JES::FitGN()
   string addRun = (GetrunIIa()?"_RunIIa":"");	//For output
   addRun       += (GetrunIIb()?"_"+Getrun()+(GetP20ToP17()?"-P20ToP17":""):"");
   string respNotes = (GetStrangeB() ? "" : "_noStrangeB"  );
-  string gjOut = "./output_ROOT_files/D0JES_"+gjFile+addRun+respNotes+".root";
-  string djOut = "./output_ROOT_files/D0JES_"+djFile+addRun+respNotes+".root";
+  string gjOut = "./output_ROOT_files/CMSJES_"+gjFile+addRun+respNotes+".root";
+  string djOut = "./output_ROOT_files/CMSJES_"+djFile+addRun+respNotes+".root";
   vector<string> outs;  outs.push_back(djOut);  outs.push_back(gjOut); //Handle
 
   /* Fitting functionality starts here */
@@ -1708,7 +1688,7 @@ void D0JES::FitGN()
   if (!fixC) vec_arr[iC] = GetC();
   ABC.SetElements(vec_arr);
 
-  //Objects to read D0JES output
+  //Objects to read CMSJES output
   //[0]=dijet, [1]=gammajet, xjdY=derivative of pTprobe/pTtag w.r.t. Y (x=d,g)
   TFile*    file[2];  TProfile* prof[2];  //Files and prEpFit profiles
   TProfile* dA[2];    TProfile* dB[2];    TProfile* dC[2];
@@ -1756,8 +1736,8 @@ void D0JES::FitGN()
   }
   cout<<"^The above factors may make |gradient| large, don't panic."<<endl;
 
-  //Instantiate and setup D0JES objects to read in dijet and gamma+jet TTrees
-  D0JES* dijet = new D0JES(0,djFile);  D0JES* gammajet = new D0JES(0,gjFile);
+  //Instantiate and setup CMSJES objects to read in dijet and gamma+jet TTrees
+  CMSJES* dijet = new CMSJES(0,djFile);  CMSJES* gammajet = new CMSJES(0,gjFile);
   dijet->SetprintProg(     false);     gammajet->SetprintProg(     false);
   dijet->SetcontHistos(    false);     gammajet->SetcontHistos(    false);
   dijet->SetbEnrichedFiles(false);     gammajet->SetbEnrichedFiles(false);
@@ -1794,14 +1774,14 @@ void D0JES::FitGN()
     else if (GetdjFitting()) dijet->Loop();
     else                     gammajet->Loop();
   
-    //Retrieve D0JES output
+    //Retrieve CMSJES output
     for (int s : sampleIndices) {
       file[s] = TFile::Open(outs[s].c_str());
       file[s]->GetObject("prEpFit0",prof[s]);  file[s]->GetObject("dAf",dA[s]);
       file[s]->GetObject("dBf",dB[s]);         file[s]->GetObject("dCf",dC[s]);
     }
 
-    //Read the first 10 bins of D0JES output histos, compare to D0 data
+    //Read the first 10 bins of CMSJES output histos, compare to D0 data
     for (int s : sampleIndices) {
       for (int i=0; i!=nD0data; ++i) { //GetBinContent indices start from 1
         fit[s]=prof[s]->GetBinContent(i+1);  fitdA[s]=dA[s]->GetBinContent(i+1);
@@ -1894,9 +1874,9 @@ void D0JES::FitGN()
   //Free memory
   delete dijet;  delete gammajet;
 
-  //Obtain uncertainty histograms using this D0JES object's MultiLoop
+  //Obtain uncertainty histograms using this CMSJES object's MultiLoop
   cout<<"* Finding uncert. histos + running b-enr. samples if needed *"<<endl;
-  //Set results to this D0JES
+  //Set results to this CMSJES
   if (!fixA) {
     SetA(ABC.GetMatrixArray()[iA]);
     SetAer(Aer_temp);
@@ -1945,7 +1925,7 @@ void D0JES::FitGN()
 
 } //FitGN
 //-----------------------------------------------------------------------------
-void D0JES::Plot2D()
+void CMSJES::Plot2D()
 {
   if (fChain == 0) return;
 
@@ -1991,9 +1971,9 @@ void D0JES::Plot2D()
 } //Plot2D
 //-----------------------------------------------------------------------------
 //A function to combine several response function plots stored as TProfiles
-//in "D0JES_X.root" files.
+//in "CMSJES_X.root" files.
 //MConly and fitOnly are Master flags, overriding all others if true
-void D0JES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
+void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
                    int P,   int XS,   bool MConly,    bool fitOnly      )
 {
   bool plotOurMC  = false;
@@ -2181,7 +2161,7 @@ void D0JES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
 } //plotPT
 //-----------------------------------------------------------------------------
 //A handle for drawing "MC only" and "Fit+data only" pT-bal. plots at once
-void D0JES::plotSepPT() {
+void CMSJES::plotSepPT() {
   int gen=0, alg=0, rad=0, ct=-1, Nevt=0, run=0, P=0, XS=0;
   string nameDum, djdummy1, gjdummy1, djdummy2, gjdummy2;
   plotQuery(nameDum, djdummy1, gjdummy1, djdummy2, gjdummy2,
@@ -2191,7 +2171,7 @@ void D0JES::plotSepPT() {
 }
 //-----------------------------------------------------------------------------
 //Like plotPT, but for MPF histograms
-void D0JES::plotMPF(int gen,  int alg, int rad, int ct,
+void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
                     int Nevt, int run, int P,   int XS )
 {
   //Choose filenames to open
@@ -2367,7 +2347,7 @@ void axisSetup(TAxis* xAxis, TAxis* yAxis, string Xtitle, string Ytitle) {
 }
 //-----------------------------------------------------------------------------
 /* A handle to set up TProfile2D object axis in FindFJtoMC */
-void D0JES::axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd) {
+void CMSJES::axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd) {
   string title = titleAdd + " #font[132]{MC vs gen, ";
   if      (GetrunIIa()) title += "RunIIa";
   else if (GetrunIIb()) title += Getrun();
@@ -2396,7 +2376,7 @@ void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
 //A function to plot the pT-conversion factors in the more readable format
 //(pT^gen,pT^MC/pT^gen) instead of the (pT^gen,pT^MC) actually used for the 
 //conversion. 
-void D0JES::plotConvPT() {
+void CMSJES::plotConvPT() {
 
   //Set color codes and other handy numbers
   int black = kGray+3;  int red  = 2;   int blue  = 9;	//Dark shades
@@ -2410,12 +2390,12 @@ void D0JES::plotConvPT() {
   for (int a=0; a!=3; ++a) {
     for (int r=0; r!=Nr; ++r) ins.push_back("./output_ROOT_files/");
   }
-  ins[0] += "D0JES_P6_gammajet_D0rIIc_R05_ct10mm_1000000";
-  ins[1] += "D0JES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000";
-  ins[2] += "D0JES_H7_gammajet_D0rIIc_R05_ct10mm_2000000";
-  ins[3] += "D0JES_P6_gammajet_D0rIIc_R05_ct10mm_1000000";
-  ins[4] += "D0JES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000";
-  ins[5] += "D0JES_H7_gammajet_D0rIIc_R05_ct10mm_2000000";
+  ins[0] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_1000000";
+  ins[1] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000";
+  ins[2] += "CMSJES_H7_gammajet_D0rIIc_R05_ct10mm_2000000";
+  ins[3] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_1000000";
+  ins[4] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000";
+  ins[5] += "CMSJES_H7_gammajet_D0rIIc_R05_ct10mm_2000000";
   TFile* files[3][Nr];
   for (int a=0; a!=6; ++a) {
     if (a<3) ins[a] += "_RunIIa.root";
@@ -2529,7 +2509,7 @@ void D0JES::plotConvPT() {
 } //plotConvP
 //-----------------------------------------------------------------------------
 //A function to produce a reference plot containing D0 data and MC points.
-void D0JES::plotD0() {
+void CMSJES::plotD0() {
 
   bool raiseIIa = false;
   bool lowerIIb = false;
@@ -2711,7 +2691,7 @@ void D0JES::plotD0() {
 //				N=0 using IIa or default IIb
 //				N=1 using IIb*-P20ToP17
 //Returns:	The calculated response (>= 0) or -1 if event invalid
-void D0JES::Response(int id, double pseudorap, double energy, double pT,
+void CMSJES::Response(int id, double pseudorap, double energy, double pT,
 	             TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                      double fA,double fB,double fC,bool MC,bool FIT,bool EM,
                      vector<double>& retMC, vector<double>& retFIT,
@@ -2807,7 +2787,7 @@ void D0JES::Response(int id, double pseudorap, double energy, double pT,
         //were not presented. As an Ansatz, we modify the responses of known
         //hadrons by  R^MC_h(E=m_h) = 0 <=> p^(1)_h = (m_h/0.75)^(1-p^(2)_h).
         //The different Ansätze below are based on different hadrons' params.
-        //To use the Ansätze, set StrangeB=true in D0JES.h
+        //To use the Ansätze, set StrangeB=true in CMSJES.h
         if (GetStrangeB() && GetAnsatz()=="pn") { //PROTON & NEUTRON params
           switch (PDG) {
             case 3112 :		//Sigma^-
@@ -2949,8 +2929,8 @@ void D0JES::Response(int id, double pseudorap, double energy, double pT,
 
 } //Response
 //-----------------------------------------------------------------------------
-//For studying the general properties TTree read in by the D0JES object.
-void D0JES::StudyTree()
+//For studying the general properties TTree read in by the CMSJES object.
+void CMSJES::StudyTree()
 {
   if (fChain == 0) return;
   Long64_t nentries = fChain->GetEntriesFast();
@@ -3085,8 +3065,8 @@ void D0JES::StudyTree()
 
 } //StudyTree
 //-----------------------------------------------------------------------------
-//Print a chosen event from the TTree read in by the D0JES object.
-void D0JES::PrintEvt()
+//Print a chosen event from the TTree read in by the CMSJES object.
+void CMSJES::PrintEvt()
 {
   if (fChain == 0) return;
   Long64_t nentries = fChain->GetEntriesFast();
@@ -3148,19 +3128,19 @@ void D0JES::PrintEvt()
 } //PrintEvt
 //-----------------------------------------------------------------------------
 //User interface to choose which files to open in plotting functions
-//Params:	nameAdd		Additions to the standard D0JES output names
+//Params:	nameAdd		Additions to the standard CMSJES output names
 //		djstr, gjstr	Set dijet & gammajet all flavor filenames here
 //		djstrb, gjstrb	Set b-jet enriched filenames here
 //		gen,alg,rad,...
 //		ct,run,P,XS	Preset values if user interface omitted
 //N.B. only the interesting cases are enabled in this function ATM
-void D0JES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
+void CMSJES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
                                        string& djstrb, string& gjstrb,
                       int& gen,  int& alg, int& rad, int& ct, 
                       int& Nevt, int& run, int& P,   int& XS          )
 {
   //Init
-  string respStr = "./output_ROOT_files/D0JES_";
+  string respStr = "./output_ROOT_files/CMSJES_";
   string runStr="";		//To contain e.g. "RunIIa"
   string root = ".root";	//File suffix
   string properties = "";	//Sample properties will be contained here
@@ -3232,7 +3212,7 @@ void D0JES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
 //		run	      -||-       runII epoch
 //		P	      -||-       use P20ToP17 correction?
 //		XS	      -||-       "use strange hadron Ansätze?"
-void D0JES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
+void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
                      int Nevt,  int run, int P,   int XS          )
 {
   bool fitMode = true;	//Draw fitted TF1s on top of the histos
@@ -4223,7 +4203,7 @@ void D0JES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 } //flavCorr
 //------------------------------------------------------------------------------
 //A function to combine flavour fractions of several generators in a single plot
-void   D0JES::FFplot() {
+void   CMSJES::FFplot() {
 
   bool gjMode = true;	//true = plot gamma+jet, false = plot EM+jet
   bool bEnr   = true;	//Plot b-enriched samples
@@ -4238,18 +4218,18 @@ void   D0JES::FFplot() {
   if (bEnr) {
     if (gjMode) {
       ins.push_back(
-          "D0JES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000_RunIIa.root");
+          "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000_RunIIa.root");
     } else {	//Em+jet (dijet)
       ins.push_back(
-          "D0JES_P6_dijet_D0rIIc_R05_ct10mm_b-enriched_1000000_RunIIa.root");
+          "CMSJES_P6_dijet_D0rIIc_R05_ct10mm_b-enriched_1000000_RunIIa.root");
     }
   } else {
     if (gjMode) {
-      ins.push_back("D0JES_P6_gammajet_D0rIIc_R05_ct10mm_1000000_RunIIa.root");
-      ins.push_back("D0JES_H7_gammajet_D0rIIc_R05_ct10mm_2000000_RunIIa.root");
+      ins.push_back("CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_1000000_RunIIa.root");
+      ins.push_back("CMSJES_H7_gammajet_D0rIIc_R05_ct10mm_2000000_RunIIa.root");
     } else {	//Em+jet (dijet)
-      ins.push_back("D0JES_P6_dijet_D0rIIc_R05_ct10mm_1000000_RunIIa.root");
-      ins.push_back("D0JES_H7_dijet_D0rIIc_R05_ct10mm_2000000_RunIIa.root");
+      ins.push_back("CMSJES_P6_dijet_D0rIIc_R05_ct10mm_1000000_RunIIa.root");
+      ins.push_back("CMSJES_H7_dijet_D0rIIc_R05_ct10mm_2000000_RunIIa.root");
     }
   }
   string temp;

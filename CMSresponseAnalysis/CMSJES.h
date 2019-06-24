@@ -1,15 +1,15 @@
 ////////////////////////////////////////////////////////////////
 // This class has been automatically generated on             //
 // Thu Feb  1 12:21:30 2018 by ROOT version 6.13/01           //
-// from TTree Pythia6Jets/Pythia6 particle data               //
+// from TTree Pythia8Jets/Pythia8 particle data               //
 // found on files: P6_dijet_*.root, H7_dijet_*.root, etc.     //
 //                                                            //
 // The code has been modified further along the way by        //
 // toni.makela@cern.ch of Helsinki Institute of Physics, 2018 //
 ////////////////////////////////////////////////////////////////
 
-#ifndef D0JES_h
-#define D0JES_h
+#ifndef CMSJES_h
+#define CMSJES_h
 
 // C/C++
 #include <cstdlib>
@@ -65,7 +65,7 @@ using std::stringstream;
 
 //#define NIJ //If uncommented, sample must have prtclsnij_ -branches
 
-class D0JES {
+class CMSJES {
 public :
   string ReadName;	//ROOT filename to read
   string OpenName;	// -||- with ".root" -suffix
@@ -81,6 +81,8 @@ public :
 
   string gjFile="";	//gamma+jet filename compatible with this object
   string djFile="";	//EM+jet -||-
+  string zjFile="";	//Z+jet -||-
+
   string gjFile_b="";	//Same as the two above but...
   string djFile_b="";	//...for b-enriched samples
 
@@ -111,14 +113,10 @@ public :
   vector<float>   *prtn_eta;		// -- 
   vector<float>   *prtn_phi;		// --
   vector<float>   *prtn_e;		//
-  vector<float>   *prtn_dr;		// not used
   vector<float>   *jet_pt;		// Gen jets
   vector<float>   *jet_eta;		//
   vector<float>   *jet_phi;		//
   vector<float>   *jet_e;		//
-  vector<int>     *jet_constituents;	// not used
-  vector<float>   *jet_ptd;		// not used
-  vector<float>   *jet_sigma2;		// not used
   Float_t         met;			// Neutrino E_T sum not used
 
   // List of branches
@@ -146,23 +144,18 @@ public :
   TBranch        *b_prtn_eta;
   TBranch        *b_prtn_phi;
   TBranch        *b_prtn_e;
-  TBranch        *b_prtn_dr;
   //Jet lvl
   TBranch        *b_jet_pt;
   TBranch        *b_jet_eta;
   TBranch        *b_jet_phi;
   TBranch        *b_jet_e;
-  TBranch        *b_jet_constituents;
-  TBranch        *b_jet_ptd;
-  TBranch        *b_jet_sigma2;
   TBranch        *b_met;
 
   double R_cone;//Jet algorithm cone radius
 
   //Tensors to contain response function parameters
-  //  1st index: (0) runIIa or or default D0 style runIIb* (1) runIIb*-P20ToP17
-  //  2nd index: |eta| region. 32 entries for this index
-  //  3rd index: the parameters p^(i)_{particle type} in the SPR functions
+  //  1st index: |eta| region. 32 entries for this index
+  //  2nd index: the parameters p^(i)_{particle type} in the SPR functions
   //             3rd index has 3 entries unless otherwise stated
   vector<vector<vector<double>>> params_e;	//electron //3rd index 5 entries
   vector<vector<vector<double>>> params_K;	//Kaon
@@ -177,7 +170,9 @@ public :
 
   //For storing D0 dijet / EM+jet data points and errors
   static int const nD0data = 10;	//#Data points available from D0
+  static int const nCMSdata = 10;	//#Data points available from CMS
   static int const nEpochs = 4;		//#Epochs in run IIa and IIb altogether
+
   //D0 pT-balance data points and errors. dj for dijet, gj for gamma+jet
   double djEpII[nEpochs][nD0data];
   double djD0II[nEpochs][nD0data];
@@ -185,8 +180,14 @@ public :
   double gjEpII[nEpochs][nD0data];
   double gjD0II[nEpochs][nD0data];
   double gjERII[nEpochs][nD0data];
+
+  //CMS pT-balance data points and errors. dj for dijet, gj for gamma+jet, zj for Z+jet
+  double zjEp[nCMSdata];
+  double zjCMS[nCMSdata];
+  double zjER[nCMSdata];
+
   //RunIIa D0 PTB MC
-  static int const nD0MC = 13;		//#MC sim. points available from D0
+  static int const nD0MC = 13;	//#MC sim. points available from D0
   double djMCEpII[nEpochs][nD0MC];	//Dijet
   double djD0MCII[nEpochs][nD0MC];
   double gjMCEpII[nEpochs][nD0MC];	//Gamma+jet
@@ -217,26 +218,26 @@ public :
   bool runIIa = true; 		//Use runIIa response parameters
   bool runIIb = false;	 	//-||-runIIb -||-
   bool P20ToP17	= true; 	//P20ToP17 params for MC-reco instead of default
-  //string run = "RunIIb1";	//Different options...
-  //string run = "RunIIb2";	//...which run IIb...
   string run = "RunIIb34";	//... epoch to use
-  //string run = "ZS";		//Parameters from samples w/ zero suppression
+
   bool StrangeB = true;		//Use Ansätze for strange baryon response
   //string Ansatz = "pn";   	//If StrangeB=true, use p & n  based Ansätze
   //string Ansatz = "L";  	//        -||-         Lambda     -||-
   string Ansatz = "pi";  	//        -||-         pion       -||-
+
   bool printProg = true;	//Print info on Loop() progress?
   bool useEarlierCuts  = false;	//True if events chosen based on readEvt
   bool useD0ABC        = false;	//Use fit param A,B,C values given in D0 ANs.
   bool useInitGuessABC = false;	//Use initial guess A,B,C; for starting fits
-  bool djFitting = true;	//Use EM+jet ("dijet") data points for fitting
-  bool gjFitting = true;	//Use gamma+jet data points for fitting
+  bool djFitting = false;	//Use EM+jet ("dijet") data points for fitting
+  bool gjFitting = false;	//Use gamma+jet data points for fitting
+  bool zjFitting = true;	//Use Z+jet data points for fitting
   double epsilon = 0.01;	//Small step to take along gradient
   double epsilonMin = 1e-6;	//Fit converged when step smaller than this
   double A=1,B=0,C=1;		//Fit reco hadron response fit parameters
   double Aer=0,Ber=0,Cer=0;	//Fit parameter uncertainties
   double ABer=0,ACer=0,BCer=0;	//Off-diag. elem.s of covariance matrix
-  double E_O[2] = {0.15,0.45};	//Approx. offset energy: [0] IIa, [1] IIb
+  double E_O[2] = {0.15,0.45};	//Approx. offset energy for CMS, value from D0, does not make sense
   #ifdef NIJ
   bool recoMissing = false;	//Fully reconstruct also particles not in jets
   #endif
@@ -253,12 +254,15 @@ public :
   void SetACer(double val) {ACer = val;}
   void SetBCer(double val) {BCer = val;}
   void SetABCer(double Ain,double Bin,double Cin) {Aer=Ain;  Ber=Bin;  Cer=Cin;}
+
   void Setepsilon(   double val) {epsilon = val;}
   void SetepsilonMin(double val) {epsilonMin = val;}
   void SetuseEarlierCuts(bool flag) {useEarlierCuts = flag;}
   void SetuseD0ABC(  bool flag) {useD0ABC  = flag;}
   void SetdjFitting( bool flag) {djFitting = flag;}
   void SetgjFitting( bool flag) {gjFitting = flag;}
+  void SetzjFitting( bool flag) {zjFitting = flag;}
+
   void SetprintProg( bool flag) {printProg = flag;}
   void SetbEnrichedFiles(bool flag) {bEnrichedFiles=flag;}
   void SetcontHistos(bool flag) {contHistos=flag;}
@@ -288,20 +292,21 @@ public :
   double GetABer() {return ABer;}
   double GetACer() {return ACer;}
   double GetBCer() {return BCer;}
-  double Getepsilon()    {return epsilon;}
-  double GetepsilonMin() {return epsilonMin;}
-  bool GetuseEarlierCuts() {return useEarlierCuts;}
-  bool GetuseD0ABC()  {return useD0ABC; }
-  bool GetdjFitting() {return djFitting;}
-  bool GetgjFitting() {return gjFitting;}
-  bool GetprintProg() {return printProg;}
-  bool GetbEnrichedFiles() {return bEnrichedFiles;}
-  bool GetcontHistos() {return contHistos;}
-  bool GetMPFmode()  {return MPFmode;}
   string Getrun()    {return run;}
   bool GetrunIIa()   {return runIIa;}
   bool GetrunIIb()   {return runIIb;}
   bool GetP20ToP17() {return P20ToP17;}
+  bool GetuseD0ABC()  {return useD0ABC; }
+  double Getepsilon()    {return epsilon;}
+  double GetepsilonMin() {return epsilonMin;}
+  bool GetuseEarlierCuts() {return useEarlierCuts;}
+  bool GetdjFitting() {return djFitting;}
+  bool GetgjFitting() {return gjFitting;}
+  bool GetzjFitting() {return zjFitting;}
+  bool GetprintProg() {return printProg;}
+  bool GetbEnrichedFiles() {return bEnrichedFiles;}
+  bool GetcontHistos() {return contHistos;}
+  bool GetMPFmode()  {return MPFmode;}
   bool GetStrangeB() {return StrangeB;}
   string GetAnsatz() {return Ansatz;}
   #ifdef NIJ
@@ -311,8 +316,8 @@ public :
   bool Getverbose() {return verbose;}
 
   //Constructor and destructor
-  D0JES(TTree *tree=0, string="");
-  virtual ~D0JES();
+  CMSJES(TTree *tree=0, string="");
+  virtual ~CMSJES();
 
   //ROOT TTree specific functions
   virtual Int_t    Cut(Long64_t entry);
@@ -331,7 +336,7 @@ public :
   virtual void     Show(Long64_t entry = -1);
   void   axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd);
   void   FitGN();		//Gauss-Newton fit function
-  void   MultiLoop(D0JES* dj_in=NULL, D0JES* gj_in=NULL, bool fitPars=true);
+  void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
   void   plotConvPT();
   void   plotPT(int gen=0,int alg=0,int rad=0,int ct=-1,int Nevt=0,int run=0,
                 int P=0,  int XS=0, bool MConly=false, bool fitOnly=false    );
@@ -360,13 +365,13 @@ public :
 
 #endif
 
-#ifdef D0JES_cxx
+#ifdef CMSJES_cxx
 
 //A function to read hadron response function parameters from files
 //Params:	file		The filename to read as a string
 //		n1,n2,n3	Dimensions of the params tensor
 //		params		Reference to the tensor to read parameters into
-void D0JES::ParamReader(string file, int n1, int n2, int n3,
+void CMSJES::ParamReader(string file, int n1, int n2, int n3,
                         vector<vector<vector<double>>> &params)
 {
   //Init temps to read into
@@ -405,22 +410,17 @@ void D0JES::ParamReader(string file, int n1, int n2, int n3,
 } //ParamReader
 
 //Constructor
-D0JES::D0JES(TTree *tree, string toRead) : fChain(0) 
+CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
   if (tree == 0) {	//No pointer to a tree given
-    // toRead = "P6_dijet_D0rIIc_R05_ct10mm_30000";
     if (toRead != "") ReadName = toRead;
     else {
       //Add here all the files one should be able to study
       vector<string> files;	//To contain studiable filenames
-      files.push_back(              "P6_dijet_D0rIIc_R05_ct10mm_30000");
-      files.push_back( 		 "P6_gammajet_D0rIIc_R05_ct10mm_30000");
-      files.push_back(   "P6_dijet_D0rIIc_R05_ct10mm_b-enriched_1000000");
-      files.push_back("P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000");
-      files.push_back(              "H7_dijet_D0rIIc_R05_ct10mm_2000000");
-      files.push_back(           "H7_gammajet_D0rIIc_R05_ct10mm_2000000");
+      files.push_back("P8_Zjet_1000" );
+      files.push_back("P8_Zjet_10000");
 
       //User interface
       printf("No filename given, choose file (y = default file):\n");
@@ -444,6 +444,7 @@ D0JES::D0JES(TTree *tree, string toRead) : fChain(0)
 			    ->FindObject(OpenName.c_str());
     if (!f || !f->IsOpen()) f = new TFile(OpenName.c_str());
     if (ReadName.find("P6")!=string::npos) f->GetObject("Pythia6Jets",tree);
+    else if (ReadName.find("P8")!=string::npos) f->GetObject("Pythia8Jets",tree);
     else f->GetObject("HerwigTree",tree);
 
   }
@@ -587,34 +588,17 @@ D0JES::D0JES(TTree *tree, string toRead) : fChain(0)
     //Default: use our A,B,C depending on generator
     else {
       if (ReadName.find("P6")!=string::npos) {
-/*
-        //P6 G-N: chi2/n_d0f=1.84271 RunIIa	LC=1/pow(0.01,2), LB=0, LA=0
-        A    =  1.48853;        B    = -0.00438068;     C    = 1.00328;
-        Aer  =  0.0580336;	Ber  =  0.0261882;      Cer  = 0.00704791;
-        ABer = -0.00143444;	ACer = -6.22493e-05;	BCer = 8.43637e-05;
-*/
-/*
-        //P6G-N: chi2/n_d0f=2.2961 RunIIa 190327 dijet tag.eta<0.4
-        A    = 1.45924;		B    = 0.0039269;	C = 1.00393;
-        Aer  = 0.0576814;	Ber  = 0.0263632;	Cer = 0.00704882;
-        ABer = -0.00143583;	ACer =-5.93105e-05;	BCer = 8.37236e-05;
-*/
-        //P6 G-N: chi2/n_d0f=2.28613 RunIIa dijet tag.eta<0.4 C constr 0.015
         A    = 1.45399;	B    = 0.0115405;	C    = 1.00865;
         Aer  = 0.0572361;	Ber  = 0.0287636;	Cer  = 0.0105337;
         ABer = -0.00148885;	ACer = -0.000124997;	BCer = 0.000180898;
       } else if (ReadName.find("H7")!=string::npos) {
-/*
-        //H7G-N: chi2/n_d0f=2.39969 RunIIa 190327 dijet tag.eta<0.4
-        A = 1.23648;		B = 0.0290488;		C = 1.00211;
-        Aer = 0.0563003;	Ber = 0.0296926;	Cer = 0.00706082;
-        ABer = -0.0015739;	ACer = -3.61654e-05;	BCer = 8.54972e-05;
-*/
-        //H7 G-N: chi2/n_d0f=2.39668 RunIIa tag.eta<0.4 C constr 0.015
         A    = 1.23482;	B    = 0.0333262;	C    = 1.0047;
         Aer  = 0.0559627;	Ber  = 0.0321562;	Cer  = 0.0105726;
         ABer = -0.00160909;	ACer = -7.75965e-05;	BCer = 0.00018794;
-
+      } else if (ReadName.find("P8")!=string::npos){
+        A    = 1.0;	B    = 0.0;	C    = 1.0;
+        Aer  = 0.05;	Ber  = 0.02;	Cer  = 0.01;
+        ABer = -0.001;	ACer = -0.0001;	BCer = 0.0001;        
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
   } else if (runIIb) {
@@ -748,56 +732,25 @@ D0JES::D0JES(TTree *tree, string toRead) : fChain(0)
           ABer = -0.00243865;	ACer = -0.000261209;	BCer = 0.000378679;
         }
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
-/*
-    //P6 sigma_C=0.02
-    if (run == "RunIIb1") {
-      //G-N: chi2/n_d0f=6.8445 RunIIb1-P20ToP17
-      A = 1.37688;	B = -0.062586;		C = 1.03392;
-      Aer = 0.059592;	Ber = 0.0418771;	Cer = 0.0138767;
-    } else if (run == "RunIIb2") {
-      //G-N: chi2/n_d0f=8.99029 RunIIb2-P20ToP17
-      A = 1.61032;	B = -0.136087;		C = 1.04016;
-      Aer = 0.0684915;	Ber = 0.0443471;	Cer = 0.0137736;
-    } else if (run == "RunIIb34") {
-      //G-N: chi2/n_d0f=5.56895 RunIIb34-P20ToP17
-      A = 1.57573;	B = -0.137047;		C = 1.03069;
-      Aer = 0.0686895;	Ber = 0.0457585;	Cer = 0.0137586;
-    }
-    //P6 sigma_C=0.05
-    if (run == "RunIIb1") {
-      //G-N: chi2/n_d0f=6.21719 RunIIb1-P20ToP17
-      A = 1.23686;	B = 0.134131;		C = 1.15244;
-      Aer = 0.0377558;	Ber = 0.0400128;	Cer = 0.0333264;
-    } else if (run == "RunIIb2") {
-      //G-N: chi2/n_d0f=8.24218 RunIIb2-P20ToP17
-      A = 1.35843;		B = 0.0978804;		C = 1.16306;
-      Aer = 0.0426116;	Ber = 0.0422117;	Cer = 0.0331325;
-    } else if (run == "RunIIb34") {
-      //G-N: chi2/n_d0f=5.10582 RunIIb34-P20ToP17
-      A = 1.3504;		B = 0.0714475;		C = 1.12938;
-      Aer = 0.0478388;	Ber = 0.0484399;	Cer = 0.0329338;
-    }
-*/
-
     }
   } else cout << "\n\n\tERROR: neither run IIa nor IIb activated!\n\n" << endl;
 } //Constructor
 //-----------------------------------------------------------------------------
 //Destructor
-D0JES::~D0JES()
+CMSJES::~CMSJES()
 {
   if (!fChain) return;
   delete fChain->GetCurrentFile();
 }
 //-----------------------------------------------------------------------------
-Int_t D0JES::GetEntry(Long64_t entry)
+Int_t CMSJES::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
   if (!fChain) return 0;
   return fChain->GetEntry(entry);
 }
 //-----------------------------------------------------------------------------
-Long64_t D0JES::LoadTree(Long64_t entry)
+Long64_t CMSJES::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
   if (!fChain) return -5;
@@ -810,7 +763,7 @@ Long64_t D0JES::LoadTree(Long64_t entry)
   return centry;
 }
 //-----------------------------------------------------------------------------
-void D0JES::Init(TTree *tree)
+void CMSJES::Init(TTree *tree)
 {
   // The Init() function is called when the selector needs to initialize
   // a new tree or chain. Typically here the branch addresses and branch
@@ -844,15 +797,11 @@ void D0JES::Init(TTree *tree)
   prtn_eta = 0;
   prtn_phi = 0;
   prtn_e = 0;
-  prtn_dr = 0;
   //Jet lvl
   jet_pt = 0;
   jet_eta = 0;
   jet_phi = 0;
   jet_e = 0;
-  jet_constituents = 0;
-  jet_ptd = 0;
-  jet_sigma2 = 0;
   // Set branch addresses and branch pointers
   if (!tree) return;
   fChain = tree;
@@ -883,21 +832,16 @@ void D0JES::Init(TTree *tree)
   fChain->SetBranchAddress("prtn_eta", &prtn_eta, &b_prtn_eta);
   fChain->SetBranchAddress("prtn_phi", &prtn_phi, &b_prtn_phi);
   fChain->SetBranchAddress("prtn_e", &prtn_e, &b_prtn_e);
-  fChain->SetBranchAddress("prtn_dr", &prtn_dr, &b_prtn_dr);
   //Jet lvl
   fChain->SetBranchAddress("jet_pt", &jet_pt, &b_jet_pt);
   fChain->SetBranchAddress("jet_eta", &jet_eta, &b_jet_eta);
   fChain->SetBranchAddress("jet_phi", &jet_phi, &b_jet_phi);
   fChain->SetBranchAddress("jet_e", &jet_e, &b_jet_e);
-  fChain->SetBranchAddress("jet_constituents", &jet_constituents,
-						&b_jet_constituents);
-  fChain->SetBranchAddress("jet_ptd", &jet_ptd, &b_jet_ptd);
-  fChain->SetBranchAddress("jet_sigma2", &jet_sigma2, &b_jet_sigma2);
   fChain->SetBranchAddress("met", &met, &b_met);
   Notify();
 }
 //-----------------------------------------------------------------------------
-Bool_t D0JES::Notify()
+Bool_t CMSJES::Notify()
 {
   // The Notify() function is called when a new file is opened. This
   // can be either for a new TTree in a TChain or when when a new TTree
@@ -908,7 +852,7 @@ Bool_t D0JES::Notify()
   return kTRUE;
 }
 //-----------------------------------------------------------------------------
-void D0JES::Show(Long64_t entry)
+void CMSJES::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
@@ -916,11 +860,11 @@ void D0JES::Show(Long64_t entry)
   fChain->Show(entry);
 }
 //-----------------------------------------------------------------------------
-Int_t D0JES::Cut(Long64_t entry)
+Int_t CMSJES::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
   return 1;
 }
-#endif // #ifdef D0JES_cxx
+#endif // #ifdef CMSJES_cxx
