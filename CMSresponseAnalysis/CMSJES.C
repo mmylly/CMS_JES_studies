@@ -575,6 +575,8 @@ void CMSJES::Loop()
     int muPDG=13;  int muTAG=3; //mu PDGID and tag 
     if (studyMode == 3) {
 
+      if (Getverbose()) cout << "Entering Z+JET: FIND TAG" << endl;
+
       int i_tag1 = -137;	// These values won't change if 
       int i_tag2 = -731;	// muons not found
       for (int a=0; a!= prtn_tag->size(); ++a) {
@@ -924,21 +926,26 @@ void CMSJES::Loop()
 
     } //Dijet find tag and probe
 
-    /****************************** COMMON CUTS ******************************/
+    
+
+    /****************************** COMMON CUTS FOR Z+JET ******************************/
     if (Getverbose()) cout << "Entering COMMON CUTS" << endl;
+    
 
     //Tag object and probe jet back-to-back. Note ROOT DeltaPhi is in [-pi,pi]
     if (fabs(tag.DeltaPhi(probe)) < phiMin) continue;
 
     //Assert probe is not confused with tag
-    if (fabs(tag.DeltaR(probe)) < 0.2) continue;
+
+    // How can this be true if already required back to back
+    // if (fabs(tag.DeltaR(probe)) < 0.2) continue;
 
     //Assert sufficiently low MET w.r.t. tag pT and leading jet (we use probe)
-    if      (p4EM_tag.Pt() > 50 && met > 0.9*p4EM_tag.Pt()) continue;
-    else if (p4EM_tag.Pt() > 25 && met > 1.1*p4EM_tag.Pt()) continue;
-    else if (p4EM_tag.Pt() > 15 && met > 1.2*p4EM_tag.Pt()) continue;
-    else if (                      met > 2.0*p4EM_tag.Pt()) continue;
-    if      (met/p4r_probe.Pt() > 0.7                     ) continue;
+    if      (p4r_tag.Pt() > 50 && met > 0.9*p4r_tag.Pt()) continue;
+    else if (p4r_tag.Pt() > 25 && met > 1.1*p4r_tag.Pt()) continue;
+    else if (p4r_tag.Pt() > 15 && met > 1.2*p4r_tag.Pt()) continue;
+    else if (                     met > 2.0*p4r_tag.Pt()) continue;
+    if      (met/p4r_probe.Pt()       > 0.7             ) continue;
 
     /************** FIND DERIVATIVES IN CASE i_probe > 1 (RARE) **************/
 
@@ -1039,163 +1046,146 @@ void CMSJES::Loop()
     } //Loop over particles
 
     /**************************** FILL HISTOGRAMS ****************************/
+    //Jet energy estimator: E' = p_T_tag cosh(eta_probe) and pT'.
+    //- Jet direction change in reconstruction is usually negligible, though.
 
-    for (int a=0; a!=(repeat ? 2 : 1); ++a) {
+    // Modified for Z+jet usage, most of the p4EM_tag changed to p4r_tag
+    Ep   = p4r_tag.Pt()*cosh(probe.Eta());
+    pTp  = p4r_tag.Pt();
 
-      if (repeat && a==1) {	//Flip dijet tag and probe when appropriate
-        //Jet indices
-        temp = i_tag;	i_tag = i_probe;	i_probe = temp;
-        //FastJet lvl
-        p4 = tag;	tag = probe;		probe = p4;
+    //Data<->MC & MC'<->MC factors
+    F    = Fnum[i_probe]/Fden[i_probe];
+    F101 = Fnum101[i_probe]/Fden[i_probe];
 
-        p4=p4g_tag;	p4g_tag =p4g_probe;	p4g_probe =p4;	//Gen lvl
-        p4=p4r_tag;	p4r_tag =p4r_probe;	p4r_probe =p4;	//Reco lvl
-        p4=p4f_tag;	p4f_tag =p4f_probe;	p4f_probe =p4;	//Fit lvl
-        p4=p4EM_tag;	p4EM_tag=p4EM_probe;	p4EM_probe=p4;	//EM reco lvl
-        p4=p4EMDtag;	p4EMDtag=p4EMDprobe;	p4EMDprobe=p4;	//EM (default)
+    //Add the new values to TProfile histograms:
+    //p_T balance method
+    prEp->Fill(    Ep,            p4r_probe.Pt()/p4r_tag.Pt(),  weight);
+    //prEpD->Fill(   pTp,     jets_d[i_probe].Pt()/p4EMDtag.Pt(),  weight);
+    prE->Fill(     p4g_probe.E(), p4r_probe.Pt()/p4r_tag.Pt(),  weight);
+    prEpFit->Fill( Ep,            (GetP20ToP17()?F101:1)
+                                  *p4f_probe.Pt()/p4r_tag.Pt(), weight);
 
+    //Derivatives of pTprobe/pTtag
+    //The x- and y-term sums in the derivatives of pTprobe/pTtag
+    dA_X=dAjetsX[i_probe];  dB_X=dBjetsX[i_probe];  dC_X=dCjetsX[i_probe];
+    dA_Y=dAjetsY[i_probe];  dB_Y=dBjetsY[i_probe];  dC_Y=dCjetsY[i_probe];
+
+    //Derivatives of the nominator in F factors
+    dAfTMP = (jets_f[i_probe].X()*dA_X + jets_f[i_probe].Y()*dA_Y)/
+               (p4r_tag.Pt()*jets_f[i_probe].Pt());
+    dBfTMP = (jets_f[i_probe].X()*dB_X + jets_f[i_probe].Y()*dB_Y)/
+               (p4r_tag.Pt()*jets_f[i_probe].Pt());
+    dCfTMP = (jets_f[i_probe].X()*dC_X + jets_f[i_probe].Y()*dC_Y)/
+               (p4r_tag.Pt()*jets_f[i_probe].Pt());
+    if (!isnan(dAfTMP)) dAf->Fill(Ep, dAfTMP, weight);
+    if (!isnan(dBfTMP)) dBf->Fill(Ep, dBfTMP, weight);
+    if (!isnan(dCfTMP)) dCf->Fill(Ep, dCfTMP, weight);
+
+    //MPF method
+    MET_r = -1.0*NIJ_r;
+    MET_f = -1.0*NIJ_f;
+    for (int i=0; i!=jets_r.size(); ++i) {
+      if (studyMode==1 && i!=i_tag) {
+        MET_r -= jets_r[i];
+        MET_f -= jets_f[i];
       }
+    }
+    if (studyMode==1) {
+        MET_r -= jetsEM[i_tag];
+        MET_f -= jetsEM[i_tag];
+    }
+    R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
+    R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
-      //Jet energy estimator: E' = p_T_tag cosh(eta_probe) and pT'.
-      //- Jet direction change in reconstruction is usually negligible, though.
-      
-      Ep   = p4EM_tag.Pt()*cosh(probe.Eta());
-      pTp  = p4EM_tag.Pt();
+    //Fill MPF histograms
+    R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
+    prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
+    prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
+    prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
 
-      //Data<->MC & MC'<->MC factors
-      F    = Fnum[i_probe]/Fden[i_probe];
-      F101 = Fnum101[i_probe]/Fden[i_probe];
+    //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
+    //                   SUCH AS MC-DATA CORRECTION FACTORS F
+    //  N.B. Results are meaningful only if A,B,C params already optimized.
+    //Loop partons to find where jets originated from
 
-      //Add the new values to TProfile histograms:
-      //p_T balance method
-      prEp->Fill(    Ep,            p4r_probe.Pt()/p4EM_tag.Pt(),  weight);
-      prEpD->Fill(   pTp,     jets_d[i_probe].Pt()/p4EMDtag.Pt(),  weight);
-      prE->Fill(     p4g_probe.E(), p4r_probe.Pt()/p4EM_tag.Pt(),  weight);
-      prEpFit->Fill( Ep,            (GetP20ToP17()?F101:1)
-                                    *p4f_probe.Pt()/p4EM_tag.Pt(), weight);
-
-      //Derivatives of pTprobe/pTtag
-      //The x- and y-term sums in the derivatives of pTprobe/pTtag
-      dA_X=dAjetsX[i_probe];  dB_X=dBjetsX[i_probe];  dC_X=dCjetsX[i_probe];
-      dA_Y=dAjetsY[i_probe];  dB_Y=dBjetsY[i_probe];  dC_Y=dCjetsY[i_probe];
-
-      //Derivatives of the nominator in F factors
-      dAfTMP = (jets_f[i_probe].X()*dA_X + jets_f[i_probe].Y()*dA_Y)/
-                 (p4EM_tag.Pt()*jets_f[i_probe].Pt());
-      dBfTMP = (jets_f[i_probe].X()*dB_X + jets_f[i_probe].Y()*dB_Y)/
-                 (p4EM_tag.Pt()*jets_f[i_probe].Pt());
-      dCfTMP = (jets_f[i_probe].X()*dC_X + jets_f[i_probe].Y()*dC_Y)/
-                 (p4EM_tag.Pt()*jets_f[i_probe].Pt());
-      if (!isnan(dAfTMP)) dAf->Fill(Ep, dAfTMP, weight);
-      if (!isnan(dBfTMP)) dBf->Fill(Ep, dBfTMP, weight);
-      if (!isnan(dCfTMP)) dCf->Fill(Ep, dCfTMP, weight);
-
-      //MPF method
-      MET_r = -1.0*NIJ_r;
-      MET_f = -1.0*NIJ_f;
-      for (int i=0; i!=jets_r.size(); ++i) {
-        if (studyMode==1 && i!=i_tag) {
-          MET_r -= jets_r[i];
-          MET_f -= jets_f[i];
-        }
-      }
-      if (studyMode==1) {
-          MET_r -= jetsEM[i_tag];
-          MET_f -= jetsEM[i_tag];
-      }
-      R_MPF_r = 1.0 + MET_r.Pt()*cos(p4EM_tag.DeltaPhi(MET_r))/p4EM_tag.Pt();
-      R_MPF_f = 1.0 + MET_f.Pt()*cos(p4EM_tag.DeltaPhi(MET_f))/p4EM_tag.Pt();
-
-      //Fill MPF histograms
-      R_MPF_D0= -p4r_probe.Pt()*cos(p4EM_tag.DeltaPhi(p4r_probe))/p4EM_tag.Pt();
-      prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
-      prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
-      prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
-
-      //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
-      //                   SUCH AS MC-DATA CORRECTION FACTORS F
-      //  N.B. Results are meaningful only if A,B,C params already optimized.
-      //Loop partons to find where jets originated from
-      for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
-        //prtn_tag=0 for outgoing hard process partons
-        //Suffix "a" for "all jet flavours", needed for averaging etc.
-        if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
-          if (abs((*prtn_pdgid)[j])==5) {	//b-jets
-            prqjet->Fill(Ep, p4r_probe.Pt()/p4EM_tag.Pt(), weight); //q-jet resp
-            pRpGptr  = pRpGb;
-            pTppRptr = pTppRb;
-            Fptr     = Fb;      FptrSU   = FbSU;
-            Fptr_p   = Fb_p;    FptrSU_p = FbSU_p;
-            Fptr_r   = Fb_r;    FptrSU_r = FbSU_r;
-            Fptr_g   = Fb_g;    FptrSU_g = FbSU_g;
-            EpEptr   = EpE_b;   EpPptr= EpP_b;
-            FFb->Fill(Ep, weight);
-          } else if (abs((*prtn_pdgid)[j])<5) { //Light quark (u,d,s,c) jets
-            prqjet->Fill(Ep, p4r_probe.Pt()/p4EM_tag.Pt(), weight); //q-jet resp
-            pRpGptr  = pRpGlq;
-            pTppRptr = pTppRlq;
-            Fptr     = Flq;      FptrSU   = FlqSU;
-            Fptr_p   = Flq_p;    FptrSU_p = FlqSU_p;
-            Fptr_r   = Flq_r;    FptrSU_r = FlqSU_r;
-            Fptr_g   = Flq_g;    FptrSU_g = FlqSU_g;
-            EpEptr   = EpE_lq;   EpPptr   = EpP_lq;
-            FFlq->Fill(Ep, weight);
-          } else if ((*prtn_pdgid)[j]==21) {	//Gluon jets
-            prgjet->Fill(Ep, p4r_probe.Pt()/p4EM_tag.Pt(), weight); //g-jet resp
-            pRpGptr  = pRpGg;
-            pTppRptr = pTppRg;
-            Fptr     = Fg;      FptrSU   = FgSU;
-            Fptr_p   = Fg_p;    FptrSU_p = FgSU_p;
-            Fptr_r   = Fg_r;    FptrSU_r = FgSU_r;
-            Fptr_g   = Fg_g;    FptrSU_g = FgSU_g;
-            EpEptr   = EpE_g;   EpPptr   = EpP_g;
-            FFg->Fill(Ep, weight);
-          } else continue;			//Undetermined flavour
-          EpP->Fill(     Ep,             p4r_probe.Pt(),                weight);
-          EpPptr->Fill(  Ep,             p4r_probe.Pt(),                weight);
-          EpE->Fill(     p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
-          EpEptr->Fill(  p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
-          prF101->Fill(  Ep,             F101,                          weight);
-          prF101pT->Fill(p4g_probe.Pt(), F101,                          weight);
-          Fptr_p->Fill(  pTp,            F,                             weight);
-          Fjet_p->Fill(  pTp,            F,                             weight);
-          Fptr_r->Fill(  p4r_probe.Pt(), F,                             weight);
-          Fjet_r->Fill(  p4r_probe.Pt(), F,                             weight);
-          Fptr_g->Fill(  p4g_probe.Pt(), F,                             weight);
-          Fjet_g->Fill(  p4g_probe.Pt(), F,                             weight);
-          Fptr->Fill(    Ep,             F,                             weight);
-          Fjet->Fill(    Ep,             F,                             weight);
-          pTEp->Fill(    pTp,            p4g_probe.Pt()/pTp,            weight);
-          tEMpG->Fill(   p4r_probe.Pt(), p4g_probe.E()/p4EMDtag.Pt(),   weight);
-          FFa->Fill(     Ep,                                            weight);
-          pRpGptr->Fill( p4g_probe.Pt(), p4r_probe.Pt(),                weight);
-          pRpGa->Fill(   p4g_probe.Pt(), p4r_probe.Pt(),                weight);
-          pTppRptr->Fill(  pTp,          p4r_probe.Pt(),                weight);
-          pTppRa->Fill(  pTp,            p4r_probe.Pt(),                weight);
-          //Systematic uncertainties
-          dA_E=dAjetsE[i_probe];  dB_E=dBjetsE[i_probe];  dC_E=dCjetsE[i_probe];
+    for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
+      //prtn_tag=0 for outgoing hard process partons
+      //Suffix "a" for "all jet flavours", needed for averaging etc.
+      if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
+        if (abs((*prtn_pdgid)[j])==5) {	//b-jets
+          prqjet->Fill(Ep, p4r_probe.Pt()/p4r_tag.Pt(), weight); //q-jet resp
+          pRpGptr  = pRpGb;
+          pTppRptr = pTppRb;
+          Fptr     = Fb;      FptrSU   = FbSU;
+          Fptr_p   = Fb_p;    FptrSU_p = FbSU_p;
+          Fptr_r   = Fb_r;    FptrSU_r = FbSU_r;
+          Fptr_g   = Fb_g;    FptrSU_g = FbSU_g;
+          EpEptr   = EpE_b;   EpPptr= EpP_b;
+          FFb->Fill(Ep, weight);
+        } else if (abs((*prtn_pdgid)[j])<5) { //Light quark (u,d,s,c) jets
+          prqjet->Fill(Ep, p4r_probe.Pt()/p4r_tag.Pt(), weight); //q-jet resp
+          pRpGptr  = pRpGlq;
+          pTppRptr = pTppRlq;
+          Fptr     = Flq;      FptrSU   = FlqSU;
+          Fptr_p   = Flq_p;    FptrSU_p = FlqSU_p;
+          Fptr_r   = Flq_r;    FptrSU_r = FlqSU_r;
+          Fptr_g   = Flq_g;    FptrSU_g = FlqSU_g;
+          EpEptr   = EpE_lq;   EpPptr   = EpP_lq;
+          FFlq->Fill(Ep, weight);
+        } else if ((*prtn_pdgid)[j]==21) {	//Gluon jets
+          prgjet->Fill(Ep, p4r_probe.Pt()/p4r_tag.Pt(), weight); //g-jet resp
+          pRpGptr  = pRpGg;
+          pTppRptr = pTppRg;
+          Fptr     = Fg;      FptrSU   = FgSU;
+          Fptr_p   = Fg_p;    FptrSU_p = FgSU_p;
+          Fptr_r   = Fg_r;    FptrSU_r = FgSU_r;
+          Fptr_g   = Fg_g;    FptrSU_g = FgSU_g;
+          EpEptr   = EpE_g;   EpPptr   = EpP_g;
+          FFg->Fill(Ep, weight);
+        } else continue;			//Undetermined flavour
+        EpP->Fill(     Ep,             p4r_probe.Pt(),                weight);
+        EpPptr->Fill(  Ep,             p4r_probe.Pt(),                weight);
+        EpE->Fill(     p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
+        EpEptr->Fill(  p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
+        prF101->Fill(  Ep,             F101,                          weight);
+        prF101pT->Fill(p4g_probe.Pt(), F101,                          weight);
+        Fptr_p->Fill(  pTp,            F,                             weight);
+        Fjet_p->Fill(  pTp,            F,                             weight);
+        Fptr_r->Fill(  p4r_probe.Pt(), F,                             weight);
+        Fjet_r->Fill(  p4r_probe.Pt(), F,                             weight);
+        Fptr_g->Fill(  p4g_probe.Pt(), F,                             weight);
+        Fjet_g->Fill(  p4g_probe.Pt(), F,                             weight);
+        Fptr->Fill(    Ep,             F,                             weight);
+        Fjet->Fill(    Ep,             F,                             weight);
+        pTEp->Fill(    pTp,            p4g_probe.Pt()/pTp,            weight);
+        //tEMpG->Fill(   p4r_probe.Pt(), p4g_probe.E()/p4EMDtag.Pt(),   weight);
+        FFa->Fill(     Ep,                                            weight);
+        pRpGptr->Fill( p4g_probe.Pt(), p4r_probe.Pt(),                weight);
+        pRpGa->Fill(   p4g_probe.Pt(), p4r_probe.Pt(),                weight);
+        pTppRptr->Fill(  pTp,          p4r_probe.Pt(),                weight);
+        pTppRa->Fill(  pTp,            p4r_probe.Pt(),                weight);
+        //Systematic uncertainties
+        dA_E=dAjetsE[i_probe];  dB_E=dBjetsE[i_probe];  dC_E=dCjetsE[i_probe];
           if (!isnan(dA_E) && !isnan(dB_E) && !isnan(dC_E)) {
-            //sigma = sqrt( (H^{-1})^{ij} (\partial_i F) (\partial_j F))
-            FSU = sqrt( pow(GetAer()*dA_E,2)
-                       +pow(GetBer()*dB_E,2)
-                       +pow(GetCer()*dC_E,2)
-                       +2*GetABer()*dA_E*dB_E //Covar. matrix is symmetric => 2*
-                       +2*GetACer()*dA_E*dC_E
-                       +2*GetBCer()*dB_E*dC_E )/p4r_probe.E()*F101;
-            FptrSU->Fill(  Ep,                                     FSU, weight);
-            FjetSU->Fill(  Ep,                                     FSU, weight);
-            FptrSU_p->Fill(pTp,                                    FSU, weight);
-            FjetSU_p->Fill(pTp,                                    FSU, weight);
-            FptrSU_r->Fill(p4r_probe.Pt(),                         FSU, weight);
-            FjetSU_r->Fill(p4r_probe.Pt(),                         FSU, weight);
-            FptrSU_g->Fill(p4g_probe.Pt(),                         FSU, weight);
-            FjetSU_g->Fill(p4g_probe.Pt(),                         FSU, weight);
-          }
-          continue;	//Only one flavour may be associated with a jet
+          //sigma = sqrt( (H^{-1})^{ij} (\partial_i F) (\partial_j F))
+          FSU = sqrt( pow(GetAer()*dA_E,2)
+                     +pow(GetBer()*dB_E,2)
+                     +pow(GetCer()*dC_E,2)
+                     +2*GetABer()*dA_E*dB_E //Covar. matrix is symmetric => 2*
+                     +2*GetACer()*dA_E*dC_E
+                     +2*GetBCer()*dB_E*dC_E )/p4r_probe.E()*F101;
+          FptrSU->Fill(  Ep,                                     FSU, weight);
+          FjetSU->Fill(  Ep,                                     FSU, weight);
+          FptrSU_p->Fill(pTp,                                    FSU, weight);
+          FjetSU_p->Fill(pTp,                                    FSU, weight);
+          FptrSU_r->Fill(p4r_probe.Pt(),                         FSU, weight);
+          FjetSU_r->Fill(p4r_probe.Pt(),                         FSU, weight);
+          FptrSU_g->Fill(p4g_probe.Pt(),                         FSU, weight);
+          FjetSU_g->Fill(p4g_probe.Pt(),                         FSU, weight);
         }
-      } //Loop partons
-
-    } //Fill repeat loop
+        continue;	//Only one flavour may be associated with a jet
+      }
+    } //Loop partons
 
     //If the old list of cut events is not read, a new one is written
     if (!GetuseEarlierCuts()) passedCuts[jentry]=true;
@@ -1361,6 +1351,8 @@ void CMSJES::Loop()
   delete fr_mu;      delete fr_e;       delete fr_gam;     delete fr_h;
 
 } //CMSJES::Loop
+
+
 //-----------------------------------------------------------------------------
 //A function to find an average correction factor from gen jet (as output by
 //FastJet) level to MC-recontructed level.
