@@ -279,6 +279,7 @@ void CMSJES::Loop()
   double Ep   = 0;		//Jet energy estimator E' = pTtag*cosh(eta_gen)
   double pTp  = 0;		//pT' = E'/cosh(eta_det)
   double eta_gamma = 1.0;	//Max |eta| for photon in gamma+jet (ALT 1.0)
+  double eta_muon  = 1.0;
   double eta_tag   = 0.4;	//Max |eta| for tag jet in dijet
   double eta_probe = 0.4;	//Max |eta| for probe jets
   vector<double> f_05;		//Fraction of jets' E w/in R<0.5 from jet axis
@@ -312,7 +313,8 @@ void CMSJES::Loop()
   double pTmin_probe = 6;	//Minimum probe jet p_T (GeV)
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
   double pTmin_gamma = 7;	//Minimum tag gamma p_T (GeV) (Meas. 7 GeV)
-  double pTmin_muon = 0;        //Minimum tag single muon pT (GeV)    
+  double pTmin_muon = 0;        //Minimum single tag muon pT (GeV)
+  double pTmin_muon_tag = 0;    //Minimum tag muon pair pT (GeV)   
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
   bool   repeat = false;	//Repeat event for changing probe in dijet
   vector<double> resp   = {1.0,1.0};	//SPR value                (dummy init)
@@ -588,7 +590,7 @@ void CMSJES::Loop()
       if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
 
 
-      //1st muon*****
+      //***** 1st muon *****
       //Parton level first tag muon:
       tag.SetPtEtaPhiE((*prtn_pt)[i_tag1], (*prtn_eta)[i_tag1],
                        (*prtn_phi)[i_tag1],(*prtn_e)[i_tag1]);
@@ -603,7 +605,7 @@ void CMSJES::Loop()
       p4r_tag  = tag*resp[0];	//MC lvl
 
 
-      //2nd muon******
+      //***** 2nd muon ******
       tag.SetPtEtaPhiE((*prtn_pt)[i_tag2], (*prtn_eta)[i_tag2],
                        (*prtn_phi)[i_tag2],(*prtn_e)[i_tag2]);
 
@@ -614,7 +616,6 @@ void CMSJES::Loop()
 
       p4g_tag  += tag;		//gen lvl
       p4r_tag  += tag*resp[0];	//MC lvl
-
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
@@ -796,6 +797,58 @@ void CMSJES::Loop()
           p4r_probe.Pt()        < pTmin_probe   ) continue;
 
     }
+
+    /************************* Z+JET: FIND PROBE *************************/
+
+    if (studyMode == 3) {
+
+      if (Getverbose()) cout << "Entering Z+JET: FIND PROBE" << endl;
+
+      switch (jets_r.size()) {
+        case 0 : continue;      //No jets
+        case 1 :		//Take the only jet as a probe 
+          i_probe = 0;
+          break;
+        default :		//One excess high-pT jet OK if confused w/ tag
+
+          //if more than two high energy jets
+          //if (jets_r.size()>2 && jets_r[2].Pt()>pTmin_probe) continue;
+          i_probe = 0;
+      }
+
+      p4.SetPtEtaPhiE(0,0,0,0);	//Reinit
+      //Set probe 4-vectors. EM reco'd probe is useless in Z+jet
+
+      //Gen lvl as output by FastJet
+      probe.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
+			 (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
+      //Gen lvl for particles that reach D0 detector volume
+      p4g_probe.SetPtEtaPhiE(jets_g[i_probe].Pt(),  jets_g[i_probe].Eta(),
+			     jets_g[i_probe].Phi(), jets_g[i_probe].E()  );
+      //MC SPR reco
+      p4r_probe.SetPtEtaPhiE(jets_r[i_probe].Pt(),  jets_r[i_probe].Eta(),
+			     jets_r[i_probe].Phi(), jets_r[i_probe].E()  );
+      //Data reco
+      p4f_probe.SetPtEtaPhiE(jets_f[i_probe].Pt(),  jets_f[i_probe].Eta(),
+			     jets_f[i_probe].Phi(), jets_f[i_probe].E()  );
+
+      //Assertions:
+      //-sufficiently little jet E left in coarse HCAL
+      if (f_CH[i_probe] > f_CHjetMax) continue;
+      //-probe E left in EMCAL is in the correct energy window
+      if (f_EM[i_probe] < f_EMjetMin || f_EM[i_probe] > f_EMjetMax) continue;
+      //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
+      if ((p4r_probe.Pt()<softPt && f_05[i_probe]<f_05jetMinS) ||
+          f_05[i_probe] < f_05jetMin                             ) continue;
+      //-tag and probe in the right |eta| region with enough p_T
+      if (fabs(p4r_tag.Eta())  > eta_muon       ||
+          p4r_tag.Pt()         < pTmin_muon_tag ||
+          fabs(p4r_probe.Eta()) > eta_probe     ||
+          p4r_probe.Pt()        < pTmin_probe   ) continue;
+
+    }// Z+JET: FIND PROBE
+
+
 
     /*********************** EM+JET: FIND TAG AND PROBE ***********************/
 
