@@ -312,6 +312,7 @@ void CMSJES::Loop()
   double pTmin_probe = 6;	//Minimum probe jet p_T (GeV)
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
   double pTmin_gamma = 7;	//Minimum tag gamma p_T (GeV) (Meas. 7 GeV)
+  double pTmin_muon = 0;        //Minimum tag single muon pT (GeV)    
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
   bool   repeat = false;	//Repeat event for changing probe in dijet
   vector<double> resp   = {1.0,1.0};	//SPR value                (dummy init)
@@ -349,10 +350,14 @@ void CMSJES::Loop()
     hTitles.push_back("#font[132]{EM+jet probe particle content (gen)}");
     hTitles.push_back("#font[132]{EM+jet probe particle content (MC SPR)}");
     hTitles.push_back("#font[132]{EM+jet probe particle content (Fit)}");
-  } else {
+  } else if (studyMode==2) {
     hTitles.push_back("#font[132]{#gamma+jet probe particle content (gen)}");
     hTitles.push_back("#font[132]{#gamma+jet probe particle content (MC SPR)}");
     hTitles.push_back("#font[132]{#gamma+jet probe particle content (Fit)}");
+  } else {
+    hTitles.push_back("#font[132]{Z+jet probe particle content (gen)}");
+    hTitles.push_back("#font[132]{Z+jet probe particle content (MC SPR)}");
+    hTitles.push_back("#font[132]{Z+jet probe particle content (Fit)}");
   }
   if (ReadName.find("b-enriched")!=string::npos) {
     hTitles[0] += " #font[132]{(}#font[12]{b}#font[132]{-enr.)}";
@@ -471,10 +476,11 @@ void CMSJES::Loop()
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
 
     //Print progress for long runs
-    if ((GetprintProg() && jentry % 10000==0) || Getverbose()) {
+    if ((GetprintProg() && jentry % 1000==0) || Getverbose()) {
       cout << "Looping event " << jentry;
       if      (studyMode==1) cout << " in EM+jet";
       else if (studyMode==2) cout << " in gamma+jet";
+      else if (studyMode==3) cout << " in Z+jet";
       if (ReadName.find("b-enriched")!=string::npos) cout << " b-enr.";
       cout << endl;
     }
@@ -542,6 +548,7 @@ void CMSJES::Loop()
             (*prtn_pdgid)[a] == gPDG &&
             (*prtn_pt)[a]    >  prtnPt ) {prtnPt=(*prtn_pt)[a];  i_tag=a;}
       }
+
       if (i_tag == -137) continue;	//No leading photon found
       //Parton level single photon tag:
       tag.SetPtEtaPhiE((*prtn_pt)[i_tag], (*prtn_eta)[i_tag],
@@ -549,6 +556,7 @@ void CMSJES::Loop()
 
       //Fast gen lvl cuts, more strict reco lvl cuts below
       if (fabs(tag.Eta())>eta_gamma || tag.Pt()<pTmin_gamma) continue;
+      // PDG index not gamma? Probably since EM reconstruction only activated
       Response(PDG,tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                1, 0, 1,  false, false, true,  resp, resp_f, respEM       );
       p4g_tag  = tag;
@@ -557,6 +565,56 @@ void CMSJES::Loop()
       p4r_tag  = tag*respEM[0];
       p4f_tag  = tag*respEM[(GetrunIIb() ? 1:0)];
       
+    }
+
+    /**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************/
+    // Find how many muons in the events
+
+    int muPDG=13;  int muTAG=3; //mu PDGID and tag 
+    if (studyMode == 3) {
+
+      int i_tag1 = -137;	// These values won't change if 
+      int i_tag2 = -731;	// muons not found
+      for (int a=0; a!= prtn_tag->size(); ++a) {
+        // Find muons with tag == 3 and store those in i_tag1 and i_tag2
+        if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
+          if (i_tag1 == -137) i_tag1 = a;
+          else if (i_tag2 == -731) i_tag2 = a;
+          else {cout << "More than two muons with tag 3 in an event." << endl;
+                continue;}
+        }
+      }
+
+      if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
+
+
+      //1st muon*****
+      //Parton level first tag muon:
+      tag.SetPtEtaPhiE((*prtn_pt)[i_tag1], (*prtn_eta)[i_tag1],
+                       (*prtn_phi)[i_tag1],(*prtn_e)[i_tag1]);
+
+      //Fast gen lvl cuts, more strict reco lvl cuts below
+      if (fabs(tag.Eta())>eta_gamma || tag.Pt()<pTmin_muon) continue;
+
+      Response((*prtn_pdgid)[i_tag1],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
+               1, 0, 1, true, false, false, resp, resp_f, respEM       );
+
+      p4g_tag  = tag;		//gen lvl
+      p4r_tag  = tag*resp[0];	//MC lvl
+
+
+      //2nd muon******
+      tag.SetPtEtaPhiE((*prtn_pt)[i_tag2], (*prtn_eta)[i_tag2],
+                       (*prtn_phi)[i_tag2],(*prtn_e)[i_tag2]);
+
+      if (fabs(tag.Eta())>eta_gamma || tag.Pt()<pTmin_muon) continue;
+
+      Response((*prtn_pdgid)[i_tag2],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
+               1, 0, 1, true, false, false,  resp, resp_f, respEM       );
+
+      p4g_tag  += tag;		//gen lvl
+      p4r_tag  += tag*resp[0];	//MC lvl
+
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
