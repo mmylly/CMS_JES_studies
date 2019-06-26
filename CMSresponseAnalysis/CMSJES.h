@@ -373,7 +373,7 @@ public :
                   int rad=0,int ct=-1,int Nevt=0,int run=0,int P=0,int XS=0);
   void   FFplot();
   void   plotQuery(string& respStr, string& djstr,  string& gjstr,
-                                    string& djstrb, string& gjstrb,
+                    string& zjstr, string& djstrb, string& gjstrb,
                    int& gen,  int& alg,  int& rad,  int& ct,
                    int& Nevt, int& run,  int& P,    int& XS        );
   bool   fidCuts(int id, double pT);
@@ -437,8 +437,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     else {
       //Add here all the files one should be able to study
       vector<string> files;	//To contain studiable filenames
-      files.push_back("P8_Zjet_1000" );
-      files.push_back("P8_Zjet_10000");
+      files.push_back("P8_Zjet_1000"  );
+      files.push_back("P8_Zjet_10000" );
+      files.push_back("P8_Zjet_100000");
+      files.push_back("P6_gammajet_D0rIIc_R05_ct10mm_30000");
 
       //User interface
       printf("No filename given, choose file (y = default file):\n");

@@ -4,3 +4,9 @@
 *.cmnd
 *.eps
 *.bin
+plots/pT-bal/P*
+plots/pT-bal/our_MC_D0_param/OMCD0P*
+*/plots/pT-bal/P8_Zjet
+*/plots/pT-bal/our_MC_D0_param/OMCD0P_P8_Zjet
+*.save
+*.swp

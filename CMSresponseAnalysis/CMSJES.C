@@ -177,7 +177,7 @@ void CMSJES::Loop()
   string pTEpStr = ";#font[132]{#font[12]{E'} [GeV]};";
   pTEpStr       += "#font[132]{#font[12]{p}_{T,probe}^{gen}/#font[12]{E'}}"; 
   TProfile* pTEp = new TProfile("pTEp", pTEpStr.c_str(), 17, 30, 200);
-  TProfile* tEMpG=new TProfile("tEMpG",
+  TProfile* tEMpG= new TProfile("tEMpG",
             ";p_{T,probe}^{MC} [GeV];p_{T,tag}^{EM(default)}/p_{T,probe}^{gen}",
                                                                     nF,FL,FH);
   string EpPstr=";#font[132]{#font[12]{p}_{T,probe}^{MC} [GeV]};#font[12]{E'}";
@@ -663,7 +663,7 @@ void CMSJES::Loop()
       // may produce monstrous jets even with R=0.5)
       p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI],	//Gen jet 4-vec
                        (*jet_phi)[JI],(*jet_e)[JI]  );
-      if (p4.DeltaR(p4j)<0.5) { // Should this be changed to 0.4 as in CMS?
+      if (p4.DeltaR(p4j)<0.4) { // Should this be 0.4??
         f_05[JI] += resp[0]*p4.E();
       }
 
@@ -1056,6 +1056,8 @@ void CMSJES::Loop()
     //Data<->MC & MC'<->MC factors
     F    = Fnum[i_probe]/Fden[i_probe];
     F101 = Fnum101[i_probe]/Fden[i_probe];
+
+    //cout << Ep << " " << p4r_probe.Pt()/p4r_tag.Pt() << " " << weight << endl;
 
     //Add the new values to TProfile histograms:
     //p_T balance method
@@ -2054,6 +2056,7 @@ void CMSJES::Plot2D()
   fout->Write();	//Save output
   fout->Close();	//Close file
 } //Plot2D
+
 //-----------------------------------------------------------------------------
 //A function to combine several response function plots stored as TProfiles
 //in "CMSJES_X.root" files.
@@ -2061,8 +2064,8 @@ void CMSJES::Plot2D()
 void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
                    int P,   int XS,   bool MConly,    bool fitOnly      )
 {
-  bool plotOurMC  = false;
-  bool plotD0MC   = false;
+  bool plotOurMC  = true;
+  bool plotD0MC   = true;
   bool plotD0data = true;
   bool plotFit    = true;
   bool OMCD0P     = false;	//Is this a "Our MC w/ D0 param." plot?
@@ -2073,87 +2076,48 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
   plotD0data=(fitOnly?true :plotD0data);  plotFit =(fitOnly?true :plotFit );
 
   //Choose filenames to open
-  string nameAdd, dijetFile, gammajetFile, djdummy, gjdummy;
-  plotQuery(nameAdd, dijetFile, gammajetFile, djdummy, gjdummy,
+  string nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy;
+  plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy,
             gen, alg, rad, ct, Nevt, run, P, XS                );
 
   //Initialize histograms and open ROOT files and fetch the stored objects
-  //  TH1 params: name, title, #bins, #lowlimit, #highlimit
-  TFile* fdj = TFile::Open(dijetFile.c_str());
-  TFile* fgj = TFile::Open(gammajetFile.c_str());
-  TProfile* prdj=0;      TProfile* prdj_f=0;
-  TProfile* prgj=0;      TProfile* prgj_f=0;	//p_T balance method response
+  TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
 
-  /* 1: dijet */
-  fdj->GetObject("prEp",prdj);		//Dijet response
-  //fdj->GetObject("prE",prdj);
-  fdj->GetObject("prEpFit0",prdj_f);	//Dijet fit to data
-  TH1D* hdj = prdj->ProjectionX();
-  TH1D* hdj_f = prdj_f->ProjectionX();
+  TProfile* przj=0;      TProfile* przj_f=0;
 
-  /* 2: gamma+jet */
-  fgj->GetObject("prEp",prgj);	//Gamma+jet response
-  //fgj->GetObject("prE",prgj);
-  fgj->GetObject("prEpFit0",prgj_f);	//Gamma+jet fit to data
-  TH1D* hgj   = prgj->ProjectionX();
-  TH1D* hgj_f = prgj_f->ProjectionX();
+  /* Z+jet */
+  fzj->GetObject("prEp",przj);		//Z+jet response
+  fzj->GetObject("prEpFit0",przj_f);	//Z+jet fit to data
+  TH1D* hzj   = przj->ProjectionX();
+  TH1D* hzj_f = przj_f->ProjectionX();
 
-  //For plotting ratio R_{gamma+jet} / R_{dijet}
-  TH1D* rp   = (TH1D*)hgj->Clone("rp");
-  TH1D* rp_f = (TH1D*)hgj_f->Clone("rp_f");
-
-  //D0 data points
-  TGraphErrors* ddj = new TGraphErrors();	//dijet data
+  //D0 data points for gamma
   TGraphErrors* dgj = new TGraphErrors();	//gamma+jet data
-  TGraph* mc_dj = new TGraph();			//dijet MC
   TGraph* mc_gj = new TGraph();			//gamma+jet MC
+
+
   //Filled circle (4 hollow circle); 1 black, 2 red, 4 blue, 3/8 green
-  ddj->SetMarkerStyle(  8           );  ddj->SetMarkerColor(  kBlack  );
   dgj->SetMarkerStyle(  8           );  dgj->SetMarkerColor(  kGreen+2);
-  mc_dj->SetMarkerStyle(4           );  mc_dj->SetMarkerColor(kBlack  );
   mc_gj->SetMarkerStyle(4           );  mc_gj->SetMarkerColor(kGreen+2);
-  hdj->SetLineColor(    kBlack      );  hgj->SetLineColor(    kGreen+2);
-  hdj_f->SetMarkerStyle(kFullDiamond);  hdj_f->SetMarkerColor(kGray+1 );
-  hgj_f->SetMarkerStyle(kFullDiamond);  hgj_f->SetMarkerColor(kGreen-6);
+
+  hzj->SetLineColor(    kGreen+2);
+  hzj_f->SetMarkerStyle(kFullDiamond);  
+  hzj_f->SetMarkerColor(kGreen-6);
+
+
 
   //D0 pT-balance data points and errors
   int i_ep = 0;	//Epoch index, 0 for run IIa
-  if      (nameAdd.find("RunIIb1" )!=string::npos) i_ep = 1; 
-  else if (nameAdd.find("RunIIb2" )!=string::npos) i_ep = 2; 
-  else if (nameAdd.find("RunIIb34")!=string::npos) i_ep = 3; 
   for (int i=0; i!=nD0data; ++i) {	//D0 pT-bal data
-    ddj->SetPoint(     i, djEpII[i_ep][i], djD0II[i_ep][i]);
-    ddj->SetPointError(i,               0, djERII[i_ep][i]);
     dgj->SetPoint(     i, gjEpII[i_ep][i], gjD0II[i_ep][i]);
     dgj->SetPointError(i,               0, gjERII[i_ep][i]);
   }
   for (int i=0; i!=nD0MC; ++i) {	//D0 pT-bal. MC
-    mc_dj->SetPoint(i, djMCEpII[i_ep][i], djD0MCII[i_ep][i]);
     mc_gj->SetPoint(i, gjMCEpII[i_ep][i], gjD0MCII[i_ep][i]);  
   }
 
   //Savefile name setup
-  string savename;
-  if      (dijetFile.find("P6")!=string::npos) savename+= "P6_";
-  else if (dijetFile.find("H7")!=string::npos) savename+= "H7_";
-  string hdjtitle = hdj->GetTitle();
-  if (hdjtitle.find("D#oslash cone")!=string::npos) savename += "D0rIIc_";
-  else                                              savename += "a-kT_";
-  if      (hdjtitle.find("=0.7")!=string::npos) savename += "R07";
-  else if (hdjtitle.find("=0.5")!=string::npos) savename += "R05";
-  if      (hdjtitle.find("RunIIa"  )!=string::npos) savename += "_RunIIa";
-  else if (hdjtitle.find("RunIIb1" )!=string::npos) savename += "_RunIIb1";
-  else if (hdjtitle.find("RunIIb2" )!=string::npos) savename += "_RunIIb2";
-  else if (hdjtitle.find("RunIIb34")!=string::npos) savename += "_RunIIb34";
-  if      (hdjtitle.find("P20ToP17")!=string::npos) savename += "-P20ToP17";
-  else if (hdjtitle.find("ZS")!=string::npos) savename+="_ZS";
-  if (hdjtitle.find("no #Xi, #Sigma")!=string::npos) savename+="_noStrangeB";
-  if      (hdjtitle.find("0.3 cm")!=string::npos) savename+="_ct3mm";
-  else if (hdjtitle.find("1 cm")  !=string::npos) savename+="_ct10mm";
-  else if (hdjtitle.find("2.5 cm")!=string::npos) savename+="_ct25mm";
-  else if (hdjtitle.find("5 cm")  !=string::npos) savename+="_ct50mm";
-  else if (hdjtitle.find("10 cm") !=string::npos) savename+="_ct100mm";
-  savename+=".eps";
+  string savename = "P8_Zjet";
 
   //Canvas and dividing it into pads.
   //TPad: name,title,xlow,ylow,xup,yup,color
@@ -2166,20 +2130,17 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
   pad1->SetBottomMargin(0.115);
   pad1->cd();			//Go to pad1
   pad1->SetLogx();		//Logarithmic horizontal axis
-  hdj->GetXaxis()->SetRangeUser(10,1000);
-  hgj->GetXaxis()->SetRangeUser(10,1000);
+  hzj->GetXaxis()->SetRangeUser(10,1000);
 
   //Suppress stat boxes
-  hdj->SetStats(0);  hgj->SetStats(0);  rp->SetStats(0);  rp_f->SetStats(0);
+  hzj->SetStats(0);
 
   //Axis setup. New dummy TH1 for easy usage in multiple plots
-  TH1D* setup = new TH1D("setup",""/*hdj->GetTitle()*/,
-                                 hdj->GetXaxis()->GetNbins(),
-			         hdj->GetXaxis()->GetXmin(),
-                                 hdj->GetXaxis()->GetXmax());
+  TH1D* setup = new TH1D("setup",""/*hdj->GetTitle()*/, hzj->GetXaxis()->GetNbins(),
+			 hzj->GetXaxis()->GetXmin(),    hzj->GetXaxis()->GetXmax());
   setup->SetStats(0);				//Suppress stat box
-  setup->GetXaxis()->SetTitle(hdj->GetXaxis()->GetTitle());
-  setup->GetYaxis()->SetTitle(hdj->GetYaxis()->GetTitle());
+  setup->GetXaxis()->SetTitle(hzj->GetXaxis()->GetTitle());
+  setup->GetYaxis()->SetTitle(hzj->GetYaxis()->GetTitle());
   setup->SetAxisRange(0.55,0.9,"Y");		//Vertical axis limits
   setup->GetYaxis()->SetTitleFont(133);
   int titleSize = 18;				//Common title size everywhere
@@ -2192,9 +2153,9 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
   setup->GetYaxis()->SetTitleOffset(0.9);
   
   //Separate legends for dijet and gamma+jet
-  double ld_horiz[2] = {       0.43, 0.67};
-  double lg_horiz[2] = {ld_horiz[1], 0.89};
-  double vertical[2] = {       0.13, 0.37};
+  //double ld_horiz[2] = {       0.43, 0.67};
+  double lz_horiz[2] = {0.67, 0.89};
+  double vertical[2] = {0.13, 0.37};
   if (MConly || fitOnly) vertical[1] -= 0.12;
   else {
     if (!plotD0MC  ) vertical[1] -= 0.06;  //Resize legends so that...
@@ -2202,36 +2163,30 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
     if (!plotD0data) vertical[0] += 0.06;  //...with all combinations ...
     if (!plotFit   ) vertical[0] += 0.06;  //...of plot flags
   }
-  if (OMCD0P && plotFit) {ld_horiz[0] -= 0.09;  ld_horiz[1] -= 0.02;
-                          lg_horiz[0] -= 0.05;  lg_horiz[1] += 0.02;}
-  TLegend* ld = new TLegend(ld_horiz[0],vertical[0],ld_horiz[1],vertical[1]);
-  TLegend* lg = new TLegend(lg_horiz[0],vertical[0],lg_horiz[1],vertical[1]);
-  ld->SetBorderSize(0);  lg->SetBorderSize(0);	//No box around legend
-  ld->SetFillStyle( 0);  lg->SetFillStyle( 0);	//No background fill
-  if (plotD0MC  ) ld->AddEntry(mc_dj,"#font[132]{D#oslash EM+jet MC}",     "p");
-  if (plotOurMC ) ld->AddEntry(hdj,  "#font[132]{Our EM+jet MC}",          "l");
-  if (plotD0data) ld->AddEntry(ddj,"#font[132]{D#oslash EM+jet data}", "p");
+  if (OMCD0P && plotFit) { lz_horiz[0] -= 0.05;  lz_horiz[1] += 0.02;}
+  TLegend* lz = new TLegend(lz_horiz[0],vertical[0],lz_horiz[1],vertical[1]);
+  lz->SetBorderSize(0);	//No box around legend
+  lz->SetFillStyle( 0);	//No background fill
+
+  if (plotD0MC  ) lz->AddEntry(mc_gj,"#font[132]{D#oslash #gamma+jet MC}", "p");
+  if (plotOurMC ) lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}",      "l");
+  if (plotD0data) lz->AddEntry(dgj, "#font[132]{D#oslash #gamma+jet data}","p");
   if (plotFit   ) {
-    if (OMCD0P)   ld->AddEntry(hdj_f,
-                                  "#font[132]{Our EM+jet, D#oslash A,B,C}","p");
-    else          ld->AddEntry(hdj_f,"#font[132]{Our EM+jet data fit}",    "p");
+    if (OMCD0P)   lz->AddEntry(hzj_f, "#font[132]{Our #gamma+jet, D#oslash A,B,C}","p");
+    else          lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
   }
-  if (plotD0MC  ) lg->AddEntry(mc_gj,"#font[132]{D#oslash #gamma+jet MC}", "p");
-  if (plotOurMC ) lg->AddEntry(hgj,  "#font[132]{Our #gamma+jet MC}",      "l");
-  if (plotD0data) lg->AddEntry(dgj,
-                               "#font[132]{D#oslash #gamma+jet data}","p");
-  if (plotFit   ) {
-    if (OMCD0P)   lg->AddEntry(hgj_f,
-                              "#font[132]{Our #gamma+jet, D#oslash A,B,C}","p");
-    else          lg->AddEntry(hgj_f,"#font[132]{Our #gamma+jet data fit}","p");
-  }
+
+
   //Main plot
   setup->Draw();
-  if (plotOurMC ) {hdj->Draw(  "SAME"       );  hgj->Draw(  "SAME"       );}
-  if (plotD0data) {ddj->Draw(  "P"          );  dgj->Draw(  "P SAME"     );}
-  if (plotFit   ) {hdj_f->Draw("HIST P SAME");  hgj_f->Draw("HIST P SAME");}
-  if (plotD0MC  ) {mc_dj->Draw("P SAME"     );  mc_gj->Draw("P SAME"     );}
-  lg->Draw();  ld->Draw();	//Legends
+  if (plotOurMC ) {hzj->Draw(  "SAME"       );}
+  if (plotD0data) {dgj->Draw(  "P SAME"     );}
+  if (plotFit   ) {hzj_f->Draw("HIST P SAME");}
+  if (plotD0MC  ) {mc_gj->Draw("P SAME"     );}
+  lz->Draw();	//Legends
+
+
+
 
   //Save plot
   string saveTo = "./plots/pT-bal/";
@@ -2240,16 +2195,16 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
   canv->Print(saveTo.c_str());
 
   //Free memory
-  delete setup;  delete ld;   delete lg;     delete pad1;   delete canv;
-  delete ddj;    delete dgj;  delete mc_dj;  delete mc_gj;
+  delete setup;  delete lz;   delete pad1;   delete canv;
+  delete dgj;  delete mc_gj;
 
 } //plotPT
 //-----------------------------------------------------------------------------
 //A handle for drawing "MC only" and "Fit+data only" pT-bal. plots at once
 void CMSJES::plotSepPT() {
   int gen=0, alg=0, rad=0, ct=-1, Nevt=0, run=0, P=0, XS=0;
-  string nameDum, djdummy1, gjdummy1, djdummy2, gjdummy2;
-  plotQuery(nameDum, djdummy1, gjdummy1, djdummy2, gjdummy2,
+  string nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2;
+  plotQuery(nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2,
             gen, alg, rad, ct, Nevt, run, P, XS             );
   plotPT(gen, alg, rad, ct, Nevt, run, P, XS, true,  false);
   plotPT(gen, alg, rad, ct, Nevt, run, P, XS, false, true );
@@ -2260,8 +2215,8 @@ void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
                     int Nevt, int run, int P,   int XS )
 {
   //Choose filenames to open
-  string nameAdd, dijetFile, gammajetFile, djdummy, gjdummy;
-  plotQuery(nameAdd, dijetFile, gammajetFile, djdummy, gjdummy,
+  string nameAdd, dijetFile, gammajetFile, djdummy, gjdummy , zjdummy;
+  plotQuery(nameAdd, dijetFile, gammajetFile, djdummy, gjdummy, zjdummy,
             gen, alg, rad, ct, Nevt, run, P, XS                     );
 
   //Initialize histograms and open ROOT files and fetch the stored objects
@@ -3219,8 +3174,8 @@ void CMSJES::PrintEvt()
 //		gen,alg,rad,...
 //		ct,run,P,XS	Preset values if user interface omitted
 //N.B. only the interesting cases are enabled in this function ATM
-void CMSJES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
-                                       string& djstrb, string& gjstrb,
+void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
+                       string& zjstr, string& djstrb, string& gjstrb,
                       int& gen,  int& alg, int& rad, int& ct, 
                       int& Nevt, int& run, int& P,   int& XS          )
 {
@@ -3232,17 +3187,18 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
 
   /* User interface */
   //Choose generator
-  cout << "Which generator to use? (1) P6 (2) H7" << endl;
-  while (gen<1 || gen>2) cin >> gen;
-  respStr += (gen==1 ? "P6_": (gen==2 ? "H7_" : ""));
+  cout << "Which generator to use? (1) P6 (2) H7 (3) P8" << endl;
+  while (gen<1 || gen>3) cin >> gen;
+  respStr += (gen==3 ? "P8_": (gen==1 ? "P6_": (gen==2 ? "H7_" : "")));
+
   //Choose jet algorithm
   cout << "Choose jet algorithm\n1: D0 runII cone\n2: Anti-kT" << endl;
   while (alg!=1 && alg!=2) cin >> alg;
   properties += (alg==1 ? "D0rIIc_" : "a-kT_");
   //Choose cone radius
-  cout << "Choose cone radius (1) 0.5 (2) 0.7" << endl;
+  cout << "Choose cone radius (1) 0.5 (2) 0.4" << endl;
   while (rad<1 || rad>2) cin >> rad;
-  properties += (rad==1 ? "R05_": (rad==2 ? "R07_" : ""));
+  properties += (rad==1 ? "R05_": (rad==2 ? "R04_" : ""));
   //Choose showering lengthscale ctau (Choose 0 if setting not available)
   cout<<"ctau: (0) N/A (1) 0.3 cm, (2) 1 cm, (3) 2.5 cm, (4) 5 cm or (5) 10 cm?"
       <<endl;
@@ -3254,12 +3210,12 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
   else if (ct == 5) properties += "ct100mm_";
 
   //Set #events
-  string num   = "1000000";	//Default #events
+  string num   = "100000";	//Default #events
   //string num_b = "100000";	//0.1M #events in b-enriched sample
-  string num_b = "1000000";	//1M #events in b-enriched sample
-  cout << "#Events (1) 1M (2) 30k" << endl;
+  string num_b = "1000";	//1M #events in b-enriched sample
+  cout << "#Events (1) 100k (2) 10k" << endl;
   while (Nevt<1 || Nevt>2) cin >> Nevt;
-  if (Nevt==2) num = "30000";  
+  if (Nevt==2) num = "10000";  
 
   //Choose run
   cout << "Choose run II epoch (1) IIa (2) IIb1 (3) IIb2 (4) IIb3-4" << endl;
@@ -3278,9 +3234,11 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr,  string& gjstr,
   cout << "Use strange particle Ansätze? (1) yes (2) no" << endl;  
   while (XS<1 || XS>2) cin >> XS;
   if (XS==2) runStr += "_noStrangeB";
+
   //Construct all-flavor filenames
   djstr = respStr + "dijet_"    + properties + num + runStr + root;
   gjstr = respStr + "gammajet_" + properties + num + runStr + root;
+  zjstr = respStr + "Zjet_" + num + root;
   //b-jet enriched filenames. ATM there are only 100k event sets of these
   djstrb = respStr +"dijet_"    + properties+"b-enriched_"+num_b+runStr+root;
   gjstrb = respStr +"gammajet_" + properties+"b-enriched_"+num_b+runStr+root;
@@ -3314,8 +3272,8 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   int gray  = kGray+1;  int lred = 46;  int lblue = 33;	//Light shades
 
   //Choose filenames to open
-  string nameAdd, in_d, in_g, in_d_b, in_g_b;
-  plotQuery(nameAdd, in_d, in_g, in_d_b, in_g_b,gen,alg,rad,ct,Nevt,run,P,XS);
+  string nameAdd, in_d, in_g, in_z, in_d_b, in_g_b;
+  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b,gen,alg,rad,ct,Nevt,run,P,XS);
 
   //Check which generator was used for producing the files asked for
   string genStr="";
