@@ -154,16 +154,16 @@ public :
   //  1st index: |eta| region. 32 entries for this index
   //  2nd index: the parameters p^(i)_{particle type} in the SPR functions
   //             3rd index has 3 entries unless otherwise stated
-  vector<vector<vector<double>>> params_e;	//electron //3rd index 5 entries
-  vector<vector<vector<double>>> params_K;	//Kaon
-  vector<vector<vector<double>>> params_KL;	//Kaon_long
-  vector<vector<vector<double>>> params_KS;	//Kaon_short
-  vector<vector<vector<double>>> params_L;	//Lambda
-  vector<vector<vector<double>>> params_mu;	//muon //3rd index 4 entries
-  vector<vector<vector<double>>> params_n;	//neutron
-  vector<vector<vector<double>>> params_gam;	//photon //3rd index 6 entries
-  vector<vector<vector<double>>> params_pi;	//pion
-  vector<vector<vector<double>>> params_p;	//proton
+  vector<vector<double>> params_e;	//electron //3rd index 5 entries
+  vector<vector<double>> params_K;	//Kaon
+  vector<vector<double>> params_KL;	//Kaon_long
+  vector<vector<double>> params_KS;	//Kaon_short
+  vector<vector<double>> params_L;	//Lambda
+  vector<vector<double>> params_mu;	//muon //3rd index 4 entries
+  vector<vector<double>> params_n;	//neutron
+  vector<vector<double>> params_gam;	//photon //3rd index 6 entries
+  vector<vector<double>> params_pi;	//pion
+  vector<vector<double>> params_p;	//proton
 
   //For storing D0 dijet / EM+jet data points and errors
   static int const nD0data = 10;	//#Data points available from D0
@@ -353,10 +353,10 @@ public :
   void   Response(int id, double pseudorap, double energy,   double pT,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
-                  vector<double>& retMC, vector<double>& retFIT,
-                  vector<double>& retEM                                       );
-  void   ParamReader(string file, int n1, int n2, int n3,
-                     vector<vector<vector<double>>> &params);
+                  double& retMC, double& retFIT,
+                  double& retEM                                       );
+  void   ParamReader(string file, int n1, int n2,
+                     vector<vector<double>> &params);
   void   flavCorr(bool plot=true, int gen=0, int alg=0,
                   int rad=0,int ct=-1,int Nevt=0,int XS=0);
   void   FFplot();
@@ -378,14 +378,14 @@ public :
 //		n1,n2,n3	Dimensions of the params tensor
 //		params		Reference to the tensor to read parameters into
 
-void CMSJES::ParamReader(string file, int n1, int n2, int n3,
-                        vector<vector<vector<double>>> &params)
+void CMSJES::ParamReader(string file, int n1, int n2,
+                        vector<vector<double>> &params)
 {
   //Init temps to read into
   double p=0;
   vector<double> v;
   vector<vector<double>> M;		//Temp matrix
-  vector<vector<vector<double>>> T;	//Temp tensor
+  //vector<vector<double>> T;	//Temp tensor
   //Read the parameters from files
   ifstream in;
   string paramFile;
@@ -396,20 +396,23 @@ void CMSJES::ParamReader(string file, int n1, int n2, int n3,
     cout << "Error opening " << paramFile << endl;
     return;
   }
-  for (int lines=0; lines!=n2; ++lines) {
+  for (int lines=0; lines!=n1; ++lines) {
     in >> p;		//1st string on line is eta region low. bd., omit it
-    for (int i=0; i!=n3; ++i) {
+    for (int i=0; i!=n2; ++i) {
       in >> p;  v.push_back(p);
     }
     M.push_back(v);
     v.clear();
   }
-  T.push_back(M);
+  //T.push_back(M);
+  //M.clear();
+  //in.close();
+  
+  //params = T;
+  //T.clear();
+  params = M;
   M.clear();
   in.close();
-  
-  params = T;
-  T.clear();
 
 } //ParamReader
 
@@ -525,16 +528,16 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   double bp0=0,bp1=0,bp2=0,bp3=0,bp4=0,bp5=0;
 
   //Param reading works the same way for all hadrons
-  ParamReader("/photon.txt",   1, 32, 6, params_gam);
-  ParamReader("/electron.txt", 1, 32, 5, params_e  );
-  ParamReader("/muon.txt",     1, 32, 4, params_mu );
-  ParamReader("/kaon.txt",     1, 32, 3, params_K  );
-  ParamReader("/klong.txt",    1, 32, 3, params_KL );
-  ParamReader("/kshort.txt",   1, 32, 3, params_KS );
-  ParamReader("/lambda.txt",   1, 32, 3, params_L  );
-  ParamReader("/neutron.txt",  1, 32, 3, params_n  );
-  ParamReader("/pion.txt",     1, 32, 3, params_pi );
-  ParamReader("/proton.txt",   1, 32, 3, params_p  );
+  ParamReader("/photon.txt",   32, 6, params_gam);
+  ParamReader("/electron.txt", 32, 5, params_e  );
+  ParamReader("/muon.txt",     32, 4, params_mu );
+  ParamReader("/kaon.txt",     32, 3, params_K  );
+  ParamReader("/klong.txt",    32, 3, params_KL );
+  ParamReader("/kshort.txt",   32, 3, params_KS );
+  ParamReader("/lambda.txt",   32, 3, params_L  );
+  ParamReader("/neutron.txt",  32, 3, params_n  );
+  ParamReader("/pion.txt",     32, 3, params_pi );
+  ParamReader("/proton.txt",   32, 3, params_p  );
 
   /* Plug fit parameter values here for fit reco */
   if (runIIa) {

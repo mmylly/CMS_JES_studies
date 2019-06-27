@@ -258,9 +258,9 @@ void CMSJES::Loop()
   TLorentzVector p4f_tag;
 
   //Partial derivative values for a hadron
-  vector<double> dARtemp = {0,0};  
-  vector<double> dBRtemp = {0,0};
-  vector<double> dCRtemp = {0,0};
+  double dARtemp = 0;  
+  double dBRtemp = 0;
+  double dCRtemp = 0;
   double dA_E, dA_X, dA_Y;	//Temps for sum terms...
   double dB_E, dB_X, dB_Y;	//... in the derivatives...  
   double dC_E, dC_X, dC_Y;	//... when fitting
@@ -311,9 +311,9 @@ void CMSJES::Loop()
   double pTmin_muon_tag = 0;    //Minimum tag muon pair pT (GeV)   
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
   bool   repeat = false;	//Repeat event for changing probe in dijet
-  vector<double> resp   = {1.0,1.0};	//SPR value                (dummy init)
-  vector<double> resp_f = {1.0,1.0};	// -||- w/ fit params      (dummy init)
-  vector<double> respEM = {1.0,1.0};	// -||- for EM-object reco (dummy init)
+  double resp   = 1.0;	//SPR value                (dummy init)
+  double resp_f = 1.0;	// -||- w/ fit params      (dummy init)
+  double respEM = 1.0;	// -||- for EM-object reco (dummy init)
   double respFit[nABCvars];	//    -||-    for fitting to D0 data
   double R_MPF_D0= 0;		//D0 style MPF response
   double R_MPF_r = 0;		//MC-reco'd MPF response
@@ -556,10 +556,10 @@ void CMSJES::Loop()
       Response(PDG,tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                1, 0, 1,  false, false, true,  resp, resp_f, respEM       );
       p4g_tag  = tag;
-      p4EM_tag = tag*respEM[0];
-      p4EMDtag = tag*respEM[0];	//Always reco w/ default SPR-parameters
-      p4r_tag  = tag*respEM[0];
-      p4f_tag  = tag*respEM[0];
+      p4EM_tag = tag*respEM;
+      p4EMDtag = tag*respEM;	//Always reco w/ default SPR-parameters
+      p4r_tag  = tag*respEM;
+      p4f_tag  = tag*respEM;
     }
 
     /**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************/
@@ -596,7 +596,7 @@ void CMSJES::Loop()
                1, 0, 1, true, false, false, resp, resp_f, respEM       );
 
       p4g_tag  = tag;		//gen lvl
-      p4r_tag  = tag*resp[0];	//MC lvl
+      p4r_tag  = tag*resp;	//MC lvl
 
 
       //***** 2nd muon ******
@@ -609,7 +609,7 @@ void CMSJES::Loop()
                1, 0, 1, true, false, false,  resp, resp_f, respEM       );
 
       p4g_tag  += tag;		//gen lvl
-      p4r_tag  += tag*resp[0];	//MC lvl
+      p4r_tag  += tag*resp;	//MC lvl
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
@@ -631,24 +631,24 @@ void CMSJES::Loop()
       //Reconstruct jets
       //jets_g[ JI] += (PDG==13||!fidCuts(PDG,(*prtcl_pt)[i])?0:1)*p4;//Gen lvl
       jets_g[ JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;           //Gen lvl
-      jets_r[ JI] += p4*resp[0];   //MC reco
-      jets_d[ JI] += p4*resp[0];				      //default
-      jets_f[ JI] += p4*resp_f[0];                  //Fit reco always w/ MC'
-      jetsEM[ JI] += p4*respEM[0]; //EM reco
-      jetsEMD[JI] += p4*respEM[0];                                    //EM reco always w/ D0 def. SPR
+      jets_r[ JI] += p4*resp;   //MC reco
+      jets_d[ JI] += p4*resp;				      //default
+      jets_f[ JI] += p4*resp_f;                  //Fit reco always w/ MC'
+      jetsEM[ JI] += p4*respEM; //EM reco
+      jetsEMD[JI] += p4*respEM;                                    //EM reco always w/ D0 def. SPR
 
-      Fnum[JI]   += resp_f[0]*p4.E();
-      Fnum101[JI]+= resp[0]*p4.E();
-      Fden[JI]   += resp[0]*p4.E(); //F denominator reco'd w/ default params
+      Fnum[JI]   += resp_f*p4.E();
+      Fnum101[JI]+= resp*p4.E();
+      Fden[JI]   += resp*p4.E(); //F denominator reco'd w/ default params
 
       //Hadrons in jets: check what is left in HCAL
       if (PDG>99 && (GetStrangeB() || !isStrangeB(PDG))) {	// Hadrons
         //1/4 of E_jet to coarse HCAL.
-        f_CH[JI] += resp[0]*0.25*p4.E();
+        f_CH[JI] += resp*0.25*p4.E();
         //1/2 of E_jet to EMCALroot 
-        f_EM[JI] += resp[0]*0.5*p4.E();
+        f_EM[JI] += resp*0.5*p4.E();
       } else if (PDG==20 || PDG==22 || PDG==11 || PDG==13) {	// EM-interactive
-        f_EM[JI] += resp[0]*p4.E();
+        f_EM[JI] += resp*p4.E();
       }
 
       //Fraction of jet E within R=0.5 from jet axis (n.b. D0 cone algorithm
@@ -656,7 +656,7 @@ void CMSJES::Loop()
       p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI],	//Gen jet 4-vec
                        (*jet_phi)[JI],(*jet_e)[JI]  );
       if (p4.DeltaR(p4j)<0.4) { // Should this be 0.4??
-        f_05[JI] += resp[0]*p4.E();
+        f_05[JI] += resp*p4.E();
       }
       
       //Find derivatives of hadron (PDG>100) responses for 2 leading jets
@@ -672,15 +672,15 @@ void CMSJES::Loop()
                  GetA(),GetB(),GetC(),false,true,false, resp,dBRtemp,respEM );
         Response(PDG, p4.Eta(), p4.E(), p4.Pt(),fr_e,fr_mu,fr_gam,dCR, false,
                  GetA(),GetB(),GetC(),false,true,false, resp,dCRtemp,respEM );
-        dAjetsE[JI] += p4.E()*dARtemp[0];
-        dAjetsX[JI] += p4.X()*dARtemp[0];
-        dAjetsY[JI] += p4.Y()*dARtemp[0];
-        dBjetsE[JI] += p4.E()*dBRtemp[0];
-        dBjetsX[JI] += p4.X()*dBRtemp[0];
-        dBjetsY[JI] += p4.Y()*dBRtemp[0];
-        dCjetsE[JI] += p4.E()*dCRtemp[0];
-        dCjetsX[JI] += p4.X()*dCRtemp[0];
-        dCjetsY[JI] += p4.Y()*dCRtemp[0];
+        dAjetsE[JI] += p4.E()*dARtemp;
+        dAjetsX[JI] += p4.X()*dARtemp;
+        dAjetsY[JI] += p4.Y()*dARtemp;
+        dBjetsE[JI] += p4.E()*dBRtemp;
+        dBjetsX[JI] += p4.X()*dBRtemp;
+        dBjetsY[JI] += p4.Y()*dBRtemp;
+        dCjetsE[JI] += p4.E()*dCRtemp;
+        dCjetsX[JI] += p4.X()*dCRtemp;
+        dCjetsY[JI] += p4.Y()*dCRtemp;
       } //Find derivatives
 
     } //Loop particles in jets
@@ -712,11 +712,11 @@ void CMSJES::Loop()
 
         //Check for contributions to gamma+jet tag EM-cluster
         if (studyMode==2 && p4.DeltaR(tag)<R_EMc) {
-          NIJ_r+=p4*respEM[0]; //Reco as EM
-          NIJ_f+=p4*respEM[0];
+          NIJ_r+=p4*respEM; //Reco as EM
+          NIJ_f+=p4*respEM;
         } else {
-          NIJ_r+=p4*resp[0];
-          NIJ_f+=p4*resp_f[0];
+          NIJ_r+=p4*resp;
+          NIJ_f+=p4*resp_f;
         }
 
       } //Loop particles not in jets
@@ -958,15 +958,15 @@ void CMSJES::Loop()
                    GetA(),GetB(),GetC(),false,true,false,resp,dBRtemp,respEM  );
           Response(PDG, p4.Eta(), p4.E(), p4.Pt(),fr_e,fr_mu,fr_gam,dCR, false,
                    GetA(),GetB(),GetC(),false,true,false,resp,dCRtemp,respEM  );
-          dAjetsE[JI] += p4.E()*dARtemp[0];
-          dAjetsX[JI] += p4.X()*dARtemp[0];
-          dAjetsY[JI] += p4.Y()*dARtemp[0];
-          dBjetsE[JI] += p4.E()*dBRtemp[0];
-          dBjetsX[JI] += p4.X()*dBRtemp[0];
-          dBjetsY[JI] += p4.Y()*dBRtemp[0];
-          dCjetsE[JI] += p4.E()*dCRtemp[0];
-          dCjetsX[JI] += p4.X()*dCRtemp[0];
-          dCjetsY[JI] += p4.Y()*dCRtemp[0];
+          dAjetsE[JI] += p4.E()*dARtemp;
+          dAjetsX[JI] += p4.X()*dARtemp;
+          dAjetsY[JI] += p4.Y()*dARtemp;
+          dBjetsE[JI] += p4.E()*dBRtemp;
+          dBjetsX[JI] += p4.X()*dBRtemp;
+          dBjetsY[JI] += p4.Y()*dBRtemp;
+          dCjetsE[JI] += p4.E()*dCRtemp;
+          dCjetsX[JI] += p4.X()*dCRtemp;
+          dCjetsY[JI] += p4.Y()*dCRtemp;
         } //Find derivatives
       } //Loop particles in jets
     }
@@ -1017,22 +1017,22 @@ void CMSJES::Loop()
                 h_other[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
                                  (*prtcl_e)[i]                  );
                 h_other[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                                 (resp[0]*p4).E()               );
+                                 (resp*p4).E()               );
                 h_other[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                                 (resp_f[0]*p4).E());
+                                 (resp_f*p4).E());
               } //Xi, Sigma, Omega^-
               //List further unknown particle PDGIDs
               if (find(otherIDs.begin(),otherIDs.end(),PDG)==otherIDs.end() &&
                   !GetStrangeB() && !isNeutrino(PDG)  ) otherIDs.push_back(PDG);
           } //Switch PDG (general)
           h_ptr[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
-          h_ptr[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp[0]*p4).E() );
+          h_ptr[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp*p4).E() );
           h_ptr[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                         (resp_f[0]*p4).E() );
+                         (resp_f*p4).E() );
           h_all[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
-          h_all[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp[0]*p4).E() );
+          h_all[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp*p4).E() );
           h_all[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                         (resp_f[0]*p4).E() );
+                         (resp_f*p4).E() );
         } //Particle content histograms
 	
       } //If ptcl in the studied probe or tag
@@ -1369,9 +1369,9 @@ void CMSJES::FindFJtoMC() {
   TLorentzVector jet_g; 		//Gen jet as output by FastJet
   TLorentzVector jet_g_no_nu; 		//Gen jet w/o/ neutrinos
   TLorentzVector tag; 			//Store prompt photon in gamma+jet
-  vector<double> R_MC ={1.0,1.0};	//For storing responses...
-  vector<double> R_FIT={1.0,1.0};	//...at different...
-  vector<double> R_EM ={1.0,1.0};	//...reconstruction levels
+  double R_MC =1.0;	//For storing responses...
+  double R_FIT=1.0;	//...at different...
+  double R_EM =1.0;	//...reconstruction levels
   int PDG;				//Particle PDGID temp
   double prtnPt=0;			//For finding photon w/ highest pT (g+j)
   int i_tag = -1;			//Temp for tag photon prtn index (g+j)
@@ -1429,10 +1429,10 @@ void CMSJES::FindFJtoMC() {
                            (*prtcl_phi)[i], (*prtcl_e)[i]  );
           Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,
                    true,1,0,1,true,false,false,R_MC,R_FIT,R_EM       );
-          jet_r += R_MC[0]*p4;
+          jet_r += R_MC*p4;
           if (isNeutrino(PDG)) jet_g_no_nu += p4; //gen lvl 4-mom for neutrinos
-          Fnum += R_MC[0]*p4.E(); // poista
-          Fden += R_MC[0]*p4.E();
+          Fnum += R_MC*p4.E(); // poista
+          Fden += R_MC*p4.E();
 	}
       } //Loop particles
 
@@ -2411,96 +2411,95 @@ void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
 void CMSJES::Response(int id, double pseudorap, double energy, double pT,
 	             TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                      double fA,double fB,double fC,bool MC,bool FIT,bool EM,
-                     vector<double>& retMC, vector<double>& retFIT,
-                     vector<double>& retEM                                  )
+                     double& retMC, double& retFIT,
+                     double& retEM                                  )
 {
   //Init
-  vector<bool> zero = {false,false}; //Return zero responses (run index-wise)
+  bool zero = false; //Return zero responses (run index-wise)
   bool pTm[2] = {false,true};	     //Hadron pT cut at m_h (true) or 0.3 GeV (false)
   double R_temp;
   int PDG = abs(id);
 
   //Check if particle outside good eta region
-  if (fabs(pseudorap) > 3.2) zero = {true,true};
+  if (fabs(pseudorap) > 3.2) zero = true;
   unsigned int row = int(fabs(pseudorap)*10);	//Param matrix row from |eta|
 
   //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
   if (PDG==111 || PDG==221) {
     cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << PDG
          << "Returning zero response" << endl;
-    zero = {true,true};
+    zero = true;
   }
 
   //Neutrino responses are zero
-  if (isNeutrino(PDG)) zero = {true,true};
+  if (isNeutrino(PDG)) zero = true;
 
   //Particle must have enough pT to reach D0 detector volume
-  if (!fidCuts(PDG,pT)) zero    = {true,true};
-  if (GetrunIIa()) zero[1] = true;
+  if (!fidCuts(PDG,pT)) zero = true;
 
   //CALCULATE RESPONSES
   //  Loop structure to go over IIa/IIb default & IIb-P20ToP17 params
-  for (int i_r=(zero[0]?1:0); i_r<1; ++i_r) {
-    frE->SetParameters(params_e[i_r][row][0], params_e[i_r][row][1],
-                       params_e[i_r][row][2], params_e[i_r][row][3],
-                       params_e[i_r][row][4]                       );
-    frG->SetParameters(params_gam[i_r][row][0], params_gam[i_r][row][1],
-                       params_gam[i_r][row][2], params_gam[i_r][row][3],
-                       params_gam[i_r][row][4], params_gam[i_r][row][5]);
-    frMU->SetParameters(params_mu[i_r][row][0], params_mu[i_r][row][1],
-                        params_mu[i_r][row][2], params_mu[i_r][row][3]);
+  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
+    frE->SetParameters(params_e[row][0], params_e[row][1],
+                       params_e[row][2], params_e[row][3],
+                       params_e[row][4]                       );
+    frG->SetParameters(params_gam[row][0], params_gam[row][1],
+                       params_gam[row][2], params_gam[row][3],
+                       params_gam[row][4], params_gam[row][5]);
+    frMU->SetParameters(params_mu[row][0], params_mu[row][1],
+                        params_mu[row][2], params_mu[row][3]);
 
     //EM-reco always using photon response
     R_temp = frG->Eval(energy);
-    retEM[i_r] = R_temp;
+    retEM = R_temp;
     switch (PDG) {
       case 20 : //Same for both photon IDs. No min pT or fit params A,B,C
-      case 22 : retMC[i_r]=R_temp;  retFIT[i_r]=R_temp;	
+      case 22 : retMC=R_temp;  retFIT=R_temp;	
                 break;
       //LEPTONS: choose params to use. N.B. leptons have no fit params A,B,C
       case 11 : R_temp = frE->Eval(energy);
-                retMC[i_r]=R_temp;  retFIT[i_r]=R_temp;
+                retMC=R_temp;  retFIT=R_temp;
                 break;
 //***********************************************************************************************
       case 13 : R_temp = frG->Eval(energy); //frMU->Eval(energy); Change this
 //***********************************************************************************************
-                retMC[i_r]=R_temp;  retFIT[i_r]=R_temp;
+                retMC=R_temp;  retFIT=R_temp;
                 break;
       //HADRONS
       case 211 :		//pi^+-
-        frH->SetParameters(params_pi[i_r][row][0],params_pi[i_r][row][1],
-                           params_pi[i_r][row][2],     1,    0,    1    );
-        retMC[i_r] = frH->Eval(energy);
+        frH->SetParameters(params_pi[row][0],params_pi[row][1],
+                           params_pi[row][2],     1,    0,    1    );
+        retMC = frH->Eval(energy);
         break;
       case 321 : 		//K^+-
-        frH->SetParameters(params_K[i_r][row][0], params_K[i_r][row][1],
-                           params_K[i_r][row][2],       1,     0,    1 );
-        retMC[i_r] = frH->Eval(energy);
+        frH->SetParameters(params_K[row][0], params_K[row][1],
+                           params_K[row][2],       1,     0,    1 );
+        retMC = frH->Eval(energy);
         break;
       case 130 :		//K^0_L
-        frH->SetParameters(params_KL[i_r][row][0],params_KL[i_r][row][1],
-                           params_KL[i_r][row][2],      1,     0,    1  );
-        retMC[i_r] = frH->Eval(energy);
+        frH->SetParameters(params_KL[row][0],params_KL[row][1],
+                           params_KL[row][2],      1,     0,    1  );
+        retMC = frH->Eval(energy);
         break;
       case 310 :		//K^0_S
-        frH->SetParameters(params_KS[i_r][row][0],params_KS[i_r][row][1],
-                           params_KS[i_r][row][2],      1,     0,    1  );
-        retMC[i_r] = frH->Eval(energy);
+        frH->SetParameters(params_KS[row][0],params_KS[row][1],
+                           params_KS[row][2],      1,     0,    1  );
+        retMC = frH->Eval(energy);
         break;
       case 3122 :		//Lambda
-        frH->SetParameters(params_L[i_r][row][0],params_L[i_r][row][1],
-                           params_L[i_r][row][2],     1,     0,     1 );
-        retMC[i_r] = frH->Eval(energy);
+        frH->SetParameters(params_L[row][0],params_L[row][1],
+                           params_L[row][2],     1,     0,     1 );
+        retMC = frH->Eval(energy);
         break;
       case 2112 :		//n
-        frH->SetParameters(params_n[i_r][row][0],params_n[i_r][row][1],
-                           params_n[i_r][row][2],     1,     0,     1 );
-        retMC[i_r] = frH->Eval(energy);
+        frH->SetParameters(params_n[row][0],params_n[row][1],
+                           params_n[row][2],     1,     0,     1 );
+        retMC = frH->Eval(energy);
         break;
       case 2212 :		//p
-        frH->SetParameters(params_p[i_r][row][0],params_p[i_r][row][1],
-                           params_p[i_r][row][2],     1,     0,    1  );
-        retMC[i_r] = frH->Eval(energy);
+        frH->SetParameters(params_p[row][0],params_p[row][1],
+                           params_p[row][2],     1,     0,    1  );
+        retMC = frH->Eval(energy);
         break;
       default: // ANSÄTZE FOR XI, SIGMA, OMEGA
         //According to D0 JES, strange baryons may have had responses but such
@@ -2511,141 +2510,140 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
         if (GetStrangeB() && GetAnsatz()=="pn") { //PROTON & NEUTRON params
           switch (PDG) {
             case 3112 :		//Sigma^-
-              frH->SetParameters(params_p[i_r][row][0],
-                                 pow((1.197/0.75),1-params_p[i_r][row][2]),
-                                 params_p[i_r][row][2],   1,    0,   1    );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_p[row][0],
+                                 pow((1.197/0.75),1-params_p[row][2]),
+                                 params_p[row][2],   1,    0,   1    );
+              retMC = frH->Eval(energy);
               break;
             case 3212 :		//Sigma^0
-              frH->SetParameters(params_n[i_r][row][0],
-                                 pow((1.192/0.75),1-params_n[i_r][row][2]),
-                                 params_n[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_n[row][0],
+                                 pow((1.192/0.75),1-params_n[row][2]),
+                                 params_n[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3222 :		//Sigma^+
-              frH->SetParameters(params_p[i_r][row][0],
-                                 pow((1.189/0.75),1-params_p[i_r][row][2]),
-                                 params_p[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_p[row][0],
+                                 pow((1.189/0.75),1-params_p[row][2]),
+                                 params_p[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3312 :		//Xi^-
-              frH->SetParameters(params_p[i_r][row][0],
-                                 pow((1.322/0.75),1-params_p[i_r][row][2]),
-                                 params_p[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_p[row][0],
+                                 pow((1.322/0.75),1-params_p[row][2]),
+                                 params_p[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3322 :		//Xi^0
-              frH->SetParameters(params_n[i_r][row][0],
-                                 pow((1.315/0.75),1-params_n[i_r][row][2]),
-                                 params_n[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_n[row][0],
+                                 pow((1.315/0.75),1-params_n[row][2]),
+                                 params_n[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3334 :		//Omega^-
-              frH->SetParameters(params_p[i_r][row][0],
-                                 pow((1.67245/0.75),1-params_p[i_r][row][2]),
-                                 params_p[i_r][row][2],    1,    0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_p[row][0],
+                                 pow((1.67245/0.75),1-params_p[row][2]),
+                                 params_p[row][2],    1,    0,   1     );
+              retMC = frH->Eval(energy);
              break;
-            default : zero={true,true};  continue;	 //Unknown particle
+            default : zero=true; continue;	 //Unknown particle
           } //Switch PDG (proton & neutron Ansatz)
         } else if (GetStrangeB() && GetAnsatz()=="L") { //LAMBDA params
           switch (PDG) {
             case 3112 :		//Sigma^-
-              frH->SetParameters(params_L[i_r][row][0],
-                                 pow((1.197/0.75),1-params_L[i_r][row][2]),
-                                 params_L[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_L[row][0],
+                                 pow((1.197/0.75),1-params_L[row][2]),
+                                 params_L[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3212 :		//Sigma^0
-              frH->SetParameters(params_L[i_r][row][0],
-                                 pow((1.192/0.75),1-params_L[i_r][row][2]),
-                                 params_L[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_L[row][0],
+                                 pow((1.192/0.75),1-params_L[row][2]),
+                                 params_L[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3222 :		//Sigma^+
-              frH->SetParameters(params_L[i_r][row][0],
-                                 pow((1.189/0.75),1-params_L[i_r][row][2]),
-                                 params_L[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_L[row][0],
+                                 pow((1.189/0.75),1-params_L[row][2]),
+                                 params_L[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3312 :		//Xi^-
-              frH->SetParameters(params_L[i_r][row][0],
-                                 pow((1.322/0.75),1-params_L[i_r][row][2]),
-                                 params_L[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_L[row][0],
+                                 pow((1.322/0.75),1-params_L[row][2]),
+                                 params_L[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3322 :		//Xi^0
-              frH->SetParameters(params_L[i_r][row][0],
-                                 pow((1.315/0.75),1-params_L[i_r][row][2]),
-                                 params_L[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_L[row][0],
+                                 pow((1.315/0.75),1-params_L[row][2]),
+                                 params_L[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3334 :		//Omega^-
-              frH->SetParameters(params_L[i_r][row][0],
-                                 pow((1.67245/0.75),1-params_L[i_r][row][2]),
-                                 params_L[i_r][row][2],    1,    0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_L[row][0],
+                                 pow((1.67245/0.75),1-params_L[row][2]),
+                                 params_L[row][2],    1,    0,   1     );
+              retMC = frH->Eval(energy);
               break;
-            default : zero={true,true};  continue;	 //Unknown particle
+            default : zero=true; continue;	 //Unknown particle
           } //Switch PDG (Lambda Ansatz)
         } else if (GetStrangeB() && GetAnsatz()=="pi") {	//PION params
           switch (PDG) {
             case 3112 :		//Sigma^-
-              frH->SetParameters(params_pi[i_r][row][0],
-                                 pow((1.197/0.75),1-params_pi[i_r][row][2]),
-                                 params_pi[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.197/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3212 :		//Sigma^0
-              frH->SetParameters(params_pi[i_r][row][0],
-                                 pow((1.192/0.75),1-params_pi[i_r][row][2]),
-                                 params_pi[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.192/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3222 :		//Sigma^+
-              frH->SetParameters(params_pi[i_r][row][0],
-                                 pow((1.189/0.75),1-params_pi[i_r][row][2]),
-                                 params_pi[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.189/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3312 :		//Xi^-
-              frH->SetParameters(params_pi[i_r][row][0],
-                                 pow((1.322/0.75),1-params_pi[i_r][row][2]),
-                                 params_pi[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.322/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3322 :		//Xi^0
-              frH->SetParameters(params_pi[i_r][row][0],
-                                 pow((1.315/0.75),1-params_pi[i_r][row][2]),
-                                 params_pi[i_r][row][2],   1,   0,   1     );
-              retMC[i_r] = frH->Eval(energy);
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.315/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
               break;
             case 3334 :		//Omega^-
-              frH->SetParameters(params_pi[i_r][row][0],
-                                 pow((1.67245/0.75),1-params_pi[i_r][row][2]),
-                                 params_pi[i_r][row][2],    1,    0,   1     );
-              retMC[i_r] = (MC ? frH->Eval(energy) : 0);
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.67245/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],    1,    0,   1     );
+              retMC = (MC ? frH->Eval(energy) : 0);
               break;
-            default : zero={true,true};  continue;	 //Unknown particle
+            default : zero=true; continue;	 //Unknown particle
           } //Switch PDG (pion Ansatz)
-        } else {zero={true,true};  break;} //Unknown partcle, not observed
+        } else {zero=true;  break;} //Unknown partcle, not observed
     } //Switch PDG (before Ansätze)
 
-    if (PDG>99 && FIT && !zero[i_r]) { //Had.: reset A,B,C; others same as MC
+    if (PDG>99 && FIT && !zero) { //Had.: reset A,B,C; others same as MC
       frH->SetParameter(3,fA);
       frH->SetParameter(4,fB);
       frH->SetParameter(5,fC);
-      retFIT[i_r] = frH->Eval(energy);
+      retFIT = frH->Eval(energy);
     }
 
-  } //Loop over run index i_r
+  } 
 
   //Set results. Check for NaN and negative results if positive demanded
-  for (int i=0; i!=2; ++i) {
-    if (!MC || zero[i] || isnan(retMC[i])  || (pos && retMC[i] <0)) retMC[i] =0;
-    if (!FIT|| zero[i] || isnan(retFIT[i]) || (pos && retFIT[i]<0)) retFIT[i]=0;
-    if (!EM || zero[i] || isnan(retEM[i])  || (pos && retEM[i] <0)) retEM[i] =0;
-  }
+  if (!MC || zero || isnan(retMC)  || (pos && retMC <0)) retMC =0;
+  if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<0)) retFIT=0;
+  if (!EM || zero || isnan(retEM)  || (pos && retEM <0)) retEM =0;
+
 } //Response
 //-----------------------------------------------------------------------------
 //For studying the general properties TTree read in by the CMSJES object.
