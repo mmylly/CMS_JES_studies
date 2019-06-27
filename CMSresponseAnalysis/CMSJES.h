@@ -491,8 +491,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   //RunIIa pT-balance
   inPTBdata_dj_a.open("./data_and_MC_input/pTbal/runIIa/dijet_data");
   inPTBdata_gj_a.open("./data_and_MC_input/pTbal/runIIa/gammajet_data");
-  inPTBMC_dj_a.open("./data_and_MC_input/pTbal/runIIa/dijet_MC");
-  inPTBMC_gj_a.open("./data_and_MC_input/pTbal/runIIa/gammajet_MC");
+  inPTBMC_dj_a.open(  "./data_and_MC_input/pTbal/runIIa/dijet_MC");
+  inPTBMC_gj_a.open(  "./data_and_MC_input/pTbal/runIIa/gammajet_MC");
   //RunIIb1 pT-balance
   inPTBdata_dj_b1.open("./data_and_MC_input/pTbal/runIIb1/dijet_data"   );
   inPTBdata_gj_b1.open("./data_and_MC_input/pTbal/runIIb1/gammajet_data");

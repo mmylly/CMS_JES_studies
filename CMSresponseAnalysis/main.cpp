@@ -14,7 +14,7 @@ int main() {
   // 2: FindFJtoMC
   // 3: Fit
   // 4: run many samples and produce their plots at once
-  int mode = 4;
+  int mode = 0;
 
   vector<string> runs = {"RunIIb1","RunIIb2","RunIIb34"};
   

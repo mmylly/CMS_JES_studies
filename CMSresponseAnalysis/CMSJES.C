@@ -436,6 +436,10 @@ void CMSJES::Loop()
 
   /* LOOP EVENTS */
 
+/*
+  SOME TEMPORARY VARIABLES TO TRACK CUTTING ETC.
+*/
+
   cout << "Entering loop";
   if (!printProg) cout << ", progress printing disabled";
   cout << endl;
@@ -488,9 +492,7 @@ void CMSJES::Loop()
     }
 
     //Skip events that didn't pass cuts earlier. Useful in e.g. repeating Loop
-    if (GetuseEarlierCuts()        &&
-        passedCuts.size() > jentry &&
-        !passedCuts[jentry]          ) continue;
+    if (GetuseEarlierCuts() && passedCuts.size()>jentry && !passedCuts[jentry]) continue;
  
     Long64_t ientry = LoadTree(jentry);	//Load new event
     if (ientry < 0) break;		//When no more events
@@ -566,19 +568,17 @@ void CMSJES::Loop()
       p4EMDtag = tag*respEM[0];	//Always reco w/ default SPR-parameters
       p4r_tag  = tag*respEM[0];
       p4f_tag  = tag*respEM[(GetrunIIb() ? 1:0)];
-      
     }
 
     /**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************/
     // Find how many muons in the events
-
+    
     int muPDG=13;  int muTAG=3; //mu PDGID and tag 
     if (studyMode == 3) {
-
       if (Getverbose()) cout << "Entering Z+JET: FIND TAG" << endl;
 
-      int i_tag1 = -137;	// These values won't change if 
-      int i_tag2 = -731;	// muons not found
+      int i_tag1 = -137;	// These values won't change if...
+      int i_tag2 = -731;	// ...muons not found.
       for (int a=0; a!= prtn_tag->size(); ++a) {
         // Find muons with tag == 3 and store those in i_tag1 and i_tag2
         if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
@@ -588,9 +588,8 @@ void CMSJES::Loop()
                 continue;}
         }
       }
-
+      
       if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
-
 
       //***** 1st muon *****
       //Parton level first tag muon:
@@ -598,6 +597,7 @@ void CMSJES::Loop()
                        (*prtn_phi)[i_tag1],(*prtn_e)[i_tag1]);
 
       //Fast gen lvl cuts, more strict reco lvl cuts below
+
       if (fabs(tag.Eta())>eta_gamma || tag.Pt()<pTmin_muon) continue;
 
       Response((*prtn_pdgid)[i_tag1],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
@@ -666,7 +666,7 @@ void CMSJES::Loop()
       if (p4.DeltaR(p4j)<0.4) { // Should this be 0.4??
         f_05[JI] += resp[0]*p4.E();
       }
-
+      
       //Find derivatives of hadron (PDG>100) responses for 2 leading jets
       //Most likely probe candidates are the jets w/ indices 0 or 1. Thus to
       //save time, we only calculate the first 2 jets' derivatives.
@@ -843,6 +843,8 @@ void CMSJES::Loop()
       if ((p4r_probe.Pt()<softPt && f_05[i_probe]<f_05jetMinS) ||
           f_05[i_probe] < f_05jetMin                             ) continue;
       //-tag and probe in the right |eta| region with enough p_T
+      
+
       if (fabs(p4r_tag.Eta())  > eta_muon       ||
           p4r_tag.Pt()         < pTmin_muon_tag ||
           fabs(p4r_probe.Eta()) > eta_probe     ||
@@ -931,8 +933,8 @@ void CMSJES::Loop()
     /****************************** COMMON CUTS FOR Z+JET ******************************/
     if (Getverbose()) cout << "Entering COMMON CUTS" << endl;
     
-
     //Tag object and probe jet back-to-back. Note ROOT DeltaPhi is in [-pi,pi]
+
     if (fabs(tag.DeltaPhi(probe)) < phiMin) continue;
 
     //Assert probe is not confused with tag
@@ -1045,6 +1047,7 @@ void CMSJES::Loop()
 
     } //Loop over particles
 
+
     /**************************** FILL HISTOGRAMS ****************************/
     //Jet energy estimator: E' = p_T_tag cosh(eta_probe) and pT'.
     //- Jet direction change in reconstruction is usually negligible, though.
@@ -1057,7 +1060,6 @@ void CMSJES::Loop()
     F    = Fnum[i_probe]/Fden[i_probe];
     F101 = Fnum101[i_probe]/Fden[i_probe];
 
-    //cout << Ep << " " << p4r_probe.Pt()/p4r_tag.Pt() << " " << weight << endl;
 
     //Add the new values to TProfile histograms:
     //p_T balance method
@@ -1191,7 +1193,6 @@ void CMSJES::Loop()
 
     //If the old list of cut events is not read, a new one is written
     if (!GetuseEarlierCuts()) passedCuts[jentry]=true;
-
   } //Loop Tree entries
 
   //Normalize flavour fraction histograms, add to stack and plot
@@ -2097,10 +2098,10 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
 
 
   //Filled circle (4 hollow circle); 1 black, 2 red, 4 blue, 3/8 green
-  dgj->SetMarkerStyle(  8           );  dgj->SetMarkerColor(  kGreen+2);
-  mc_gj->SetMarkerStyle(4           );  mc_gj->SetMarkerColor(kGreen+2);
+  dgj->SetMarkerStyle(8);  dgj->SetMarkerColor(  kGreen+2);
+  mc_gj->SetMarkerStyle(4);  mc_gj->SetMarkerColor(kGreen+2);
 
-  hzj->SetLineColor(    kGreen+2);
+  hzj->SetLineColor(kGreen+2);
   hzj_f->SetMarkerStyle(kFullDiamond);  
   hzj_f->SetMarkerColor(kGreen-6);
 
@@ -2109,8 +2110,8 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
   //D0 pT-balance data points and errors
   int i_ep = 0;	//Epoch index, 0 for run IIa
   for (int i=0; i!=nD0data; ++i) {	//D0 pT-bal data
-    dgj->SetPoint(     i, gjEpII[i_ep][i], gjD0II[i_ep][i]);
-    dgj->SetPointError(i,               0, gjERII[i_ep][i]);
+    dgj->SetPoint(i, gjEpII[i_ep][i], gjD0II[i_ep][i]);
+    dgj->SetPointError(i, 0, gjERII[i_ep][i]);
   }
   for (int i=0; i!=nD0MC; ++i) {	//D0 pT-bal. MC
     mc_gj->SetPoint(i, gjMCEpII[i_ep][i], gjD0MCII[i_ep][i]);  
@@ -2783,7 +2784,9 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
       case 11 : R_temp = frE->Eval(energy);
                 retMC[i_r]=R_temp;  retFIT[i_r]=R_temp;
                 break;
-      case 13 : R_temp = frMU->Eval(energy);
+//**************************************************************************************************
+      case 13 : R_temp = frG->Eval(energy); //frMU->Eval(energy); Muuta tämä
+//**************************************************************************************************
                 retMC[i_r]=R_temp;  retFIT[i_r]=R_temp;
                 break;
       //HADRONS
