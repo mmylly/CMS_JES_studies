@@ -168,7 +168,7 @@ public :
   //For storing D0 dijet / EM+jet data points and errors
   static int const nD0data = 10;	//#Data points available from D0
   static int const nCMSdata = 10;	//#Data points available from CMS
-  static int const nEpochs = 4;		//#Epochs in run IIa and IIb altogether
+  static int const nEpochs = 0;		//#Epochs in run IIa and IIb altogether
   static int const nCMSEpochs = 1;	//#Epochs in CMS data
 
   //D0 pT-balance data points and errors. dj for dijet, gj for gamma+jet
@@ -233,7 +233,6 @@ public :
   bool contHistos = true;	//Produce probe particle content histograms
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
   bool runIIa = false; 		//Use runIIa response parameters
-  bool runIIb = false;	 	//-||-runIIb -||-
   bool runCMS = true;		//Use CMS parameters
   string run = "RunIIb34";	//... epoch to use
 
@@ -286,7 +285,6 @@ public :
   void SetMPFmode( bool flag ) {MPFmode = flag;}
   void Setrun(     string val) {run    = val; }
   void SetrunIIa(  bool flag ) {runIIa = flag;}
-  void SetrunIIb(  bool flag ) {runIIb = flag;}
   void SetStrangeB(bool flag ) {StrangeB = flag;}
   void SetAnsatz(  string val) {
    if (val=="pn" || val=="L" || val=="pi") Ansatz = val;
@@ -310,7 +308,6 @@ public :
   double GetBCer() {return BCer;}
   string Getrun()    {return run;}
   bool GetrunIIa()   {return runIIa;}
-  bool GetrunIIb()   {return runIIb;}
   bool GetuseD0ABC()  {return useD0ABC; }
   double Getepsilon()    {return epsilon;}
   double GetepsilonMin() {return epsilonMin;}
@@ -352,13 +349,11 @@ public :
   void   axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd);
   void   FitGN();		//Gauss-Newton fit function
   void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
-  void   plotConvPT();
   void   plotPT(int gen=0,int alg=0,int rad=0,int ct=-1,int Nevt=0,int run=0,
                 int P=0,  int XS=0, bool MConly=false, bool fitOnly=false    );
   void   plotSepPT();
   void   plotMPF(int gen=0,  int alg=0, int rad=0, int ct=-1,
                  int Nevt=0, int run=0, int P=0,   int XS=0  );
-  void   plotD0();
   void   Response(int id, double pseudorap, double energy,   double pT,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
@@ -467,21 +462,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   }
   Init(tree);	//Setup branch adresses etc.
 
-  if (runIIa && runIIb) {
-    cout << "Error: both run IIa and IIb enabled" << endl;
-    return;
-  }
-
   /* Read D0 data and MC points */
 
   ifstream inPTBdata_dj_a;   ifstream inPTBMC_dj_a;   //RunIIa dijet
   ifstream inPTBdata_gj_a;   ifstream inPTBMC_gj_a;   // -||-  gammajet
-  ifstream inPTBdata_dj_b1;  ifstream inPTBMC_dj_b1;  //RunIIb1 dijet
-  ifstream inPTBdata_gj_b1;  ifstream inPTBMC_gj_b1;  // -||-  gammajet
-  ifstream inPTBdata_dj_b2;  ifstream inPTBMC_dj_b2;  //RunIIb1 dijet
-  ifstream inPTBdata_gj_b2;  ifstream inPTBMC_gj_b2;  // -||-  gammajet
-  ifstream inPTBdata_dj_b34; ifstream inPTBMC_dj_b34; //RunIIb1 dijet
-  ifstream inPTBdata_gj_b34; ifstream inPTBMC_gj_b34; // -||-  gammajet
   ifstream inMPFdata_gj;     ifstream inMPFMC_gj;     //MPF gammajet, run NA
   ifstream inMPFdata_dj;     ifstream inMPFMC_dj;
   ifstream inMPFdata_gj_R07; ifstream inMPFMC_gj_R07;
@@ -490,21 +474,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inPTBdata_gj_a.open("./data_and_MC_input/pTbal/runIIa/gammajet_data");
   inPTBMC_dj_a.open(  "./data_and_MC_input/pTbal/runIIa/dijet_MC");
   inPTBMC_gj_a.open(  "./data_and_MC_input/pTbal/runIIa/gammajet_MC");
-  //RunIIb1 pT-balance
-  inPTBdata_dj_b1.open("./data_and_MC_input/pTbal/runIIb1/dijet_data"   );
-  inPTBdata_gj_b1.open("./data_and_MC_input/pTbal/runIIb1/gammajet_data");
-  inPTBMC_dj_b1.open(  "./data_and_MC_input/pTbal/runIIb1/dijet_MC"     );
-  inPTBMC_gj_b1.open(  "./data_and_MC_input/pTbal/runIIb1/gammajet_MC"  );
-  //RunIIb2 pT-balance
-  inPTBdata_dj_b2.open("./data_and_MC_input/pTbal/runIIb2/dijet_data"   );
-  inPTBdata_gj_b2.open("./data_and_MC_input/pTbal/runIIb2/gammajet_data");
-  inPTBMC_dj_b2.open(  "./data_and_MC_input/pTbal/runIIb2/dijet_MC"     );
-  inPTBMC_gj_b2.open(  "./data_and_MC_input/pTbal/runIIb2/gammajet_MC"  );
-  //RunIIb3-4 pT-balance
-  inPTBdata_dj_b34.open("./data_and_MC_input/pTbal/runIIb3-4/dijet_data"   );
-  inPTBdata_gj_b34.open("./data_and_MC_input/pTbal/runIIb3-4/gammajet_data");
-  inPTBMC_dj_b34.open(  "./data_and_MC_input/pTbal/runIIb3-4/dijet_MC"     );
-  inPTBMC_gj_b34.open(  "./data_and_MC_input/pTbal/runIIb3-4/gammajet_MC"  );
   //MPF
   inMPFdata_gj_R07.open("./data_and_MC_input/MPF/MPF_gammajet_data_R07");
   inMPFMC_gj_R07.open("./data_and_MC_input/MPF/MPF_gammajet_MC_R07");
@@ -515,12 +484,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   if (!inPTBdata_dj_a.is_open()   || !inPTBMC_dj_a.is_open()   ||
       !inPTBdata_gj_a.is_open()   || !inPTBMC_gj_a.is_open()   ||
-      !inPTBdata_dj_b1.is_open()  || !inPTBMC_dj_b1.is_open()  ||
-      !inPTBdata_gj_b1.is_open()  || !inPTBMC_gj_b1.is_open()  ||
-      !inPTBdata_dj_b2.is_open()  || !inPTBMC_dj_b2.is_open()  ||
-      !inPTBdata_gj_b2.is_open()  || !inPTBMC_gj_b2.is_open()  ||
-      !inPTBdata_dj_b34.is_open() || !inPTBMC_dj_b34.is_open() ||
-      !inPTBdata_gj_b34.is_open() || !inPTBMC_gj_b34.is_open() ||
       !inMPFMC_dj.is_open()       || !inMPFMC_gj.is_open()     ||
       !inMPFdata_gj_R07.is_open() || !inMPFMC_gj_R07.is_open()   )
   {
@@ -531,22 +494,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   for (int step=0; step != nD0data; ++step) {	//D0 pT-balance data
     inPTBdata_dj_a   >> djEpII[0][step] >> djD0II[0][step] >> djERII[0][step];
     inPTBdata_gj_a   >> gjEpII[0][step] >> gjD0II[0][step] >> gjERII[0][step];
-    inPTBdata_dj_b1  >> djEpII[1][step] >> djD0II[1][step] >> djERII[1][step];
-    inPTBdata_gj_b1  >> gjEpII[1][step] >> gjD0II[1][step] >> gjERII[1][step];
-    inPTBdata_dj_b2  >> djEpII[2][step] >> djD0II[2][step] >> djERII[2][step];
-    inPTBdata_gj_b2  >> gjEpII[2][step] >> gjD0II[2][step] >> gjERII[2][step];
-    inPTBdata_dj_b34 >> djEpII[3][step] >> djD0II[3][step] >> djERII[3][step];
-    inPTBdata_gj_b34 >> gjEpII[3][step] >> gjD0II[3][step] >> gjERII[3][step];
   }
   for (int step=0; step != nD0MC; ++step) {	//D0 pT-balance MC points
     inPTBMC_dj_a   >> djMCEpII[0][step] >> djD0MCII[0][step];
     inPTBMC_gj_a   >> gjMCEpII[0][step] >> gjD0MCII[0][step];
-    inPTBMC_dj_b1  >> djMCEpII[1][step] >> djD0MCII[1][step];
-    inPTBMC_gj_b1  >> gjMCEpII[1][step] >> gjD0MCII[1][step];
-    inPTBMC_dj_b2  >> djMCEpII[2][step] >> djD0MCII[2][step];
-    inPTBMC_gj_b2  >> gjMCEpII[2][step] >> gjD0MCII[2][step];
-    inPTBMC_dj_b34 >> djMCEpII[3][step] >> djD0MCII[3][step];
-    inPTBMC_gj_b34 >> gjMCEpII[3][step] >> gjD0MCII[3][step];
   }
   for (int step=0; step != nD0_MPF_R07; ++step) {	//MPF data points
     inMPFdata_gj_R07 >> gjEp_MPF_R07[step] >> gjD0_MPF_R07[step];
@@ -560,14 +511,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   }
 
   //Close the D0 MC / data point files
-  inPTBdata_dj_a.close();    inPTBdata_dj_b1.close();
-  inPTBdata_gj_a.close();    inPTBdata_gj_b1.close();
-  inPTBMC_dj_a.close();      inPTBMC_dj_b1.close();
-  inPTBMC_gj_a.close();      inPTBMC_gj_b1.close();
-  inPTBdata_dj_b2.close();   inPTBdata_dj_b34.close();
-  inPTBdata_gj_b2.close();   inPTBdata_gj_b34.close();
-  inPTBMC_dj_b2.close();     inPTBMC_dj_b34.close();
-  inPTBMC_gj_b2.close();     inPTBMC_gj_b34.close();
+  inPTBdata_dj_a.close();    
+  inPTBdata_gj_a.close();    
+  inPTBMC_dj_a.close();      
+  inPTBMC_gj_a.close();      
   inMPFdata_gj_R07.close();  inMPFMC_gj_R07.close();
   inMPFMC_dj.close();        inMPFMC_gj.close();
 
@@ -575,7 +522,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   //Open file and initializations for reading
   ifstream in0;	//RunIIa
-  ifstream in1;	//RunIIb
   int line = 0;	//Stepper
 
   //Init dummies to read into
@@ -614,66 +560,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
         ABer = -0.00160909;	ACer = -7.75965e-05;	BCer = 0.00018794;     
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
-  } else if (runIIb) {
-    //D0 runIIb 0<|eta|0.4 fit params
-    if (useD0ABC) {
-      if      (run == "RunIIb1" ) {A   = 2.1682;  B   =-0.310;   C   = 1.0228;
-                                   Aer = 0.2854;  Ber = 0.1005;  Cer = 0.0142;}
-      else if (run == "RunIIb2" ) {A   = 1.9325;  B   =-0.1611;  C   = 1.0585;
-                                   Aer = 0.1335;  Ber = 0.0571;  Cer = 0.0153;} 
-      else if (run == "RunIIb34") {A   = 1.4687;  B   = 0.0040;  C   = 1.0729;
-                                   Aer = 0.0500;  Ber = 0.0301;  Cer = 0.0143;}
-    //Initial guess to start fitting from
-    } else if (useInitGuessABC  ) {
-      if (ReadName.find("P6")!=string::npos) {
-        A   = 2.17;       B   = -0.31;   C   = 1.0;
-        Aer = 0.0;        Ber = 0.0;     Cer = 0.0;
-      }  else if (ReadName.find("H7")!=string::npos) {
-        A   = 0.83;       B   = 0.07;    C   = 1.00;
-        Aer = 0.0;        Ber = 0.0;     Cer = 0.0;
-      }
-    //Default: use our A,B,C depending on generator and epoch
-    } else {
-      if (ReadName.find("P6")!=string::npos) {
-        if (run == "RunIIb1") {
-          //P6 G-N: chi2/n_d0f=7.64468 RunIIb1-P20ToP17 tag.eta<0.4 C con. 0.015
-          A    = 1.38622;	B    = -0.0965625;	C    = 1.0196;
-          Aer  = 0.0620556;	Ber  = 0.0397675;	Cer  = 0.0104943;
-          ABer = -0.00224026;	ACer = -0.000258386;	BCer = 0.000308332;
-
-        } else if (run == "RunIIb2") {
-          //P6 G-N: chi2/n_d0f=10.0504 RunIIb2-P20ToP17 tag.eta<0.4 C con. 0.015
-          A    = 1.67477;	B    = -0.192474;	C    = 1.02349;
-          Aer  = 0.0722089;	Ber  = 0.0424363;	Cer  = 0.0104384;
-          ABer = -0.00285822;	ACer = -0.000419891;	BCer = 0.000359969;
-        } else if (run == "RunIIb34") {
-          //P6 G-N: chi2/n_d0f=6.41513 RunIIb34-P20ToP17 tag.eta<0.4 C con 0.015
-          A    = 1.60543;	B    = -0.176375;	C    = 1.01797;
-          Aer  = 0.0695504;	Ber  = 0.0423024;	Cer  = 0.0104403;
-          ABer = -0.00272743;	ACer = -0.000396289;	BCer = 0.000359408;
-
-        }
-      } else if (ReadName.find("H7")!=string::npos) {
-        /* H7 sigma_C = 0.01 */
-        if (run == "RunIIb1") {
-          //H7 G-N: chi2/n_d0f=7.81315 RunIIb1-P20ToP17 tag.eta<0.4 C con 0.015
-          A    = 1.07966;	B    = -0.0564157;	C    = 1.00719;
-          Aer  = 0.0567488;	Ber  = 0.045132;	Cer  = 0.010559;
-          ABer = -0.00225655;	ACer = -0.000172125;	BCer = 0.00033327;
-        } else if (run == "RunIIb2") {
-          //H7 G-N: chi2/n_d0f=10.2183 RunIIb2-P20ToP17 tag.eta<0.4 C con 0.015
-          A    = 1.29986;	B    = -0.156661;	C    = 1.00784;
-          Aer  = 0.0643688;	Ber  = 0.0483232;	Cer  = 0.0105222;
-          ABer = -0.0028136;	ACer = -0.000308217;	BCer = 0.000398856;
-
-        } else if (run == "RunIIb34") {
-          //H7 G-N: chi2/n_d0f=6.08783 RunIIb34-P20ToP17 tag.eta<0.4 C con 0.015
-          A    = 1.21223;	B    = -0.11859;	C    = 1.00518;
-          Aer  = 0.0591748;	Ber  = 0.0462266;	Cer  = 0.0105287;
-          ABer = -0.00243865;	ACer = -0.000261209;	BCer = 0.000378679;
-        }
-      } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
-    }
   } else if (runCMS) {
     if      (useD0ABC       ) {A  =1.409;     B  =0.0017;      C  =0.9973;
                                Aer=0.020468;  Ber=0.00710429;  Cer=0.0929739;}
@@ -689,7 +575,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
         cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
-  } else cout << "\n\n\tERROR: neither run IIa, IIb, nor runCMS activated!\n\n" << endl;
+  } else cout << "\n\n\tERROR: neither run IIa nor runCMS activated!\n\n" << endl;
 } //Constructor
 //-----------------------------------------------------------------------------
 //Destructor

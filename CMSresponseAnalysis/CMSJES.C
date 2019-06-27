@@ -29,7 +29,6 @@ void CMSJES::Loop()
   //Output file
   string outname = "./output_ROOT_files/CMSJES_" + ReadName;
   if (GetrunIIa()) outname += "_RunIIa";
-  if (GetrunIIb()) outname = outname + "_" + Getrun();
   if (!GetStrangeB())    outname += "_noStrangeB";
   outname += ".root";	//Filetype suffix
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -443,7 +442,6 @@ void CMSJES::Loop()
   fstream cutflag_stream;
   string cutflag_file = "./cutflag_files/" + ReadName;
   if (GetrunIIa()  ) cutflag_file += "_RunIIa";
-  if (GetrunIIb()  ) cutflag_file = cutflag_file + "_" + Getrun();
   if (!GetStrangeB()) cutflag_file += "_noStrangeB";
   cutflag_file += ".bin";
   if (GetuseEarlierCuts()) cout << "Checking for "; 
@@ -561,7 +559,7 @@ void CMSJES::Loop()
       p4EM_tag = tag*respEM[0];
       p4EMDtag = tag*respEM[0];	//Always reco w/ default SPR-parameters
       p4r_tag  = tag*respEM[0];
-      p4f_tag  = tag*respEM[(GetrunIIb() ? 1:0)];
+      p4f_tag  = tag*respEM[0];
     }
 
     /**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************/
@@ -635,12 +633,12 @@ void CMSJES::Loop()
       jets_g[ JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;           //Gen lvl
       jets_r[ JI] += p4*resp[0];   //MC reco
       jets_d[ JI] += p4*resp[0];				      //default
-      jets_f[ JI] += p4*resp_f[(GetrunIIb() ? 1:0)];                  //Fit reco always w/ MC'
+      jets_f[ JI] += p4*resp_f[0];                  //Fit reco always w/ MC'
       jetsEM[ JI] += p4*respEM[0]; //EM reco
       jetsEMD[JI] += p4*respEM[0];                                    //EM reco always w/ D0 def. SPR
 
-      Fnum[JI]   += resp_f[(GetrunIIb() ? 1:0)]*p4.E();
-      Fnum101[JI]+= resp[(GetrunIIb() ? 1:0)]*p4.E();
+      Fnum[JI]   += resp_f[0]*p4.E();
+      Fnum101[JI]+= resp[0]*p4.E();
       Fden[JI]   += resp[0]*p4.E(); //F denominator reco'd w/ default params
 
       //Hadrons in jets: check what is left in HCAL
@@ -674,15 +672,15 @@ void CMSJES::Loop()
                  GetA(),GetB(),GetC(),false,true,false, resp,dBRtemp,respEM );
         Response(PDG, p4.Eta(), p4.E(), p4.Pt(),fr_e,fr_mu,fr_gam,dCR, false,
                  GetA(),GetB(),GetC(),false,true,false, resp,dCRtemp,respEM );
-        dAjetsE[JI] += p4.E()*dARtemp[(GetrunIIb() ? 1:0)];
-        dAjetsX[JI] += p4.X()*dARtemp[(GetrunIIb() ? 1:0)];
-        dAjetsY[JI] += p4.Y()*dARtemp[(GetrunIIb() ? 1:0)];
-        dBjetsE[JI] += p4.E()*dBRtemp[(GetrunIIb() ? 1:0)];
-        dBjetsX[JI] += p4.X()*dBRtemp[(GetrunIIb() ? 1:0)];
-        dBjetsY[JI] += p4.Y()*dBRtemp[(GetrunIIb() ? 1:0)];
-        dCjetsE[JI] += p4.E()*dCRtemp[(GetrunIIb() ? 1:0)];
-        dCjetsX[JI] += p4.X()*dCRtemp[(GetrunIIb() ? 1:0)];
-        dCjetsY[JI] += p4.Y()*dCRtemp[(GetrunIIb() ? 1:0)];
+        dAjetsE[JI] += p4.E()*dARtemp[0];
+        dAjetsX[JI] += p4.X()*dARtemp[0];
+        dAjetsY[JI] += p4.Y()*dARtemp[0];
+        dBjetsE[JI] += p4.E()*dBRtemp[0];
+        dBjetsX[JI] += p4.X()*dBRtemp[0];
+        dBjetsY[JI] += p4.Y()*dBRtemp[0];
+        dCjetsE[JI] += p4.E()*dCRtemp[0];
+        dCjetsX[JI] += p4.X()*dCRtemp[0];
+        dCjetsY[JI] += p4.Y()*dCRtemp[0];
       } //Find derivatives
 
     } //Loop particles in jets
@@ -960,15 +958,15 @@ void CMSJES::Loop()
                    GetA(),GetB(),GetC(),false,true,false,resp,dBRtemp,respEM  );
           Response(PDG, p4.Eta(), p4.E(), p4.Pt(),fr_e,fr_mu,fr_gam,dCR, false,
                    GetA(),GetB(),GetC(),false,true,false,resp,dCRtemp,respEM  );
-          dAjetsE[JI] += p4.E()*dARtemp[(GetrunIIb() ? 1:0)];
-          dAjetsX[JI] += p4.X()*dARtemp[(GetrunIIb() ? 1:0)];
-          dAjetsY[JI] += p4.Y()*dARtemp[(GetrunIIb() ? 1:0)];
-          dBjetsE[JI] += p4.E()*dBRtemp[(GetrunIIb() ? 1:0)];
-          dBjetsX[JI] += p4.X()*dBRtemp[(GetrunIIb() ? 1:0)];
-          dBjetsY[JI] += p4.Y()*dBRtemp[(GetrunIIb() ? 1:0)];
-          dCjetsE[JI] += p4.E()*dCRtemp[(GetrunIIb() ? 1:0)];
-          dCjetsX[JI] += p4.X()*dCRtemp[(GetrunIIb() ? 1:0)];
-          dCjetsY[JI] += p4.Y()*dCRtemp[(GetrunIIb() ? 1:0)];
+          dAjetsE[JI] += p4.E()*dARtemp[0];
+          dAjetsX[JI] += p4.X()*dARtemp[0];
+          dAjetsY[JI] += p4.Y()*dARtemp[0];
+          dBjetsE[JI] += p4.E()*dBRtemp[0];
+          dBjetsX[JI] += p4.X()*dBRtemp[0];
+          dBjetsY[JI] += p4.Y()*dBRtemp[0];
+          dCjetsE[JI] += p4.E()*dCRtemp[0];
+          dCjetsX[JI] += p4.X()*dCRtemp[0];
+          dCjetsY[JI] += p4.Y()*dCRtemp[0];
         } //Find derivatives
       } //Loop particles in jets
     }
@@ -1021,7 +1019,7 @@ void CMSJES::Loop()
                 h_other[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
                                  (resp[0]*p4).E()               );
                 h_other[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                                 (resp_f[(GetrunIIb() ? 1:0)]*p4).E());
+                                 (resp_f[0]*p4).E());
               } //Xi, Sigma, Omega^-
               //List further unknown particle PDGIDs
               if (find(otherIDs.begin(),otherIDs.end(),PDG)==otherIDs.end() &&
@@ -1030,11 +1028,11 @@ void CMSJES::Loop()
           h_ptr[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
           h_ptr[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp[0]*p4).E() );
           h_ptr[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                         (resp_f[(GetrunIIb() ? 1:0)]*p4).E() );
+                         (resp_f[0]*p4).E() );
           h_all[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
           h_all[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp[0]*p4).E() );
           h_all[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                         (resp_f[(GetrunIIb() ? 1:0)]*p4).E() );
+                         (resp_f[0]*p4).E() );
         } //Particle content histograms
 	
       } //If ptcl in the studied probe or tag
@@ -1312,7 +1310,6 @@ void CMSJES::Loop()
     //Save particle content histogram plot
     string plotName = "./plots/particleComposition/PC_" + ReadName;
     if (GetrunIIa()) plotName += "_runIIa";
-    if (GetrunIIb()) plotName =  plotName + "_" + Getrun();
     if (!GetStrangeB()) plotName += "_noStrangeB";	//Strange hadrons
     plotName += ".eps";	//Filetype suffix
     canv->Print(plotName.c_str());
@@ -1362,7 +1359,6 @@ void CMSJES::FindFJtoMC() {
   string outname = "./output_ROOT_files/FJtoMC/";
   string printname = "FJtoMC_";
   if      (GetrunIIa()) printname += "RunIIa";
-  else if (GetrunIIb()) printname += Getrun();
   if (!GetStrangeB()) printname += "_noStrangeB";
   outname = outname + printname + ".root";	//Filetype suffix
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -1435,7 +1431,7 @@ void CMSJES::FindFJtoMC() {
                    true,1,0,1,true,false,false,R_MC,R_FIT,R_EM       );
           jet_r += R_MC[0]*p4;
           if (isNeutrino(PDG)) jet_g_no_nu += p4; //gen lvl 4-mom for neutrinos
-          Fnum += R_MC[(GetrunIIb() ? 1:0)]*p4.E();
+          Fnum += R_MC[0]*p4.E(); // poista
           Fden += R_MC[0]*p4.E();
 	}
       } //Loop particles
@@ -1726,7 +1722,6 @@ void CMSJES::FitGN()
   //Construct input and output files
   InputNameConstructor();			//Input filenames to read
   string addRun = (GetrunIIa()?"_RunIIa":"");	//For output
-  addRun       += (GetrunIIb()?"_"+Getrun():"");
   string respNotes = (GetStrangeB() ? "" : "_noStrangeB"  );
   string gjOut = "./output_ROOT_files/CMSJES_"+gjFile+addRun+respNotes+".root";
   string djOut = "./output_ROOT_files/CMSJES_"+djFile+addRun+respNotes+".root";
@@ -1776,12 +1771,6 @@ void CMSJES::FitGN()
   //Get data points to vector handles, choose runIIa or IIb depending on flags
   vector<double> djD0v, gjD0v, djERv2, gjERv2;	//Last two: errors squared
   int dataForRun = 0; //Default to runIIa
-  if (GetrunIIb()) {
-    if      (Getrun()=="RunIIb1" ) dataForRun = 1;
-    else if (Getrun()=="RunIIb2" ) dataForRun = 2;
-    else if (Getrun()=="RunIIb34") dataForRun = 3;
-    else {cout<<"ERROR: run IIb enabled but epoch not chosen!"<<endl;  return;}
-  } 
   for (int i=0; i!=nD0data; ++i) { //N.B. do not use "sampleIndices" here,...
     if (GetdjFitting()) {          //...these vectors must first be allocated...
       djD0v.push_back( djD0II[dataForRun][i]);  //...as such. Only later are...
@@ -1987,7 +1976,6 @@ void CMSJES::FitGN()
   else if (gjFile.find("H7")!=string::npos) output << "H7";
   output << " G-N: " << "chi2/n_d0f=" << chi2; //Divided by n_dof before
   if (GetrunIIa()) output << " RunIIa";
-  if (GetrunIIb()) output << " " << Getrun();
   if (!GetStrangeB()) output << ", no strange had.";
   output << "\n" << "    A    = " << GetA()
                  <<";\t\tB    = " << GetB()
@@ -2331,9 +2319,6 @@ void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
   if      (MPFtitle.find("D#oslash cone")!=string::npos) savename += "_D0rIIc";
   else if (MPFtitle.find("_a-kT"        )!=string::npos) savename += "_a-kT";
   if      (MPFtitle.find("RunIIa"  )!=string::npos) savename += "_RunIIa";
-  else if (MPFtitle.find("RunIIb1" )!=string::npos) savename+="_RunIIb1";
-  else if (MPFtitle.find("RunIIb2" )!=string::npos) savename+="_RunIIb2";
-  else if (MPFtitle.find("RunIIb34")!=string::npos) savename+="_RunIIb34";
   if      (MPFtitle.find("ZS"      )!=string::npos) savename+="_ZS";
   if (MPFtitle.find("no #Xi, #Sigma")!=string::npos) savename+="_noStrangeB";
   if      (MPFtitle.find("0.3 cm")!=string::npos) savename+="_ct3mm";
@@ -2380,7 +2365,6 @@ void axisSetup(TAxis* xAxis, TAxis* yAxis, string Xtitle, string Ytitle) {
 void CMSJES::axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd) {
   string title = titleAdd + " #font[132]{MC vs gen, ";
   if      (GetrunIIa()) title += "RunIIa";
-  else if (GetrunIIb()) title += Getrun();
   if (!GetStrangeB())    title +=", no strange hadrons";
   title += "}";
   FJtoMC->SetTitle(title.c_str());
@@ -2402,303 +2386,8 @@ void histoSetup(TH1D* h, string Xtitle, string Ytitle) {
 void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
   axisSetup(g->GetXaxis(), g->GetYaxis(), Xtitle, Ytitle);
 }
-//-----------------------------------------------------------------------------
-//A function to plot the pT-conversion factors in the more readable format
-//(pT^gen,pT^MC/pT^gen) instead of the (pT^gen,pT^MC) actually used for the 
-//conversion. 
-void CMSJES::plotConvPT() {
 
-  //Set color codes and other handy numbers
-  int black = kGray+3;  int red  = 2;   int blue  = 9;	//Dark shades
-  int const Nr=2;	//#Runs
-  int const Ng=2;	//#Generators
-  int const Nf=3;	//#Jet flavours
 
-  //Open TFiles. The ins vector contains filenames and works as if it was the 
-  //matrix [IIa/IIb][P6/P6b/h7] with [row][col], but in the form [row*3+col]
-  vector<string> ins;
-  for (int a=0; a!=3; ++a) {
-    for (int r=0; r!=Nr; ++r) ins.push_back("./output_ROOT_files/");
-  }
-  ins[0] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_1000000";
-  ins[1] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000";
-  ins[2] += "CMSJES_H7_gammajet_D0rIIc_R05_ct10mm_2000000";
-  ins[3] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_1000000";
-  ins[4] += "CMSJES_P6_gammajet_D0rIIc_R05_ct10mm_b-enriched_1000000";
-  ins[5] += "CMSJES_H7_gammajet_D0rIIc_R05_ct10mm_2000000";
-  TFile* files[3][Nr];
-  for (int a=0; a!=6; ++a) {
-    if (a<3) ins[a] += "_RunIIa.root";
-    else     ins[a] += "_RunIIb1-P20ToP17.root";
-  }
-  for (int a=0; a!=3; ++a) {
-    for (int r=0; r!=Nr; ++r) {
-      files[a][r]  = TFile::Open(ins[3*r+a].c_str());
-    }
-  }
-
-  //Fetch TProfiles from files
-  //  1st index: 0 run IIa, 1 run IIb
-  //  2nd index: 0 P6, 1 H7
-  //  3rd index: 0 b-jets, 1 g-jets, 2 lq-jets
-  TProfile *prRtrue[Nr][Ng][Nf];
-  for (int r=0; r!=Nr; ++r) {
-    //P6 -- fetch b-jets from separate file
-    files[1][r]->GetObject("pRpGb",  prRtrue[r][0][0]);
-    files[0][r]->GetObject("pRpGg",  prRtrue[r][0][1]);
-    files[0][r]->GetObject("pRpGlq", prRtrue[r][0][2]);
-    //H7 -- all jet flavours from the same file
-    files[2][r]->GetObject("pRpGb",  prRtrue[r][1][0]);
-    files[2][r]->GetObject("pRpGg",  prRtrue[r][1][1]);
-    files[2][r]->GetObject("pRpGlq", prRtrue[r][1][2]);
-  }
-
-  //Fit functions to the TPRofiles
-  TF1* fRtrue[ Nr][Ng][Nf];
-  TF1* fRtrueN[Nr][Ng][Nf];	//Normalized
-  for (int r=0; r!=Nr; ++r) {
-    for (int g=0; g!=Ng; ++g) {
-      for (int f=0; f!=Nf; ++f) {
-        fRtrue[ r][g][f] = new TF1("fRtrue", "pol1",         30,140);
-        fRtrueN[r][g][f] = new TF1("fRtrueN","([0]+x*[1])/x",30,140);
-        prRtrue[r][g][f]->Fit(fRtrue[r][g][f], "Q");
-        fRtrueN[r][g][f]->SetParameter(0,fRtrue[r][g][f]->GetParameter(0));
-        fRtrueN[r][g][f]->SetParameter(1,fRtrue[r][g][f]->GetParameter(1));
-        //Style setup
-        if      (f==0) fRtrueN[r][g][f]->SetLineColor(red    );
-        else if (f==1) fRtrueN[r][g][f]->SetLineColor(black  );
-        else           fRtrueN[r][g][f]->SetLineColor(blue   );
-        if      (g==1) fRtrueN[r][g][f]->SetLineStyle(kDashed);
-      }
-    }
-  }
-
-  //Legend
-  TLegend* lg[Nr];
-  string lgstr;
-  for (int r=0; r!=Nr; ++r) {
-    lg[r] = new TLegend(0.65,0.15,0.9,0.45);
-    lg[r]->SetFillStyle(0);  lg[r]->SetBorderSize(0);
-    for (int g=0; g!=Ng; ++g) {
-      for (int f=0; f!=Nf; ++f) {
-        lgstr="";	//Reinit
-        if      (g==0) lgstr += "#font[132]{P6 ";
-        else           lgstr += "#font[132]{H7 ";
-        if      (r==0) lgstr += "IIa ";
-        else           lgstr += "IIb ";
-        if      (f==0) lgstr += "#font[12]{b}-jets}";
-        else if (f==1) lgstr += "#font[12]{g}-jets}";
-        else           lgstr += "#font[12]{lq}-jets}";
-        lg[r]->AddEntry(fRtrueN[r][g][f],lgstr.c_str(),"l");
-      }
-    }
-  }
-
-  //Dummy TGraph for setting axes right
-  TGraphErrors* setup = new TGraphErrors();
-  setup->SetPoint(0,40,0.55);  setup->SetPoint(1,130,0.8);
-  setup->SetMarkerColor(kWhite);  setup->SetMarkerSize(0);
-  string yTitle = "#font[132]{<#font[12]{p}_{T}^{MC}>/#font[12]{p}_{T}^{gen}}";
-  graphSetup(setup, prRtrue[0][0][0]->GetXaxis()->GetTitle(), yTitle);
-  
-  //Draw and save conversion factor plots
-  string convsavename; 
-  //Instantiate and setup canvas
-  TCanvas* canv = new TCanvas("canv","",400,400);
-  canv->SetLeftMargin(0.12);  canv->SetBottomMargin(0.12);
-  for (int r=0; r!=Nr; ++r) {
-    canv->Clear();
-    if (r==1) {
-      yTitle="#font[132]{<#font[12]{p}_{T}^{MC'}>/#font[12]{p}_{T}^{gen}}";
-    }
-    graphSetup(setup, prRtrue[0][0][0]->GetXaxis()->GetTitle(), yTitle);
-    setup->Draw("AP");
-    for (int f=0; f!=Nf; ++f) {
-      for (int g=0; g!=Ng; ++g) fRtrueN[r][g][f]->Draw("SAME");
-    }
-    lg[r]->Draw();
-    convsavename = "./plots/pTconversion/pTconv_compilation_";
-    convsavename = convsavename + (r==0?"RunIIa":"RunIIb") + ".eps";
-    canv->Print(convsavename.c_str());
-  }
-
-  //Free memory
-  for (int r=0; r!=Nr; ++r) {
-    delete lg[r];
-    for (int f=0; f!=Nf; ++f) {
-      for (int g=0; g!=Ng; ++g) {
-        delete fRtrueN[r][g][f];
-        delete fRtrue[ r][g][f];
-        delete prRtrue[r][g][f];
-      }
-    }
-  }
-  delete setup;
-  delete canv;
-
-} //plotConvP
-//-----------------------------------------------------------------------------
-//A function to produce a reference plot containing D0 data and MC points.
-void CMSJES::plotD0() {
-
-  bool raiseIIa = false;
-  bool lowerIIb = false;
-  bool drawMC   = true;
-  bool drawData = false;
-
-  //D0 data points
-  //Run IIa
-  TGraphErrors* data_dja = new TGraphErrors();	//dijet data
-  TGraphErrors* data_gja = new TGraphErrors();	//gamma+jet data
-  TGraph* mc_dja = new TGraph();		//dijet MC
-  TGraph* mc_gja = new TGraph();		//gamma+jet MC
-  //Run IIb
-  TGraphErrors* data_djb = new TGraphErrors();	//dijet data
-  TGraphErrors* data_gjb = new TGraphErrors();	//gamma+jet data
-  TGraph* mc_djb = new TGraph();		//dijet MC
-  TGraph* mc_gjb = new TGraph();		//gamma+jet MC
-  //Set marker styles and colors
-  data_dja->SetMarkerStyle(kFullCircle);   data_dja->SetMarkerColor(kBlack);
-  data_gja->SetMarkerStyle(kFullCircle);   data_gja->SetMarkerColor(kGreen+2);
-  mc_dja->SetMarkerStyle(  kOpenCircle);   mc_dja->SetMarkerColor(  kBlack);
-  mc_gja->SetMarkerStyle(  kOpenCircle);   mc_gja->SetMarkerColor(  kGreen+2);
-  data_djb->SetMarkerStyle(kFullDiamond);  data_djb->SetMarkerColor(kOrange+1);
-  data_gjb->SetMarkerStyle(kFullDiamond);  data_gjb->SetMarkerColor(kAzure+7);
-  mc_djb->SetMarkerStyle(  kOpenDiamond);  mc_djb->SetMarkerColor(  kOrange+1);
-  mc_gjb->SetMarkerStyle(  kOpenDiamond);  mc_gjb->SetMarkerColor(  kAzure+7);
-
-  //Store D0 pT-balance data points and errors to the TGraphErrors objects
-  for (int i=0; i!=nD0data; ++i) {
-    //Run IIb points
-    if (raiseIIa) {
-      data_dja->SetPoint(i,djEpII[0][i],1.08*djD0II[0][i]);
-      data_gja->SetPoint(i,gjEpII[0][i],1.08*gjD0II[0][i]);
-    } else {
-      data_dja->SetPoint(i,djEpII[0][i],djD0II[0][i]);
-      data_gja->SetPoint(i,gjEpII[0][i],gjD0II[0][i]);
-    }
-    //Run IIb points
-    if (lowerIIb) {
-      data_djb->SetPoint(i,djEpII[1][i],0.92*djD0II[1][i]);
-      data_gjb->SetPoint(i,gjEpII[1][i],0.92*gjD0II[1][i]);
-    } else {
-      data_djb->SetPoint(i,djEpII[1][i],djD0II[1][i]);
-      data_gjb->SetPoint(i,gjEpII[1][i],gjD0II[1][i]);
-    }
-    //Uncertainties
-    data_dja->SetPointError(i,0,djERII[0][i]);
-    data_gja->SetPointError(i,0,gjERII[0][i]);
-    data_djb->SetPointError(i,0,djERII[1][i]);
-    data_gjb->SetPointError(i,0,gjERII[1][i]);
-  }
-  int i_ep=1;	//Run IIb epoch index: 1=b1, 2=b2, 3=b3-4
-  for (int i=0; i!=nD0MC; ++i) {	//D0 pT-bal. MC points
-    mc_dja->SetPoint(i, djMCEpII[0][i],    djD0MCII[0][i]   );
-    mc_gja->SetPoint(i, gjMCEpII[0][i],    gjD0MCII[0][i]   );  
-    mc_djb->SetPoint(i, djMCEpII[i_ep][i], djD0MCII[i_ep][i]);
-    mc_gjb->SetPoint(i, gjMCEpII[i_ep][i], gjD0MCII[i_ep][i]);  
-  }
-
-  //Canvas and dividing it into pads.
-  //TPad: name,title,xlow,ylow,xup,yup,color
-  TCanvas* canv = new TCanvas("canvas","canvas",500,350);
-  TPad *pad1 = new TPad("pad1","",0,0,1,1,0);
-  pad1->Draw();
-
-  //General plot setup
-  pad1->SetLeftMargin(0.12);	//Room for axis label
-  pad1->SetBottomMargin(0.115);
-  pad1->cd();			//Go to pad1
-  pad1->SetLogx();		//Logarithmic horizontal axis
-
-  //Axis setup. New dummy TH1 for easy usage in multiple plots
-  TH1D* hndl;	//Handle
-  if (drawMC) hndl = new TH1D("hndl","",13,35,550);
-  else        hndl = new TH1D("hndl","",13,35,200);
-  hndl->SetStats(0);				//Suppress stat box
-  histoSetup(hndl,                      "#font[12]{E'} [GeV]",
-             "#font[12]{p}_{T}^{probe}/#font[12]{p}_{T}^{tag}");
-  hndl->SetAxisRange(0.55,0.9,"Y");		//Vertical axis limits
-  hndl->GetYaxis()->SetTitleOffset(0.7);
-  hndl->GetXaxis()->SetMoreLogLabels();
-  hndl->GetXaxis()->SetNoExponent();
-
-  //Naming the graphs
-  TLegend* ld;  TLegend* lg;	//Separate legends for dijet and gamma+jet
-  if (!drawData || !drawMC) {
-    ld = new TLegend(0.28,0.13,0.59,0.26);
-    lg = new TLegend(0.58,0.13,0.9, 0.26);
-  } else {
-    ld = new TLegend(0.28,0.13,0.59,0.37);
-    lg = new TLegend(0.58,0.13,0.88,0.37);
-  }
-  ld->SetFillStyle( 0);  lg->SetFillStyle( 0);
-  ld->SetBorderSize(0);  lg->SetBorderSize(0);	//No box around legend
-  if (drawMC) ld->AddEntry(mc_dja,
-                  "#font[132]{D#oslash run IIa EM+jet MC}",               "p");
-  if (drawData) {
-    if (raiseIIa) ld->AddEntry(data_dja,
-                  "#font[132]{D#oslash run IIa EM+jet data #uparrow}",    "p");
-    else ld->AddEntry(data_dja,"#font[132]{D#oslash run IIa EM+jet data}","p");
-  }
-  if (run == "RunIIb1") {
-    if (drawMC) ld->AddEntry(mc_djb,
-                             "#font[132]{D#oslash run IIb1 EM+jet MC}",   "p");
-    if (drawData) ld->AddEntry(data_djb,
-                             "#font[132]{D#oslash run IIb1 EM+jet data}", "p");
-  } else if (run == "RunIIb2") {
-    if (drawMC) ld->AddEntry(mc_djb,
-                             "#font[132]{D#oslash run IIb2 EM+jet MC}",   "p");
-    if (drawData) ld->AddEntry(data_djb,
-                  "#font[132]{D#oslash run IIb2 EM+jet data}",            "p");
-  } else if (run == "RunIIb34") {
-    if (drawMC) ld->AddEntry(mc_djb,
-                  "#font[132]{D#oslash run IIb3-4 EM+jet MC}",            "p");
-    if (drawData) ld->AddEntry(data_djb,
-                  "#font[132]{D#oslash run IIb3-4 EM+jet data}",          "p");
-  }
-  if (drawMC) lg->AddEntry(mc_gja,
-                  "#font[132]{D#oslash run IIa #gamma+jet MC}",           "p");
-  if (raiseIIa) {
-    if (drawData) lg->AddEntry(data_gja,
-                  "#font[132]{D#oslash run IIa #gamma+jet data #uparrow}","p");
-  } else {
-    if (drawData) lg->AddEntry(data_gja,
-                  "#font[132]{D#oslash run IIa #gamma+jet data}",         "p");
-  }
-  if (run == "RunIIb1") {
-    if (drawMC) lg->AddEntry(mc_gjb,
-                  "#font[132]{D#oslash run IIb1 #gamma+jet MC}",          "p");
-    if (drawData) lg->AddEntry(data_gjb,
-                  "#font[132]{D#oslash run IIb1 #gamma+jet data}",        "p");
-  } else if (run == "RunIIb2") {
-    if (drawMC) lg->AddEntry(mc_gjb,
-                  "#font[132]{D#oslash run IIb2 #gamma+jet MC}",          "p");
-    if (drawData) lg->AddEntry(data_gjb,
-                  "#font[132]{D#oslash run IIb2 #gamma+jet data}",        "p");
-  } else if (run == "RunIIb34") {
-    if (drawMC) lg->AddEntry(mc_gjb,
-                  "#font[132]{D#oslash run IIb3-4 #gamma+jet MC}",        "p");
-    if (drawData) lg->AddEntry(data_gjb,
-                  "#font[132]{D#oslash run IIb3-4 #gamma+jet data}",      "p");
-  }
-
-  //Main plot
-  hndl->Draw();
-  if (drawData) {
-    data_dja->Draw("P SAME");  data_gja->Draw("P SAME");  //D0 runIIa data
-    data_djb->Draw("P SAME");  data_gjb->Draw("P SAME");  //D0 runIIb data
-  }
-  if (drawMC) {
-    mc_dja->Draw("P SAME");    mc_djb->Draw("P SAME");    //D0 dijet MC
-    mc_gja->Draw("P SAME");    mc_gjb->Draw("P SAME");    //D0 gamma+jet MC
-  }
-  lg->Draw();  ld->Draw();		//Legends
-  canv->Print("./plots/D0points.eps");  //Save plot
-
-  delete canv;				//Free memory
-
-} //plotD0
 //-----------------------------------------------------------------------------
 //A function to calculate the MC hadron response R 
 //  D0 single-particle response parameters for different particles & eta 
@@ -2749,7 +2438,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
 
   //Particle must have enough pT to reach D0 detector volume
   if (!fidCuts(PDG,pT)) zero    = {true,true};
-  if (GetrunIIa() && !GetrunIIb()) zero[1] = true;
+  if (GetrunIIa()) zero[1] = true;
 
   //CALCULATE RESPONSES
   //  Loop structure to go over IIa/IIb default & IIb-P20ToP17 params
@@ -3210,12 +2899,9 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   if (Nevt==2) num = "10000";  
 
   //Choose run
-  cout << "Choose run II epoch (1) IIa (2) IIb1 (3) IIb2 (4) IIb3-4" << endl;
-  while (run<1 || run>4) cin >> run;
+  cout << "Choose run II epoch (1) IIa" << endl;
+  while (run<1 || run>1) cin >> run;
   if      (run==1) runStr += "_RunIIa";
-  else if (run==2) runStr += "_RunIIb1";
-  else if (run==3) runStr += "_RunIIb2";
-  else if (run==4) runStr += "_RunIIb34";
 
   //Choose whether or not to use Xi and Sigma Ansatz etc.
   cout << "Use strange particle Ansätze? (1) yes (2) no" << endl;  
@@ -3226,12 +2912,14 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   djstr = respStr + "dijet_"    + properties + num + runStr + root;
   gjstr = respStr + "gammajet_" + properties + num + runStr + root;
   zjstr = respStr + "Zjet_" + num + root;
+
   //b-jet enriched filenames. ATM there are only 100k event sets of these
   djstrb = respStr +"dijet_"    + properties+"b-enriched_"+num_b+runStr+root;
   gjstrb = respStr +"gammajet_" + properties+"b-enriched_"+num_b+runStr+root;
   //Additions in filename
   nameAdd = properties + num + runStr;
 } //plotQuery
+
 //-----------------------------------------------------------------------------
 //A function to find and plot flavor dependent correction factors.
 //Param		plot	if false, only reads in the F_corr histograms
@@ -3747,46 +3435,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
     D0FbcorrALT->SetParameters( 0.970,    0.0002394,             0); 
     D0FgcorrALT->SetParameters( 0.9835,   0.00007392, -1.76300e-08);
     D0FlqcorrALT->SetParameters(0.9996,   6.756e-05,  -1.28200e-07);
-  } else if (nameAdd.find("RunIIb1")!=string::npos) {
-    D0FbcH.open( "./data_and_MC_input/Fcorr/runIIb1/eta00-04/Fbcorr_histo" );
-    D0FgcH.open( "./data_and_MC_input/Fcorr/runIIb1/eta00-04/Fgcorr_histo" );
-    D0FlqcH.open("./data_and_MC_input/Fcorr/runIIb1/eta00-04/Flqcorr_histo");
-    D0FbH.open( "./data_and_MC_input/F/runIIb1/eta00-04/Fb" );
-    D0FgH.open( "./data_and_MC_input/F/runIIb1/eta00-04/Fg" );
-    D0FlqH.open("./data_and_MC_input/F/runIIb1/eta00-04/Flq");
-    D0Fbcorr->SetParameters(    0.907158,  0.001488260, -6.07181e-06);
-    D0Fgcorr->SetParameters(    0.946558,  0.000747613, -3.05711e-06);
-    D0Flqcorr->SetParameters(   1.003290,  8.06946e-05, -2.69637e-07);
-    D0FbcorrALT->SetParameters( 9.472e-01, 7.61400e-04, -2.51500e-06);
-    D0FgcorrALT->SetParameters( 9.433e-01, 6.69200e-04, -2.38400e-06);
-    D0FlqcorrALT->SetParameters(1.0020000, 1.04100e-04, -3.71400e-07);
-  } else if (nameAdd.find("RunIIb2")!=string::npos) {
-    D0FbcH.open( "./data_and_MC_input/Fcorr/runIIb2/eta00-04/Fbcorr_histo" );
-    D0FgcH.open( "./data_and_MC_input/Fcorr/runIIb2/eta00-04/Fgcorr_histo" );
-    D0FlqcH.open("./data_and_MC_input/Fcorr/runIIb2/eta00-04/Flqcorr_histo");
-    D0FbH.open( "./data_and_MC_input/F/runIIb2/eta00-04/Fb" );
-    D0FgH.open( "./data_and_MC_input/F/runIIb2/eta00-04/Fg" );
-    D0FlqH.open("./data_and_MC_input/F/runIIb2/eta00-04/Flq");
-    D0Fbcorr->SetParameters(    0.895682, 0.00151564, -5.966750e-06);
-    D0Fgcorr->SetParameters(    0.955820, 0.000435297, -1.16437e-06);
-    D0Flqcorr->SetParameters(   1.000980, 0.000164347, -7.05496e-07);
-    D0FbcorrALT->SetParameters( 0.933400, 8.90600e-04, -3.07200e-06);
-    D0FgcorrALT->SetParameters( 0.946000, 5.72300e-04, -1.88700e-06);
-    D0FlqcorrALT->SetParameters(1.003000, 7.46700e-05, -4.01100e-08);
-  } else if (nameAdd.find("RunIIb34")!=string::npos) {
-    D0FbcH.open( "./data_and_MC_input/Fcorr/runIIb3-4/eta00-04/Fbcorr_histo" );
-    D0FgcH.open( "./data_and_MC_input/Fcorr/runIIb3-4/eta00-04/Fgcorr_histo" );
-    D0FlqcH.open("./data_and_MC_input/Fcorr/runIIb3-4/eta00-04/Flqcorr_histo");
-    D0FbH.open( "./data_and_MC_input/F/runIIb3-4/eta00-04/Fb" );
-    D0FgH.open( "./data_and_MC_input/F/runIIb3-4/eta00-04/Fg" );
-    D0FlqH.open("./data_and_MC_input/F/runIIb3-4/eta00-04/Flq");
-    l_max=18;	//Run IIb3-4 has less points in the histogram
-    D0Fbcorr->SetParameters(    0.922772, 0.000965453, -3.49557e-06);
-    D0Fgcorr->SetParameters(    0.972868, 0.000429794, -2.41643e-06);
-    D0Flqcorr->SetParameters(   1.000890, 6.53228e-05,  7.23081e-08);
-    D0FbcorrALT->SetParameters( 0.957800, 3.23700e-04, -3.67500e-07);
-    D0FgcorrALT->SetParameters( 0.964300, 5.86000e-04, -3.18300e-06);
-    D0FlqcorrALT->SetParameters(0.999100, 1.00200e-04, -2.01900e-07);
   } else cout << "Unknown run, could not set D0 parameters" << endl;
 
   //Read Fcorr histo points into TGraphs
@@ -3804,9 +3452,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   h_Fcorr[1][0][0]->SetAxisRange(0.9,1.02,"Y");
   string runTitle = "#font[132]{Run ";
   if      (nameAdd.find("RunIIa"  )!=string::npos) runTitle += "IIa}";
-  else if (nameAdd.find("RunIIb1" )!=string::npos) runTitle += "IIb1}";
-  else if (nameAdd.find("RunIIb2" )!=string::npos) runTitle += "IIb2}";
-  else if (nameAdd.find("RunIIb34")!=string::npos) runTitle += "IIb3-4}";
   h_Fcorr[1][0][0]->SetTitle(runTitle.c_str());
   
   /* F PLOTS */
