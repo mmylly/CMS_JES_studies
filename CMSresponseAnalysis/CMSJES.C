@@ -30,7 +30,6 @@ void CMSJES::Loop()
   string outname = "./output_ROOT_files/CMSJES_" + ReadName;
   if (GetrunIIa()) outname += "_RunIIa";
   if (GetrunIIb()) outname = outname + "_" + Getrun();
-  if (GetrunIIb() && GetP20ToP17()) outname += "-P20ToP17";
   if (!GetStrangeB())    outname += "_noStrangeB";
   outname += ".root";	//Filetype suffix
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -195,9 +194,7 @@ void CMSJES::Loop()
 
   //MC-reco probe pT vs. gen probe pT (TRUE RESPONSE). a=all flavours
   string RtrueStr = ";#font[132]{#font[12]{p}_{T,probe}^{gen} [GeV]};";
-  if (GetrunIIb() && GetP20ToP17()) {
-    RtrueStr += "#font[132]{#font[12]{p}_{T,probe}^{MC'} [GeV]}";
-  } else RtrueStr += "#font[132]{#font[12]{p}_{T,probe}^{MC} [GeV]}";
+  RtrueStr += "#font[132]{#font[12]{p}_{T,probe}^{MC} [GeV]}";
   TProfile* pRpGa  = new TProfile("pRpGa",  RtrueStr.c_str(), 17, 30, 200);
   TProfile* pRpGb  = new TProfile("pRpGb",  RtrueStr.c_str(), 17, 30, 200);
   TProfile* pRpGg  = new TProfile("pRpGg",  RtrueStr.c_str(), 17, 30, 200);
@@ -207,9 +204,7 @@ void CMSJES::Loop()
 
   //MC-reco probe pT vs. pT' (approx. pTtagReco)
   string pTppRstr = ";#font[132]{#font[12]{p'}_{T} [GeV]};";
-  if (GetrunIIb() && GetP20ToP17()) {
-    pTppRstr += "#font[132]{#font[12]{p}_{T,probe}^{MC'} [GeV]}";
-  } else pTppRstr += "#font[132]{#font[12]{p}_{T,probe}^{MC} [GeV]}";
+  pTppRstr += "#font[132]{#font[12]{p}_{T,probe}^{MC} [GeV]}";
   TProfile* pTppRa  = new TProfile("pTppRa", pTppRstr.c_str(),17, 30, 200);
   TProfile* pTppRb  = new TProfile("pTppRb", pTppRstr.c_str(),17, 30, 200);
   TProfile* pTppRg  = new TProfile("pTppRg", pTppRstr.c_str(),17, 30, 200);
@@ -449,7 +444,6 @@ void CMSJES::Loop()
   string cutflag_file = "./cutflag_files/" + ReadName;
   if (GetrunIIa()  ) cutflag_file += "_RunIIa";
   if (GetrunIIb()  ) cutflag_file = cutflag_file + "_" + Getrun();
-  if (GetrunIIb() && GetP20ToP17()) cutflag_file += "-P20ToP17";
   if (!GetStrangeB()) cutflag_file += "_noStrangeB";
   cutflag_file += ".bin";
   if (GetuseEarlierCuts()) cout << "Checking for "; 
@@ -564,7 +558,7 @@ void CMSJES::Loop()
       Response(PDG,tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                1, 0, 1,  false, false, true,  resp, resp_f, respEM       );
       p4g_tag  = tag;
-      p4EM_tag = tag*respEM[(GetrunIIb() && GetP20ToP17() ? 1:0)];
+      p4EM_tag = tag*respEM[0];
       p4EMDtag = tag*respEM[0];	//Always reco w/ default SPR-parameters
       p4r_tag  = tag*respEM[0];
       p4f_tag  = tag*respEM[(GetrunIIb() ? 1:0)];
@@ -639,10 +633,10 @@ void CMSJES::Loop()
       //Reconstruct jets
       //jets_g[ JI] += (PDG==13||!fidCuts(PDG,(*prtcl_pt)[i])?0:1)*p4;//Gen lvl
       jets_g[ JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;           //Gen lvl
-      jets_r[ JI] += p4*resp[(GetrunIIb() && GetP20ToP17() ? 1:0)];   //MC reco
+      jets_r[ JI] += p4*resp[0];   //MC reco
       jets_d[ JI] += p4*resp[0];				      //default
       jets_f[ JI] += p4*resp_f[(GetrunIIb() ? 1:0)];                  //Fit reco always w/ MC'
-      jetsEM[ JI] += p4*respEM[(GetrunIIb() && GetP20ToP17() ? 1:0)]; //EM reco
+      jetsEM[ JI] += p4*respEM[0]; //EM reco
       jetsEMD[JI] += p4*respEM[0];                                    //EM reco always w/ D0 def. SPR
 
       Fnum[JI]   += resp_f[(GetrunIIb() ? 1:0)]*p4.E();
@@ -720,11 +714,11 @@ void CMSJES::Loop()
 
         //Check for contributions to gamma+jet tag EM-cluster
         if (studyMode==2 && p4.DeltaR(tag)<R_EMc) {
-          NIJ_r+=p4*respEM[(GetrunIIb() && GetP20ToP17() ? 1:0)]; //Reco as EM
-          NIJ_f+=p4*respEM[(GetrunIIb() && GetP20ToP17() ? 1:0)];
+          NIJ_r+=p4*respEM[0]; //Reco as EM
+          NIJ_f+=p4*respEM[0];
         } else {
-          NIJ_r+=p4*resp[  (GetrunIIb() && GetP20ToP17() ? 1:0)];
-          NIJ_f+=p4*resp_f[(GetrunIIb() && GetP20ToP17() ? 1:0)];
+          NIJ_r+=p4*resp[0];
+          NIJ_f+=p4*resp_f[0];
         }
 
       } //Loop particles not in jets
@@ -1063,11 +1057,10 @@ void CMSJES::Loop()
 
     //Add the new values to TProfile histograms:
     //p_T balance method
-    prEp->Fill(    Ep,            p4r_probe.Pt()/p4r_tag.Pt(),  weight);
+    prEp->Fill(    Ep,            p4r_probe.Pt()/p4r_tag.Pt(), weight);
     //prEpD->Fill(   pTp,     jets_d[i_probe].Pt()/p4EMDtag.Pt(),  weight);
-    prE->Fill(     p4g_probe.E(), p4r_probe.Pt()/p4r_tag.Pt(),  weight);
-    prEpFit->Fill( Ep,            (GetP20ToP17()?F101:1)
-                                  *p4f_probe.Pt()/p4r_tag.Pt(), weight);
+    prE->Fill(     p4g_probe.E(), p4r_probe.Pt()/p4r_tag.Pt(), weight);
+    prEpFit->Fill( Ep,            p4f_probe.Pt()/p4r_tag.Pt(), weight);
 
     //Derivatives of pTprobe/pTtag
     //The x- and y-term sums in the derivatives of pTprobe/pTtag
@@ -1320,7 +1313,6 @@ void CMSJES::Loop()
     string plotName = "./plots/particleComposition/PC_" + ReadName;
     if (GetrunIIa()) plotName += "_runIIa";
     if (GetrunIIb()) plotName =  plotName + "_" + Getrun();
-    if (GetrunIIb() && GetP20ToP17()) plotName += "-P20ToP17";
     if (!GetStrangeB()) plotName += "_noStrangeB";	//Strange hadrons
     plotName += ".eps";	//Filetype suffix
     canv->Print(plotName.c_str());
@@ -1371,7 +1363,6 @@ void CMSJES::FindFJtoMC() {
   string printname = "FJtoMC_";
   if      (GetrunIIa()) printname += "RunIIa";
   else if (GetrunIIb()) printname += Getrun();
-  if (GetrunIIb() && GetP20ToP17()) printname += "-P20ToP17";
   if (!GetStrangeB()) printname += "_noStrangeB";
   outname = outname + printname + ".root";	//Filetype suffix
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -1735,7 +1726,7 @@ void CMSJES::FitGN()
   //Construct input and output files
   InputNameConstructor();			//Input filenames to read
   string addRun = (GetrunIIa()?"_RunIIa":"");	//For output
-  addRun       += (GetrunIIb()?"_"+Getrun()+(GetP20ToP17()?"-P20ToP17":""):"");
+  addRun       += (GetrunIIb()?"_"+Getrun():"");
   string respNotes = (GetStrangeB() ? "" : "_noStrangeB"  );
   string gjOut = "./output_ROOT_files/CMSJES_"+gjFile+addRun+respNotes+".root";
   string djOut = "./output_ROOT_files/CMSJES_"+djFile+addRun+respNotes+".root";
@@ -1997,7 +1988,6 @@ void CMSJES::FitGN()
   output << " G-N: " << "chi2/n_d0f=" << chi2; //Divided by n_dof before
   if (GetrunIIa()) output << " RunIIa";
   if (GetrunIIb()) output << " " << Getrun();
-  if (GetrunIIb() && GetP20ToP17()) output << "-P20ToP17";
   if (!GetStrangeB()) output << ", no strange had.";
   output << "\n" << "    A    = " << GetA()
                  <<";\t\tB    = " << GetB()
@@ -2344,7 +2334,6 @@ void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
   else if (MPFtitle.find("RunIIb1" )!=string::npos) savename+="_RunIIb1";
   else if (MPFtitle.find("RunIIb2" )!=string::npos) savename+="_RunIIb2";
   else if (MPFtitle.find("RunIIb34")!=string::npos) savename+="_RunIIb34";
-  if      (MPFtitle.find("P20ToP17")!=string::npos) savename+="-P20ToP17";
   if      (MPFtitle.find("ZS"      )!=string::npos) savename+="_ZS";
   if (MPFtitle.find("no #Xi, #Sigma")!=string::npos) savename+="_noStrangeB";
   if      (MPFtitle.find("0.3 cm")!=string::npos) savename+="_ct3mm";
@@ -2764,7 +2753,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
 
   //CALCULATE RESPONSES
   //  Loop structure to go over IIa/IIb default & IIb-P20ToP17 params
-  for (int i_r=(zero[0]?1:0); i_r<(zero[1]?1:2); ++i_r) {
+  for (int i_r=(zero[0]?1:0); i_r<1; ++i_r) {
     frE->SetParameters(params_e[i_r][row][0], params_e[i_r][row][1],
                        params_e[i_r][row][2], params_e[i_r][row][3],
                        params_e[i_r][row][4]                       );
@@ -2773,6 +2762,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
                        params_gam[i_r][row][4], params_gam[i_r][row][5]);
     frMU->SetParameters(params_mu[i_r][row][0], params_mu[i_r][row][1],
                         params_mu[i_r][row][2], params_mu[i_r][row][3]);
+
     //EM-reco always using photon response
     R_temp = frG->Eval(energy);
     retEM[i_r] = R_temp;
@@ -2784,9 +2774,9 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
       case 11 : R_temp = frE->Eval(energy);
                 retMC[i_r]=R_temp;  retFIT[i_r]=R_temp;
                 break;
-//**************************************************************************************************
-      case 13 : R_temp = frG->Eval(energy); //frMU->Eval(energy); Muuta tämä
-//**************************************************************************************************
+//***********************************************************************************************
+      case 13 : R_temp = frG->Eval(energy); //frMU->Eval(energy); Change this
+//***********************************************************************************************
                 retMC[i_r]=R_temp;  retFIT[i_r]=R_temp;
                 break;
       //HADRONS
@@ -2969,7 +2959,6 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
     if (!FIT|| zero[i] || isnan(retFIT[i]) || (pos && retFIT[i]<0)) retFIT[i]=0;
     if (!EM || zero[i] || isnan(retEM[i])  || (pos && retEM[i] <0)) retEM[i] =0;
   }
-
 } //Response
 //-----------------------------------------------------------------------------
 //For studying the general properties TTree read in by the CMSJES object.
@@ -3227,12 +3216,7 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   else if (run==2) runStr += "_RunIIb1";
   else if (run==3) runStr += "_RunIIb2";
   else if (run==4) runStr += "_RunIIb34";
-  //Use IIb*-P20ToP17 parametrizations?
-  if (run>1) {
-    cout << "Use P20ToP17? (1) yes (2) no" << endl;
-    while (P<1 || P>2) cin >> P;
-    if (P==1) runStr += "-P20ToP17";
-  }
+
   //Choose whether or not to use Xi and Sigma Ansatz etc.
   cout << "Use strange particle Ansätze? (1) yes (2) no" << endl;  
   while (XS<1 || XS>2) cin >> XS;

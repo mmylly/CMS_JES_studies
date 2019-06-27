@@ -235,7 +235,6 @@ public :
   bool runIIa = false; 		//Use runIIa response parameters
   bool runIIb = false;	 	//-||-runIIb -||-
   bool runCMS = true;		//Use CMS parameters
-  bool P20ToP17	= false; 	//P20ToP17 params for MC-reco instead of default
   string run = "RunIIb34";	//... epoch to use
 
   bool StrangeB = true;		//Use Ansätze for strange baryon response
@@ -288,7 +287,6 @@ public :
   void Setrun(     string val) {run    = val; }
   void SetrunIIa(  bool flag ) {runIIa = flag;}
   void SetrunIIb(  bool flag ) {runIIb = flag;}
-  void SetP20ToP17(bool flag ) {P20ToP17 = flag;}
   void SetStrangeB(bool flag ) {StrangeB = flag;}
   void SetAnsatz(  string val) {
    if (val=="pn" || val=="L" || val=="pi") Ansatz = val;
@@ -313,7 +311,6 @@ public :
   string Getrun()    {return run;}
   bool GetrunIIa()   {return runIIa;}
   bool GetrunIIb()   {return runIIb;}
-  bool GetP20ToP17() {return P20ToP17;}
   bool GetuseD0ABC()  {return useD0ABC; }
   double Getepsilon()    {return epsilon;}
   double GetepsilonMin() {return epsilonMin;}
@@ -389,6 +386,7 @@ public :
 //Params:	file		The filename to read as a string
 //		n1,n2,n3	Dimensions of the params tensor
 //		params		Reference to the tensor to read parameters into
+
 void CMSJES::ParamReader(string file, int n1, int n2, int n3,
                         vector<vector<vector<double>>> &params)
 {
@@ -397,35 +395,34 @@ void CMSJES::ParamReader(string file, int n1, int n2, int n3,
   vector<double> v;
   vector<vector<double>> M;		//Temp matrix
   vector<vector<vector<double>>> T;	//Temp tensor
-
   //Read the parameters from files
   ifstream in;
-  string paramFile0, paramFile1;
-  paramFile0 = "./spr_mc/" + (runIIa ? "RunIIa" : run) + file; 
-  paramFile1 = "./spr_mc/" + run + "-P20ToP17" + file; 
-  for (int paramSet=0; paramSet!=n1; ++paramSet) {
-    if (paramSet==0) in.open(paramFile0);
-    else             in.open(paramFile1);
-    if (!in.is_open()) {
-      cout << "Error opening " << (paramSet==0 ? paramFile0:paramFile1) << endl;
-      return;
-    }
-    for (int lines=0; lines!=n2; ++lines) {
-      in >> p;		//1st string on line is eta region low. bd., omit it
-      for (int i=0; i!=n3; ++i) {
-        in >> p;  v.push_back(p);
-      }
-      M.push_back(v);
-      v.clear();
-    }
-    T.push_back(M);
-    M.clear();
-    in.close();
+  string paramFile;
+  paramFile = "./spr_mc/" + (runIIa ? "RunIIa" : run) + file; 
+
+  in.open(paramFile);
+  if (!in.is_open()) {
+    cout << "Error opening " << paramFile << endl;
+    return;
   }
+  for (int lines=0; lines!=n2; ++lines) {
+    in >> p;		//1st string on line is eta region low. bd., omit it
+    for (int i=0; i!=n3; ++i) {
+      in >> p;  v.push_back(p);
+    }
+    M.push_back(v);
+    v.clear();
+  }
+  T.push_back(M);
+  M.clear();
+  in.close();
+  
   params = T;
   T.clear();
 
 } //ParamReader
+
+
 
 //Constructor
 CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0) 
@@ -586,16 +583,16 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   double bp0=0,bp1=0,bp2=0,bp3=0,bp4=0,bp5=0;
 
   //Param reading works the same way for all hadrons
-  ParamReader("/photon.txt",   2, 32, 6, params_gam);
-  ParamReader("/electron.txt", 2, 32, 5, params_e  );
-  ParamReader("/muon.txt",     2, 32, 4, params_mu );
-  ParamReader("/kaon.txt",     2, 32, 3, params_K  );
-  ParamReader("/klong.txt",    2, 32, 3, params_KL );
-  ParamReader("/kshort.txt",   2, 32, 3, params_KS );
-  ParamReader("/lambda.txt",   2, 32, 3, params_L  );
-  ParamReader("/neutron.txt",  2, 32, 3, params_n  );
-  ParamReader("/pion.txt",     2, 32, 3, params_pi );
-  ParamReader("/proton.txt",   2, 32, 3, params_p  );
+  ParamReader("/photon.txt",   1, 32, 6, params_gam);
+  ParamReader("/electron.txt", 1, 32, 5, params_e  );
+  ParamReader("/muon.txt",     1, 32, 4, params_mu );
+  ParamReader("/kaon.txt",     1, 32, 3, params_K  );
+  ParamReader("/klong.txt",    1, 32, 3, params_KL );
+  ParamReader("/kshort.txt",   1, 32, 3, params_KS );
+  ParamReader("/lambda.txt",   1, 32, 3, params_L  );
+  ParamReader("/neutron.txt",  1, 32, 3, params_n  );
+  ParamReader("/pion.txt",     1, 32, 3, params_pi );
+  ParamReader("/proton.txt",   1, 32, 3, params_p  );
 
   /* Plug fit parameter values here for fit reco */
   if (runIIa) {
