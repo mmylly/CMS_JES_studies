@@ -168,16 +168,15 @@ public :
   //For storing D0 dijet / EM+jet data points and errors
   static int const nD0data = 10;	//#Data points available from D0
   static int const nCMSdata = 10;	//#Data points available from CMS
-  static int const nEpochs = 0;		//#Epochs in run IIa and IIb altogether
   static int const nCMSEpochs = 1;	//#Epochs in CMS data
 
   //D0 pT-balance data points and errors. dj for dijet, gj for gamma+jet
-  double djEpII[nEpochs][nD0data];
-  double djD0II[nEpochs][nD0data];
-  double djERII[nEpochs][nD0data];
-  double gjEpII[nEpochs][nD0data];
-  double gjD0II[nEpochs][nD0data];
-  double gjERII[nEpochs][nD0data];
+  double djEpII[nD0data];
+  double djD0II[nD0data];
+  double djERII[nD0data];
+  double gjEpII[nD0data];
+  double gjD0II[nD0data];
+  double gjERII[nD0data];
 
   //CMS pT-balance data points and errors zj for Z+jet
   double zjEp[nCMSdata];
@@ -186,10 +185,10 @@ public :
 
   //RunIIa D0 PTB MC
   static int const nD0MC = 13;	//#MC sim. points available from D0
-  double djMCEpII[nEpochs][nD0MC];	//Dijet
-  double djD0MCII[nEpochs][nD0MC];
-  double gjMCEpII[nEpochs][nD0MC];	//Gamma+jet
-  double gjD0MCII[nEpochs][nD0MC];
+  double djMCEpII[nD0MC];	//Dijet
+  double djD0MCII[nD0MC];
+  double gjMCEpII[nD0MC];	//Gamma+jet
+  double gjD0MCII[nD0MC];
   //D0 gamma+jet MPF MC (run unknown) R_cone=0.7
   static int const nD0MC_MPF_R07=16;	//#MC MPF points R=0.7 from D0
   double gjMCEp_MPF_R07[nD0MC_MPF_R07];
@@ -234,7 +233,6 @@ public :
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
   bool runIIa = false; 		//Use runIIa response parameters
   bool runCMS = true;		//Use CMS parameters
-  string run = "RunIIb34";	//... epoch to use
 
   bool StrangeB = true;		//Use Ansätze for strange baryon response
   //string Ansatz = "pn";   	//If StrangeB=true, use p & n  based Ansätze
@@ -283,7 +281,6 @@ public :
   void SetbEnrichedFiles(bool flag) {bEnrichedFiles=flag;}
   void SetcontHistos(bool flag) {contHistos=flag;}
   void SetMPFmode( bool flag ) {MPFmode = flag;}
-  void Setrun(     string val) {run    = val; }
   void SetrunIIa(  bool flag ) {runIIa = flag;}
   void SetStrangeB(bool flag ) {StrangeB = flag;}
   void SetAnsatz(  string val) {
@@ -306,7 +303,6 @@ public :
   double GetABer() {return ABer;}
   double GetACer() {return ACer;}
   double GetBCer() {return BCer;}
-  string Getrun()    {return run;}
   bool GetrunIIa()   {return runIIa;}
   bool GetuseD0ABC()  {return useD0ABC; }
   double Getepsilon()    {return epsilon;}
@@ -349,11 +345,11 @@ public :
   void   axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd);
   void   FitGN();		//Gauss-Newton fit function
   void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
-  void   plotPT(int gen=0,int alg=0,int rad=0,int ct=-1,int Nevt=0,int run=0,
-                int P=0,  int XS=0, bool MConly=false, bool fitOnly=false    );
+  void   plotPT(int gen=0,int alg=0,int rad=0,int ct=-1,int Nevt=0, int XS=0, 
+                bool MConly=false, bool fitOnly=false    );
   void   plotSepPT();
   void   plotMPF(int gen=0,  int alg=0, int rad=0, int ct=-1,
-                 int Nevt=0, int run=0, int P=0,   int XS=0  );
+                 int Nevt=0,   int XS=0  );
   void   Response(int id, double pseudorap, double energy,   double pT,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
@@ -362,12 +358,12 @@ public :
   void   ParamReader(string file, int n1, int n2, int n3,
                      vector<vector<vector<double>>> &params);
   void   flavCorr(bool plot=true, int gen=0, int alg=0,
-                  int rad=0,int ct=-1,int Nevt=0,int run=0,int P=0,int XS=0);
+                  int rad=0,int ct=-1,int Nevt=0,int XS=0);
   void   FFplot();
   void   plotQuery(string& respStr, string& djstr,  string& gjstr,
                     string& zjstr, string& djstrb, string& gjstrb,
                    int& gen,  int& alg,  int& rad,  int& ct,
-                   int& Nevt, int& run,  int& P,    int& XS        );
+                   int& Nevt, int& XS        );
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-
@@ -393,7 +389,7 @@ void CMSJES::ParamReader(string file, int n1, int n2, int n3,
   //Read the parameters from files
   ifstream in;
   string paramFile;
-  paramFile = "./spr_mc/" + (runIIa ? "RunIIa" : run) + file; 
+  paramFile = "./spr_mc/RunIIa" + file; 
 
   in.open(paramFile);
   if (!in.is_open()) {
@@ -492,12 +488,12 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   }
   
   for (int step=0; step != nD0data; ++step) {	//D0 pT-balance data
-    inPTBdata_dj_a   >> djEpII[0][step] >> djD0II[0][step] >> djERII[0][step];
-    inPTBdata_gj_a   >> gjEpII[0][step] >> gjD0II[0][step] >> gjERII[0][step];
+    inPTBdata_dj_a   >> djEpII[step] >> djD0II[step] >> djERII[step];
+    inPTBdata_gj_a   >> gjEpII[step] >> gjD0II[step] >> gjERII[step];
   }
   for (int step=0; step != nD0MC; ++step) {	//D0 pT-balance MC points
-    inPTBMC_dj_a   >> djMCEpII[0][step] >> djD0MCII[0][step];
-    inPTBMC_gj_a   >> gjMCEpII[0][step] >> gjD0MCII[0][step];
+    inPTBMC_dj_a   >> djMCEpII[step] >> djD0MCII[step];
+    inPTBMC_gj_a   >> gjMCEpII[step] >> gjD0MCII[step];
   }
   for (int step=0; step != nD0_MPF_R07; ++step) {	//MPF data points
     inMPFdata_gj_R07 >> gjEp_MPF_R07[step] >> gjD0_MPF_R07[step];

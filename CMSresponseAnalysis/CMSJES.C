@@ -48,10 +48,10 @@ void CMSJES::Loop()
   string Rcone = "R_{cone}=0.4";	//R_cone info in string form
   R_cone = 0.4;
 
-  string EpTitle = Rcone;     EpTitle    += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
-  string ETitle = Rcone;      ETitle     += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
-  string MPFTitle = Rcone;    MPFTitle   += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
-  string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS"; //(GetrunIIa() ? "RunIIa" : Getrun());
+  string EpTitle = Rcone;     EpTitle    += "RunCMS"; 
+  string ETitle = Rcone;      ETitle     += "RunCMS"; 
+  string MPFTitle = Rcone;    MPFTitle   += "RunCMS"; 
+  string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS"; 
 
   //Was Xi & Sigma response Ansatz used:
   string XS_Str="";
@@ -1770,15 +1770,14 @@ void CMSJES::FitGN()
 
   //Get data points to vector handles, choose runIIa or IIb depending on flags
   vector<double> djD0v, gjD0v, djERv2, gjERv2;	//Last two: errors squared
-  int dataForRun = 0; //Default to runIIa
   for (int i=0; i!=nD0data; ++i) { //N.B. do not use "sampleIndices" here,...
     if (GetdjFitting()) {          //...these vectors must first be allocated...
-      djD0v.push_back( djD0II[dataForRun][i]);  //...as such. Only later are...
-      djERv2.push_back(pow(djERII[dataForRun][i],2)); //...they stored into...
+      djD0v.push_back( djD0II[i]);  //...as such. Only later are...
+      djERv2.push_back(pow(djERII[i],2)); //...they stored into...
     }                                                 //...handles allowing...
     if (GetgjFitting()) {                             //...the use of...
-      gjD0v.push_back( gjD0II[dataForRun][i]);        //...sampleIndices
-      gjERv2.push_back(pow(gjERII[dataForRun][i],2));
+      gjD0v.push_back( gjD0II[i]);        //...sampleIndices
+      gjERv2.push_back(pow(gjERII[i],2));
     }
   }
 
@@ -2040,8 +2039,8 @@ void CMSJES::Plot2D()
 //A function to combine several response function plots stored as TProfiles
 //in "CMSJES_X.root" files.
 //MConly and fitOnly are Master flags, overriding all others if true
-void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
-                   int P,   int XS,   bool MConly,    bool fitOnly      )
+void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,  
+                    bool MConly,    bool fitOnly      )
 {
   bool plotOurMC  = true;
   bool plotD0MC   = true;
@@ -2057,7 +2056,7 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
   //Choose filenames to open
   string nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy;
   plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy,
-            gen, alg, rad, ct, Nevt, run, P, XS                );
+            gen, alg, rad, ct, Nevt, XS                );
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
@@ -2086,13 +2085,12 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
 
 
   //D0 pT-balance data points and errors
-  int i_ep = 0;	//Epoch index, 0 for run IIa
   for (int i=0; i!=nD0data; ++i) {	//D0 pT-bal data
-    dgj->SetPoint(i, gjEpII[i_ep][i], gjD0II[i_ep][i]);
-    dgj->SetPointError(i, 0, gjERII[i_ep][i]);
+    dgj->SetPoint(i, gjEpII[i], gjD0II[i]);
+    dgj->SetPointError(i, 0, gjERII[i]);
   }
   for (int i=0; i!=nD0MC; ++i) {	//D0 pT-bal. MC
-    mc_gj->SetPoint(i, gjMCEpII[i_ep][i], gjD0MCII[i_ep][i]);  
+    mc_gj->SetPoint(i, gjMCEpII[i], gjD0MCII[i]);  
   }
 
   //Savefile name setup
@@ -2181,22 +2179,22 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int run,
 //-----------------------------------------------------------------------------
 //A handle for drawing "MC only" and "Fit+data only" pT-bal. plots at once
 void CMSJES::plotSepPT() {
-  int gen=0, alg=0, rad=0, ct=-1, Nevt=0, run=0, P=0, XS=0;
+  int gen=0, alg=0, rad=0, ct=-1, Nevt=0, XS=0;
   string nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2;
   plotQuery(nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2,
-            gen, alg, rad, ct, Nevt, run, P, XS             );
-  plotPT(gen, alg, rad, ct, Nevt, run, P, XS, true,  false);
-  plotPT(gen, alg, rad, ct, Nevt, run, P, XS, false, true );
+            gen, alg, rad, ct, Nevt, XS             );
+  plotPT(gen, alg, rad, ct, Nevt, XS, true,  false);
+  plotPT(gen, alg, rad, ct, Nevt, XS, false, true );
 }
 //-----------------------------------------------------------------------------
 //Like plotPT, but for MPF histograms
 void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
-                    int Nevt, int run, int P,   int XS )
+                    int Nevt,  int XS )
 {
   //Choose filenames to open
   string nameAdd, dijetFile, gammajetFile, djdummy, gjdummy , zjdummy;
   plotQuery(nameAdd, dijetFile, gammajetFile, djdummy, gjdummy, zjdummy,
-            gen, alg, rad, ct, Nevt, run, P, XS                     );
+            gen, alg, rad, ct, Nevt, XS                     );
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
@@ -2853,12 +2851,12 @@ void CMSJES::PrintEvt()
 //		djstr, gjstr	Set dijet & gammajet all flavor filenames here
 //		djstrb, gjstrb	Set b-jet enriched filenames here
 //		gen,alg,rad,...
-//		ct,run,P,XS	Preset values if user interface omitted
+//		ct,XS	Preset values if user interface omitted
 //N.B. only the interesting cases are enabled in this function ATM
 void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
                        string& zjstr, string& djstrb, string& gjstrb,
                       int& gen,  int& alg, int& rad, int& ct, 
-                      int& Nevt, int& run, int& P,   int& XS          )
+                      int& Nevt, int& XS          )
 {
   //Init
   string respStr = "./output_ROOT_files/CMSJES_";
@@ -2898,10 +2896,8 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   while (Nevt<1 || Nevt>2) cin >> Nevt;
   if (Nevt==2) num = "10000";  
 
-  //Choose run
-  cout << "Choose run II epoch (1) IIa" << endl;
-  while (run<1 || run>1) cin >> run;
-  if      (run==1) runStr += "_RunIIa";
+  //RunIIb functionality removed
+  runStr += "_RunIIa";
 
   //Choose whether or not to use Xi and Sigma Ansatz etc.
   cout << "Use strange particle Ansätze? (1) yes (2) no" << endl;  
@@ -2927,11 +2923,9 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
 //		alg	      -||-       jet algorithm
 //		rad	      -||-       cone radius
 //              ct	      -||-       ctau time-/lengthscale
-//		run	      -||-       runII epoch
-//		P	      -||-       use P20ToP17 correction?
 //		XS	      -||-       "use strange hadron Ansätze?"
 void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
-                     int Nevt,  int run, int P,   int XS          )
+                     int Nevt,   int XS          )
 {
   bool fitMode = true;	//Draw fitted TF1s on top of the histos
   bool drawD0  = false;	//Draw D0 Fcorr on top of the histos (extracted from AN)
@@ -2948,7 +2942,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   //Choose filenames to open
   string nameAdd, in_d, in_g, in_z, in_d_b, in_g_b;
-  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b,gen,alg,rad,ct,Nevt,run,P,XS);
+  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b,gen,alg,rad,ct,Nevt,XS);
 
   //Check which generator was used for producing the files asked for
   string genStr="";
