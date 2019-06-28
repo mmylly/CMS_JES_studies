@@ -224,7 +224,6 @@ public :
 
 
   //Flags etc. for changing calculation properties
-  int const nABCvars=25;	//#Neighboring points to calculate respFit at
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
   unsigned int maxIter=500;	//Maximum #iterations in fitting
   bool verbose = false;		//Print additional information in Loop
@@ -241,7 +240,6 @@ public :
 
   bool printProg = true;	//Print info on Loop() progress?
   bool useEarlierCuts  = false;	//True if events chosen based on readEvt
-  bool useD0ABC        = false;	//Use fit param A,B,C values given in D0 ANs.
   bool useInitGuessABC = false;	//Use initial guess A,B,C; for starting fits
   bool djFitting = false;	//Use EM+jet ("dijet") data points for fitting
   bool gjFitting = false;	//Use gamma+jet data points for fitting
@@ -251,7 +249,7 @@ public :
   double A=1,B=0,C=1;		//Fit reco hadron response fit parameters
   double Aer=0,Ber=0,Cer=0;	//Fit parameter uncertainties
   double ABer=0,ACer=0,BCer=0;	//Off-diag. elem.s of covariance matrix
-  double E_O[2] = {0.15,0.45};	//Approx. offset energy for CMS, value from D0, does not make sense
+
   #ifdef NIJ
   bool recoMissing = false;	//Fully reconstruct also particles not in jets
   #endif
@@ -272,7 +270,6 @@ public :
   void Setepsilon(   double val) {epsilon = val;}
   void SetepsilonMin(double val) {epsilonMin = val;}
   void SetuseEarlierCuts(bool flag) {useEarlierCuts = flag;}
-  void SetuseD0ABC(  bool flag) {useD0ABC  = flag;}
   void SetdjFitting( bool flag) {djFitting = flag;}
   void SetgjFitting( bool flag) {gjFitting = flag;}
   void SetzjFitting( bool flag) {zjFitting = flag;}
@@ -304,7 +301,6 @@ public :
   double GetACer() {return ACer;}
   double GetBCer() {return BCer;}
   bool GetrunIIa()   {return runIIa;}
-  bool GetuseD0ABC()  {return useD0ABC; }
   double Getepsilon()    {return epsilon;}
   double GetepsilonMin() {return epsilonMin;}
   bool GetuseEarlierCuts() {return useEarlierCuts;}
@@ -375,7 +371,7 @@ public :
 
 //A function to read hadron response function parameters from files
 //Params:	file		The filename to read as a string
-//		n1,n2,n3	Dimensions of the params tensor
+//		n1,n2		Dimensions of the params tensor
 //		params		Reference to the tensor to read parameters into
 
 void CMSJES::ParamReader(string file, int n1, int n2,
@@ -385,7 +381,6 @@ void CMSJES::ParamReader(string file, int n1, int n2,
   double p=0;
   vector<double> v;
   vector<vector<double>> M;		//Temp matrix
-  //vector<vector<double>> T;	//Temp tensor
   //Read the parameters from files
   ifstream in;
   string paramFile;
@@ -404,18 +399,12 @@ void CMSJES::ParamReader(string file, int n1, int n2,
     M.push_back(v);
     v.clear();
   }
-  //T.push_back(M);
-  //M.clear();
-  //in.close();
-  
-  //params = T;
-  //T.clear();
+
   params = M;
   M.clear();
   in.close();
 
 } //ParamReader
-
 
 
 //Constructor
@@ -541,12 +530,9 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   /* Plug fit parameter values here for fit reco */
   if (runIIa) {
-    //D0 runIIa 0<|eta|0.4 fit params
-    if      (useD0ABC       ) {A  =1.409;     B  =0.0017;      C  =0.9973;
-                               Aer=0.020468;  Ber=0.00710429;  Cer=0.0929739;}
     //Initial guess to start fitting from
-    else if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
-                               Aer = 0.0;     Ber = 0.0;       Cer = 0.0;    }
+    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
+                          Aer = 0.0;     Ber = 0.0;       Cer = 0.0;}
     //Default: use our A,B,C depending on generator
     else {
       if (ReadName.find("P6")!=string::npos) {
@@ -560,11 +546,9 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
   } else if (runCMS) {
-    if      (useD0ABC       ) {A  =1.409;     B  =0.0017;      C  =0.9973;
-                               Aer=0.020468;  Ber=0.00710429;  Cer=0.0929739;}
     //Initial guess to start fitting from
-    else if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
-                               Aer = 0.0;     Ber = 0.0;       Cer = 0.0;    }
+    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
+                          Aer = 0.0;     Ber = 0.0;       Cer = 0.0;    }
     //Default: use our A,B,C depending on generator
     else {
       if (ReadName.find("P8")!=string::npos) {
@@ -576,6 +560,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     }
   } else cout << "\n\n\tERROR: neither run IIa nor runCMS activated!\n\n" << endl;
 } //Constructor
+
 //-----------------------------------------------------------------------------
 //Destructor
 CMSJES::~CMSJES()

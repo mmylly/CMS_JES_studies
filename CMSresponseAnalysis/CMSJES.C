@@ -311,10 +311,9 @@ void CMSJES::Loop()
   double pTmin_muon_tag = 0;    //Minimum tag muon pair pT (GeV)   
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
   bool   repeat = false;	//Repeat event for changing probe in dijet
-  double resp   = 1.0;	//SPR value                (dummy init)
-  double resp_f = 1.0;	// -||- w/ fit params      (dummy init)
-  double respEM = 1.0;	// -||- for EM-object reco (dummy init)
-  double respFit[nABCvars];	//    -||-    for fitting to D0 data
+  double resp   = 1.0;	        //SPR value                (dummy init)
+  double resp_f = 1.0;	        // -||- w/ fit params      (dummy init)
+  double respEM = 1.0;	        // -||- for EM-object reco (dummy init)
   double R_MPF_D0= 0;		//D0 style MPF response
   double R_MPF_r = 0;		//MC-reco'd MPF response
   double R_MPF_f = 0;		//Fit reco'd MPF response
