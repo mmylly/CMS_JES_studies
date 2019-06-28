@@ -83,11 +83,6 @@ void CMSJES::Loop()
   TProfile* prMPF_EpFit = new TProfile("prMPF_EpFit", EpMPFTitle.c_str(),
 			               nbinsMPF-1, binsxMPF                );
 
-  TProfile* prF101 = new TProfile("prF101",
-          ";#font[12]{E'} #font[132]{[GeV]};#font[12]{F(1,0,1)}",nbins-1,binsx);
-  TProfile* prF101pT = new TProfile("prF101pT",
-       ";#font[132]{#font[12]{p}_{T} [GeV]};#font[12]{F(1,0,1)}",nbins-1,binsx);
-
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",
           "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
@@ -250,10 +245,7 @@ void CMSJES::Loop()
   TLorentzVector p4g_tag;	//Tag    -||-    for dijet case
   TLorentzVector p4r_probe;	//Reconstr. probe 4-momentum, resp. included
   TLorentzVector p4r_tag;	//       -||-    for tag in dijet case
-  TLorentzVector p4EM_probe;	//Probe 4-momentum w/ gamma resp for all ptcls
   TLorentzVector p4EM_tag;	//Tag    -||-
-  TLorentzVector p4EMDprobe;	//Probe  -||- w/ always default reco
-  TLorentzVector p4EMDtag;	//Tag    -||- w/ always default reco
   TLorentzVector p4f_probe;	//w/ fit params to D0 data
   TLorentzVector p4f_tag;
 
@@ -281,7 +273,6 @@ void CMSJES::Loop()
   vector<double> f_EM;		//Fraction of jets' E left in EMCAL
   double f_05jetMin = 0.5;	//Min. probe f_05 value  w/in [0,1], 0=inactive
   double f_05jetMinS= 0.1;	//^soft pT<15 GeV jets,  w/in [0,1], 0=inactive
-  double f_EMtagMin = 0;	//Min. tag f_EM (EM+jet) w/in [0,1], 0=inactive
   double f_EMjetMin = 0.05;	//Min. probe f_EM value  w/in [0,1], 0=inactive
   double f_EMjetMax = 0.95;	//Max. probe f_EM value  w/in [0,1], 1=inactive
   double f_CHjetMax = 1;//0.44;	//Max. probe f_CH value  w/in [0,1], 1=inactive
@@ -289,20 +280,12 @@ void CMSJES::Loop()
   vector<TLorentzVector> jets_g;//Gen lvl jet 4-vectors
   vector<TLorentzVector> jets_r;//MC reco'd jet 4-vectors
   vector<TLorentzVector> jets_f;//Fit reco'd jet 4-vectors
-  vector<TLorentzVector> jetsEM;//Jet 4-vectors reco'd as EM-objects
-  vector<TLorentzVector> jetsEMD;//^ always reco'd w/ D0 default SPR
-  vector<TLorentzVector> jets_d;//Always default IIa-stylre reco (as the above)
   vector<double> Fden;		//F denominator:   sum_j R_j^MC   E_j^g
   vector<double> Fnum;		//F numerator:     sum_i R_i^data E_i^g
-  vector<double> Fnum101;	//ALT F numerator: sum_i R_i^MC'  E_i^g
-  double F,F101;		//Temps to store F values for the probe jet
+  double F;			//Temps to store F values for the probe jet
   int PDG = 1;			//Shorthand, to store a particle's PDGID
   int JI = 0;			//Shorthand, particle's jet index
   double phiMin = 3.0;		//Minimum azimuth angle between tag and probe
-  vector<int> probes;		//Probe jet candidate indices
-  vector<int> tags;		//Tag jet   -||-
-  int n_probes;			//#probe jet candidates in the right eta region
-  int n_tags;			//#tag   -||-
   double prtnPt = 0;		//Temp, find prtn lvl gamma w/ highest pT
   double pTmin_probe = 6;	//Minimum probe jet p_T (GeV)
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
@@ -310,7 +293,6 @@ void CMSJES::Loop()
   double pTmin_muon = 0;        //Minimum single tag muon pT (GeV)
   double pTmin_muon_tag = 0;    //Minimum tag muon pair pT (GeV)   
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
-  bool   repeat = false;	//Repeat event for changing probe in dijet
   double resp   = 1.0;	        //SPR value                (dummy init)
   double resp_f = 1.0;	        // -||- w/ fit params      (dummy init)
   double respEM = 1.0;	        // -||- for EM-object reco (dummy init)
@@ -319,7 +301,6 @@ void CMSJES::Loop()
   double R_MPF_f = 0;		//Fit reco'd MPF response
   double R_EMc = 0.3;		//EM-cluster radius, contributes to tag
   double FSU = 0.0;		//Temp for F systematic uncertainty calculations
-  int temp = 1;
   unsigned long njets;		//#jets in the event, for resizing vectors
   TLorentzVector NIJ_g;		//Gen lvl 4-vec sum of prtcls Not In Jets
   TLorentzVector NIJ_r;		//MC-reco lvl  -||-
@@ -496,34 +477,30 @@ void CMSJES::Loop()
     p4g_probe.SetPtEtaPhiE(0,0,0,0);	  p4g_tag.SetPtEtaPhiE(0,0,0,0);
     p4r_probe.SetPtEtaPhiE(0,0,0,0);      p4r_tag.SetPtEtaPhiE(0,0,0,0);
     p4f_probe.SetPtEtaPhiE(0,0,0,0);      p4f_tag.SetPtEtaPhiE(0,0,0,0);
-    p4EM_probe.SetPtEtaPhiE(0,0,0,0);     p4EM_tag.SetPtEtaPhiE(0,0,0,0);
-    p4EMDprobe.SetPtEtaPhiE(0,0,0,0);     p4EMDtag.SetPtEtaPhiE(0,0,0,0);
+    p4EM_tag.SetPtEtaPhiE(0,0,0,0);
     NIJ_g.SetPtEtaPhiE(0,0,0,0);          NIJ_r.SetPtEtaPhiE(0,0,0,0);
     NIJ_f.SetPtEtaPhiE(0,0,0,0);
     MET_r.SetPtEtaPhiE(0,0,0,0);          MET_f.SetPtEtaPhiE(0,0,0,0);
-    probes.clear();     tags.clear();     n_probes = 0;     n_tags = 0;
-    jets_g.clear();     jets_r.clear();   jets_f.clear();   jetsEM.clear();
-    jets_d.clear();
-    Fden.clear();       Fnum.clear();     Fnum101.clear();  jetsEMD.clear();
+    jets_g.clear();     jets_r.clear();   jets_f.clear();
+    Fden.clear();       Fnum.clear();  
     njets = (unsigned long)jet_pt->size();
-    jetsEM.resize(njets);   jets_g.resize(njets);   jets_r.resize(njets);
-    jets_f.resize(njets);   jetsEMD.resize(njets);  jets_d.resize(njets);
-    Fden.resize(njets);     Fnum.resize(njets);     Fnum101.resize(njets);
+    jets_g.resize(njets);   jets_r.resize(njets);
+    jets_f.resize(njets);
+    Fden.resize(njets);     Fnum.resize(njets);
     f_05.resize(njets);     f_CH.resize(njets);     f_EM.resize(njets);
     dAjetsE.resize(njets);  dAjetsX.resize(njets);  dAjetsY.resize(njets);
     dBjetsE.resize(njets);  dBjetsX.resize(njets);  dBjetsY.resize(njets);
     dCjetsE.resize(njets);  dCjetsX.resize(njets);  dCjetsY.resize(njets);
     for (int i=0; i!=jets_g.size(); ++i) {	//All objects have njets size
       jets_g[i].SetPtEtaPhiE(0,0,0,0);  jets_r[i].SetPtEtaPhiE(0,0,0,0);
-      jets_f[i].SetPtEtaPhiE(0,0,0,0);  jetsEM[i].SetPtEtaPhiE(0,0,0,0);
-      jetsEMD[i].SetPtEtaPhiE(0,0,0,0); jets_d[i].SetPtEtaPhiE(0,0,0,0);
+      jets_f[i].SetPtEtaPhiE(0,0,0,0);
       f_05[i] = 0;     f_CH[i] = 0;     f_EM[i] = 0;
-      Fden[i] = 0;     Fnum[i] = 0;     Fnum101[i] = 0;
+      Fden[i] = 0;     Fnum[i] = 0;
       dAjetsE[i] = 0;  dAjetsX[i] = 0;  dAjetsY[i] = 0;
       dBjetsE[i] = 0;  dBjetsX[i] = 0;  dBjetsY[i] = 0;
       dCjetsE[i] = 0;  dCjetsX[i] = 0;  dCjetsY[i] = 0;
     }
-    repeat = false;   tagIsJet=false;
+    tagIsJet=false;
 
     dA_E=0; dA_X=0; dA_Y=0; dB_E=0; dB_X=0; dB_Y=0; dC_E=0; dC_X=0; dC_Y=0;
     prtnPt=0;
@@ -556,7 +533,6 @@ void CMSJES::Loop()
                1, 0, 1,  false, false, true,  resp, resp_f, respEM       );
       p4g_tag  = tag;
       p4EM_tag = tag*respEM;
-      p4EMDtag = tag*respEM;	//Always reco w/ default SPR-parameters
       p4r_tag  = tag*respEM;
       p4f_tag  = tag*respEM;
     }
@@ -631,13 +607,10 @@ void CMSJES::Loop()
       //jets_g[ JI] += (PDG==13||!fidCuts(PDG,(*prtcl_pt)[i])?0:1)*p4;//Gen lvl
       jets_g[ JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;           //Gen lvl
       jets_r[ JI] += p4*resp;   //MC reco
-      jets_d[ JI] += p4*resp;				      //default
       jets_f[ JI] += p4*resp_f;                  //Fit reco always w/ MC'
-      jetsEM[ JI] += p4*respEM; //EM reco
-      jetsEMD[JI] += p4*respEM;                                    //EM reco always w/ D0 def. SPR
+
 
       Fnum[JI]   += resp_f*p4.E();
-      Fnum101[JI]+= resp*p4.E();
       Fden[JI]   += resp*p4.E(); //F denominator reco'd w/ default params
 
       //Hadrons in jets: check what is left in HCAL
@@ -654,7 +627,7 @@ void CMSJES::Loop()
       // may produce monstrous jets even with R=0.5)
       p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI],	//Gen jet 4-vec
                        (*jet_phi)[JI],(*jet_e)[JI]  );
-      if (p4.DeltaR(p4j)<0.4) { // Should this be 0.4??
+      if (p4.DeltaR(p4j)<0.5) { // Should this be 0.4??
         f_05[JI] += resp*p4.E();
       }
       
@@ -844,83 +817,6 @@ void CMSJES::Loop()
     }// Z+JET: FIND PROBE
 
 
-
-    /*********************** EM+JET: FIND TAG AND PROBE ***********************/
-
-    else if (studyMode == 1) {
-
-      if (Getverbose()) cout << "Entering EM+JET: FIND PROBE" << endl;
-
-      //Check if enough jets found, 2 is needed. Excess jets must be low-pT
-      switch (jets_r.size()) {
-        case 0  :
-        case 1  : continue;
-        case 2  : break;	//Proceed to further analysis
-        default : if (jets_r[2].Pt()>pTmin_probe) continue;
-      }
-
-      //Check if jets 0 and 1 are ok as tag and probe choices
-      bool tag_0=false, tag_1=false, probe_0=false, probe_1=false;
-      if (fabs(jets_r[0].Eta()) < eta_tag              &&
-          fabs(jets_r[0].Pt())  > pTmin_tag            &&
-          f_EM[0]               > f_EMtagMin             ) tag_0 = true;
-      if (fabs(jets_r[0].Eta()) < eta_probe            &&
-          fabs(jets_r[0].Pt())  > pTmin_probe          &&
-          f_05[0] > f_05jetMin                         &&
-          f_EM[0] < f_EMjetMax && f_EM[0] > f_EMjetMin &&
-          f_CH[0] < f_CHjetMax                           ) probe_0 = true;
-      if (fabs(jets_r[1].Eta()) < eta_tag              &&
-          fabs(jets_r[1].Pt())  > pTmin_tag            &&
-          f_EM[1]               > f_EMtagMin             ) tag_1 = true;
-      if (fabs(jets_r[1].Eta()) < eta_probe            &&
-          fabs(jets_r[1].Pt())  > pTmin_probe          &&
-          f_05[1] > f_05jetMin                         &&
-          f_EM[1] < f_EMjetMax && f_EM[1] > f_EMjetMin &&
-          f_CH[1] < f_CHjetMax                           ) probe_1 = true;
-      //Check if both 0:th and 1st jet suit as both tag and probe candidates
-      if (tag_0 && tag_1 && probe_0 && probe_1) {
-        i_tag   = 1;		//Choose this now, flip later (while filling...
-        repeat = true;  	//...histos) by virtue of the repeat flag
-      } else if (probe_1 && tag_0) i_tag = 0;	//1 ok probe candidate, 0 ok tag
-      else if   (probe_0 && tag_1) i_tag = 1;	//0 ok probe candidate, 1 ok tag
-      else continue;				//Neither a good probe nor tag
-      i_probe = (i_tag==0 ? 1 : 0);		//The other jet must be probe
-
-      //Gen lvl jet 4-vectors, only prtcls w/in D0 detector volume in jets_g
-      tag.SetPtEtaPhiE((*jet_pt)[i_tag],  (*jet_eta)[i_tag],
-		       (*jet_phi)[i_tag], (*jet_e)[i_tag]);
-      probe.SetPtEtaPhiE((*jet_pt)[i_probe], (*jet_eta)[i_probe],
-			 (*jet_phi)[i_probe],(*jet_e)[i_probe]  );
-      p4g_tag.SetPtEtaPhiE(jets_g[i_tag].Pt(),  jets_g[i_tag].Eta(),
-		           jets_g[i_tag].Phi(), jets_g[i_tag].E()  );
-      p4g_probe.SetPtEtaPhiE(jets_g[i_probe].Pt(),  jets_g[i_probe].Eta(),
-			     jets_g[i_probe].Phi(), jets_g[i_probe].E()  );
-      //Reco lvl
-      p4r_tag.SetPtEtaPhiE(jets_r[i_tag].Pt(),  jets_r[i_tag].Eta(),
-		           jets_r[i_tag].Phi(), jets_r[i_tag].E()  );
-      p4r_probe.SetPtEtaPhiE(jets_r[i_probe].Pt(),  jets_r[i_probe].Eta(),
-			     jets_r[i_probe].Phi(), jets_r[i_probe].E()  );
-      //Jets reconstructed as EM-objects (tag is to be handled as an EM-object)
-      p4EM_tag.SetPtEtaPhiE(jetsEM[i_tag].Pt(),  jetsEM[i_tag].Eta(),
-		            jetsEM[i_tag].Phi(), jetsEM[i_tag].E()  );
-      p4EM_probe.SetPtEtaPhiE(jetsEM[i_probe].Pt(),  jetsEM[i_probe].Eta(),
-			      jetsEM[i_probe].Phi(), jetsEM[i_probe].E()  );
-      // -||- but always reco'd w/ default SPR photon param
-      p4EMDtag.SetPtEtaPhiE(jetsEMD[i_tag].Pt(),  jetsEMD[i_tag].Eta(),
-		            jetsEMD[i_tag].Phi(), jetsEMD[i_tag].E()  );
-      p4EMDprobe.SetPtEtaPhiE(jetsEMD[i_probe].Pt(),  jetsEMD[i_probe].Eta(),
-			      jetsEMD[i_probe].Phi(), jetsEMD[i_probe].E()  );
-
-      //Fit reco lvl
-      p4f_tag.SetPtEtaPhiE(jets_f[i_tag].Pt(),  jets_f[i_tag].Eta(),
-			   jets_f[i_tag].Phi(), jets_f[i_tag].E()  );
-      p4f_probe.SetPtEtaPhiE(jets_f[i_probe].Pt(),  jets_f[i_probe].Eta(),
-			     jets_f[i_probe].Phi(), jets_f[i_probe].E()  );
-
-    } //Dijet find tag and probe
-
-    
-
     /****************************** COMMON CUTS FOR Z+JET ******************************/
     if (Getverbose()) cout << "Entering COMMON CUTS" << endl;
     
@@ -977,7 +873,7 @@ void CMSJES::Loop()
       JI = (*prtcl_jet)[i];
 
       //See if ptcl belongs to the studied jet(s)
-      if (JI==i_probe || (repeat && JI==i_tag)) {
+      if (JI==i_probe) {
 
         PDG = abs((*prtcl_pdgid)[i]); 
         p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i], //Prtcl gen lvl values
@@ -1049,13 +945,11 @@ void CMSJES::Loop()
 
     //Data<->MC & MC'<->MC factors
     F    = Fnum[i_probe]/Fden[i_probe];
-    F101 = Fnum101[i_probe]/Fden[i_probe];
 
 
     //Add the new values to TProfile histograms:
     //p_T balance method
     prEp->Fill(    Ep,            p4r_probe.Pt()/p4r_tag.Pt(), weight);
-    //prEpD->Fill(   pTp,     jets_d[i_probe].Pt()/p4EMDtag.Pt(),  weight);
     prE->Fill(     p4g_probe.E(), p4r_probe.Pt()/p4r_tag.Pt(), weight);
     prEpFit->Fill( Ep,            p4f_probe.Pt()/p4r_tag.Pt(), weight);
 
@@ -1083,10 +977,6 @@ void CMSJES::Loop()
         MET_r -= jets_r[i];
         MET_f -= jets_f[i];
       }
-    }
-    if (studyMode==1) {
-        MET_r -= jetsEM[i_tag];
-        MET_f -= jetsEM[i_tag];
     }
     R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
     R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
@@ -1141,8 +1031,6 @@ void CMSJES::Loop()
         EpPptr->Fill(  Ep,             p4r_probe.Pt(),                weight);
         EpE->Fill(     p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
         EpEptr->Fill(  p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
-        prF101->Fill(  Ep,             F101,                          weight);
-        prF101pT->Fill(p4g_probe.Pt(), F101,                          weight);
         Fptr_p->Fill(  pTp,            F,                             weight);
         Fjet_p->Fill(  pTp,            F,                             weight);
         Fptr_r->Fill(  p4r_probe.Pt(), F,                             weight);
@@ -1152,7 +1040,6 @@ void CMSJES::Loop()
         Fptr->Fill(    Ep,             F,                             weight);
         Fjet->Fill(    Ep,             F,                             weight);
         pTEp->Fill(    pTp,            p4g_probe.Pt()/pTp,            weight);
-        //tEMpG->Fill(   p4r_probe.Pt(), p4g_probe.E()/p4EMDtag.Pt(),   weight);
         FFa->Fill(     Ep,                                            weight);
         pRpGptr->Fill( p4g_probe.Pt(), p4r_probe.Pt(),                weight);
         pRpGa->Fill(   p4g_probe.Pt(), p4r_probe.Pt(),                weight);
@@ -1167,7 +1054,7 @@ void CMSJES::Loop()
                      +pow(GetCer()*dC_E,2)
                      +2*GetABer()*dA_E*dB_E //Covar. matrix is symmetric => 2*
                      +2*GetACer()*dA_E*dC_E
-                     +2*GetBCer()*dB_E*dC_E )/p4r_probe.E()*F101;
+                     +2*GetBCer()*dB_E*dC_E )/p4r_probe.E();
           FptrSU->Fill(  Ep,                                     FSU, weight);
           FjetSU->Fill(  Ep,                                     FSU, weight);
           FptrSU_p->Fill(pTp,                                    FSU, weight);
@@ -2045,7 +1932,6 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   bool plotD0MC   = true;
   bool plotD0data = true;
   bool plotFit    = true;
-  bool OMCD0P     = false;	//Is this a "Our MC w/ D0 param." plot?
 
   plotOurMC =(MConly ?true :plotOurMC );  plotD0MC=(MConly ?true :plotD0MC);
   plotD0data=(MConly ?false:plotD0data);  plotFit =(MConly ?false:plotFit );
@@ -2139,7 +2025,6 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
     if (!plotD0data) vertical[0] += 0.06;  //...with all combinations ...
     if (!plotFit   ) vertical[0] += 0.06;  //...of plot flags
   }
-  if (OMCD0P && plotFit) { lz_horiz[0] -= 0.05;  lz_horiz[1] += 0.02;}
   TLegend* lz = new TLegend(lz_horiz[0],vertical[0],lz_horiz[1],vertical[1]);
   lz->SetBorderSize(0);	//No box around legend
   lz->SetFillStyle( 0);	//No background fill
@@ -2147,10 +2032,7 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   if (plotD0MC  ) lz->AddEntry(mc_gj,"#font[132]{D#oslash #gamma+jet MC}", "p");
   if (plotOurMC ) lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}",      "l");
   if (plotD0data) lz->AddEntry(dgj, "#font[132]{D#oslash #gamma+jet data}","p");
-  if (plotFit   ) {
-    if (OMCD0P)   lz->AddEntry(hzj_f, "#font[132]{Our #gamma+jet, D#oslash A,B,C}","p");
-    else          lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
-  }
+  if (plotFit   ) lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
 
 
   //Main plot
@@ -2166,7 +2048,6 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
 
   //Save plot
   string saveTo = "./plots/pT-bal/";
-  if (OMCD0P) saveTo += "our_MC_D0_param/OMCD0P_";
   saveTo = saveTo + (MConly?"MC_":"") + (fitOnly?"data_fit_":"") + savename;
   canv->Print(saveTo.c_str());
 
@@ -2927,7 +2808,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   bool fitMode = true;	//Draw fitted TF1s on top of the histos
   bool drawD0  = false;	//Draw D0 Fcorr on top of the histos (extracted from AN)
   bool drawD0_h= false;	//^Draw the histos instead of the fits
-  bool OMCD0P  = false;	//Write "Our MC, D0 A,B,C" on the plot
   bool Eprm    = true;	//True: F(E'), false: F(pT') at intpretation 0
   bool pTgen   = true;	//True: F(pT^gen_jet), false: F(pT^MC_jet) at int.pre. 1
   bool uncertF     = false;	//Draw F uncertainties?
@@ -3067,7 +2947,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   TCanvas* canvConv = new TCanvas("canvConv","",400,400);
   canvConv->SetLeftMargin(0.12);
-  TProfile *prEpD, *prF101, *prF101pT, *tEMpG = 0;
+  TProfile *prEpD, *tEMpG = 0;
   TProfile *prEpP,    *prEpP_b,   *prEpP_g,   *prEpP_lq   = 0; 
   TProfile *prRtrue,  *prRtrue_b, *prRtrue_g, *prRtrue_lq = 0;
   TProfile *prpTppRb, *prpTppRg,  *prpTppRlq = 0;
@@ -3075,8 +2955,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   fg->GetObject(       "EpP",      prEpP     );  prEpP->SetStats(     0);
   fg->GetObject(       "EpP_g",    prEpP_g   );  prEpP_g->SetStats(   0);
   fg->GetObject(       "EpP_lq",   prEpP_lq  );  prEpP_lq->SetStats(  0);
-  fg->GetObject(       "prF101",   prF101    );  prF101->SetStats(    0);
-  fg->GetObject(       "prF101pT", prF101pT  );  prF101pT->SetStats(  0);
   fg->GetObject(       "pRpGa",    prRtrue   );  prRtrue->SetStats(   0);
   fg->GetObject(       "pTppRg",   prpTppRg  );  prpTppRg->SetStats(  0);
   fg->GetObject(       "pTppRlq",  prpTppRlq );  prpTppRlq->SetStats( 0);
@@ -3098,7 +2976,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   TF1* fEpP_b     = new TF1("fEpP_b",   "pol1",          10, 145);
   TF1* fEpP_g     = new TF1("fEpP_g",   "pol1",          10, 145);
   TF1* fEpP_lq    = new TF1("fEpP_lq",  "pol1",          10, 145);
-  TF1* fF101      = new TF1("fF101",     pwrlaw.c_str(), 30, 145);
   TF1* fRtrue;   TF1* fRtrue_b;  TF1* fRtrue_g;  TF1* fRtrue_lq;
   TF1* fpTppRb;  TF1* fpTppRg;   TF1* fpTppRlq;
   bool fitPwrLaw = false;
@@ -3128,7 +3005,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   ftEMpG->SetParameters( 1.15,0.7,0.85);
   cout << "*** tEMpG fit" << endl;              tEMpG->Fit(   ftEMpG     );
   fpTbal->SetParameters(   1.15,0.7,0.85);	prEpD->Fit(   fpTbal, "Q");
-  fF101->SetParameters(    1.5, 0.5,0.9 );	prF101->Fit(  fF101,  "Q");
   TF1* fF[Nf][Ns][NI];
   stringstream fFname;
   for (int f=0; f!=Nf; ++f) {
@@ -3451,9 +3327,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   string savename;
 
   //Indicate if the plots use D0 A,B,C in our MC
-  string OMC;
-  if (OMCD0P) OMC = "#font[132]{Our MC with D#oslash} #font[12]{A,B,C}";
-  else        OMC = "#font[132]{Our MC}";
+  string OMC = "#font[132]{Our MC}";
 
   //Where to place some additional LaTeX text in the plots
   double latexBD[3]={70.0, 85.0, 0.955};
@@ -3595,8 +3469,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
     }
     lgF->Draw();
     savename = "./plots/F/";
-    if (OMCD0P) savename += "our_MC_D0_param/OMCD0P_";
-    if (!OMCD0P && (drawD0 || drawD0_h)) savename += "D0comp_";
+    if (drawD0 || drawD0_h) savename += "D0comp_";
     savename = savename+"F_"+(a==0?"Ep_":"pTjet_")+genStr+nameAdd+".eps";
     canv->Print(savename.c_str());	//Save plot
   } //Horizontal axis interpretations
@@ -3685,8 +3558,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
     g_Fcorr[2][0][a]->Draw(             "P SAME");
     lgc->Draw();
     savename = "./plots/Fcorr/";
-    if (OMCD0P) savename += "our_MC_D0_param/OMCD0P_";
-    if (!OMCD0P && (drawD0 || drawD0_h)) savename += "D0comp_";
+    if (drawD0 || drawD0_h) savename += "D0comp_";
     savename = savename+"Fcorr_"+(a==0?"Ep_":"pTjet_")+genStr+nameAdd+".eps";
     canv->Print(savename.c_str());	//Save plot
   } //Horizontal axis interpretations

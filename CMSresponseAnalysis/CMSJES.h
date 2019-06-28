@@ -168,7 +168,6 @@ public :
   //For storing D0 dijet / EM+jet data points and errors
   static int const nD0data = 10;	//#Data points available from D0
   static int const nCMSdata = 10;	//#Data points available from CMS
-  static int const nCMSEpochs = 1;	//#Epochs in CMS data
 
   //D0 pT-balance data points and errors. dj for dijet, gj for gamma+jet
   double djEpII[nD0data];
