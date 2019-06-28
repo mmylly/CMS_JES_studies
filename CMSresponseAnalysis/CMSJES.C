@@ -783,8 +783,8 @@ void CMSJES::Loop()
       }
 
       p4.SetPtEtaPhiE(0,0,0,0);	//Reinit
-      //Set probe 4-vectors. EM reco'd probe is useless in Z+jet
 
+      //Set probe 4-vectors.
       //Gen lvl as output by FastJet
       probe.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
 			 (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
@@ -806,9 +806,8 @@ void CMSJES::Loop()
       //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
       if ((p4r_probe.Pt()<softPt && f_05[i_probe]<f_05jetMinS) ||
           f_05[i_probe] < f_05jetMin                             ) continue;
-      //-tag and probe in the right |eta| region with enough p_T
-      
 
+      //-tag and probe in the right |eta| region with enough p_T
       if (fabs(p4r_tag.Eta())  > eta_muon       ||
           p4r_tag.Pt()         < pTmin_muon_tag ||
           fabs(p4r_probe.Eta()) > eta_probe     ||
