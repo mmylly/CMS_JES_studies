@@ -167,7 +167,7 @@ public :
 
   //For storing D0 dijet / EM+jet data points and errors
   static int const nD0data = 10;	//#Data points available from D0
-  static int const nCMSdata = 10;	//#Data points available from CMS
+  static int const nCMSdata = 6;	//#Data points available from CMS
 
   //D0 pT-balance data points and errors. dj for dijet, gj for gamma+jet
   double djEpII[nD0data];
@@ -203,24 +203,10 @@ public :
   double djMCEp_MPF[nD0MC_MPF];
   double djD0MC_MPF[nD0MC_MPF];
 
-
   // Similar for CMS Z+jet with invented values
-  static int const nCMSMC = 13;	
-  double zjMCEpII[nCMSMC];	
-  double zjCMSMCII[nCMSMC];
-
-  static int const nCMSMC_MPF_R07=16;	//#MC MPF points R=0.7 from CMS
-  double zjCMSEp_MPF_R07[nCMSMC_MPF_R07];
-  double zjCMSMC_MPF_R07[nCMSMC_MPF_R07];
-
-  static int const nCMS_MPF_R07 = 11;  //#MC MPF data points available from CMS
-  double zjEp_MPF_R07[nCMS_MPF_R07];
-  double zjCMS_MPF_R07[nCMS_MPF_R07];
-
-  static int const nCMSMC_MPF=11;	//#MC MPF points from D0
-  double zjMCEp_MPF[nCMSMC_MPF];
-  double zjCMSMC_MPF[nCMSMC_MPF];
-
+  static int const nCMSMC = 6;	
+  double zjMCEp[nCMSMC];	
+  double zjCMSMC[nCMSMC];
 
   //Flags etc. for changing calculation properties
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
@@ -453,6 +439,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   ifstream inPTBdata_dj_a;   ifstream inPTBMC_dj_a;   //RunIIa dijet
   ifstream inPTBdata_gj_a;   ifstream inPTBMC_gj_a;   // -||-  gammajet
+  ifstream inPTBdata_zj;     ifstream inPTBMC_zj;     //CMS   Z+jet
+
   ifstream inMPFdata_gj;     ifstream inMPFMC_gj;     //MPF gammajet, run NA
   ifstream inMPFdata_dj;     ifstream inMPFMC_dj;
   ifstream inMPFdata_gj_R07; ifstream inMPFMC_gj_R07;
@@ -461,6 +449,11 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inPTBdata_gj_a.open("./data_and_MC_input/pTbal/runIIa/gammajet_data");
   inPTBMC_dj_a.open(  "./data_and_MC_input/pTbal/runIIa/dijet_MC");
   inPTBMC_gj_a.open(  "./data_and_MC_input/pTbal/runIIa/gammajet_MC");
+
+  //CMS pT-balance
+  inPTBdata_zj.open("./data_and_MC_input/pTbal/jecdataGH/zmmjet_data");
+  inPTBMC_zj.open(  "./data_and_MC_input/pTbal/jecdataGH/zmmjet_mc");
+
   //MPF
   inMPFdata_gj_R07.open("./data_and_MC_input/MPF/MPF_gammajet_data_R07");
   inMPFMC_gj_R07.open("./data_and_MC_input/MPF/MPF_gammajet_MC_R07");
@@ -471,10 +464,11 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   if (!inPTBdata_dj_a.is_open()   || !inPTBMC_dj_a.is_open()   ||
       !inPTBdata_gj_a.is_open()   || !inPTBMC_gj_a.is_open()   ||
+      !inPTBdata_zj.is_open()     || !inPTBMC_zj.is_open()     ||
       !inMPFMC_dj.is_open()       || !inMPFMC_gj.is_open()     ||
       !inMPFdata_gj_R07.is_open() || !inMPFMC_gj_R07.is_open()   )
   {
-    cout << "Error opening D0 data/MC point files!" << endl;
+    cout << "Error opening D0/CMS data/MC point files!" << endl;
     return;
   }
   
@@ -486,6 +480,14 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     inPTBMC_dj_a   >> djMCEpII[step] >> djD0MCII[step];
     inPTBMC_gj_a   >> gjMCEpII[step] >> gjD0MCII[step];
   }
+
+  for (int step=0; step != nCMSdata; ++step) {	//CMS pT-balance data
+    inPTBdata_zj   >> zjEp[step] >> zjCMS[step] >> zjER[step];
+  }
+  for (int step=0; step != nCMSMC; ++step) {	//CMS pT-balance MC points
+    inPTBMC_zj   >> zjMCEp[step] >> zjCMSMC[step];
+  }
+
   for (int step=0; step != nD0_MPF_R07; ++step) {	//MPF data points
     inMPFdata_gj_R07 >> gjEp_MPF_R07[step] >> gjD0_MPF_R07[step];
   }
@@ -499,9 +501,11 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   //Close the D0 MC / data point files
   inPTBdata_dj_a.close();    
-  inPTBdata_gj_a.close();    
+  inPTBdata_gj_a.close();
+  inPTBdata_zj.close(); 
   inPTBMC_dj_a.close();      
-  inPTBMC_gj_a.close();      
+  inPTBMC_gj_a.close();
+  inPTBMC_zj.close(); 
   inMPFdata_gj_R07.close();  inMPFMC_gj_R07.close();
   inMPFMC_dj.close();        inMPFMC_gj.close();
 

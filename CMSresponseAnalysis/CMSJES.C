@@ -1532,7 +1532,7 @@ void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
 void CMSJES::InputNameConstructor() {
 
   //Prevent overwriting existing filenames
-  if (djFile!="" || gjFile!="" || djFile_b!="" || gjFile_b!="") return;
+  if (djFile!="" || gjFile!="" || djFile_b!="" || gjFile_b!="" || zjFile!="") return;
 
   //Init strings to contain parts of the resulting filenames
   string jetAlg = "";	//Jet algorithm and cone radius
@@ -1540,10 +1540,10 @@ void CMSJES::InputNameConstructor() {
   string num = "";	//#events in the sample to study
 
   //Generator and sample event content indicators
-  if      (ReadName.find("P6")!=string::npos) {gjFile="P6_";  djFile="P6_";}
-  else if (ReadName.find("P8")!=string::npos) {gjFile="P8_";  djFile="P8_";}
-  else if (ReadName.find("H7")!=string::npos) {gjFile="H7_";  djFile="H7_";}
-  gjFile += "gammajet_";  djFile += "dijet_";
+  if      (ReadName.find("P6")!=string::npos) {gjFile="P6_";  djFile="P6_"; zjFile="P6_";}
+  else if (ReadName.find("P8")!=string::npos) {gjFile="P8_";  djFile="P8_"; zjFile="P8_";}
+  else if (ReadName.find("H7")!=string::npos) {gjFile="H7_";  djFile="H7_"; zjFile="H7_";}
+  gjFile += "gammajet_";  djFile += "dijet_"; zjFile += "Zjet_";
   //Jet algorithm
   if      (ReadName.find("D0rIIc") !=string::npos) jetAlg += "D0rIIc_"; 
   else if (ReadName.find("a-kT")   !=string::npos) jetAlg += "a-kT_";
@@ -1561,7 +1561,10 @@ void CMSJES::InputNameConstructor() {
   if      (ReadName.find("1000000")!=string::npos) num = "1000000";
   else if (ReadName.find("2000000")!=string::npos) num = "2000000";
   else if (ReadName.find("200000") !=string::npos) num = "200000";
+  else if (ReadName.find("100000") !=string::npos) num = "100000";
   else if (ReadName.find("30000")  !=string::npos) num = "30000";
+  else if (ReadName.find("10000")  !=string::npos) num = "10000";
+  else if (ReadName.find("1000")   !=string::npos) num = "1000";
   else {
     cout << "ERROR: fitting not supported for this file" << endl;
     return;
@@ -1571,7 +1574,7 @@ void CMSJES::InputNameConstructor() {
   gjFile_b = gjFile + "b-enriched_" + num;
   djFile += num;
   gjFile += num; 
-
+  zjFile += num;
 }
 //-----------------------------------------------------------------------------
 //Find the params A,B,C to fit to D0 data. Minimize LSQ-sum using Gauss-Newton.
@@ -1586,8 +1589,8 @@ void CMSJES::FitGN()
   bool fixA = false;  bool fixB = false;  bool fixC = false;
 
   //Ensure first that at least some fitting functionality is enabled
-  if (!GetdjFitting() && !GetgjFitting()) {
-    cout << "ERROR: neither gamma+jet nor dijet fitting enabled!" << endl;
+  if (!GetdjFitting() && !GetgjFitting() && !GetzjFitting()) {
+    cout << "ERROR: neither gamma+jet, dijet nor Z+jet fitting enabled!" << endl;
     return;
   }
 
@@ -1597,12 +1600,14 @@ void CMSJES::FitGN()
   //To avoid boilerplate, store the following combinations in sampleIndices:
   //  0		if fit to EM+jet (dijet) sample only
   //  1		if fit to gamma+jet sample only
+  //  2		if fit to Z+jet sample only
   //  0 and 1	if simultaneous fit to both samples
   //The vector is to be used via:
   //  for (int s: sampleIndices) {index s picks components for studied samples}
   vector<int> sampleIndices;
   if (GetdjFitting()) sampleIndices.push_back(0);
   if (GetgjFitting()) sampleIndices.push_back(1);
+  if (GetzjFitting()) sampleIndices.push_back(2);
 
   //Construct input and output files
   InputNameConstructor();			//Input filenames to read
@@ -1610,7 +1615,9 @@ void CMSJES::FitGN()
   string respNotes = (GetStrangeB() ? "" : "_noStrangeB"  );
   string gjOut = "./output_ROOT_files/CMSJES_"+gjFile+addRun+respNotes+".root";
   string djOut = "./output_ROOT_files/CMSJES_"+djFile+addRun+respNotes+".root";
-  vector<string> outs;  outs.push_back(djOut);  outs.push_back(gjOut); //Handle
+  string zjOut = "./output_ROOT_files/CMSJES_"+zjFile+addRun+respNotes+".root";
+  vector<string> outs;  outs.push_back(djOut);  outs.push_back(gjOut); 
+  outs.push_back(zjOut);//Handle
 
   /* Fitting functionality starts here */
   
@@ -1648,13 +1655,13 @@ void CMSJES::FitGN()
   ABC.SetElements(vec_arr);
 
   //Objects to read CMSJES output
-  //[0]=dijet, [1]=gammajet, xjdY=derivative of pTprobe/pTtag w.r.t. Y (x=d,g)
-  TFile*    file[2];  TProfile* prof[2];  //Files and prEpFit profiles
-  TProfile* dA[2];    TProfile* dB[2];    TProfile* dC[2];
-  double fit[2];      double fitdA[2];    double fitdB[2];  double fitdC[2];
+  //[0]=dijet, [1]=gammajet, [2]=gammajet, xjdY=derivative of pTprobe/pTtag w.r.t. Y (x=d,g)
+  TFile*    file[3];  TProfile* prof[3];  //Files and prEpFit profiles
+  TProfile* dA[3];    TProfile* dB[3];    TProfile* dC[3];
+  double fit[3];      double fitdA[3];    double fitdB[3];  double fitdC[3];
 
   //Get data points to vector handles, choose runIIa or IIb depending on flags
-  vector<double> djD0v, gjD0v, djERv2, gjERv2;	//Last two: errors squared
+  vector<double> djD0v, gjD0v, zjCMSv, djERv2, gjERv2, zjERv2;	//Last two: errors squared
   for (int i=0; i!=nD0data; ++i) { //N.B. do not use "sampleIndices" here,...
     if (GetdjFitting()) {          //...these vectors must first be allocated...
       djD0v.push_back( djD0II[i]);  //...as such. Only later are...
@@ -1665,15 +1672,26 @@ void CMSJES::FitGN()
       gjERv2.push_back(pow(gjERII[i],2));
     }
   }
+  
+  //Data points for CMS pT balance
+  for (int i=0; i!=nCMSdata; ++i) { //Allocated here
+    if (GetzjFitting()) {
+      zjCMSv.push_back(zjCMS[i]); //Not read yet
+      zjERv2.push_back(pow(zjER[i],2)); 
+    }
+  }  
 
   //Handles to the above data and uncertainty vectors to enable sample indexing
   vector<vector<double>> D0v;   D0v.push_back( djD0v );  D0v.push_back( gjD0v );
+  D0v.push_back( zjCMSv ); //Change the name later
   vector<vector<double>> ERv2;  ERv2.push_back(djERv2);  ERv2.push_back(gjERv2);
+  ERv2.push_back(zjERv2); //Change the name later
 
   //#D.O.F. for chi^2 normalization -- non-rigorous, but D0 apparently did this
   //  #D.O.F.="Number of data points to fit to minus number of free fit parameters"
   double n_dof = (GetgjFitting() ? (double) nD0data : 0)
-                +(GetdjFitting() ? (double) nD0data : 0) - (double) dim
+                +(GetdjFitting() ? (double) nD0data : 0)
+                +(GetzjFitting() ? (double) nCMSdata : 0) - (double) dim
                 +(fixA || fabs(LA)>0.01 ? 1:0)  //Constrained param.s are not...
                 +(fixB || fabs(LB)>0.01 ? 1:0)  //...free, hence they do not...
                 +(fixC || fabs(LC)>0.01 ? 1:0); //...contribute to "-dim"
@@ -1684,17 +1702,23 @@ void CMSJES::FitGN()
   for (int i=0; i!=nD0data; ++i) {  //Don't use sampleIndices for print format
     if (GetdjFitting()) printf("dj: 1/sigma^2[%d]=%-9.3f\t",i,1/ERv2[0][i]);
     if (GetgjFitting()) printf("gj: 1/sigma^2[%d]=%-9.3f",  i,1/ERv2[1][i]);
+    if (GetzjFitting()) printf("zj: 1/sigma^2[%d]=%-9.3f",  i,1/ERv2[2][i]);
     printf("\n");
   }
   cout<<"^The above factors may make |gradient| large, don't panic."<<endl;
 
-  //Instantiate and setup CMSJES objects to read in dijet and gamma+jet TTrees
+  //Instantiate and setup CMSJES objects to read in dijet, gamma+jet and Z+jet TTrees
   CMSJES* dijet = new CMSJES(0,djFile);  CMSJES* gammajet = new CMSJES(0,gjFile);
+  CMSJES* zjet = new CMSJES(0,zjFile);
   dijet->SetprintProg(     false);     gammajet->SetprintProg(     false);
   dijet->SetcontHistos(    false);     gammajet->SetcontHistos(    false);
   dijet->SetbEnrichedFiles(false);     gammajet->SetbEnrichedFiles(false);
+  zjet->SetprintProg(     false);
+  zjet->SetcontHistos(    false);
+  zjet->SetbEnrichedFiles(false);
   dijet->SetuseEarlierCuts(GetuseEarlierCuts());
   gammajet->SetuseEarlierCuts(GetuseEarlierCuts());
+  zjet->SetuseEarlierCuts(GetuseEarlierCuts());
 
   do { //The fit calculation loop
 
@@ -1710,21 +1734,25 @@ void CMSJES::FitGN()
     for (int i=0; i!=dim*dim; ++i) H[i]=0;
     if (!fixA) {dijet->SetA(   ABC.GetMatrixArray()[iA]);
                 gammajet->SetA(ABC.GetMatrixArray()[iA]);
+                zjet->SetA(ABC.GetMatrixArray()[iA]);
                 dAchi2 = 2*LA*(ABC.GetMatrixArray()[iA]-1);
                 H[dim*iA+iA]+=2*LA;                        }
     if (!fixB) {dijet->SetB(   ABC.GetMatrixArray()[iB]);
                 gammajet->SetB(ABC.GetMatrixArray()[iB]);
+                zjet->SetB(ABC.GetMatrixArray()[iB]);
                 dBchi2 =  2*LB*ABC.GetMatrixArray()[iB];
                 H[dim*iB+iB]+=2*LB;                        }
     if (!fixC) {dijet->SetC(   ABC.GetMatrixArray()[iC]);
                 gammajet->SetC(ABC.GetMatrixArray()[iC]);
+                zjet->SetC(ABC.GetMatrixArray()[iC]);
                 dCchi2 = 2*LC*(ABC.GetMatrixArray()[iC]-1);
                 H[dim*iC+iC]+=2*LC;                        }
 
     //Calculate new values
     if (GetdjFitting() && GetgjFitting()) MultiLoop(dijet, gammajet, false);
     else if (GetdjFitting()) dijet->Loop();
-    else                     gammajet->Loop();
+    else if (GetgjFitting()) gammajet->Loop();
+    else zjet->Loop();
   
     //Retrieve CMSJES output
     for (int s : sampleIndices) {
@@ -1734,8 +1762,35 @@ void CMSJES::FitGN()
     }
 
     //Read the first 10 bins of CMSJES output histos, compare to D0 data
+    /*
     for (int s : sampleIndices) {
       for (int i=0; i!=nD0data; ++i) { //GetBinContent indices start from 1
+        fit[s]=prof[s]->GetBinContent(i+1);  fitdA[s]=dA[s]->GetBinContent(i+1);
+        fitdB[s]=dB[s]->GetBinContent(i+1);  fitdC[s]=dC[s]->GetBinContent(i+1);
+        chi2 += pow(fit[s]-D0v[s][i],2)/ERv2[s][i]/n_dof;	//LSQ sum
+        //NaN check
+        if (isnan(fitdA[s]) || isnan(fitdB[s]) || isnan(fitdC[s])) {
+          cout << "Nonsensical gradient at dijet data point " << i << ": "
+               << fitdA[s]<<", "<<fitdB[s]<<", "<<fitdC[s]<<", skip" << endl;  
+          continue;
+        }
+        //Gradient components
+        if (!fixA) dAchi2 += 2*(fit[s]-D0v[s][i])*fitdA[s]/ERv2[s][i];
+        if (!fixB) dBchi2 += 2*(fit[s]-D0v[s][i])*fitdB[s]/ERv2[s][i];
+        if (!fixC) dCchi2 += 2*(fit[s]-D0v[s][i])*fitdC[s]/ERv2[s][i];
+        //The relevant components of Gauss-Newton's Hessian  estimate
+        if (!fixA         ) H[iA       ]+=2*fitdA[s]*fitdA[s]/ERv2[s][i];
+        if (!fixA && !fixB) H[iB       ]+=2*fitdA[s]*fitdB[s]/ERv2[s][i];
+        if (!fixA && !fixC) H[iC       ]+=2*fitdA[s]*fitdC[s]/ERv2[s][i];
+        if (!fixB         ) H[dim*iB+iB]+=2*fitdB[s]*fitdB[s]/ERv2[s][i];
+        if (!fixB && !fixC) H[dim*iB+iC]+=2*fitdB[s]*fitdC[s]/ERv2[s][i];
+        if (!fixC         ) H[dim*iC+iC]+=2*fitdC[s]*fitdC[s]/ERv2[s][i];
+      }
+    }
+    */
+
+    for (int s : sampleIndices) {
+      for (int i=0; i!=nCMSdata; ++i) { //GetBinContent indices start from 1
         fit[s]=prof[s]->GetBinContent(i+1);  fitdA[s]=dA[s]->GetBinContent(i+1);
         fitdB[s]=dB[s]->GetBinContent(i+1);  fitdC[s]=dC[s]->GetBinContent(i+1);
         chi2 += pow(fit[s]-D0v[s][i],2)/ERv2[s][i]/n_dof;	//LSQ sum
@@ -1811,6 +1866,7 @@ void CMSJES::FitGN()
     //The next iteration should use the same set of events as earlier
     dijet->SetuseEarlierCuts(true);
     gammajet->SetuseEarlierCuts(true);
+    zjet->SetuseEarlierCuts(true);
 
   } while (nIter!=GetmaxIter()); //The fit calculation loop
 
@@ -1824,7 +1880,7 @@ void CMSJES::FitGN()
   double BCer_temp = (fixB||fixC?0:          Cov.GetMatrixArray()[dim*iB+iC]  );
 
   //Free memory
-  delete dijet;  delete gammajet;
+  delete dijet;  delete gammajet; delete zjet;
 
   //Obtain uncertainty histograms using this CMSJES object's MultiLoop
   cout<<"* Finding uncert. histos + running b-enr. samples if needed *"<<endl;
@@ -1844,7 +1900,7 @@ void CMSJES::FitGN()
 
   SetuseEarlierCuts(false);  SetbEnrichedFiles(bEnrichedAtEnd);
   Setverbose(true);
-  MultiLoop();
+  MultiLoop(); // Has to be fixed for Z+jet probably
 
   //Write results to terminal and file
   cout << "*** FitGN result ***" << endl;

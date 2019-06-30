@@ -326,3 +326,13 @@ Aer = 0.20818;		Ber = 0.0787899;	Cer = 0.00308037;
     Aer  = 0.0198988;	Ber  = 0.0139617;	Cer  = 0.0102542;
     ABer = 9.93173e-05;	ACer = -6.29567e-05;	BCer = 0.000108841;
 
+    //P8 G-N: chi2/n_d0f=-nan
+    A    = -nan;		B    = -nan;		C    = -nan;
+    Aer  = nan;	Ber  = nan;	Cer  = nan;
+    ABer = -nan;	ACer = -nan;	BCer = -nan;
+
+    //P8 G-N: chi2/n_d0f=93606.7
+    A    = -3.41728e+08;		B    = 0.0115405;		C    = 1.00865;
+    Aer  = 0;	Ber  = 0;	Cer  = 0;
+    ABer = 0;	ACer = 8888.89;	BCer = 0;
+
