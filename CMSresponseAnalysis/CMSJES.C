@@ -2903,16 +2903,17 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   //Choose filenames to open
   string nameAdd, in_d, in_g, in_z, in_d_b, in_g_b;
-  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b,gen,alg,rad,ct,Nevt,XS);
+  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b, gen, alg, rad, ct, Nevt, XS);
 
   //Check which generator was used for producing the files asked for
   string genStr="";
-  if      (in_g.find("P6")!=string::npos) genStr="P6_";
-  else if (in_g.find("P8")!=string::npos) genStr="P8_";
-  else if (in_g.find("H7")!=string::npos) genStr="H7_";
+  if      (in_z.find("P6")!=string::npos) genStr="P6_";
+  else if (in_z.find("P8")!=string::npos) genStr="P8_";
+  else if (in_z.find("H7")!=string::npos) genStr="H7_";
 
   int const Nf=3;	//#Jet flavour classes: b, g, lq
-  int const Ns=2;	//#Sample types: gamma+jet, EM+jet
+  //int const Ns=2;	//#Sample types: gamma+jet, EM+jet
+  int const Ns=3;	//#Sample types: gamma+jet, EM+jet, and Z+jet
   int const NI=2;	//#Plots w/ diff. interpretation for hor. axis variable
 
   //Retrieve flavor-dependent factor F profiles to these pointers
@@ -2925,8 +2926,9 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   TH1D* h_F[Nf][Ns][NI];      TH1D* h_FSU[Nf][Ns][NI];
   TH1D* h_Fjet[NI];           TH1D* h_FjetSU[NI];
   //The TFiles to open
-  TFile* fd;  TFile* fd_b;  TFile* fg;  TFile* fg_b;
+  TFile* fd;  TFile* fd_b;  TFile* fg;  TFile* fg_b; TFile* fz;
 
+  if (!runCMS) {
   /* EM+jet (dijet) */
   fd = TFile::Open(in_d.c_str());
   if (GetbEnrichedFiles()) fd_b = TFile::Open(in_d_b.c_str());
@@ -3015,18 +3017,75 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
     fg->GetObject("Flq_r", F[2][0][1]);  fg->GetObject("FlqSU_r",FSU[2][0][1]);
     fg->GetObject("Fjet_r",   Fjet[1]);  fg->GetObject("FjetSU_r",  FjetSU[1]);
   }
-  //Project TProfiles to TH1Ds
-  for (int a=0; a!=NI; ++a) {
-    for (int s=0; s!=Ns; ++s) {
-      for (int f=0; f!=Nf; ++f) {
-        h_F[f][s][a]   = F[f][s][a]->ProjectionX();
-        h_FSU[f][s][a] = FSU[f][s][a]->ProjectionX();	//Syst. uncert.
-      }
+
+  } //if !runCMS
+  else {
+    //Z+jet 
+    fz   = TFile::Open(in_z.c_str());
+    if (!fz) {
+      cout << "Error opening files! Exiting" << endl;
+      return;
     }
-    h_Fjet[a]   = Fjet[a]->ProjectionX();
-    h_FjetSU[a] = FjetSU[a]->ProjectionX();
+    //b-jets
+    if (Eprm) {fz->GetObject(  "Fb",      F[0][2][0]);
+               fz->GetObject(  "FbSU",  FSU[0][2][0]);}
+    else      {fz->GetObject(  "Fb_p",    F[0][2][0]);
+               fz->GetObject(  "FbSU_p",FSU[0][2][0]);}
+    if (pTgen) {fz->GetObject( "FbSU_g",FSU[0][2][1]);
+                fz->GetObject( "Fb_g",    F[0][2][1]);}
+    else       {fz->GetObject( "FbSU_r",FSU[0][2][1]);
+                fz->GetObject( "Fb_r",    F[0][2][1]);}
+    //Always retrieve standard sample's Fb, needed for Fcorr calculation (new avg)
+    if (Eprm ) fz->GetObject("Fb",   Fbstd[0]);
+    else       fz->GetObject("Fb_p", Fbstd[0]);
+    if (pTgen) fz->GetObject("Fb_g", Fbstd[1]);
+    else       fz->GetObject("Fb_r", Fbstd[1]);
+    //Gluon jets, light quark jets and all jets (gamma+jet specific, for avg.)
+    if (Eprm) {
+      fz->GetObject("Fg",    F[1][2][0]);  fz->GetObject("FgSU",    FSU[1][2][0]);
+      fz->GetObject("Flq",   F[2][2][0]);  fz->GetObject("FlqSU",   FSU[2][2][0]);
+      fz->GetObject("Fjet",     Fjet[0]);  fz->GetObject("FjetSU",     FjetSU[0]);
+    } else {
+      fz->GetObject("Fg_p",  F[1][2][0]);  fz->GetObject("FgSU_p",  FSU[1][2][0]);
+      fz->GetObject("Flq_p", F[2][2][0]);  fz->GetObject("FlqSU_p", FSU[2][2][0]);
+      fz->GetObject("Fjet_p",   Fjet[0]);  fz->GetObject("FjetSU_p",   FjetSU[0]);
+    }
+    if (pTgen) {
+      fz->GetObject("Fg_g",  F[1][2][1]);  fz->GetObject("FgSU_g", FSU[1][2][1]);
+      fz->GetObject("Flq_g", F[2][2][1]);  fz->GetObject("FlqSU_g",FSU[2][2][1]);
+      fz->GetObject("Fjet_g",   Fjet[1]);  fz->GetObject("FjetSU_g",  FjetSU[1]);
+    } else {
+      fz->GetObject("Fg_r",  F[1][2][1]);  fz->GetObject("FgSU_r", FSU[1][2][1]);
+      fz->GetObject("Flq_r", F[2][2][1]);  fz->GetObject("FlqSU_r",FSU[2][2][1]);
+      fz->GetObject("Fjet_r",   Fjet[1]);  fz->GetObject("FjetSU_r",  FjetSU[1]);
+    }
   }
 
+
+  //Project TProfiles to TH1Ds
+  cout << "start" << endl;
+  if (!runCMS) {
+    for (int a=0; a!=NI; ++a) {
+      for (int s=0; s!=Ns; ++s) {
+        for (int f=0; f!=Nf; ++f) {
+          h_F[f][s][a]   = F[f][s][a]->ProjectionX();
+          h_FSU[f][s][a] = FSU[f][s][a]->ProjectionX();	//Syst. uncert.
+        }
+      }
+      h_Fjet[a]   = Fjet[a]->ProjectionX();
+      h_FjetSU[a] = FjetSU[a]->ProjectionX();
+    }
+  } else {
+    for (int a=0; a!=NI; ++a) {
+      for (int f=0; f!=Nf; ++f) {
+        h_F[f][2][a]   = F[f][2][a]->ProjectionX();
+        h_FSU[f][2][a] = FSU[f][2][a]->ProjectionX();	//Syst. uncert.
+      }
+      h_Fjet[a]   = Fjet[a]->ProjectionX();
+      h_FjetSU[a] = FjetSU[a]->ProjectionX();
+    }
+  }
+  cout << "end" << endl;
   /* Conversion to prtcl lvl jet pT from gamma+jet sample */
 
   TCanvas* canvConv = new TCanvas("canvConv","",400,400);

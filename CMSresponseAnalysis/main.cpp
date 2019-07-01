@@ -29,10 +29,8 @@ int main() {
       d.FitGN();
       break;
     case 4 :
-      //for (int XS=1; XS!=2; ++XS) {
-          // d.flavCorr(true, 1, 1, 1, 2, XS);
-          d.plotPT(3, 2, 2, 2, 1, 1, false,false);
-      //}
+          d.flavCorr(true, 3, 2, 2, 2, 1);
+          //d.plotPT(3, 2, 2, 2, 1, 1, false,false);
       break;
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }
