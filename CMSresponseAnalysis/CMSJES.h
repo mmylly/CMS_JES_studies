@@ -207,6 +207,7 @@ public :
   static int const nCMSMC = 6;	
   double zjMCEp[nCMSMC];	
   double zjCMSMC[nCMSMC];
+  double zjCMSMCER[nCMSMC];
 
   //Flags etc. for changing calculation properties
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
@@ -485,7 +486,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     inPTBdata_zj   >> zjEp[step] >> zjCMS[step] >> zjER[step];
   }
   for (int step=0; step != nCMSMC; ++step) {	//CMS pT-balance MC points
-    inPTBMC_zj   >> zjMCEp[step] >> zjCMSMC[step];
+    inPTBMC_zj   >> zjMCEp[step] >> zjCMSMC[step] >> zjCMSMCER[step];
   }
 
   for (int step=0; step != nD0_MPF_R07; ++step) {	//MPF data points
@@ -555,7 +556,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     //Default: use our A,B,C depending on generator
     else {
       if (ReadName.find("P8")!=string::npos) {
-        A    = 1.45399;	B    = 0.0115405;	C    = 1.00865;
+        A    = 1.91588;	B    = -7.74112;	C    = 1.16804;
         Aer  = 0.0572361;	Ber  = 0.0287636;	Cer  = 0.0105337;
         ABer = -0.00148885;	ACer = -0.000124997;	BCer = 0.000180898;
         cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;

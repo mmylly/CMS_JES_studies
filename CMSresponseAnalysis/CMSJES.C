@@ -36,10 +36,16 @@ void CMSJES::Loop()
   //TProfile constructors /w custom binning
   //  "name", "header;x_axis;y_axis", nbinsx, binsx
   //  here binsx = array containing bin limits.
-  int const nbins = 13;
+  //int const nbins = 13;
+  int const nbins = 7;
   int const nbinsMPF = 15;
-  const double binsx[nbins] = {31.0,  36.5,  41.5,  47.0,  52.0,  62.0, 72.5,
-                               87.0, 107.0, 130.0, 180.0, 350.0, 550.0      };
+  //const double binsx[nbins] = {31.0,  36.5,  41.5,  47.0,  52.0,  62.0, 72.5,
+  //                             87.0, 107.0, 130.0, 180.0, 350.0, 550.0      };
+
+  //Check values
+  const double binsx[nbins] = {82.75, 105.25, 132.75, 173.25, 228.0, 299.0, 380.0}; 
+
+
   const double binsxMPF[nbinsMPF] = {30.0,   39.0,  47.0,  55.0,  67.0,  78.0,
                                      94.0,  107.0, 130.0, 160.0, 205.0, 310.0,
                                      385.0, 470.0, 550.0                     };
@@ -69,8 +75,6 @@ void CMSJES::Loop()
   EpTitle += ";E' [GeV];p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prEp    = new TProfile("prEp", EpTitle.c_str(),      nbins-1,binsx);
   TProfile* prEpFit = new TProfile("prEpFit0", EpTitle.c_str(),  nbins-1,binsx);
-  TProfile* prEpD   = new TProfile("prEpD", //Default reco & func. of p'T
-                       ";p'_{T} [GeV];p_{T}^{probe}/p_{T}^{tag}",nbins-1,binsx);
 
   ETitle += ";E_{probe} [GeV];p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prE   = new TProfile("prE",ETitle.c_str(),nbins-1,binsx);
@@ -1981,22 +1985,27 @@ void CMSJES::Plot2D()
 //in "CMSJES_X.root" files.
 //MConly and fitOnly are Master flags, overriding all others if true
 void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,  
-                    bool MConly,    bool fitOnly      )
+                    bool MConly, bool fitOnly)
 {
   bool plotOurMC  = true;
-  bool plotD0MC   = true;
-  bool plotD0data = true;
+  bool plotD0MC   = false; //true;
+  bool plotD0data = false; //true;
+  bool plotCMSMC   = true;
+  bool plotCMSdata = true;
   bool plotFit    = true;
 
+  /*
   plotOurMC =(MConly ?true :plotOurMC );  plotD0MC=(MConly ?true :plotD0MC);
   plotD0data=(MConly ?false:plotD0data);  plotFit =(MConly ?false:plotFit );
+  plotCMSdata=(MConly ?false:plotCMSdata);plotCMSMC=(MConly ?true :plotCMSMC);
   plotOurMC =(fitOnly?false:plotOurMC );  plotD0MC=(fitOnly?false:plotD0MC);
   plotD0data=(fitOnly?true :plotD0data);  plotFit =(fitOnly?true :plotFit );
+  */
 
   //Choose filenames to open
   string nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy;
   plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy,
-            gen, alg, rad, ct, Nevt, XS                );
+            gen, alg, rad, ct, Nevt, XS);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
@@ -2013,10 +2022,15 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   TGraphErrors* dgj = new TGraphErrors();	//gamma+jet data
   TGraph* mc_gj = new TGraph();			//gamma+jet MC
 
+  //CMS data points for Z+jet
+  TGraphErrors* dzj = new TGraphErrors();	//Z+jet data
+  TGraph* mc_zj = new TGraph();			//Z+jet MC
 
   //Filled circle (4 hollow circle); 1 black, 2 red, 4 blue, 3/8 green
-  dgj->SetMarkerStyle(8);  dgj->SetMarkerColor(  kGreen+2);
+  dgj->SetMarkerStyle(8);    dgj->SetMarkerColor(  kGreen+2);
   mc_gj->SetMarkerStyle(4);  mc_gj->SetMarkerColor(kGreen+2);
+  dzj->SetMarkerStyle(8);    dzj->SetMarkerColor(  kGreen+2);
+  mc_zj->SetMarkerStyle(4);  mc_zj->SetMarkerColor(kGreen+2);
 
   hzj->SetLineColor(kGreen+2);
   hzj_f->SetMarkerStyle(kFullDiamond);  
@@ -2031,6 +2045,15 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   }
   for (int i=0; i!=nD0MC; ++i) {	//D0 pT-bal. MC
     mc_gj->SetPoint(i, gjMCEpII[i], gjD0MCII[i]);  
+  }
+
+  //CMS pT-balance data points and errors
+  for (int i=0; i!=nCMSdata; ++i) {	//CMS pT-bal data
+    dzj->SetPoint(i, zjEp[i], zjCMS[i]);
+    dzj->SetPointError(i, 0, zjER[i]);
+  }
+  for (int i=0; i!=nCMSMC; ++i) {	//CMS pT-bal. MC
+    mc_zj->SetPoint(i, zjMCEp[i], zjCMSMC[i]); //Can add errors since those exist
   }
 
   //Savefile name setup
@@ -2058,7 +2081,7 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   setup->SetStats(0);				//Suppress stat box
   setup->GetXaxis()->SetTitle(hzj->GetXaxis()->GetTitle());
   setup->GetYaxis()->SetTitle(hzj->GetYaxis()->GetTitle());
-  setup->SetAxisRange(0.55,0.9,"Y");		//Vertical axis limits
+  setup->SetAxisRange(0.6, 0.93,"Y");		//Vertical axis limits
   setup->GetYaxis()->SetTitleFont(133);
   int titleSize = 18;				//Common title size everywhere
   setup->GetYaxis()->SetTitleSize(titleSize);
@@ -2076,39 +2099,45 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   if (MConly || fitOnly) vertical[1] -= 0.12;
   else {
     if (!plotD0MC  ) vertical[1] -= 0.06;  //Resize legends so that...
+    if (!plotCMSMC  ) vertical[1] -= 0.06;
     if (!plotOurMC ) vertical[1] -= 0.06;  //...they appear properly...
     if (!plotD0data) vertical[0] += 0.06;  //...with all combinations ...
+    if (!plotCMSdata) vertical[0] += 0.06;
     if (!plotFit   ) vertical[0] += 0.06;  //...of plot flags
   }
   TLegend* lz = new TLegend(lz_horiz[0],vertical[0],lz_horiz[1],vertical[1]);
   lz->SetBorderSize(0);	//No box around legend
   lz->SetFillStyle( 0);	//No background fill
 
-  if (plotD0MC  ) lz->AddEntry(mc_gj,"#font[132]{D#oslash #gamma+jet MC}", "p");
-  if (plotOurMC ) lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}",      "l");
-  if (plotD0data) lz->AddEntry(dgj, "#font[132]{D#oslash #gamma+jet data}","p");
-  if (plotFit   ) lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
+  if (plotD0MC  )  lz->AddEntry(mc_gj,"#font[132]{D#oslash #gamma+jet MC}", "p");
+  if (plotCMSMC  ) lz->AddEntry(mc_zj,"#font[132]{CMS Z+jet MC}", "p");
+  if (plotOurMC )  lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}", "l");
+  if (plotD0data)  lz->AddEntry(dgj,  "#font[132]{D#oslash #gamma+jet data}","p");
+  if (plotCMSdata) lz->AddEntry(dzj,  "#font[132]{CMS Z+jet data}","p");
+  if (plotFit   )  lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
 
 
   //Main plot
   setup->Draw();
-  if (plotOurMC ) {hzj->Draw(  "SAME"       );}
-  if (plotD0data) {dgj->Draw(  "P SAME"     );}
-  if (plotFit   ) {hzj_f->Draw("HIST P SAME");}
-  if (plotD0MC  ) {mc_gj->Draw("P SAME"     );}
+  if (plotOurMC )  {hzj->Draw(  "SAME"       );}
+  if (plotD0data)  {dgj->Draw(  "P SAME"     );}
+  if (plotCMSdata) {dzj->Draw(  "P SAME"     );}
+  if (plotFit   )  {hzj_f->Draw("HIST P SAME");}
+  if (plotD0MC  )  {mc_gj->Draw("P SAME"     );}
+  if (plotCMSMC  ) {mc_zj->Draw("P SAME"     );}
   lz->Draw();	//Legends
-
 
 
 
   //Save plot
   string saveTo = "./plots/pT-bal/";
   saveTo = saveTo + (MConly?"MC_":"") + (fitOnly?"data_fit_":"") + savename;
+
   canv->Print(saveTo.c_str());
 
   //Free memory
   delete setup;  delete lz;   delete pad1;   delete canv;
-  delete dgj;  delete mc_gj;
+  delete dgj;  delete mc_gj;  delete dzj;  delete mc_zj;
 
 } //plotPT
 //-----------------------------------------------------------------------------
@@ -3002,11 +3031,10 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   TCanvas* canvConv = new TCanvas("canvConv","",400,400);
   canvConv->SetLeftMargin(0.12);
-  TProfile *prEpD, *tEMpG = 0;
+  TProfile *tEMpG = 0;
   TProfile *prEpP,    *prEpP_b,   *prEpP_g,   *prEpP_lq   = 0; 
   TProfile *prRtrue,  *prRtrue_b, *prRtrue_g, *prRtrue_lq = 0;
   TProfile *prpTppRb, *prpTppRg,  *prpTppRlq = 0;
-  fg->GetObject(       "prEpD",    prEpD     );  prEpD->SetStats(     0);
   fg->GetObject(       "EpP",      prEpP     );  prEpP->SetStats(     0);
   fg->GetObject(       "EpP_g",    prEpP_g   );  prEpP_g->SetStats(   0);
   fg->GetObject(       "EpP_lq",   prEpP_lq  );  prEpP_lq->SetStats(  0);
@@ -3059,7 +3087,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   //much, bu ROOT needs some init values when fitting a "custom" function
   ftEMpG->SetParameters( 1.15,0.7,0.85);
   cout << "*** tEMpG fit" << endl;              tEMpG->Fit(   ftEMpG     );
-  fpTbal->SetParameters(   1.15,0.7,0.85);	prEpD->Fit(   fpTbal, "Q");
+  fpTbal->SetParameters(   1.15,0.7,0.85);
   TF1* fF[Nf][Ns][NI];
   stringstream fFname;
   for (int f=0; f!=Nf; ++f) {
