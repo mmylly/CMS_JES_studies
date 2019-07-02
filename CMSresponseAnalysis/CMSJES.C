@@ -2033,7 +2033,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   setup->SetStats(0);				//Suppress stat box
   setup->GetXaxis()->SetTitle(hzj->GetXaxis()->GetTitle());
   setup->GetYaxis()->SetTitle(hzj->GetYaxis()->GetTitle());
-  setup->SetAxisRange(0.0, 1.5,"Y");		//Vertical axis limits
+  setup->SetAxisRange(0.6, 1.0,"Y");		//Vertical axis limits
   setup->GetYaxis()->SetTitleFont(133);
   int titleSize = 18;				//Common title size everywhere
   setup->GetYaxis()->SetTitleSize(titleSize);
@@ -2840,7 +2840,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   //The TFiles to open
   TFile* fd; TFile* fg; TFile* fz;
 
-  if (!runCMS) {
+  if (!GetrunCMS()) {
   /* EM+jet (dijet) */
   fd = TFile::Open(in_d.c_str());
   if (!fd) {

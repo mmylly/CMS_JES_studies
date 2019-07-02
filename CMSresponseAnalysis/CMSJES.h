@@ -254,7 +254,7 @@ public :
   void SetdjFitting( bool flag) {djFitting = flag;}
   void SetgjFitting( bool flag) {gjFitting = flag;}
   void SetzjFitting( bool flag) {zjFitting = flag;}
-
+  void SetrunCMS( bool flag)    {runCMS = flag;}
   void SetprintProg( bool flag) {printProg = flag;}
   void SetcontHistos(bool flag) {contHistos=flag;}
   void SetMPFmode( bool flag ) {MPFmode = flag;}
@@ -285,6 +285,7 @@ public :
   bool GetdjFitting() {return djFitting;}
   bool GetgjFitting() {return gjFitting;}
   bool GetzjFitting() {return zjFitting;}
+  bool GetrunCMS() {return runCMS;}
   bool GetprintProg() {return printProg;}
   bool GetcontHistos() {return contHistos;}
   bool GetMPFmode()  {return MPFmode;}
@@ -393,7 +394,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       files.push_back("P8_Zjet_1000"  );
       files.push_back("P8_Zjet_10000" );
       files.push_back("P8_Zjet_100000");
-      files.push_back("P6_gammajet_D0rIIc_R05_ct10mm_30000");
 
       //User interface
       printf("No filename given, choose file (y = default file):\n");
@@ -527,10 +527,12 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     //Default: use our A,B,C depending on generator
     else {
       if (ReadName.find("P8")!=string::npos) {
-        A    = 1.91588;	B    = -7.74112;	C    = 1.16804; // with 100 000 sample
+        //A    = 1.91588;	B    = -7.74112;	C    = 1.16804; // with 100 000 sample
 	//A = -275.669;		B    = -57.1223;	C = -0.137663; // with 10 000 sample
-        Aer  = 0.0572361;	Ber  = 0.0287636;	Cer  = 0.0105337;
-        ABer = -0.00148885;	ACer = -0.000124997;	BCer = 0.000180898;
+	// with 100 000 sample and 500 loops
+	A    = -13.4601;	B    = -2.06685;	C    = 1.04347; 
+        Aer  = 0.000274392;	Ber  =  0.162663;	Cer  = 0.00665224;
+        ABer = 0.0000415123;	ACer = -0.00000176575;	BCer = -0.00102026;
         cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
