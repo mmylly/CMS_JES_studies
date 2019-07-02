@@ -80,9 +80,6 @@ public :
   string djFile="";	//EM+jet -||-
   string zjFile="";	//Z+jet -||-
 
-  string gjFile_b="";	//Same as the two above but...
-  string djFile_b="";	//...for b-enriched samples
-
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
   // Declaration of leaf types
@@ -213,7 +210,6 @@ public :
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
   unsigned int maxIter=500;	//Maximum #iterations in fitting
   bool verbose = false;		//Print additional information in Loop
-  bool bEnrichedFiles = false;	//Use separate files for getting F^b_corr?
   bool contHistos = true;	//Produce probe particle content histograms
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
   bool runCMS = true;		//Use CMS parameters
@@ -260,7 +256,6 @@ public :
   void SetzjFitting( bool flag) {zjFitting = flag;}
 
   void SetprintProg( bool flag) {printProg = flag;}
-  void SetbEnrichedFiles(bool flag) {bEnrichedFiles=flag;}
   void SetcontHistos(bool flag) {contHistos=flag;}
   void SetMPFmode( bool flag ) {MPFmode = flag;}
   void SetStrangeB(bool flag ) {StrangeB = flag;}
@@ -291,7 +286,6 @@ public :
   bool GetgjFitting() {return gjFitting;}
   bool GetzjFitting() {return zjFitting;}
   bool GetprintProg() {return printProg;}
-  bool GetbEnrichedFiles() {return bEnrichedFiles;}
   bool GetcontHistos() {return contHistos;}
   bool GetMPFmode()  {return MPFmode;}
   bool GetStrangeB() {return StrangeB;}
@@ -338,8 +332,7 @@ public :
                   int rad=0,int ct=-1,int Nevt=0);
   void   FFplot();
   void   plotQuery(string& respStr, string& djstr,  string& gjstr,
-                    string& zjstr, string& djstrb, string& gjstrb,
-                   int& gen, int& Nevt);
+                    string& zjstr, int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-

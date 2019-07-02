@@ -329,11 +329,6 @@ void CMSJES::Loop()
     hTitles.push_back("#font[132]{Z+jet probe particle content (MC SPR)}");
     hTitles.push_back("#font[132]{Z+jet probe particle content (Fit)}");
   }
-  if (ReadName.find("b-enriched")!=string::npos) {
-    hTitles[0] += " #font[132]{(}#font[12]{b}#font[132]{-enr.)}";
-    hTitles[1] += " #font[132]{(}#font[12]{b}#font[132]{-enr.)}";
-    hTitles[2] += " #font[132]{(}#font[12]{b}#font[132]{-enr.)}";
-  }
 
   //Instantiate and setup composition histos if needed
   if (GetcontHistos()) {
@@ -451,7 +446,6 @@ void CMSJES::Loop()
       if      (studyMode==1) cout << " in EM+jet";
       else if (studyMode==2) cout << " in gamma+jet";
       else if (studyMode==3) cout << " in Z+jet";
-      if (ReadName.find("b-enriched")!=string::npos) cout << " b-enr.";
       cout << endl;
     }
 
@@ -1449,25 +1443,20 @@ void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
   InputNameConstructor();
 
   //Instantiate new CMSJES objects to be run in parallel
-  CMSJES* resp_dj;  CMSJES* resp_gj;  CMSJES* resp_dj_b;  CMSJES* resp_gj_b;
+  CMSJES* resp_dj;  CMSJES* resp_gj;
 
   bool noInputGiven = true;
 
   //Instantiate new CMSJES objects where needed
    if (dj_in && gj_in) {	//Use given dijet & gamma+jet CMSJES objects
     if (Getverbose()) cout<<"MultiLoop: using input CMSJES objects"<<endl;
-    SetbEnrichedFiles(false);    
-    resp_dj = dj_in;  resp_dj->SetbEnrichedFiles(false);
-    resp_gj = gj_in;  resp_gj->SetbEnrichedFiles(false);
+    resp_dj = dj_in;
+    resp_gj = gj_in;
     noInputGiven = false;
   } else {	//No dijet & gamma+jet objects given
     if (Getverbose()) cout<<"MultiLoop: Instantiating new CMSJES objects"<<endl;
     resp_dj = new CMSJES(0,djFile);
     resp_gj = new CMSJES(0,gjFile);
-    if (GetbEnrichedFiles()) {
-      resp_dj_b = new CMSJES(0,djFile_b);
-      resp_gj_b = new CMSJES(0,gjFile_b);
-    } 
   }
 
   //MultiLoop may be called from FitHandle, ensure fit params. are taken from 
@@ -1475,34 +1464,23 @@ void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
   if (fitPars) {
     resp_dj->SetABC(GetA(),GetB(),GetC());
     resp_gj->SetABC(GetA(),GetB(),GetC());
-    if (GetbEnrichedFiles()) {
-      resp_dj_b->SetABC(GetA(),GetB(),GetC());
-      resp_gj_b->SetABC(GetA(),GetB(),GetC());
-    } 
   }
 
   //Instantiate the threads
   if (Getverbose()) cout<<"Instantiating threads"<<endl; 
-  TThread* t_dj;  TThread* t_gj;  TThread* t_dj_b;  TThread* t_gj_b;
+  TThread* t_dj;  TThread* t_gj;
   t_dj = new TThread("t_dj", loopHandle, (void*) resp_dj);
   t_gj = new TThread("t_gj", loopHandle, (void*) resp_gj);
-  if (GetbEnrichedFiles()) {
-    t_dj_b = new TThread("t_dj_b", loopHandle, (void*) resp_dj_b);
-    t_gj_b = new TThread("t_gj_b", loopHandle, (void*) resp_gj_b);
-  }
 
   //Start running the threads
   t_dj->Run();	t_gj->Run();
-  if (GetbEnrichedFiles()) {t_dj_b->Run();  t_gj_b->Run();}
 
   //Gather the threads together after execution
   t_dj->Join();	t_gj->Join();
-  if (GetbEnrichedFiles()) {t_dj_b->Join();  t_gj_b->Join();}
 
   //Free memory
   delete t_dj;  delete t_gj;	//Threads always instantiated here
-  if (GetbEnrichedFiles()) {delete t_dj_b;     delete t_gj_b;
-                            delete resp_dj_b;  delete resp_gj_b;}
+
   if (noInputGiven) {delete resp_dj;  delete resp_gj;}
 
 } //MultiLoop
@@ -1516,13 +1494,13 @@ void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
 //CMSJES objects instantiated in this function will have the same properties.
 // => The user cannot e.g. accidentally enter a file savename that would
 //    imply properties that are not really there.
-//Saves the filenames into the djFile, gjFile, djFile_b, gjFile_b strings 
+//Saves the filenames into the djFile, gjFile, zjFile strings 
 //belonging to this CMSJES object.
 
 void CMSJES::InputNameConstructor() {
 
   //Prevent overwriting existing filenames
-  if (djFile!="" || gjFile!="" || djFile_b!="" || gjFile_b!="" || zjFile!="") return;
+  if (djFile!="" || gjFile!="" || zjFile!="") return;
 
   //Init strings to contain parts of the resulting filenames
   string jetAlg = "";	//Jet algorithm and cone radius
@@ -1560,8 +1538,6 @@ void CMSJES::InputNameConstructor() {
     return;
   }
   //The resulting filenames. Suffix ".root" to be added in CMSJES constructor
-  djFile_b = djFile + "b-enriched_" + num;
-  gjFile_b = gjFile + "b-enriched_" + num;
   djFile += num;
   gjFile += num; 
   zjFile += num;
@@ -1583,9 +1559,6 @@ void CMSJES::FitGN()
     cout << "ERROR: neither gamma+jet, dijet nor Z+jet fitting enabled!" << endl;
     return;
   }
-
-  //Check if b-enriched files must be looped at exit, not looped in fit phase
-  bool bEnrichedAtEnd = GetbEnrichedFiles();
 
   //To avoid boilerplate, store the following combinations in sampleIndices:
   //  0		if fit to EM+jet (dijet) sample only
@@ -1701,10 +1674,8 @@ void CMSJES::FitGN()
   CMSJES* zjet = new CMSJES(0,zjFile);
   dijet->SetprintProg(     false);     gammajet->SetprintProg(     false);
   dijet->SetcontHistos(    false);     gammajet->SetcontHistos(    false);
-  dijet->SetbEnrichedFiles(false);     gammajet->SetbEnrichedFiles(false);
   zjet->SetprintProg(     false);
   zjet->SetcontHistos(    false);
-  zjet->SetbEnrichedFiles(false);
   dijet->SetuseEarlierCuts(GetuseEarlierCuts());
   gammajet->SetuseEarlierCuts(GetuseEarlierCuts());
   zjet->SetuseEarlierCuts(GetuseEarlierCuts());
@@ -1872,7 +1843,7 @@ void CMSJES::FitGN()
   delete dijet;  delete gammajet; delete zjet;
 
   //Obtain uncertainty histograms using this CMSJES object's MultiLoop
-  cout<<"* Finding uncert. histos + running b-enr. samples if needed *"<<endl;
+  cout<<"* Finding uncert. histos *"<<endl;
   //Set results to this CMSJES
   if (!fixA) {
     SetA(ABC.GetMatrixArray()[iA]);
@@ -1887,7 +1858,7 @@ void CMSJES::FitGN()
   }
   if (!fixC) {SetC(ABC.GetMatrixArray()[iC]);  SetCer(Cer_temp);}
 
-  SetuseEarlierCuts(false);  SetbEnrichedFiles(bEnrichedAtEnd);
+  SetuseEarlierCuts(false);
   Setverbose(true);
   MultiLoop(); // Has to be fixed for Z+jet probably
 
@@ -1985,9 +1956,8 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   */
 
   //Choose filenames to open
-  string nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy;
-  plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy,
-            gen, Nevt);
+  string nameAdd, dijetFile, gammajetFile, zjetFile;
+  plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
@@ -2126,9 +2096,8 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
 //A handle for drawing "MC only" and "Fit+data only" pT-bal. plots at once
 void CMSJES::plotSepPT() {
   int gen=0, Nevt=0;
-  string nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2;
-  plotQuery(nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2,
-            gen, Nevt);
+  string nameDum, djdummy, gjdummy, zjdummy;
+  plotQuery(nameDum, djdummy, gjdummy, zjdummy, gen, Nevt);
   plotPT(gen, Nevt, true,  false);
   plotPT(gen, Nevt, false, true );
 }
@@ -2138,9 +2107,8 @@ void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
                     int Nevt)
 {
   //Choose filenames to open
-  string nameAdd, dijetFile, gammajetFile, djdummy, gjdummy , zjdummy;
-  plotQuery(nameAdd, dijetFile, gammajetFile, djdummy, gjdummy, zjdummy,
-            gen, Nevt);
+  string nameAdd, dijetFile, gammajetFile, zjetFile;
+  plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
@@ -2789,13 +2757,11 @@ void CMSJES::PrintEvt()
 //User interface to choose which files to open in plotting functions
 //Params:	nameAdd		Additions to the standard CMSJES output names
 //		djstr, gjstr	Set dijet & gammajet all flavor filenames here
-//		djstrb, gjstrb	Set b-jet enriched filenames here
 //		gen,alg,rad,...
 //		ct,XS	Preset values if user interface omitted
 //N.B. only the interesting cases are enabled in this function ATM
 void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
-                       string& zjstr, string& djstrb, string& gjstrb,
-                      int& gen, int& Nevt)
+                       string& zjstr, int& gen, int& Nevt)
 {
   //Init
   string respStr = "./output_ROOT_files/CMSJES_";
@@ -2819,10 +2785,6 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   djstr = respStr + "dijet_"    + num + root;
   gjstr = respStr + "gammajet_" + num + root;
   zjstr = respStr + "Zjet_"     + num + root;
-
-  //b-jet enriched filenames. ATM there are only 100k event sets of these
-  djstrb = respStr +"dijet_"    + "b-enriched_" + num + root;
-  gjstrb = respStr +"gammajet_" + "b-enriched_" + num + root;
 
   //Additions in filename
   nameAdd = num;
@@ -2852,8 +2814,8 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   int gray  = kGray+1;  int lred = 46;  int lblue = 33;	//Light shades
 
   //Choose filenames to open
-  string nameAdd, in_d, in_g, in_z, in_d_b, in_g_b;
-  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b, gen, Nevt);
+  string nameAdd, in_d, in_g, in_z;
+  plotQuery(nameAdd, in_d, in_g, in_z, gen, Nevt);
 
   //Check which generator was used for producing the files asked for
   string genStr="";
@@ -2876,33 +2838,25 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   TH1D* h_F[Nf][Ns][NI];      TH1D* h_FSU[Nf][Ns][NI];
   TH1D* h_Fjet[NI];           TH1D* h_FjetSU[NI];
   //The TFiles to open
-  TFile* fd;  TFile* fd_b;  TFile* fg;  TFile* fg_b; TFile* fz;
+  TFile* fd; TFile* fg; TFile* fz;
 
   if (!runCMS) {
   /* EM+jet (dijet) */
   fd = TFile::Open(in_d.c_str());
-  if (GetbEnrichedFiles()) fd_b = TFile::Open(in_d_b.c_str());
-  if (!fd || (GetbEnrichedFiles() && !fd_b)) {
+  if (!fd) {
     cout << "Error opening files! Exiting" << endl;
     return;
   }
   //b-jets
-  if (GetbEnrichedFiles()) {if (Eprm) {fd_b->GetObject("Fb",      F[0][1][0]);
-                                       fd_b->GetObject("FbSU",  FSU[0][1][0]);}
-                            else      {fd_b->GetObject("Fb_p",    F[0][1][0]);
-                                       fd_b->GetObject("FbSU_p",FSU[0][1][0]);}
-                            if (pTgen){fd_b->GetObject("Fb_g",    F[0][1][1]);
-                                       fd_b->GetObject("FbSU_g",FSU[0][1][1]);}
-                            else      {fd_b->GetObject("Fb_r",    F[0][1][1]);
-                                       fd_b->GetObject("Fb_r",    F[0][1][1]);}}
-  else                     {if (Eprm) {fd->GetObject(  "Fb",      F[0][1][0]);
-                                       fd->GetObject(  "FbSU",  FSU[0][1][0]);}
-                            else      {fd->GetObject(  "Fb_p",    F[0][1][0]);
-                                       fd->GetObject(  "FbSU_p",FSU[0][1][0]);}
-                            if (pTgen) {fd->GetObject( "Fb_g",    F[0][1][1]);
-                                        fd->GetObject( "FbSU_g",FSU[0][1][1]);}
-                            else       {fd->GetObject( "Fb_r",    F[0][1][1]);
-                                        fd->GetObject( "FbSU_r",FSU[0][1][1]);}}
+  if (Eprm) {fd->GetObject(  "Fb",      F[0][1][0]);
+             fd->GetObject(  "FbSU",  FSU[0][1][0]);}
+  else      {fd->GetObject(  "Fb_p",    F[0][1][0]);
+             fd->GetObject(  "FbSU_p",FSU[0][1][0]);}
+  if (pTgen) {fd->GetObject( "Fb_g",    F[0][1][1]);
+              fd->GetObject( "FbSU_g",FSU[0][1][1]);}
+  else       {fd->GetObject( "Fb_r",    F[0][1][1]);
+              fd->GetObject( "FbSU_r",FSU[0][1][1]);}
+
   //Gluon jets, light quark jets and all jets (gamma+jet specific, for avg.)
   if (Eprm) {
     fd->GetObject("Fg",   F[1][1][0]);  fd->GetObject("FgSU",   FSU[1][1][0]);
@@ -2921,28 +2875,20 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   /* gamma+jet */
   fg   = TFile::Open(in_g.c_str());
-  if (GetbEnrichedFiles()) fg_b = TFile::Open(in_g_b.c_str());
-  if (!fg || (GetbEnrichedFiles() && !fg_b)) {
+  if (!fg) {
     cout << "Error opening files! Exiting" << endl;
     return;
   }
   //b-jets
-  if (GetbEnrichedFiles()) {if (Eprm) {fg_b->GetObject("Fb",      F[0][0][0]);
-                                       fg_b->GetObject("FbSU",  FSU[0][0][0]);}
-                            else      {fg_b->GetObject("Fb_p",    F[0][0][0]);
-                                       fg_b->GetObject("FbSU_p",FSU[0][0][0]);}
-                            if (pTgen){fg_b->GetObject("FbSU_g",FSU[0][0][1]);
-                                       fg_b->GetObject("Fb_g",    F[0][0][1]);}
-                            else      {fg_b->GetObject("FbSU_r",FSU[0][0][1]);
-                                       fg_b->GetObject("Fb_r",    F[0][0][1]);}}
-  else                     {if (Eprm) {fg->GetObject(  "Fb",      F[0][0][0]);
-                                       fg->GetObject(  "FbSU",  FSU[0][0][0]);}
-                            else      {fg->GetObject(  "Fb_p",    F[0][0][0]);
-                                       fg->GetObject(  "FbSU_p",FSU[0][0][0]);}
-                            if (pTgen) {fg->GetObject( "FbSU_g",FSU[0][0][1]);
-                                        fg->GetObject( "Fb_g",    F[0][0][1]);}
-                            else       {fg->GetObject( "FbSU_r",FSU[0][0][1]);
-                                        fg->GetObject( "Fb_r",    F[0][0][1]);}}
+
+  if (Eprm)  {fg->GetObject( "Fb",      F[0][0][0]);
+              fg->GetObject( "FbSU",  FSU[0][0][0]);}
+  else       {fg->GetObject( "Fb_p",    F[0][0][0]);
+              fg->GetObject( "FbSU_p",FSU[0][0][0]);}
+  if (pTgen) {fg->GetObject( "FbSU_g",FSU[0][0][1]);
+	      fg->GetObject( "Fb_g",    F[0][0][1]);}
+  else       {fg->GetObject( "FbSU_r",FSU[0][0][1]);
+	      fg->GetObject( "Fb_r",    F[0][0][1]);}
   //Always retrieve standard sample's Fb, needed for Fcorr calculation (new avg)
   if (Eprm ) fg->GetObject("Fb",   Fbstd[0]);
   else       fg->GetObject("Fb_p", Fbstd[0]);
@@ -2977,10 +2923,10 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       return;
     }
     //b-jets
-    if (Eprm) {fz->GetObject(  "Fb",      F[0][2][0]);
-               fz->GetObject(  "FbSU",  FSU[0][2][0]);}
-    else      {fz->GetObject(  "Fb_p",    F[0][2][0]);
-               fz->GetObject(  "FbSU_p",FSU[0][2][0]);}
+    if (Eprm)  {fz->GetObject( "Fb",      F[0][2][0]);
+                fz->GetObject( "FbSU",  FSU[0][2][0]);}
+    else       {fz->GetObject( "Fb_p",    F[0][2][0]);
+                fz->GetObject( "FbSU_p",FSU[0][2][0]);}
     if (pTgen) {fz->GetObject( "FbSU_g",FSU[0][2][1]);
                 fz->GetObject( "Fb_g",    F[0][2][1]);}
     else       {fz->GetObject( "FbSU_r",FSU[0][2][1]);
@@ -3011,9 +2957,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
     }
   }
 
-
   //Project TProfiles to TH1Ds
-  if (!runCMS) {
     for (int a=0; a!=NI; ++a) {
       for (int s=0; s!=Ns; ++s) {
         for (int f=0; f!=Nf; ++f) {
@@ -3024,16 +2968,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       h_Fjet[a]   = Fjet[a]->ProjectionX();
       h_FjetSU[a] = FjetSU[a]->ProjectionX();
     }
-  } else {
-    for (int a=0; a!=NI; ++a) {
-      for (int f=0; f!=Nf; ++f) {
-        h_F[f][2][a]   = F[f][2][a]->ProjectionX();
-        h_FSU[f][2][a] = FSU[f][2][a]->ProjectionX();	//Syst. uncert.
-      }
-      h_Fjet[a]   = Fjet[a]->ProjectionX();
-      h_FjetSU[a] = FjetSU[a]->ProjectionX();
-    }
-  }
+
 
   /* Conversion to prtcl lvl jet pT from gamma+jet sample */
 
@@ -3049,15 +2984,9 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   fg->GetObject(       "pRpGa",    prRtrue   );  prRtrue->SetStats(   0);
   fg->GetObject(       "pTppRg",   prpTppRg  );  prpTppRg->SetStats(  0);
   fg->GetObject(       "pTppRlq",  prpTppRlq );  prpTppRlq->SetStats( 0);
-  if (GetbEnrichedFiles()) {
-    fg_b->GetObject(   "pTppRb",   prpTppRb  );  prpTppRb->SetStats(  0);
-    fg_b->GetObject(   "EpP_b",    prEpP_b   );  prEpP_b->SetStats(   0);
-    fg_b->GetObject(   "pRpGb",    prRtrue_b );  prRtrue_b->SetStats( 0);
-  } else {
-    fg->GetObject(     "pTppRb",   prpTppRb  );  prpTppRb->SetStats(  0);
-    fg->GetObject(     "EpP_b",    prEpP_b   );  prEpP_b->SetStats(   0);
-    fg->GetObject(     "pRpGb",    prRtrue_b );  prRtrue_b->SetStats( 0);
-  }
+  fg->GetObject(       "pTppRb",   prpTppRb  );  prpTppRb->SetStats(  0);
+  fg->GetObject(       "EpP_b",    prEpP_b   );  prEpP_b->SetStats(   0);
+  fg->GetObject(       "pRpGb",    prRtrue_b );  prRtrue_b->SetStats( 0);
   fg->GetObject(       "pRpGg",    prRtrue_g );  prRtrue_g->SetStats( 0);
   fg->GetObject(       "pRpGlq",   prRtrue_lq);  prRtrue_lq->SetStats(0);
   fg->GetObject(       "tEMpG",    tEMpG     );  tEMpG->SetStats(     0);
