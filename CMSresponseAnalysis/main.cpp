@@ -29,8 +29,8 @@ int main() {
       d.FitGN();
       break;
     case 4 :
-      //d.flavCorr(true, 3, 2, 2, 2, 1);
-      d.plotPT(3, 0, false, false);
+      d.flavCorr(true, 3, 0);
+      //d.plotPT(3, 0, false, false);
       break;
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }

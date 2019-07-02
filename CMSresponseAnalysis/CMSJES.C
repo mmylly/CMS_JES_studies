@@ -2794,12 +2794,8 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
 //A function to find and plot flavor dependent correction factors.
 //Param		plot	if false, only reads in the F_corr histograms
 //		gen	Preset value for which generator to use
-//		alg	      -||-       jet algorithm
-//		rad	      -||-       cone radius
-//              ct	      -||-       ctau time-/lengthscale
-//		XS	      -||-       "use strange hadron Ansätze?"
-void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
-                     int Nevt)
+//		Nevt	Number of events in the sample
+void CMSJES::flavCorr(bool plot, int gen, int Nevt)
 {
   bool fitMode = true;	//Draw fitted TF1s on top of the histos
   bool drawD0  = false;	//Draw D0 Fcorr on top of the histos (extracted from AN)
@@ -2824,172 +2820,91 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   else if (in_z.find("H7")!=string::npos) genStr="H7_";
 
   int const Nf=3;	//#Jet flavour classes: b, g, lq
-  //int const Ns=2;	//#Sample types: gamma+jet, EM+jet
-  int const Ns=3;	//#Sample types: gamma+jet, EM+jet, and Z+jet
   int const NI=2;	//#Plots w/ diff. interpretation for hor. axis variable
 
   //Retrieve flavor-dependent factor F profiles to these pointers
   //  Naming: F[flavour]_[gen/reco/fit]_[dijet/gammajet]
-  TProfile* F[Nf][Ns][NI];    TProfile* Fjet[NI];
+  TProfile* F[Nf][NI];    TProfile* Fjet[NI];
   TProfile* Fbstd[NI];	//Standard gamma+jet Fb for obtaining weights
   //...and their upper and lower limits (for syst. uncert. SU) here
-  TProfile* FSU[Nf][Ns][NI];  TProfile* FjetSU[NI];
+  TProfile* FSU[Nf][NI];  TProfile* FjetSU[NI];
   //For storing TH1D projections of the above TProfiles
-  TH1D* h_F[Nf][Ns][NI];      TH1D* h_FSU[Nf][Ns][NI];
+  TH1D* h_F[Nf][NI];      TH1D* h_FSU[Nf][NI];
   TH1D* h_Fjet[NI];           TH1D* h_FjetSU[NI];
   //The TFiles to open
-  TFile* fd; TFile* fg; TFile* fz;
+  TFile* fz;
 
-  if (!GetrunCMS()) {
-  /* EM+jet (dijet) */
-  fd = TFile::Open(in_d.c_str());
-  if (!fd) {
+  //Z+jet sample
+  fz   = TFile::Open(in_z.c_str());
+  if (!fz) {
     cout << "Error opening files! Exiting" << endl;
     return;
   }
   //b-jets
-  if (Eprm) {fd->GetObject(  "Fb",      F[0][1][0]);
-             fd->GetObject(  "FbSU",  FSU[0][1][0]);}
-  else      {fd->GetObject(  "Fb_p",    F[0][1][0]);
-             fd->GetObject(  "FbSU_p",FSU[0][1][0]);}
-  if (pTgen) {fd->GetObject( "Fb_g",    F[0][1][1]);
-              fd->GetObject( "FbSU_g",FSU[0][1][1]);}
-  else       {fd->GetObject( "Fb_r",    F[0][1][1]);
-              fd->GetObject( "FbSU_r",FSU[0][1][1]);}
-
-  //Gluon jets, light quark jets and all jets (gamma+jet specific, for avg.)
-  if (Eprm) {
-    fd->GetObject("Fg",   F[1][1][0]);  fd->GetObject("FgSU",   FSU[1][1][0]);
-    fd->GetObject("Flq",  F[2][1][0]);  fd->GetObject("FlqSU",  FSU[2][1][0]);
-  } else {
-    fd->GetObject("Fg_p", F[1][1][0]);  fd->GetObject("FgSU_p", FSU[1][1][0]);
-    fd->GetObject("Flq_p",F[2][1][0]);  fd->GetObject("FlqSU_p",FSU[2][1][0]);
-  }
-  if (pTgen) {
-    fd->GetObject("Fg_g", F[1][1][1]);  fd->GetObject("FgSU_g", FSU[1][1][1]);
-    fd->GetObject("Flq_g",F[2][1][1]);  fd->GetObject("FlqSU_g",FSU[2][1][1]);
-  } else {
-    fd->GetObject("Fg_r", F[1][1][1]);  fd->GetObject("FgSU_r", FSU[1][1][1]);
-    fd->GetObject("Flq_r",F[2][1][1]);  fd->GetObject("FlqSU_r",FSU[2][1][1]);
-  }
-
-  /* gamma+jet */
-  fg   = TFile::Open(in_g.c_str());
-  if (!fg) {
-    cout << "Error opening files! Exiting" << endl;
-    return;
-  }
-  //b-jets
-
-  if (Eprm)  {fg->GetObject( "Fb",      F[0][0][0]);
-              fg->GetObject( "FbSU",  FSU[0][0][0]);}
-  else       {fg->GetObject( "Fb_p",    F[0][0][0]);
-              fg->GetObject( "FbSU_p",FSU[0][0][0]);}
-  if (pTgen) {fg->GetObject( "FbSU_g",FSU[0][0][1]);
-	      fg->GetObject( "Fb_g",    F[0][0][1]);}
-  else       {fg->GetObject( "FbSU_r",FSU[0][0][1]);
-	      fg->GetObject( "Fb_r",    F[0][0][1]);}
+  if (Eprm)  {fz->GetObject( "Fb",      F[0][0]);
+              fz->GetObject( "FbSU",  FSU[0][0]);}
+  else       {fz->GetObject( "Fb_p",    F[0][0]);
+              fz->GetObject( "FbSU_p",FSU[0][0]);}
+  if (pTgen) {fz->GetObject( "FbSU_g",FSU[0][1]);
+              fz->GetObject( "Fb_g",    F[0][1]);}
+  else       {fz->GetObject( "FbSU_r",FSU[0][1]);
+              fz->GetObject( "Fb_r",    F[0][1]);}
   //Always retrieve standard sample's Fb, needed for Fcorr calculation (new avg)
-  if (Eprm ) fg->GetObject("Fb",   Fbstd[0]);
-  else       fg->GetObject("Fb_p", Fbstd[0]);
-  if (pTgen) fg->GetObject("Fb_g", Fbstd[1]);
-  else       fg->GetObject("Fb_r", Fbstd[1]);
+  if (Eprm ) fz->GetObject("Fb",   Fbstd[0]);
+  else       fz->GetObject("Fb_p", Fbstd[0]);
+  if (pTgen) fz->GetObject("Fb_g", Fbstd[1]);
+  else       fz->GetObject("Fb_r", Fbstd[1]);
   //Gluon jets, light quark jets and all jets (gamma+jet specific, for avg.)
   if (Eprm) {
-    fg->GetObject("Fg",    F[1][0][0]);  fg->GetObject("FgSU",    FSU[1][0][0]);
-    fg->GetObject("Flq",   F[2][0][0]);  fg->GetObject("FlqSU",   FSU[2][0][0]);
-    fg->GetObject("Fjet",     Fjet[0]);  fg->GetObject("FjetSU",     FjetSU[0]);
+    fz->GetObject("Fg",    F[1][0]);  fz->GetObject("FgSU",    FSU[1][0]);
+    fz->GetObject("Flq",   F[2][0]);  fz->GetObject("FlqSU",   FSU[2][0]);
+    fz->GetObject("Fjet",  Fjet[0]);  fz->GetObject("FjetSU",  FjetSU[0]);
   } else {
-    fg->GetObject("Fg_p",  F[1][0][0]);  fg->GetObject("FgSU_p",  FSU[1][0][0]);
-    fg->GetObject("Flq_p", F[2][0][0]);  fg->GetObject("FlqSU_p", FSU[2][0][0]);
-    fg->GetObject("Fjet_p",   Fjet[0]);  fg->GetObject("FjetSU_p",   FjetSU[0]);
+    fz->GetObject("Fg_p",  F[1][0]);  fz->GetObject("FgSU_p",  FSU[1][0]);
+    fz->GetObject("Flq_p", F[2][0]);  fz->GetObject("FlqSU_p", FSU[2][0]);
+    fz->GetObject("Fjet_p",Fjet[0]);  fz->GetObject("FjetSU_p",FjetSU[0]);
   }
   if (pTgen) {
-    fg->GetObject("Fg_g",  F[1][0][1]);  fg->GetObject("FgSU_g", FSU[1][0][1]);
-    fg->GetObject("Flq_g", F[2][0][1]);  fg->GetObject("FlqSU_g",FSU[2][0][1]);
-    fg->GetObject("Fjet_g",   Fjet[1]);  fg->GetObject("FjetSU_g",  FjetSU[1]);
+    fz->GetObject("Fg_g",  F[1][1]);  fz->GetObject("FgSU_g",  FSU[1][1]);
+    fz->GetObject("Flq_g", F[2][1]);  fz->GetObject("FlqSU_g", FSU[2][1]);
+    fz->GetObject("Fjet_g",Fjet[1]);  fz->GetObject("FjetSU_g",FjetSU[1]);
   } else {
-    fg->GetObject("Fg_r",  F[1][0][1]);  fg->GetObject("FgSU_r", FSU[1][0][1]);
-    fg->GetObject("Flq_r", F[2][0][1]);  fg->GetObject("FlqSU_r",FSU[2][0][1]);
-    fg->GetObject("Fjet_r",   Fjet[1]);  fg->GetObject("FjetSU_r",  FjetSU[1]);
+    fz->GetObject("Fg_r",  F[1][1]);  fz->GetObject("FgSU_r",  FSU[1][1]);
+    fz->GetObject("Flq_r", F[2][1]);  fz->GetObject("FlqSU_r", FSU[2][1]);
+    fz->GetObject("Fjet_r",Fjet[1]);  fz->GetObject("FjetSU_r",FjetSU[1]);
   }
 
-  } //if !runCMS
-  else {
-    //Z+jet 
-    fz   = TFile::Open(in_z.c_str());
-    if (!fz) {
-      cout << "Error opening files! Exiting" << endl;
-      return;
-    }
-    //b-jets
-    if (Eprm)  {fz->GetObject( "Fb",      F[0][2][0]);
-                fz->GetObject( "FbSU",  FSU[0][2][0]);}
-    else       {fz->GetObject( "Fb_p",    F[0][2][0]);
-                fz->GetObject( "FbSU_p",FSU[0][2][0]);}
-    if (pTgen) {fz->GetObject( "FbSU_g",FSU[0][2][1]);
-                fz->GetObject( "Fb_g",    F[0][2][1]);}
-    else       {fz->GetObject( "FbSU_r",FSU[0][2][1]);
-                fz->GetObject( "Fb_r",    F[0][2][1]);}
-    //Always retrieve standard sample's Fb, needed for Fcorr calculation (new avg)
-    if (Eprm ) fz->GetObject("Fb",   Fbstd[0]);
-    else       fz->GetObject("Fb_p", Fbstd[0]);
-    if (pTgen) fz->GetObject("Fb_g", Fbstd[1]);
-    else       fz->GetObject("Fb_r", Fbstd[1]);
-    //Gluon jets, light quark jets and all jets (gamma+jet specific, for avg.)
-    if (Eprm) {
-      fz->GetObject("Fg",    F[1][2][0]);  fz->GetObject("FgSU",    FSU[1][2][0]);
-      fz->GetObject("Flq",   F[2][2][0]);  fz->GetObject("FlqSU",   FSU[2][2][0]);
-      fz->GetObject("Fjet",     Fjet[0]);  fz->GetObject("FjetSU",     FjetSU[0]);
-    } else {
-      fz->GetObject("Fg_p",  F[1][2][0]);  fz->GetObject("FgSU_p",  FSU[1][2][0]);
-      fz->GetObject("Flq_p", F[2][2][0]);  fz->GetObject("FlqSU_p", FSU[2][2][0]);
-      fz->GetObject("Fjet_p",   Fjet[0]);  fz->GetObject("FjetSU_p",   FjetSU[0]);
-    }
-    if (pTgen) {
-      fz->GetObject("Fg_g",  F[1][2][1]);  fz->GetObject("FgSU_g", FSU[1][2][1]);
-      fz->GetObject("Flq_g", F[2][2][1]);  fz->GetObject("FlqSU_g",FSU[2][2][1]);
-      fz->GetObject("Fjet_g",   Fjet[1]);  fz->GetObject("FjetSU_g",  FjetSU[1]);
-    } else {
-      fz->GetObject("Fg_r",  F[1][2][1]);  fz->GetObject("FgSU_r", FSU[1][2][1]);
-      fz->GetObject("Flq_r", F[2][2][1]);  fz->GetObject("FlqSU_r",FSU[2][2][1]);
-      fz->GetObject("Fjet_r",   Fjet[1]);  fz->GetObject("FjetSU_r",  FjetSU[1]);
-    }
-  }
 
   //Project TProfiles to TH1Ds
-    for (int a=0; a!=NI; ++a) {
-      for (int s=0; s!=Ns; ++s) {
-        for (int f=0; f!=Nf; ++f) {
-          h_F[f][s][a]   = F[f][s][a]->ProjectionX();
-          h_FSU[f][s][a] = FSU[f][s][a]->ProjectionX();	//Syst. uncert.
-        }
-      }
-      h_Fjet[a]   = Fjet[a]->ProjectionX();
-      h_FjetSU[a] = FjetSU[a]->ProjectionX();
+  for (int a=0; a!=NI; ++a) {
+    for (int f=0; f!=Nf; ++f) {
+      h_F[f][a]   = F[f][a]->ProjectionX();
+      h_FSU[f][a] = FSU[f][a]->ProjectionX();	//Syst. uncert.
     }
+    h_Fjet[a]   = Fjet[a]->ProjectionX();
+    h_FjetSU[a] = FjetSU[a]->ProjectionX();
+  }
 
 
   /* Conversion to prtcl lvl jet pT from gamma+jet sample */
-
   TCanvas* canvConv = new TCanvas("canvConv","",400,400);
   canvConv->SetLeftMargin(0.12);
   TProfile *tEMpG = 0;
   TProfile *prEpP,    *prEpP_b,   *prEpP_g,   *prEpP_lq   = 0; 
   TProfile *prRtrue,  *prRtrue_b, *prRtrue_g, *prRtrue_lq = 0;
   TProfile *prpTppRb, *prpTppRg,  *prpTppRlq = 0;
-  fg->GetObject(       "EpP",      prEpP     );  prEpP->SetStats(     0);
-  fg->GetObject(       "EpP_g",    prEpP_g   );  prEpP_g->SetStats(   0);
-  fg->GetObject(       "EpP_lq",   prEpP_lq  );  prEpP_lq->SetStats(  0);
-  fg->GetObject(       "pRpGa",    prRtrue   );  prRtrue->SetStats(   0);
-  fg->GetObject(       "pTppRg",   prpTppRg  );  prpTppRg->SetStats(  0);
-  fg->GetObject(       "pTppRlq",  prpTppRlq );  prpTppRlq->SetStats( 0);
-  fg->GetObject(       "pTppRb",   prpTppRb  );  prpTppRb->SetStats(  0);
-  fg->GetObject(       "EpP_b",    prEpP_b   );  prEpP_b->SetStats(   0);
-  fg->GetObject(       "pRpGb",    prRtrue_b );  prRtrue_b->SetStats( 0);
-  fg->GetObject(       "pRpGg",    prRtrue_g );  prRtrue_g->SetStats( 0);
-  fg->GetObject(       "pRpGlq",   prRtrue_lq);  prRtrue_lq->SetStats(0);
-  fg->GetObject(       "tEMpG",    tEMpG     );  tEMpG->SetStats(     0);
+  fz->GetObject( "EpP",      prEpP     );  prEpP->SetStats(     0);
+  fz->GetObject( "EpP_g",    prEpP_g   );  prEpP_g->SetStats(   0);
+  fz->GetObject( "EpP_lq",   prEpP_lq  );  prEpP_lq->SetStats(  0);
+  fz->GetObject( "pRpGa",    prRtrue   );  prRtrue->SetStats(   0);
+  fz->GetObject( "pTppRg",   prpTppRg  );  prpTppRg->SetStats(  0);
+  fz->GetObject( "pTppRlq",  prpTppRlq );  prpTppRlq->SetStats( 0);
+  fz->GetObject( "pTppRb",   prpTppRb  );  prpTppRb->SetStats(  0);
+  fz->GetObject( "EpP_b",    prEpP_b   );  prEpP_b->SetStats(   0);
+  fz->GetObject( "pRpGb",    prRtrue_b );  prRtrue_b->SetStats( 0);
+  fz->GetObject( "pRpGg",    prRtrue_g );  prRtrue_g->SetStats( 0);
+  fz->GetObject( "pRpGlq",   prRtrue_lq);  prRtrue_lq->SetStats(0);
+  fz->GetObject( "tEMpG",    tEMpG     );  tEMpG->SetStats(     0);
   string pwrlaw   = "[0]*(1-[1]*pow(x,[2]-1))";	//D. Groom parametrization
   TF1* fpTbal     = new TF1("fpTbal",    pwrlaw.c_str(), 30, 500);
   TF1* fEpP       = new TF1("fEpP",     "pol1",          10, 145);
@@ -2998,6 +2913,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   TF1* fEpP_lq    = new TF1("fEpP_lq",  "pol1",          10, 145);
   TF1* fRtrue;   TF1* fRtrue_b;  TF1* fRtrue_g;  TF1* fRtrue_lq;
   TF1* fpTppRb;  TF1* fpTppRg;   TF1* fpTppRlq;
+
   bool fitPwrLaw = false;
   if (fitPwrLaw) {
     fRtrue        = new TF1("fRtrue",    pwrlaw.c_str(), 30, 200);
@@ -3025,18 +2941,15 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   ftEMpG->SetParameters( 1.15,0.7,0.85);
   cout << "*** tEMpG fit" << endl;              tEMpG->Fit(   ftEMpG     );
   fpTbal->SetParameters(   1.15,0.7,0.85);
-  TF1* fF[Nf][Ns][NI];
+  TF1* fF[Nf][NI];
   stringstream fFname;
   for (int f=0; f!=Nf; ++f) {
-    for (int s=0; s!=Ns; ++s) {
-      for (int a=0; a!=NI; ++a) {
-        fFname.str("");
-        fFname << "fF_" << (f==0?"b_":(f==1?"g_":"lq_"))
-                        << (s==0?"g_":"d_") << (a==0?"Ep":"pT");
-        fF[f][s][a] = new TF1(fFname.str().c_str(),pwrlaw.c_str(),30,145);
-        fF[f][s][a]->SetParameters(1.15,0.7,0.85);
-        F[ f][s][a]->Fit(fF[f][s][a], "Q");
-      }
+    for (int a=0; a!=NI; ++a) {
+      fFname.str("");
+      fFname << "fF_" << (f==0?"b_":(f==1?"g_":"lq_")) << "z_" << (a==0?"Ep":"pT");
+      fF[f][a] = new TF1(fFname.str().c_str(),pwrlaw.c_str(),30,145);
+      fF[f][a]->SetParameters(1.15,0.7,0.85);
+      F[f][a]->Fit(fF[f][a], "Q");
     }
   }
   if (fitPwrLaw) {
@@ -3125,57 +3038,51 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   double FbS, FgS, FlqS, FbSstd = 0;
   for (int a=0; a!=NI; ++a) {	//Horizontal axis interpretations
     for (int f=0; f!=Nf; ++f) {
-      for (int s=0; s!=Ns; ++s) {
-        FjetsName.str("");
-        FjetsName << "h_FS_" << (f==0?"b_":(f==1?"g_":"lq_"))
-                             << (s==0?"g_":"d_") << (a==0?"Ep":"pT");
-      }
+      FjetsName.str("");
+      FjetsName << "h_FS_" << (f==0?"b_":(f==1?"g_":"lq_")) << "z_" << (a==0?"Ep":"pT");
     }
     FjetsName.str("");
     FjetsName << "h_FjetS_" << a;
     h_FjetS[a] = new TH1D(FjetsName.str().c_str(), "",
-                          F[1][0][a]->GetXaxis()->GetNbins(),
-                          F[1][0][a]->GetXaxis()->GetXmin(),
-                          F[1][0][a]->GetXaxis()->GetXmax()  );
-    for (int s=0; s!=Ns; ++s) {	//Sample types
-      for (int i=1; i!=F[1][s][a]->GetNbinsX()+1; ++i) {
-        Nb  = 1e6*Fbstd[  a]->GetBinEntries(i); //The factors 1e6 guard...
-        Ng  = 1e6*F[1][s][a]->GetBinEntries(i); //...for NaN, but will...
-        Nlq = 1e6*F[2][s][a]->GetBinEntries(i); //...eventually cancel
-        Ntot = Nb + Ng + Nlq;
-        init = F[1][s][a]->GetBinCenter(i); //g, lq have same initial binning
-        if (a==0 && Eprm) {shift_b  = init -     fpTppRb->Eval(   init);
-                           shift_g  = init -     fpTppRg->Eval(   init);
-                           shift_lq = init -    fpTppRlq->Eval(   init);}
-        else if (a==0)    {shift_b  = init -      fEpP_b->Eval(   init);
-                           shift_g  = init -      fEpP_g->Eval(   init);
-                           shift_lq = init -     fEpP_lq->Eval(   init);}
-        else if (!pTgen) {shift_b  = init - init*ftEMpG->Eval(   init);
-                          shift_g  = init - init*ftEMpG->Eval(   init);
-                          shift_lq = init - init*ftEMpG->Eval(   init);}
-        else             {shift_b  = init -      fRtrue_b->Eval( init);
-                          shift_g  = init -      fRtrue_g->Eval( init);
-                          shift_lq = init -      fRtrue_lq->Eval(init);}
-        FbS =F[0][s][a]->GetBinContent(i)+( fF[0][s][a]->Eval(init+shift_b)
-                                           -fF[0][s][a]->Eval(init        ));
-        FgS =F[1][s][a]->GetBinContent(i)+( fF[1][s][a]->Eval(init+shift_g)
-                                           -fF[1][s][a]->Eval(init        ));
-        FlqS=F[2][s][a]->GetBinContent(i)+( fF[2][s][a]->Eval(init+shift_lq)
-                                           -fF[2][s][a]->Eval(init         ));
-        FbSstd=Fbstd[a]->GetBinContent(i)+( fF[0][s][a]->Eval(init+shift_b)
-                                           -fF[0][s][a]->Eval(init        ));
-        h_F[0][s][a]->SetBinContent(i,FbS );
-        h_F[1][s][a]->SetBinContent(i,FgS );
-        h_F[2][s][a]->SetBinContent(i,FlqS);
-        if (s==0) {
-          h_FjetS[a]->SetBinContent(i, (FbSstd*Nb + FgS*Ng + FlqS*Nlq)
-                                       /((double) Ntot)               );
-          h_FjetS[a]->SetBinError(i,sqrt(pow(h_Fjet[  a]->GetBinError(  i),2)
-                                        +pow(h_FjetSU[a]->GetBinContent(i),2)));
-
-        }
-      } //TProfile bins
-    } //Sample types
+                          F[1][a]->GetXaxis()->GetNbins(),
+                          F[1][a]->GetXaxis()->GetXmin(),
+                          F[1][a]->GetXaxis()->GetXmax()  );
+    for (int i=1; i!=F[1][a]->GetNbinsX()+1; ++i) {
+      Nb  = 1e6*Fbstd[  a]->GetBinEntries(i); //The factors 1e6 guard...
+      Ng  = 1e6*F[1][a]->GetBinEntries(i); //...for NaN, but will...
+      Nlq = 1e6*F[2][a]->GetBinEntries(i); //...eventually cancel
+      Ntot = Nb + Ng + Nlq;
+      init = F[1][a]->GetBinCenter(i); //g, lq have same initial binning
+      if (a==0 && Eprm) {shift_b  = init -     fpTppRb->Eval(   init);
+                         shift_g  = init -     fpTppRg->Eval(   init);
+                         shift_lq = init -    fpTppRlq->Eval(   init);}
+      else if (a==0)    {shift_b  = init -      fEpP_b->Eval(   init);
+                         shift_g  = init -      fEpP_g->Eval(   init);
+                         shift_lq = init -     fEpP_lq->Eval(   init);}
+      else if (!pTgen) {shift_b  = init - init*ftEMpG->Eval(   init);
+                        shift_g  = init - init*ftEMpG->Eval(   init);
+                        shift_lq = init - init*ftEMpG->Eval(   init);}
+      else             {shift_b  = init -      fRtrue_b->Eval( init);
+                        shift_g  = init -      fRtrue_g->Eval( init);
+                        shift_lq = init -      fRtrue_lq->Eval(init);}
+      FbS =F[0][a]->GetBinContent(i)+( fF[0][a]->Eval(init+shift_b)
+                                         -fF[0][a]->Eval(init        ));
+      FgS =F[1][a]->GetBinContent(i)+( fF[1][a]->Eval(init+shift_g)
+                                         -fF[1][a]->Eval(init        ));
+      FlqS=F[2][a]->GetBinContent(i)+( fF[2][a]->Eval(init+shift_lq)
+                                         -fF[2][a]->Eval(init         ));
+      FbSstd=Fbstd[a]->GetBinContent(i)+( fF[0][a]->Eval(init+shift_b)
+                                         -fF[0][a]->Eval(init        ));
+      h_F[0][a]->SetBinContent(i,FbS );
+      h_F[1][a]->SetBinContent(i,FgS );
+      h_F[2][a]->SetBinContent(i,FlqS);
+      //if (s==0) { //What is this?
+      //  h_FjetS[a]->SetBinContent(i, (FbSstd*Nb + FgS*Ng + FlqS*Nlq)
+      //                               /((double) Ntot)               );
+      //  h_FjetS[a]->SetBinError(i,sqrt(pow(h_Fjet[  a]->GetBinError(  i),2)
+      //                                +pow(h_FjetSU[a]->GetBinContent(i),2)));
+      //}
+    } //TProfile bins
     FjetsName.str("");
     FjetsName << "fFjets_" << (a==0?"Ep":"pT");
     fFjetS[a] = new TF1(FjetsName.str().c_str(),pwrlaw.c_str(),20,145);
@@ -3186,13 +3093,11 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   delete canvConv;  delete RtrueLegend;  //Free memory
 
   //Fcorr = F normalized by gamma+jet sample average (given by Fjet)
-  TH1D* h_Fcorr[Nf][Ns][NI];
+  TH1D* h_Fcorr[Nf][NI];
   for (int f=0; f!=Nf; ++f) {
-    for (int s=0; s!=Ns; ++s) {
-      for (int a=0; a!=NI; ++a) {
-        h_Fcorr[f][s][a] = new TH1D(*(h_F[f][s][a]));
-        h_Fcorr[f][s][a]->Divide(h_FjetS[a]);
-      }
+    for (int a=0; a!=NI; ++a) {
+      h_Fcorr[f][a] = new TH1D(*(h_F[f][a]));
+      h_Fcorr[f][a]->Divide(h_FjetS[a]);
     }
   }
 
@@ -3209,17 +3114,15 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       h_Fjet[a]->SetBinError(i,sqrt( pow(h_Fjet[a]->GetBinError(i),2)
                                     +pow(h_FjetSU[a]->GetBinContent(i),2)));
       for (int f=0; f!=Nf; ++f) {	//Jet flavour
-        for (int s=0; s!=Ns; ++s) {	//Sample type (gamma+jet, EM+jet)
-          h_F[f][s][a]->SetBinError(i,sqrt(pow(h_F[f][s][a]->GetBinError(i),2)
-                                     +pow(h_FSU[f][s][a]->GetBinContent(i),2)));
-          h_Fcorr[f][s][a]->SetBinError(i,
-            0.5*fabs(( h_F[f][s][a]->GetBinContent(i)
-                      +h_F[f][s][a]->GetBinError(i))
-                     /h_FjetS[a]->GetBinContent(i)
-                    -( h_F[f][s][a]->GetBinContent(i)
-                      -h_F[f][s][a]->GetBinError(i))
-                     /h_FjetS[a]->GetBinContent(i)));
-        }
+        h_F[f][a]->SetBinError(i,sqrt(pow(h_F[f][a]->GetBinError(i),2)
+                               +pow(h_FSU[f][a]->GetBinContent(i),2)));
+        h_Fcorr[f][a]->SetBinError(i,
+          0.5*fabs(( h_F[f][a]->GetBinContent(i)
+                    +h_F[f][a]->GetBinError(i))
+                   /h_FjetS[a]->GetBinContent(i)
+                  -( h_F[f][a]->GetBinContent(i)
+                    -h_F[f][a]->GetBinError(i))
+                   /h_FjetS[a]->GetBinContent(i)));
       }
     }
   }
@@ -3227,12 +3130,11 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   //Axis setup
   string pTtitle = "#font[132]{#font[12]{p}_{T,jet}^{<MC>} (#font[12]{p}";
   if      (pTgen                         ) pTtitle += "_{T,jet}^{gen}";
-  else if (in_g.find("IIb")!=string::npos) pTtitle += "_{T,jet}^{MC'}";
   else                                     pTtitle += "_{T,jet}^{MC}";
   pTtitle += "-bins) [GeV]}";
   string pTtitleEp = "#font[132]{#font[12]{p}_{T,jet}^{<MC>} ";
-  if (Eprm) pTtitleEp       += "(#font[12]{E'}-bins) [GeV]}";
-  else      pTtitleEp       += "(#font[12]{p'}_{T}-bins) [GeV]}";
+  if (Eprm) pTtitleEp += "(#font[12]{E'}-bins) [GeV]}";
+  else      pTtitleEp += "(#font[12]{p'}_{T}-bins) [GeV]}";
   string FcorrTitle = "#font[12]{F}_{corr}";
   vector<string> Fstrs;
   Fstrs.push_back("#font[12]{F_{b}}");
@@ -3242,40 +3144,32 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   int cirO = kOpenCircle;   int diaF = kFullDiamond;
   int sqrF = kFullSquare;   int cirF = kFullCircle;
   for (int a=0; a!=NI; ++a) {
-    for (int s=0; s!=Ns; ++s) {
-      for (int f=0; f!=Nf; ++f) {
-        if (a==0) {	//E'-bins
-          h_F[f][s][a]->GetXaxis()->SetTitle(pTtitleEp.c_str());
-          histoSetup(h_F[f][s][a],     pTtitleEp, Fstrs[f]    );
-          histoSetup(h_Fcorr[f][s][a], pTtitleEp, FcorrTitle  );
-        } else {	//pT-bins
-          h_F[f][s][a]->GetXaxis()->SetTitle(pTtitle.c_str()  );
-          histoSetup(h_F[f][s][a],     pTtitle,   Fstrs[f]    );
-          histoSetup(h_Fcorr[f][s][a], pTtitle,   FcorrTitle  );
-        }
-        h_F[f][s][a]->SetStats(0);	  //Suppress stat boxes
-        h_Fcorr[f][s][a]->SetStats(0);
+    for (int f=0; f!=Nf; ++f) {
+      if (a==0) {	//E'-bins
+        h_F[f][a]->GetXaxis()->SetTitle(pTtitleEp.c_str());
+        histoSetup(h_F[f][a],     pTtitleEp, Fstrs[f]    );
+        histoSetup(h_Fcorr[f][a], pTtitleEp, FcorrTitle  );
+      } else {	//pT-bins
+        h_F[f][a]->GetXaxis()->SetTitle(pTtitle.c_str()  );
+        histoSetup(h_F[f][a],     pTtitle,   Fstrs[f]    );
+        histoSetup(h_Fcorr[f][a], pTtitle,   FcorrTitle  );
       }
+      h_F[f][a]->SetStats(0);	  //Suppress stat boxes
+      h_Fcorr[f][a]->SetStats(0);
     }
-    h_F[0][0][a]->SetMarkerStyle(cirF);    h_F[0][1][a]->SetMarkerStyle(cirO);
-    h_F[1][0][a]->SetMarkerStyle(sqrF);    h_F[1][1][a]->SetMarkerStyle(sqrO);
-    h_F[2][0][a]->SetMarkerStyle(diaF);    h_F[2][1][a]->SetMarkerStyle(diaO);
-    h_Fcorr[0][0][a]->SetMarkerStyle(cirF);
-    h_Fcorr[0][1][a]->SetMarkerStyle(cirO);
-    h_Fcorr[1][0][a]->SetMarkerStyle(sqrF);
-    h_Fcorr[1][1][a]->SetMarkerStyle(sqrO);
-    h_Fcorr[2][0][a]->SetMarkerStyle(diaF);
-    h_Fcorr[2][1][a]->SetMarkerStyle(diaO);
+    h_F[0][a]->SetMarkerStyle(cirF);
+    h_F[1][a]->SetMarkerStyle(sqrF);
+    h_F[2][a]->SetMarkerStyle(diaF);
+    h_Fcorr[0][a]->SetMarkerStyle(cirF);
+    h_Fcorr[1][a]->SetMarkerStyle(sqrF);
+    h_Fcorr[2][a]->SetMarkerStyle(diaF);
     //Marker colors
-    h_F[0][0][a]->SetMarkerColor(lred );   h_F[0][1][a]->SetMarkerColor(lred );
-    h_F[1][0][a]->SetMarkerColor(black);   h_F[1][1][a]->SetMarkerColor(gray );
-    h_F[2][0][a]->SetMarkerColor(blue );   h_F[2][1][a]->SetMarkerColor(lblue);
-    h_Fcorr[0][0][a]->SetMarkerColor(lred );
-    h_Fcorr[0][1][a]->SetMarkerColor(lred );
-    h_Fcorr[1][0][a]->SetMarkerColor(black);
-    h_Fcorr[1][1][a]->SetMarkerColor(gray );
-    h_Fcorr[2][0][a]->SetMarkerColor(blue );
-    h_Fcorr[2][1][a]->SetMarkerColor(lblue);
+    h_F[0][a]->SetMarkerColor(lred );
+    h_F[1][a]->SetMarkerColor(black);
+    h_F[2][a]->SetMarkerColor(blue );
+    h_Fcorr[0][a]->SetMarkerColor(lred );
+    h_Fcorr[1][a]->SetMarkerColor(black);
+    h_Fcorr[2][a]->SetMarkerColor(blue );
   }
 
   //For adding D0 fits as TF1 pol2
@@ -3336,10 +3230,9 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   D0FbcH.close();  D0FbcH.close();  D0FbcH.close(); //Close Fcorr&F histo files
   D0FbH.close();   D0FbH.close();   D0FbH.close();
 
-  h_Fcorr[1][0][0]->SetAxisRange(0.9,1.02,"Y");
-  string runTitle = "#font[132]{Run ";
-  if      (nameAdd.find("RunIIa"  )!=string::npos) runTitle += "IIa}";
-  h_Fcorr[1][0][0]->SetTitle(runTitle.c_str());
+  h_Fcorr[1][0]->SetAxisRange(0.9,1.02,"Y");
+  string runTitle = "#font[132]{RunCMS}";
+  h_Fcorr[1][0]->SetTitle(runTitle.c_str());
   
   /* F PLOTS */
 
@@ -3351,7 +3244,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   //Where to place some additional LaTeX text in the plots
   double latexBD[3]={70.0, 85.0, 0.955};
-  if (nameAdd.find("RunIIa")!=string::npos) latexBD[2]=0.855;
 
   //Canvas and related setup
   TCanvas* canv = new TCanvas("canv","",400,400);
@@ -3360,14 +3252,12 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   canv->SetBottomMargin(0.115);
 
   //Convert jet pT to particle level to be comparable w/ D0
-  //Indices, growing order: [flavour: b,g,lq][sample: gj,dj][Hor.axis:E',pT]
-  TGraphErrors* g_F[Nf][Ns][NI];  TGraphErrors* g_Fcorr[Nf][Ns][NI];
-  TGraphErrors* g_Fjet[NI];		//Taken only from gamma+jet sample
-  for (int a=0; a!=NI; ++a) {		//Axis interpretations
-    for (int s=0; s!=Ns; ++s) {		//Sample type
-      for (int f=0; f!=Nf; ++f) {	//Flavour
-        g_F[f][s][a]=new TGraphErrors();  g_Fcorr[f][s][a]=new TGraphErrors();
-      }
+  //Indices, growing order: [flavour: b,g,lq][Hor.axis:E',pT]
+  TGraphErrors* g_F[Nf][NI];  TGraphErrors* g_Fcorr[Nf][NI];
+  TGraphErrors* g_Fjet[NI];	//Taken only from gamma+jet sample
+  for (int a=0; a!=NI; ++a) {	//Axis interpretations
+    for (int f=0; f!=Nf; ++f) {	//Flavour
+      g_F[f][a]=new TGraphErrors();  g_Fcorr[f][a]=new TGraphErrors();
     }
     g_Fjet[a] = new TGraphErrors();
   }
@@ -3384,25 +3274,21 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
     }
 
     //Flavour-specific histos
-    for (int s=0; s!=Ns; ++s) {		//Sample type
-      for (int f=0; f!=Nf; ++f) {	//Jet flavour
-        //(Re)init
-        //Copy TH1D points to TGraphs for horizontal axis shifting
-        for (int i=1; i!=1+h_F[f][s][a]->GetXaxis()->GetNbins(); ++i) {	//F bins
-          //Copy the F histogram points to TGraphs, shift by pT conv. factor
-          g_F[f][s][a]->SetPoint(i-1, h_F[f][s][a]->GetBinCenter(i),
-                                      h_F[f][s][a]->GetBinContent(i));
-          //Copy the uncertainties
-          if (uncertF) g_F[f][s][a]->SetPointError(i-1, 0,
-                                               h_F[f][s][a]->GetBinError(i)  );
-          g_Fcorr[f][s][a]->SetPoint(i-1,h_Fcorr[f][s][a]->GetBinCenter(i),
-                                         h_Fcorr[f][s][a]->GetBinContent(i));
-          if (uncertFcorr) g_Fcorr[f][s][a]->SetPointError(i-1, 0,
-                                             h_Fcorr[f][s][a]->GetBinError(i));
-        } //Loop F bins
-      } //Jet flavour
-    } //Sample type
-
+    for (int f=0; f!=Nf; ++f) {	//Jet flavour
+      //(Re)init
+      //Copy TH1D points to TGraphs for horizontal axis shifting
+      for (int i=1; i!=1+h_F[f][a]->GetXaxis()->GetNbins(); ++i) {	//F bins
+        //Copy the F histogram points to TGraphs, shift by pT conv. factor
+        g_F[f][a]->SetPoint(i-1, h_F[f][a]->GetBinCenter(i),
+                                    h_F[f][a]->GetBinContent(i));
+        //Copy the uncertainties
+        if (uncertF) g_F[f][a]->SetPointError(i-1, 0, h_F[f][a]->GetBinError(i));
+        g_Fcorr[f][a]->SetPoint(i-1,h_Fcorr[f][a]->GetBinCenter(i),
+                                    h_Fcorr[f][a]->GetBinContent(i));
+        if (uncertFcorr) g_Fcorr[f][a]->SetPointError(i-1, 0,
+                                      h_Fcorr[f][a]->GetBinError(i));
+      } //Loop F bins
+    } //Jet flavour
   } //Horizontal axis interpretations
 
   /* Fcorr level (if not taken care of above) */
@@ -3413,16 +3299,10 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   TLegend* lgFD0  = new TLegend(0.45,0.15,0.55, 0.325);
   if (drawD0) lgF = new TLegend(0.50,0.15,0.92,0.325);
   else        lgF = new TLegend(0.50,0.15,0.92,0.50 );
-  if (!drawD0) lgF->AddEntry(g_F[2][1][0],
-                    "#font[132]{EM+jet (#font[12]{u,d,s,c})-jets}",     "p");
-  lgF->AddEntry(g_F[2][0][0],
-                    "#font[132]{#gamma+jet (#font[12]{u,d,s,c})-jets}", "p");
-  if (!drawD0) lgF->AddEntry(g_F[1][1][0],
-                             "#font[132]{EM+jet gluon jets}",           "p");
-  lgF->AddEntry(g_F[1][0][0],"#font[132]{#gamma+jet gluon jets}",       "p");
-  if (!drawD0) lgF->AddEntry(g_F[0][1][0],
-                  "#font[132]{EM+jet #font[12]{b}-jets}",               "p");
-  lgF->AddEntry(g_F[0][0][0],"#font[132]{#gamma+jet #font[12]{b}-jets}","p");
+  if (!drawD0) lgF->AddEntry(g_F[2][0],
+                    "#font[132]{Z+jet (#font[12]{u,d,s,c})-jets}", "p");
+  if (!drawD0) lgF->AddEntry(g_F[1][0],"#font[132]{Z+jet gluon jets}","p");
+  if (!drawD0) lgF->AddEntry(g_F[0][0],"#font[132]{Z+jet #font[12]{b}-jets}","p");
   if (drawD0) {
     lgFD0->AddEntry(g_D0Flq, " ", "p");
     lgFD0->AddEntry(g_D0Fg,  " ", "p");
@@ -3431,50 +3311,36 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   //Setup the plots and draw
   for (int a=0; a!=NI; ++a) {	//Horizontal axis interpretations
-    g_F[2][1][a]->SetLineColor(    lblue);  g_F[2][0][a]->SetLineColor(blue );
-    g_F[1][1][a]->SetLineColor(    gray );  g_F[1][0][a]->SetLineColor(black);
-    g_F[0][1][a]->SetLineColor(    red  );  g_F[0][0][a]->SetLineColor(lred );
-    g_Fcorr[2][1][a]->SetFillColor(lblue);  g_Fcorr[2][1][a]->SetLineWidth(0);
-    g_Fcorr[2][0][a]->SetFillColor(blue );  g_Fcorr[2][0][a]->SetLineWidth(0);
-    g_Fcorr[1][1][a]->SetFillColor(gray );  g_Fcorr[1][1][a]->SetLineWidth(0);
-    g_Fcorr[1][0][a]->SetFillColor(black);  g_Fcorr[1][0][a]->SetLineWidth(0);
-    g_Fcorr[0][1][a]->SetFillColor(red  );  g_Fcorr[0][1][a]->SetLineWidth(0);
-    g_Fcorr[0][0][a]->SetFillColor(lred );  g_Fcorr[0][0][a]->SetLineWidth(0);
-    g_F[2][1][a]->SetMarkerStyle(  diaO );  g_F[2][1][a]->SetMarkerColor(lblue);
-    g_F[2][0][a]->SetMarkerStyle(  diaF );  g_F[2][0][a]->SetMarkerColor(blue );
-    g_F[1][1][a]->SetMarkerStyle(  sqrO );  g_F[1][1][a]->SetMarkerColor(gray );
-    g_F[1][0][a]->SetMarkerStyle(  sqrF );  g_F[1][0][a]->SetMarkerColor(black);
-    g_F[0][1][a]->SetMarkerStyle(  cirO );  g_F[0][1][a]->SetMarkerColor(red  );
-    g_F[0][0][a]->SetMarkerStyle(  cirF );  g_F[0][0][a]->SetMarkerColor(lred );
-    g_Fcorr[2][1][a]->SetMarkerStyle(diaO );
-    g_Fcorr[2][1][a]->SetMarkerColor(lblue);
-    g_Fcorr[2][0][a]->SetMarkerStyle(diaF );
-    g_Fcorr[2][0][a]->SetMarkerColor(blue );
-    g_Fcorr[1][1][a]->SetMarkerStyle(sqrO );
-    g_Fcorr[1][1][a]->SetMarkerColor(gray );
-    g_Fcorr[1][0][a]->SetMarkerStyle(sqrF );
-    g_Fcorr[1][0][a]->SetMarkerColor(black);
-    g_Fcorr[0][1][a]->SetMarkerStyle(cirO );
-    g_Fcorr[0][1][a]->SetMarkerColor(red  );
-    g_Fcorr[0][0][a]->SetMarkerStyle(cirF );
-    g_Fcorr[0][0][a]->SetMarkerColor(lred );
-    g_Fcorr[2][0][a]->SetFillStyle(3395);
-    g_Fcorr[1][0][a]->SetFillStyle(3354);
-    g_Fcorr[0][0][a]->SetFillStyle(3345);
+    g_F[2][a]->SetLineColor(    lblue);
+    g_F[1][a]->SetLineColor(    gray );
+    g_F[0][a]->SetLineColor(    red  );
+    g_Fcorr[2][a]->SetFillColor(lblue);  g_Fcorr[2][a]->SetLineWidth(0);
+    g_Fcorr[1][a]->SetFillColor(gray );  g_Fcorr[1][a]->SetLineWidth(0);
+    g_Fcorr[0][a]->SetFillColor(red  );  g_Fcorr[0][a]->SetLineWidth(0);
+    g_F[2][a]->SetMarkerStyle(  diaO );  g_F[2][a]->SetMarkerColor(lblue);
+    g_F[1][a]->SetMarkerStyle(  sqrO );  g_F[1][a]->SetMarkerColor(gray );
+    g_F[0][a]->SetMarkerStyle(  cirO );  g_F[0][a]->SetMarkerColor(red  );
+    g_Fcorr[2][a]->SetMarkerStyle(diaO );
+    g_Fcorr[2][a]->SetMarkerColor(lblue);
+    g_Fcorr[1][a]->SetMarkerStyle(sqrO );
+    g_Fcorr[1][a]->SetMarkerColor(gray );
+    g_Fcorr[0][a]->SetMarkerStyle(cirO );
+    g_Fcorr[0][a]->SetMarkerColor(red  );
+    g_Fcorr[2][a]->SetFillStyle(3395);
+    g_Fcorr[1][a]->SetFillStyle(3354);
+    g_Fcorr[0][a]->SetFillStyle(3345);
     gStyle->SetHatchesSpacing(1.3);	//Fill pattern sparsity
 
     //F plots
-    if (nameAdd.find("RunIIa")!=string::npos) {
-      h_F[0][0][a]->SetAxisRange(0.8,1.0,"Y");
-    } else h_F[0][0][a]->SetAxisRange(0.9,1.1,"Y");
-    h_F[0][0][a]->GetYaxis()->SetTitle("#font[12]{F}");
-    h_F[0][0][a]->SetAxisRange(15,140,"X");
-    h_F[0][0][a]->Draw(             "P HISTO"     );
-    if (!drawD0) h_F[0][1][a]->Draw("P HISTO SAME");
-    h_F[1][0][a]->Draw(             "P HISTO SAME");
-    if (!drawD0) h_F[1][1][a]->Draw("P HISTO SAME");
-    if (!drawD0) h_F[2][1][a]->Draw("P HISTO SAME");
-    h_F[2][0][a]->Draw(             "P HISTO SAME");
+    h_F[0][a]->SetAxisRange(0.9,1.1,"Y");
+    h_F[0][a]->GetYaxis()->SetTitle("#font[12]{F}");
+    h_F[0][a]->SetAxisRange(15,140,"X");
+    h_F[0][a]->Draw(             "P HISTO"     );
+    if (!drawD0) h_F[0][a]->Draw("P HISTO SAME");
+    h_F[1][a]->Draw("P HISTO SAME");
+    if (!drawD0) h_F[1][a]->Draw("P HISTO SAME");
+    if (!drawD0) h_F[2][a]->Draw("P HISTO SAME");
+    h_F[2][a]->Draw("P HISTO SAME");
 
     lgF->SetBorderSize(  0);  lgF->SetFillStyle(  0);
     lgFD0->SetBorderSize(0);  lgFD0->SetFillStyle(0);
@@ -3506,17 +3372,12 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   lgcD0->SetBorderSize(0);     lgcD0->SetFillStyle(0);
   lgcD0ALT->SetBorderSize(0);  lgcD0ALT->SetFillStyle(0);
   lgc->SetBorderSize(0);       lgc->SetFillStyle(0);
-  if (!drawD0_h && !drawD0) lgc->AddEntry(g_Fcorr[2][1][0],
-                   "#font[132]{EM+jet (#font[12]{u,d,s,c})-jets}",        "p");
-  lgc->AddEntry(                          g_Fcorr[2][0][0],
-                "#font[132]{#gamma+jet (#font[12]{u,d,s,c})-jets}",       "p");
-  if (!drawD0_h && !drawD0) lgc->AddEntry(g_Fcorr[0][1][0],
-                               "#font[132]{EM+jet #font[12]{b}-jets}",    "p");
-  lgc->AddEntry(g_Fcorr[0][0][0],
-                               "#font[132]{#gamma+jet #font[12]{b}-jets}","p");
-  if (!drawD0_h && !drawD0) lgc->AddEntry(g_Fcorr[1][1][0],
-                               "#font[132]{EM+jet gluon jets}",           "p");
-  lgc->AddEntry(g_Fcorr[1][0][0], "#font[132]{#gamma+jet gluon jets}",    "p");
+  if (!drawD0_h && !drawD0) lgc->AddEntry(g_Fcorr[2][0],
+        "#font[132]{Z+jet (#font[12]{u,d,s,c})-jets}","p");
+  if (!drawD0_h && !drawD0) lgc->AddEntry(g_Fcorr[0][0],
+                "#font[132]{Z+jet #font[12]{b}-jets}","p");
+  if (!drawD0_h && !drawD0) lgc->AddEntry(g_Fcorr[1][0], 
+                   "#font[132]{Z+jet gluon jets}",    "p");
   if (drawD0) {
     lgcD0->SetTextFont(132);
     lgcD0->AddEntry(D0Flqcorr," #font[12]{F}^{#font[12]{lq}}_{corr}", "l");
@@ -3536,20 +3397,20 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   //Fcorr
   for (int a=0; a!=NI; ++a) {	//Horizontal axis interpretations
-    h_Fcorr[1][0][a]->GetXaxis()->SetRangeUser(15,125);
-    h_Fcorr[1][0][a]->SetAxisRange(0.9,1.02,"Y");
-    h_Fcorr[1][0][a]->GetYaxis()->SetTitle("#font[132]{#font[12]{F}_{corr}}");
-    h_Fcorr[1][0][a]->SetMarkerSize(0);
-    h_Fcorr[1][0][a]->Draw("P HISTO");	//Ordering s.t. this one gives title
+    h_Fcorr[1][a]->GetXaxis()->SetRangeUser(15,125);
+    h_Fcorr[1][a]->SetAxisRange(0.9,1.02,"Y");
+    h_Fcorr[1][a]->GetYaxis()->SetTitle("#font[132]{#font[12]{F}_{corr}}");
+    h_Fcorr[1][a]->SetMarkerSize(0);
+    h_Fcorr[1][a]->Draw("P HISTO");	//Ordering s.t. this one gives title
     if (uncertFcorr) {  //Draw uncertainty bands at the bottom
-      h_Fcorr[1][0][a]->Draw("E3 SAME");
-      h_Fcorr[0][0][a]->Draw("E3 SAME");
-      h_Fcorr[2][0][a]->Draw("E3 SAME");
+      h_Fcorr[1][a]->Draw("E3 SAME");
+      h_Fcorr[0][a]->Draw("E3 SAME");
+      h_Fcorr[2][a]->Draw("E3 SAME");
     }
-    g_Fcorr[1][0][a]->Draw("P SAME" );	//Draw horizontally shifted points 
+    g_Fcorr[1][a]->Draw("P SAME" );	//Draw horizontally shifted points 
     if (drawD0) {
       D0Fbcorr->Draw("SAME");  D0Fgcorr->Draw("SAME");  D0Flqcorr->Draw("SAME");
-      g_Fcorr[1][0][a]->Draw("P SAME");	//Draw this one again to put atop
+      g_Fcorr[1][a]->Draw("P SAME");	//Draw this one again to put atop
       if (drawD0_h) {
         g_D0Fbcorr->Draw( "P SAME");
         g_D0Fgcorr->Draw( "P SAME");
@@ -3571,11 +3432,11 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       latex.DrawLatex(102.0, 0.9375, "#font[12]{F}_{corr}-1");
       latex.DrawLatex(102.0, 0.9325, " plots"               );
     }
-    if (!drawD0) g_Fcorr[1][1][a]->Draw("P SAME");
-    if (!drawD0) g_Fcorr[0][1][a]->Draw("P SAME");
-    g_Fcorr[0][0][a]->Draw(             "P SAME");
-    if (!drawD0) g_Fcorr[2][1][a]->Draw("P SAME");
-    g_Fcorr[2][0][a]->Draw(             "P SAME");
+    if (!drawD0) g_Fcorr[1][a]->Draw("P SAME");
+    if (!drawD0) g_Fcorr[0][a]->Draw("P SAME");
+    g_Fcorr[0][a]->Draw(             "P SAME");
+    if (!drawD0) g_Fcorr[2][a]->Draw("P SAME");
+    g_Fcorr[2][a]->Draw(             "P SAME");
     lgc->Draw();
     savename = "./plots/Fcorr/";
     if (drawD0 || drawD0_h) savename += "D0comp_";
@@ -3610,15 +3471,16 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
     TH1D* h_Fcorr_avg[Nf][NI];
     for (int f=0; f!=Nf; ++f) {
       for (int a=0; a!=NI; ++a) {
-        FcorrLO = h_Fcorr[f][0][a]->GetXaxis()->GetXmin();
-        FcorrHI = h_Fcorr[f][0][a]->GetXaxis()->GetXmax();
-        h_Fcorr_avg[f][a] = new TH1D("", "", h_Fcorr[f][0][a]->GetNbinsX(),
+        FcorrLO = h_Fcorr[f][a]->GetXaxis()->GetXmin();
+        FcorrHI = h_Fcorr[f][a]->GetXaxis()->GetXmax();
+        h_Fcorr_avg[f][a] = new TH1D("", "", h_Fcorr[f][a]->GetNbinsX(),
                                              FcorrLO,  FcorrHI             );
         h_Fcorr_avg[f][a]->SetStats(0);
       }
     }
 
     //Find an average of the gamma+jet and EM+jet Fcorr histograms
+    /*
     double Favg=0;  double Navg[Ns]; //Temps for avg
     for (int a=0; a!=NI; ++a) {	//Horizontal axis interpretations
       for (int f=0; f!=Nf; ++f) {	//Jet flavours
@@ -3681,6 +3543,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       g_Fcorr_avg_p[2][a]->SetMarkerColor(blue );
     } //Axis interpretations
 
+
     //Initial guesses for params, ROOT can't fit power law without them
     fit_b->SetParameters( 1.0, 1.0, 0.05);
     fit_lq->SetParameters(1.0, 1.0, 0.05);
@@ -3727,9 +3590,12 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       h_Fcorr_avg[1][a]->SetMarkerSize(0);
       h_dum->Draw(              "P HISTO");  g_Fcorr_avg[1][a]->Draw("E3 SAME");
       g_Fcorr_avg[0][a]->Draw(  "E3 SAME");  g_Fcorr_avg[2][a]->Draw("E3 SAME");
-      g_Fcorr_avg_p[1][a]->Draw("P SAME" );  fit_g->Draw(            "SAME"   );
-      g_Fcorr_avg_p[0][a]->Draw("P SAME" );  fit_b->Draw(            "SAME"   );
-      g_Fcorr_avg_p[2][a]->Draw("P SAME" );  fit_lq->Draw(           "SAME"   );
+      g_Fcorr_avg_p[1][a]->Draw("P SAME" );
+      g_Fcorr_avg_p[0][a]->Draw("P SAME" );
+      g_Fcorr_avg_p[2][a]->Draw("P SAME" );
+      fit_g->Draw(            "SAME"   );
+      fit_b->Draw(            "SAME"   );
+      fit_lq->Draw(           "SAME"   );
       TLatex latex_fit;              latex_fit.SetTextSize(0.037);
       latex_fit.DrawLatex(79,0.959,"#font[132]{EM+jet and #gamma+jet avg.}");
       lgfitU->Draw();  lgfit->Draw();
@@ -3738,19 +3604,17 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       fitName = "./plots/Fcorr/fits/";
       fitName = fitName+"Fcorr_"+(a==0?"Ep_":"pTjet_")+genStr+nameAdd+".eps";
       canvFit->Print(fitName.c_str());
-
+      
     } //Horizontal axis interpretations
-
-    delete lgfitU;  delete lgfit;  delete h_dum;
+    */
+    //delete lgfitU;  delete lgfit;  delete h_dum;
   } //if fitMode
 
   //Free memory
   delete lgc;   delete lgcD0;   delete lgcD0ALT;  delete canvFit;
   for (int f=0; f!=NI; ++f) {
-    for (int s=0; s!=Ns; ++s) {
-      for (int a=0; a!=NI; ++a) {
-        delete g_F[f][s][a];  delete g_Fcorr[f][s][a];  delete fF[f][s][a];
-      }
+    for (int a=0; a!=NI; ++a) {
+      delete g_F[f][a];  delete g_Fcorr[f][a];  delete fF[f][a];
     }
   }
   delete D0Fbcorr;      delete D0Fgcorr;      delete D0Flqcorr;
@@ -3759,6 +3623,10 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
   delete g_D0Fbcorr;    delete g_D0Fgcorr;    delete g_D0Flqcorr;
 
 } //flavCorr
+
+
+
+
 //------------------------------------------------------------------------------
 //A function to combine flavour fractions of several generators in a single plot
 void   CMSJES::FFplot() {

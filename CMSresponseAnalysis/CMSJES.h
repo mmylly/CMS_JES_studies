@@ -329,8 +329,7 @@ public :
                   double& retEM                                       );
   void   ParamReader(string file, int n1, int n2,
                      vector<vector<double>> &params);
-  void   flavCorr(bool plot=true, int gen=0, int alg=0,
-                  int rad=0,int ct=-1,int Nevt=0);
+  void   flavCorr(bool plot=true, int gen=0, int Nevt=0);
   void   FFplot();
   void   plotQuery(string& respStr, string& djstr,  string& gjstr,
                     string& zjstr, int& gen, int& Nevt);
