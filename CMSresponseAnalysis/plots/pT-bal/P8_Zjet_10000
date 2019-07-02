@@ -1,0 +1,98 @@
+%!PS-Adobe-2.0
+%%Title: ./plots/pT-bal/P8_Zjet: canvas
+%%Creator: ROOT Version 6.06/04
+%%CreationDate: Mon Jul  1 16:58:43 2019
+%%Orientation: Landscape
+%%DocumentNeededResources: ProcSet (FontSetInit)
+%%EndComments
+%%BeginProlog
+/s {stroke} def /l {lineto} def /m {moveto} def /t {translate} def
+/r {rotate} def /rl {roll}  def /R {repeat} def
+/d {rlineto} def /rm {rmoveto} def /gr {grestore} def /f {eofill} def
+/c {setrgbcolor} def /black {0 setgray} def /sd {setdash} def
+/cl {closepath} def /sf {scalefont setfont} def /lw {setlinewidth} def
+/box {m dup 0 exch d exch 0 d 0 exch neg d cl} def
+/NC{systemdict begin initclip end}def/C{NC box clip newpath}def
+/bl {box s} def /bf {gsave box gsave f grestore 1 lw [] 0 sd s grestore} def /Y { 0 exch d} def /X { 0 d} def 
+/K {{pop pop 0 moveto} exch kshow} bind def
+/ita {/ang 15 def gsave [1 0 ang dup sin exch cos div 1 0 0] concat} def 
+/mp {newpath /y exch def /x exch def} def
+/side {[w .77 mul w .23 mul] .385 w mul sd w 0 l currentpoint t -144 r} def
+/mr {mp x y w2 0 360 arc} def /m24 {mr s} def /m20 {mr f} def
+/mb {mp x y w2 add m w2 neg 0 d 0 w neg d w 0 d 0 w d cl} def
+/mt {mp x y w2 add m w2 neg w neg d w 0 d cl} def
+/m21 {mb f} def /m25 {mb s} def /m22 {mt f} def /m26{mt s} def
+/m23 {mp x y w2 sub m w2 w d w neg 0 d cl f} def
+/m27 {mp x y w2 add m w3 neg w2 neg d w3 w2 neg d w3 w2 d cl s} def
+/m28 {mp x w2 sub y w2 sub w3 add m w3 0 d  0 w3 neg d w3 0 d 0 w3 d w3 0 d  0 w3 d w3 neg 0 d 0 w3 d w3 neg 0 d 0 w3 neg d w3 neg 0 d cl s } def
+/m29 {mp gsave x w2 sub y w2 add w3 sub m currentpoint t 4 {side} repeat cl fill gr} def
+/m30 {mp gsave x w2 sub y w2 add w3 sub m currentpoint t 4 {side} repeat cl s gr} def
+/m31 {mp x y w2 sub m 0 w d x w2 sub y m w 0 d x w2 sub y w2 add m w w neg d x w2 sub y w2 sub m w w d s} def
+/m32 {mp x y w2 sub m w2 w d w neg 0 d cl s} def
+/m33 {mp x y w2 add m w3 neg w2 neg d w3 w2 neg d w3 w2 d cl f} def
+/m34 {mp x w2 sub y w2 sub w3 add m w3 0 d  0 w3 neg d w3 0 d 0 w3 d w3 0 d  0 w3 d w3 neg 0 d 0 w3 d w3 neg 0 d 0 w3 neg d w3 neg 0 d cl f } def
+/m2 {mp x y w2 sub m 0 w d x w2 sub y m w 0 d s} def
+/m5 {mp x w2 sub y w2 sub m w w d x w2 sub y w2 add m w w neg d s} def
+%%IncludeResource: ProcSet (FontSetInit)
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Times-Italic
+%%IncludeResource: font Times-Bold
+%%IncludeResource: font Times-BoldItalic
+%%IncludeResource: font Helvetica
+%%IncludeResource: font Helvetica-Oblique
+%%IncludeResource: font Helvetica-Bold
+%%IncludeResource: font Helvetica-BoldOblique
+%%IncludeResource: font Courier
+%%IncludeResource: font Courier-Oblique
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Courier-BoldOblique
+%%IncludeResource: font Symbol
+%%IncludeResource: font ZapfDingbats
+/reEncode {exch findfont dup length dict begin {1 index /FID eq  {pop pop} {def} ifelse } forall /Encoding exch def currentdict end dup /FontName get exch definefont pop } def [/Times-Bold /Times-Italic /Times-BoldItalic /Helvetica /Helvetica-Oblique
+ /Helvetica-Bold /Helvetica-BoldOblique /Courier /Courier-Oblique /Courier-Bold /Courier-BoldOblique /Times-Roman /AvantGarde-Book /AvantGarde-BookOblique /AvantGarde-Demi /AvantGarde-DemiOblique /Bookman-Demi /Bookman-DemiItalic /Bookman-Light
+ /Bookman-LightItalic /Helvetica-Narrow /Helvetica-Narrow-Bold /Helvetica-Narrow-BoldOblique /Helvetica-Narrow-Oblique /NewCenturySchlbk-Roman /NewCenturySchlbk-Bold /NewCenturySchlbk-BoldItalic /NewCenturySchlbk-Italic /Palatino-Bold
+ /Palatino-BoldItalic /Palatino-Italic /Palatino-Roman ] {ISOLatin1Encoding reEncode } forall/Zone {/iy exch def /ix exch def  ix 1 sub  3144 mul  1 iy sub  2224 mul t} def
+%%EndProlog
+%%BeginSetup
+%%EndSetup
+newpath  gsave  90 r 0 -594 t  28 20 t .25 .25 scale  gsave 
+%%Page: 1 1
+ gsave  gsave 
+ 1 1 Zone
+ gsave  0 0 t black[  ] 0 sd 3 lw 1 1 1 c 2948 1914 0 0 bf black 1 1 1 c 2948 1914 0 0 bf black 1 1 1 c 2299 1502 354 220 bf black 2299 1502 354 220 bl 0 0 0.6 c 1 1 1 c black 0 0 0.6 c 354 220 m 2299 X s black 354 220 m 2299 X s
+ gsave  2948 1914 0 0 C 2294.23 41.6053 t 0 r /Times-Roman findfont 101.041 sf 0 0 m (E' [GeV]) show NC gr  480 242 m -22 Y s
+ gsave  2948 1914 0 0 C 439.827 160.478 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (90) show NC gr  639 265 m -45 Y s
+ gsave  2948 1914 0 0 C 639.388 155.595 t 0 r  -52 0 t /Helvetica findfont 65.3797 sf 0 0 m (100) show NC gr  1685 242 m -22 Y s
+ gsave  2948 1914 0 0 C 1628.55 160.478 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (200) show NC gr  2297 242 m -22 Y s
+ gsave  2948 1914 0 0 C 2240.74 160.478 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (300) show NC gr  354 220 m 1502 Y s
+ gsave  2948 1914 0 0 C 83.2106 1640.44 t 90 r /Times-Roman findfont 65.3797 sf 0 0 m (tag) show NC gr 
+ gsave  2948 1914 0 0 C 196.139 1640.44 t 90 r /Times-Roman findfont 65.3797 sf 0 0 m (T) show NC gr 
+ gsave  2948 1914 0 0 C 142.647 1557.23 t 90 r /Times-Roman findfont 101.041 sf 0 0 m (/p) show NC gr 
+ gsave  2948 1914 0 0 C 95.0978 1408.64 t 90 r /Times-Roman findfont 65.3797 sf 0 0 m (probe) show NC gr 
+ gsave  2948 1914 0 0 C 196.139 1408.64 t 90 r /Times-Roman findfont 65.3797 sf 0 0 m (T) show NC gr 
+ gsave  2948 1914 0 0 C 142.647 1355.14 t 90 r /Times-Roman findfont 101.041 sf 0 0 m (p) show NC gr  423 220 m -69 X s 388 270 m -34 X s 388 320 m -34 X s 388 370 m -34 X s 423 420 m -69 X s 388 470 m -34 X s 388 521 m -34 X s 388 571 m -34 X s 423
+ 621 m -69 X s 388 671 m -34 X s 388 721 m -34 X s 388 771 m -34 X s 423 821 m -69 X s 388 871 m -34 X s 388 921 m -34 X s 388 971 m -34 X s 423 1021 m -69 X s 388 1071 m -34 X s 388 1122 m -34 X s 388 1172 m -34 X s 423 1222 m -69 X s 388 1272 m -34
+ X s 388 1322 m -34 X s 388 1372 m -34 X s 423 1422 m -69 X s 388 1472 m -34 X s 388 1522 m -34 X s 388 1572 m -34 X s 423 1622 m -69 X s 423 1622 m -69 X s 388 1672 m -34 X s
+ gsave  2948 1914 0 0 C 303.124 202.083 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (0) show NC gr 
+ gsave  2948 1914 0 0 C 249.632 398.222 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (0.2) show NC gr 
+ gsave  2948 1914 0 0 C 249.632 600.305 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (0.4) show NC gr 
+ gsave  2948 1914 0 0 C 249.632 802.388 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (0.6) show NC gr 
+ gsave  2948 1914 0 0 C 249.632 998.527 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (0.8) show NC gr 
+ gsave  2948 1914 0 0 C 315.011 1194.67 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (1) show NC gr 
+ gsave  2948 1914 0 0 C 249.632 1396.75 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (1.2) show NC gr 
+ gsave  2948 1914 0 0 C 249.632 1592.89 t 0 r /Helvetica findfont 65.3797 sf 0 0 m (1.4) show NC gr  0 0.6 0 c 1 1 1 c black 0 0.6 0 c 354 980 m 192 X s 546 980 m 171 X s black /w 2 def /w2 {w 2 div} def /w3 {w 3 div} def 546 980 m20 0 0.6 0 c 902
+ 1066 m 30 Y s 902 1096 m 30 Y s 717 1096 m 185 X s 902 1096 m 165 X s black 902 1096 m20 0 0.6 0 c 1281 897 m 125 Y s 1281 1022 m 126 Y s 1067 1022 m 214 X s 1281 1022 m 187 X s black 1281 1022 m20 0 0.6 0 c 1690 1057 m 15 Y s 1690 1072 m 15 Y s
+ 1468 1072 m 222 X s 1690 1072 m 193 X s black 1690 1072 m20 0 0.6 0 c 2101 1009 m 39 Y s 2101 1048 m 39 Y s 1883 1048 m 218 X s 2101 1048 m 191 X s black 2101 1048 m20 0 0.6 0 c 2483 916 m 31 Y s 2483 947 m 31 Y s 2292 947 m 191 X s 2483 947 m 170 X
+ s black 2483 947 m20 548 1112 m 2 Y s 536 1114 m 24 X s 548 1112 m -3 Y s 536 1109 m 24 X s 868 1114 m 2 Y s 856 1116 m 23 X s 868 1114 m -3 Y s 856 1111 m 23 X s 1240 1119 m 3 Y s 1228 1122 m 24 X s 1240 1119 m -4 Y s 1228 1115 m 24 X s 1667 1127 m
+ 4 Y s 1656 1131 m 23 X s 1667 1127 m -4 Y s 1656 1123 m 23 X s 2073 1136 m 6 Y s 2061 1142 m 24 X s 2073 1136 m -6 Y s 2061 1130 m 24 X s 2484 1141 m 9 Y s 2472 1150 m 24 X s 2484 1141 m -9 Y s 2472 1132 m 24 X s 0 0.6 0 c /w 48 def /w2 {w 2 div}
+ def /w3 {w 3 div} def 548 1112 868 1114 1240 1119 1667 1127 2073 1136 2484 1141 6 { m20} R 0 0 0.6 c 1 1 1 c 0.4 0.8 0.4 c 546 291 902 491 1281 573 1690 516 2101 462 2483 455 6 { m33} R black 0 0.6 0 c 554 1124 868 1130 1240 1134 1673 1136 2075 1139
+ 2487 1138 6 { m24} R black
+ gsave  2948 1914 0 0 C 2133.76 552.756 t 0 r /Times-Roman findfont 41.6053 sf 0 0 m (CMS Z+jet MC) show NC gr  0 0.6 0 c 2056 565 m24 black
+ gsave  2948 1914 0 0 C 2133.76 499.263 t 0 r /Times-Roman findfont 41.6053 sf 0 0 m (Our Z+jet MC) show NC gr  0 0.6 0 c 2000 507 m 113 X s black
+ gsave  2948 1914 0 0 C 2133.76 439.827 t 0 r /Times-Roman findfont 41.6053 sf 0 0 m (CMS Z+jet data) show NC gr  0 0.6 0 c 2056 450 m20 black
+ gsave  2948 1914 0 0 C 2133.76 380.391 t 0 r /Times-Roman findfont 41.6053 sf 0 0 m (Our Z+jet data fit) show NC gr  0.4 0.8 0.4 c 2056 392 m33 gr showpage
+ gr 
+%%Trailer
+%%Pages:  1
+ gr  gr  gr 
+%%EOF

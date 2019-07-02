@@ -28,8 +28,6 @@ void CMSJES::Loop()
   Long64_t nentries = fChain->GetEntriesFast();
   //Output file
   string outname = "./output_ROOT_files/CMSJES_" + ReadName;
-  if (GetrunIIa()) outname += "_RunIIa";
-  if (!GetStrangeB())    outname += "_noStrangeB";
   outname += ".root";	//Filetype suffix
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
@@ -59,18 +57,10 @@ void CMSJES::Loop()
   string MPFTitle = Rcone;    MPFTitle   += "RunCMS"; 
   string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS"; 
 
-  //Was Xi & Sigma response Ansatz used:
-  string XS_Str="";
-  if (!GetStrangeB()) XS_Str=" (no #Xi, #Sigma)";
-  EpTitle+=XS_Str;  ETitle+=XS_Str;  MPFTitle+=XS_Str;  EpMPFTitle +=XS_Str;
-
   //Time scale: // C_tau -> 10mm
   string ctauStr;
   ctauStr = ", c#tau=1 cm"; // Might have to change this
   EpTitle+=ctauStr;  ETitle+=ctauStr;  MPFTitle+=ctauStr;  EpMPFTitle+=ctauStr;
-  //Jet algorithm
-  EpTitle +=", anti-#font[12]{k}_{T}";  ETitle    +=", anti-#font[12]{k}_{T}";
-  MPFTitle+=", anti-#font[12]{k}_{T}";  EpMPFTitle+=", anti-#font[12]{k}_{T}";
 
   EpTitle += ";E' [GeV];p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prEp    = new TProfile("prEp", EpTitle.c_str(),      nbins-1,binsx);
@@ -250,7 +240,7 @@ void CMSJES::Loop()
   TLorentzVector p4r_probe;	//Reconstr. probe 4-momentum, resp. included
   TLorentzVector p4r_tag;	//       -||-    for tag in dijet case
   TLorentzVector p4EM_tag;	//Tag    -||-
-  TLorentzVector p4f_probe;	//w/ fit params to D0 data
+  TLorentzVector p4f_probe;	//w/ fit params to CMS data
   TLorentzVector p4f_tag;
 
   //Partial derivative values for a hadron
@@ -425,8 +415,6 @@ void CMSJES::Loop()
   //Machinery for skipping events that didn't pass cuts the last time
   fstream cutflag_stream;
   string cutflag_file = "./cutflag_files/" + ReadName;
-  if (GetrunIIa()  ) cutflag_file += "_RunIIa";
-  if (!GetStrangeB()) cutflag_file += "_noStrangeB";
   cutflag_file += ".bin";
   if (GetuseEarlierCuts()) cout << "Checking for "; 
   else                     cout << "Writing new ";
@@ -1198,8 +1186,6 @@ void CMSJES::Loop()
 
     //Save particle content histogram plot
     string plotName = "./plots/particleComposition/PC_" + ReadName;
-    if (GetrunIIa()) plotName += "_runIIa";
-    if (!GetStrangeB()) plotName += "_noStrangeB";	//Strange hadrons
     plotName += ".eps";	//Filetype suffix
     canv->Print(plotName.c_str());
 
@@ -1247,8 +1233,6 @@ void CMSJES::FindFJtoMC() {
   //Output file
   string outname = "./output_ROOT_files/FJtoMC/";
   string printname = "FJtoMC_";
-  if      (GetrunIIa()) printname += "RunIIa";
-  if (!GetStrangeB()) printname += "_noStrangeB";
   outname = outname + printname + ".root";	//Filetype suffix
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
@@ -1387,10 +1371,11 @@ bool CMSJES::fidCuts(int id, double pT) {
   int PDG = abs(id);
   if (isNeutrino(PDG)) return false;
   if (isStrangeB(PDG) && !GetStrangeB()) return false;
-  else if (GetrunIIa()) {	//Same pT threshold for all hadrons & leptons
-    if (PDG==20 || PDG==22 || pT>0.3) return true;
-    else return false;
-  }
+  //else if (GetrunCMS()) {	//Same pT threshold for all hadrons & leptons
+  if (PDG==20 || PDG==22 || pT>0.3) return true;
+  else return false;
+
+  /*
   switch (PDG) {	//Run IIb: Hadron threshold pT > m_h
     case 22   :                            //Photons have no pT...
     case 20   :               return true; //...threshold
@@ -1409,6 +1394,7 @@ bool CMSJES::fidCuts(int id, double pT) {
     case 3334 : if (pT>1.672) return true; else return false; //Omega^-
     default   : if (pT>0.3  ) return true; else return false;
   }
+  */
 } //fidCuts
 //-----------------------------------------------------------------------------
 //Check if this particle is a neutrino
@@ -1615,11 +1601,10 @@ void CMSJES::FitGN()
 
   //Construct input and output files
   InputNameConstructor();			//Input filenames to read
-  string addRun = (GetrunIIa()?"_RunIIa":"");	//For output
-  string respNotes = (GetStrangeB() ? "" : "_noStrangeB"  );
-  string gjOut = "./output_ROOT_files/CMSJES_"+gjFile+addRun+respNotes+".root";
-  string djOut = "./output_ROOT_files/CMSJES_"+djFile+addRun+respNotes+".root";
-  string zjOut = "./output_ROOT_files/CMSJES_"+zjFile+addRun+respNotes+".root";
+
+  string gjOut = "./output_ROOT_files/CMSJES_"+gjFile+".root";
+  string djOut = "./output_ROOT_files/CMSJES_"+djFile+".root";
+  string zjOut = "./output_ROOT_files/CMSJES_"+zjFile+".root";
   vector<string> outs;  outs.push_back(djOut);  outs.push_back(gjOut); 
   outs.push_back(zjOut);//Handle
 
@@ -1919,8 +1904,6 @@ void CMSJES::FitGN()
   else if (gjFile.find("P8")!=string::npos) output << "P8";
   else if (gjFile.find("H7")!=string::npos) output << "H7";
   output << " G-N: " << "chi2/n_d0f=" << chi2; //Divided by n_dof before
-  if (GetrunIIa()) output << " RunIIa";
-  if (!GetStrangeB()) output << ", no strange had.";
   output << "\n" << "    A    = " << GetA()
                  <<";\t\tB    = " << GetB()
                  <<";\t\tC    = " << GetC() << ";\n"
@@ -1984,8 +1967,7 @@ void CMSJES::Plot2D()
 //A function to combine several response function plots stored as TProfiles
 //in "CMSJES_X.root" files.
 //MConly and fitOnly are Master flags, overriding all others if true
-void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,  
-                    bool MConly, bool fitOnly)
+void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
 {
   bool plotOurMC  = true;
   bool plotD0MC   = false; //true;
@@ -2005,7 +1987,7 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   //Choose filenames to open
   string nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy;
   plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, djdummy, gjdummy,
-            gen, alg, rad, ct, Nevt, XS);
+            gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
@@ -2081,7 +2063,7 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
   setup->SetStats(0);				//Suppress stat box
   setup->GetXaxis()->SetTitle(hzj->GetXaxis()->GetTitle());
   setup->GetYaxis()->SetTitle(hzj->GetYaxis()->GetTitle());
-  setup->SetAxisRange(0.6, 0.93,"Y");		//Vertical axis limits
+  setup->SetAxisRange(0.0, 1.5,"Y");		//Vertical axis limits
   setup->GetYaxis()->SetTitleFont(133);
   int titleSize = 18;				//Common title size everywhere
   setup->GetYaxis()->SetTitleSize(titleSize);
@@ -2143,22 +2125,22 @@ void CMSJES::plotPT(int gen, int alg, int rad, int ct, int Nevt, int XS,
 //-----------------------------------------------------------------------------
 //A handle for drawing "MC only" and "Fit+data only" pT-bal. plots at once
 void CMSJES::plotSepPT() {
-  int gen=0, alg=0, rad=0, ct=-1, Nevt=0, XS=0;
+  int gen=0, Nevt=0;
   string nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2;
   plotQuery(nameDum, djdummy1, gjdummy1, zjdummy, djdummy2, gjdummy2,
-            gen, alg, rad, ct, Nevt, XS             );
-  plotPT(gen, alg, rad, ct, Nevt, XS, true,  false);
-  plotPT(gen, alg, rad, ct, Nevt, XS, false, true );
+            gen, Nevt);
+  plotPT(gen, Nevt, true,  false);
+  plotPT(gen, Nevt, false, true );
 }
 //-----------------------------------------------------------------------------
 //Like plotPT, but for MPF histograms
 void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
-                    int Nevt,  int XS )
+                    int Nevt)
 {
   //Choose filenames to open
   string nameAdd, dijetFile, gammajetFile, djdummy, gjdummy , zjdummy;
   plotQuery(nameAdd, dijetFile, gammajetFile, djdummy, gjdummy, zjdummy,
-            gen, alg, rad, ct, Nevt, XS                     );
+            gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
@@ -2280,9 +2262,7 @@ void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
   else savename += "_NA";	//R not available
   if      (MPFtitle.find("D#oslash cone")!=string::npos) savename += "_D0rIIc";
   else if (MPFtitle.find("_a-kT"        )!=string::npos) savename += "_a-kT";
-  if      (MPFtitle.find("RunIIa"  )!=string::npos) savename += "_RunIIa";
   if      (MPFtitle.find("ZS"      )!=string::npos) savename+="_ZS";
-  if (MPFtitle.find("no #Xi, #Sigma")!=string::npos) savename+="_noStrangeB";
   if      (MPFtitle.find("0.3 cm")!=string::npos) savename+="_ct3mm";
   else if (MPFtitle.find("1 cm")  !=string::npos) savename+="_ct10mm";
   else if (MPFtitle.find("2.5 cm")!=string::npos) savename+="_ct25mm";
@@ -2326,8 +2306,6 @@ void axisSetup(TAxis* xAxis, TAxis* yAxis, string Xtitle, string Ytitle) {
 /* A handle to set up TProfile2D object axis in FindFJtoMC */
 void CMSJES::axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd) {
   string title = titleAdd + " #font[132]{MC vs gen, ";
-  if      (GetrunIIa()) title += "RunIIa";
-  if (!GetStrangeB())    title +=", no strange hadrons";
   title += "}";
   FJtoMC->SetTitle(title.c_str());
   FJtoMC->GetXaxis()->SetTitle("#font[132]{#font[12]{p}_{T,jet}^{FJ}}");
@@ -2425,7 +2403,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
                 retMC=R_temp;  retFIT=R_temp;
                 break;
 //***********************************************************************************************
-      case 13 : R_temp = frG->Eval(energy); //frMU->Eval(energy); Change this
+      case 13 : R_temp = frG->Eval(energy);//frMU->Eval(energy); Change this
 //***********************************************************************************************
                 retMC=R_temp;  retFIT=R_temp;
                 break;
@@ -2817,14 +2795,11 @@ void CMSJES::PrintEvt()
 //N.B. only the interesting cases are enabled in this function ATM
 void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
                        string& zjstr, string& djstrb, string& gjstrb,
-                      int& gen,  int& alg, int& rad, int& ct, 
-                      int& Nevt, int& XS          )
+                      int& gen, int& Nevt)
 {
   //Init
   string respStr = "./output_ROOT_files/CMSJES_";
-  string runStr="";		//To contain e.g. "RunIIa"
   string root = ".root";	//File suffix
-  string properties = "";	//Sample properties will be contained here
 
   /* User interface */
   //Choose generator
@@ -2832,50 +2807,25 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   while (gen<1 || gen>3) cin >> gen;
   respStr += (gen==3 ? "P8_": (gen==1 ? "P6_": (gen==2 ? "H7_" : "")));
 
-  //Choose jet algorithm
-  cout << "Choose jet algorithm\n1: D0 runII cone\n2: Anti-kT" << endl;
-  while (alg!=1 && alg!=2) cin >> alg;
-  properties += (alg==1 ? "D0rIIc_" : "a-kT_");
-  //Choose cone radius
-  cout << "Choose cone radius (1) 0.5 (2) 0.4" << endl;
-  while (rad<1 || rad>2) cin >> rad;
-  properties += (rad==1 ? "R05_": (rad==2 ? "R04_" : ""));
-  //Choose showering lengthscale ctau (Choose 0 if setting not available)
-  cout<<"ctau: (0) N/A (1) 0.3 cm, (2) 1 cm, (3) 2.5 cm, (4) 5 cm or (5) 10 cm?"
-      <<endl;
-  while (ct<0 || ct>5) cin >> ct;	//If ct==0, nothing is added
-  if      (ct == 1) properties += "ct3mm_";
-  else if (ct == 2) properties += "ct10mm_";
-  else if (ct == 3) properties += "ct25mm_";
-  else if (ct == 4) properties += "ct50mm_";
-  else if (ct == 5) properties += "ct100mm_";
-
   //Set #events
-  string num   = "100000";	//Default #events
-  //string num_b = "100000";	//0.1M #events in b-enriched sample
-  string num_b = "1000";	//1M #events in b-enriched sample
-  cout << "#Events (1) 100k (2) 10k" << endl;
-  while (Nevt<1 || Nevt>2) cin >> Nevt;
-  if (Nevt==2) num = "10000";  
-
-  //RunIIb functionality removed
-  runStr += "_RunIIa";
-
-  //Choose whether or not to use Xi and Sigma Ansatz etc.
-  cout << "Use strange particle Ansätze? (1) yes (2) no" << endl;  
-  while (XS<1 || XS>2) cin >> XS;
-  if (XS==2) runStr += "_noStrangeB";
+  string num = "100000";
+  cout << "#Events (1) 100k (2) 10k (3) 1k" << endl;
+  while (Nevt<1 || Nevt>3) cin >> Nevt;
+  if      (Nevt==1) num = "100000";
+  else if (Nevt==2) num = "10000";
+  else if (Nevt==3) num = "1000";
 
   //Construct all-flavor filenames
-  djstr = respStr + "dijet_"    + properties + num + runStr + root;
-  gjstr = respStr + "gammajet_" + properties + num + runStr + root;
-  zjstr = respStr + "Zjet_" + num + root;
+  djstr = respStr + "dijet_"    + num + root;
+  gjstr = respStr + "gammajet_" + num + root;
+  zjstr = respStr + "Zjet_"     + num + root;
 
   //b-jet enriched filenames. ATM there are only 100k event sets of these
-  djstrb = respStr +"dijet_"    + properties+"b-enriched_"+num_b+runStr+root;
-  gjstrb = respStr +"gammajet_" + properties+"b-enriched_"+num_b+runStr+root;
+  djstrb = respStr +"dijet_"    + "b-enriched_" + num + root;
+  gjstrb = respStr +"gammajet_" + "b-enriched_" + num + root;
+
   //Additions in filename
-  nameAdd = properties + num + runStr;
+  nameAdd = num;
 } //plotQuery
 
 //-----------------------------------------------------------------------------
@@ -2887,7 +2837,7 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
 //              ct	      -||-       ctau time-/lengthscale
 //		XS	      -||-       "use strange hadron Ansätze?"
 void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
-                     int Nevt,   int XS          )
+                     int Nevt)
 {
   bool fitMode = true;	//Draw fitted TF1s on top of the histos
   bool drawD0  = false;	//Draw D0 Fcorr on top of the histos (extracted from AN)
@@ -2903,7 +2853,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
   //Choose filenames to open
   string nameAdd, in_d, in_g, in_z, in_d_b, in_g_b;
-  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b, gen, alg, rad, ct, Nevt, XS);
+  plotQuery(nameAdd, in_d, in_g, in_z, in_d_b, in_g_b, gen, Nevt);
 
   //Check which generator was used for producing the files asked for
   string genStr="";
@@ -3063,7 +3013,6 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
 
 
   //Project TProfiles to TH1Ds
-  cout << "start" << endl;
   if (!runCMS) {
     for (int a=0; a!=NI; ++a) {
       for (int s=0; s!=Ns; ++s) {
@@ -3085,7 +3034,7 @@ void CMSJES::flavCorr(bool plot, int gen, int alg, int rad, int ct,
       h_FjetSU[a] = FjetSU[a]->ProjectionX();
     }
   }
-  cout << "end" << endl;
+
   /* Conversion to prtcl lvl jet pT from gamma+jet sample */
 
   TCanvas* canvConv = new TCanvas("canvConv","",400,400);

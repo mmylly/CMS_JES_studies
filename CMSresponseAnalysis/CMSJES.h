@@ -216,7 +216,6 @@ public :
   bool bEnrichedFiles = false;	//Use separate files for getting F^b_corr?
   bool contHistos = true;	//Produce probe particle content histograms
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
-  bool runIIa = false; 		//Use runIIa response parameters
   bool runCMS = true;		//Use CMS parameters
 
   bool StrangeB = true;		//Use Ansätze for strange baryon response
@@ -264,7 +263,6 @@ public :
   void SetbEnrichedFiles(bool flag) {bEnrichedFiles=flag;}
   void SetcontHistos(bool flag) {contHistos=flag;}
   void SetMPFmode( bool flag ) {MPFmode = flag;}
-  void SetrunIIa(  bool flag ) {runIIa = flag;}
   void SetStrangeB(bool flag ) {StrangeB = flag;}
   void SetAnsatz(  string val) {
    if (val=="pn" || val=="L" || val=="pi") Ansatz = val;
@@ -286,7 +284,6 @@ public :
   double GetABer() {return ABer;}
   double GetACer() {return ACer;}
   double GetBCer() {return BCer;}
-  bool GetrunIIa()   {return runIIa;}
   double Getepsilon()    {return epsilon;}
   double GetepsilonMin() {return epsilonMin;}
   bool GetuseEarlierCuts() {return useEarlierCuts;}
@@ -327,11 +324,9 @@ public :
   void   axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd);
   void   FitGN();		//Gauss-Newton fit function
   void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
-  void   plotPT(int gen=0,int alg=0,int rad=0,int ct=-1,int Nevt=0, int XS=0, 
-                bool MConly=false, bool fitOnly=false    );
+  void   plotPT(int gen=0,int Nevt=0, bool MConly=false, bool fitOnly=false    );
   void   plotSepPT();
-  void   plotMPF(int gen=0,  int alg=0, int rad=0, int ct=-1,
-                 int Nevt=0,   int XS=0  );
+  void   plotMPF(int gen=0,  int alg=0, int rad=0, int ct=-1, int Nevt=0);
   void   Response(int id, double pseudorap, double energy,   double pT,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
@@ -340,12 +335,11 @@ public :
   void   ParamReader(string file, int n1, int n2,
                      vector<vector<double>> &params);
   void   flavCorr(bool plot=true, int gen=0, int alg=0,
-                  int rad=0,int ct=-1,int Nevt=0,int XS=0);
+                  int rad=0,int ct=-1,int Nevt=0);
   void   FFplot();
   void   plotQuery(string& respStr, string& djstr,  string& gjstr,
                     string& zjstr, string& djstrb, string& gjstrb,
-                   int& gen,  int& alg,  int& rad,  int& ct,
-                   int& Nevt, int& XS        );
+                   int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-
@@ -533,7 +527,21 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   ParamReader("/proton.txt",   32, 3, params_p  );
 
   /* Plug fit parameter values here for fit reco */
-  if (runIIa) {
+  if (runCMS) {
+    //Initial guess to start fitting from
+    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
+                          Aer = 0.0;     Ber = 0.0;       Cer = 0.0;    }
+    //Default: use our A,B,C depending on generator
+    else {
+      if (ReadName.find("P8")!=string::npos) {
+        A    = 1.91588;	B    = -7.74112;	C    = 1.16804; // with 100 000 sample
+	//A = -275.669;		B    = -57.1223;	C = -0.137663; // with 10 000 sample
+        Aer  = 0.0572361;	Ber  = 0.0287636;	Cer  = 0.0105337;
+        ABer = -0.00148885;	ACer = -0.000124997;	BCer = 0.000180898;
+        cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
+      } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
+    }
+  } else { //RunIIa parameters
     //Initial guess to start fitting from
     if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
                           Aer = 0.0;     Ber = 0.0;       Cer = 0.0;}
@@ -549,20 +557,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
         ABer = -0.00160909;	ACer = -7.75965e-05;	BCer = 0.00018794;     
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
-  } else if (runCMS) {
-    //Initial guess to start fitting from
-    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
-                          Aer = 0.0;     Ber = 0.0;       Cer = 0.0;    }
-    //Default: use our A,B,C depending on generator
-    else {
-      if (ReadName.find("P8")!=string::npos) {
-        A    = 1.91588;	B    = -7.74112;	C    = 1.16804;
-        Aer  = 0.0572361;	Ber  = 0.0287636;	Cer  = 0.0105337;
-        ABer = -0.00148885;	ACer = -0.000124997;	BCer = 0.000180898;
-        cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
-      } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
-    }
-  } else cout << "\n\n\tERROR: neither run IIa nor runCMS activated!\n\n" << endl;
+  }
 } //Constructor
 
 //-----------------------------------------------------------------------------
