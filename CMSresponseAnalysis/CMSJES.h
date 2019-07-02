@@ -319,20 +319,17 @@ public :
   void   axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd);
   void   FitGN();		//Gauss-Newton fit function
   void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
-  void   plotPT(int gen=0,int Nevt=0, bool MConly=false, bool fitOnly=false    );
+  void   plotPT(int gen=0,int Nevt=0, bool MConly=false, bool fitOnly=false);
   void   plotSepPT();
   void   plotMPF(int gen=0,  int alg=0, int rad=0, int ct=-1, int Nevt=0);
   void   Response(int id, double pseudorap, double energy,   double pT,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
-                  double& retMC, double& retFIT,
-                  double& retEM                                       );
-  void   ParamReader(string file, int n1, int n2,
-                     vector<vector<double>> &params);
+                  double& retMC, double& retFIT, double& retEM);
+  void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);
   void   flavCorr(bool plot=true, int gen=0, int Nevt=0);
-  void   FFplot();
-  void   plotQuery(string& respStr, string& djstr,  string& gjstr,
-                    string& zjstr, int& gen, int& Nevt);
+  void   plotQuery(string& respStr, string& djstr,  string& gjstr, string& zjstr, 
+                   int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-
@@ -346,7 +343,6 @@ public :
 //Params:	file		The filename to read as a string
 //		n1,n2		Dimensions of the params tensor
 //		params		Reference to the tensor to read parameters into
-
 void CMSJES::ParamReader(string file, int n1, int n2,
                         vector<vector<double>> &params)
 {
@@ -442,10 +438,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inPTBMC_zj.open(  "./data_and_MC_input/pTbal/jecdataGH/zmmjet_mc");
 
   //MPF
-  inMPFdata_gj_R07.open("./data_and_MC_input/MPF/MPF_gammajet_data_R07");
-  inMPFMC_gj_R07.open("./data_and_MC_input/MPF/MPF_gammajet_MC_R07");
-  inMPFMC_dj.open("./data_and_MC_input/MPF/MPF_dijet_MC");
-  inMPFMC_gj.open("./data_and_MC_input/MPF/MPF_gammajet_MC");
+  inMPFdata_gj_R07.open("./data_and_MC_input/MPF/D0/MPF_gammajet_data_R07");
+  inMPFMC_gj_R07.open("./data_and_MC_input/MPF/D0/MPF_gammajet_MC_R07");
+  inMPFMC_dj.open("./data_and_MC_input/MPF/D0/MPF_dijet_MC");
+  inMPFMC_gj.open("./data_and_MC_input/MPF/D0/MPF_gammajet_MC");
 	//Whe D0 MPF detector data and MC points for different run epochs found,
 	//support for them can be added here as above
 
