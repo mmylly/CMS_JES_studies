@@ -335,7 +335,7 @@ public :
   void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
   void   plotPT(int gen=0,int Nevt=0, bool MConly=false, bool fitOnly=false);
   void   plotSepPT();
-  void   plotMPF(int gen=0,  int alg=0, int rad=0, int ct=-1, int Nevt=0);
+  void   plotMPF(int gen=0, int Nevt=0);
   void   Response(int id, double pseudorap, double energy,   double pT,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,

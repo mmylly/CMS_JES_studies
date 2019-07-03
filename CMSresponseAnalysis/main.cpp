@@ -14,7 +14,7 @@ int main() {
   // 2: FindFJtoMC
   // 3: Fit
   // 4: run many samples and produce their plots at once
-  int mode = 0;
+  int mode = 4;
 
   vector<string> runs = {"RunIIb1","RunIIb2","RunIIb34"};
   
@@ -31,6 +31,7 @@ int main() {
     case 4 :
       //d.flavCorr(true, 3, 0);
       d.plotPT(3, 0, false, false);
+      d.plotMPF(3,0);
       break;
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }

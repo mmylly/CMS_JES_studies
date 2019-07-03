@@ -73,9 +73,8 @@ void CMSJES::Loop()
 
   MPFTitle += ";E_{probe} [GeV];p_{T}^{reco}/p_{T}^{gen}";
 
-//  TProfile* prMPF_D0 = new TProfile("prMPF_D0",
-//                                    MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
-  TProfile* prMPF_CMS = new TProfile("prMPF_CMS", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
+  TProfile* prMPF_D0 = new TProfile("prMPF_D0", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
+//  TProfile* prMPF_CMS = new TProfile("prMPF_CMS", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
 
   EpMPFTitle += ";E' [GeV];R_{MPF}";
   TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -291,8 +290,8 @@ void CMSJES::Loop()
   double resp   = 1.0;	        //SPR value                (dummy init)
   double resp_f = 1.0;	        // -||- w/ fit params      (dummy init)
   double respEM = 1.0;	        // -||- for EM-object reco (dummy init)
-  //double R_MPF_D0 = 0;	//D0 style MPF response
-  double R_MPF_CMS = 0;		//CMS style MPF response?
+  double R_MPF_D0 = 0;	//D0 style MPF response
+  //double R_MPF_CMS = 0;		//CMS style MPF response?
   double R_MPF_r = 0;		//MC-reco'd MPF response
   double R_MPF_f = 0;		//Fit reco'd MPF response
   double R_EMc = 0.3;		//EM-cluster radius, contributes to tag
@@ -956,8 +955,8 @@ void CMSJES::Loop()
 
     //MPF method
     MET_r = -1.0*NIJ_r;
-    //cout << MET_r << endl;
     MET_f = -1.0*NIJ_f;
+
     for (int i=0; i!=jets_r.size(); ++i) {
       if (studyMode==1 && i!=i_tag) {
         MET_r -= jets_r[i];
@@ -968,10 +967,10 @@ void CMSJES::Loop()
     R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
     //Fill MPF histograms
-    //R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
-    R_MPF_CMS = -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
-    //prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
-    prMPF_CMS->Fill(   Ep, (!isnan(R_MPF_CMS) ? R_MPF_CMS : 0), weight);
+    R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
+    //R_MPF_CMS = -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
+    prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
+    //prMPF_CMS->Fill(   Ep, (!isnan(R_MPF_CMS) ? R_MPF_CMS : 0), weight);
     prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
 
@@ -2012,6 +2011,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
 
   //Savefile name setup
   string savename = "P8_Zjet";
+  savename+=".eps";
 
   //Canvas and dividing it into pads.
   //TPad: name,title,xlow,ylow,xup,yup,color
@@ -2103,163 +2103,102 @@ void CMSJES::plotSepPT() {
   plotPT(gen, Nevt, true,  false);
   plotPT(gen, Nevt, false, true );
 }
-//-----------------------------------------------------------------------------
-//Like plotPT, but for MPF histograms
-void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
-                    int Nevt)
+
+//PlotMPF
+void CMSJES::plotMPF(int gen, int Nevt)
 {
   //Choose filenames to open
-  string nameAdd, dijetFile, gammajetFile, zjetFile;
-  plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, gen, Nevt);
+  string nameAdd, dummyFile, gammajetFile, zjetFile;
+  plotQuery(nameAdd, dummyFile, gammajetFile, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
-  TFile* fdj = TFile::Open(dijetFile.c_str());
-  TFile* fgj = TFile::Open(gammajetFile.c_str());
-  TProfile *prgj_MPF_D0=0, *prgj_MPF=0, *prgj_MPF_f=0;  //gamma+jet (_f = fit)
-  TProfile *prdj_MPF_D0=0, *prdj_MPF=0, *prdj_MPF_f=0;  //EM+jet
+  TFile* fzj = TFile::Open(zjetFile.c_str());
+  TProfile *przj_MPF_D0=0, *przj_MPF=0, *przj_MPF_f=0;  //Z+jet (_f = fit)
 
-  /* 1: dijet */
-  fdj->GetObject("prMPF_CMS",prdj_MPF_D0);
-  fdj->GetObject("prMPF_Ep",prdj_MPF);
-  fdj->GetObject("prMPF_EpFit",prdj_MPF_f);
-  TH1D* hdj_MPF_D0 = prdj_MPF_D0->ProjectionX();
-  TH1D* hdj_MPF    = prdj_MPF->ProjectionX();
-  TH1D* hdj_MPF_f  = prdj_MPF_f->ProjectionX();
+  /* 1: Z+jet */
+  fzj->GetObject("prMPF_D0"   ,przj_MPF_D0);
+  fzj->GetObject("prMPF_Ep"   ,przj_MPF);
+  fzj->GetObject("prMPF_EpFit",przj_MPF_f);
 
-  /* 2: gamma+jet */
-  fgj->GetObject("prMPF_CMS",prgj_MPF_D0);
-  fgj->GetObject("prMPF_Ep",prgj_MPF);
-  fgj->GetObject("prMPF_EpFit",prgj_MPF_f);
-  TH1D* hgj_MPF_D0 = prgj_MPF_D0->ProjectionX();
-  TH1D* hgj_MPF    = prgj_MPF->ProjectionX();
-  TH1D* hgj_MPF_f  = prgj_MPF_f->ProjectionX();
+  TH1D* hzj_MPF_D0 = przj_MPF_D0->ProjectionX();
+  TH1D* hzj_MPF    = przj_MPF->ProjectionX();
+  TH1D* hzj_MPF_f  = przj_MPF_f->ProjectionX();
+  //CMS data and MC points
+  TGraph* mc_zj_MPF=new TGraph(); TGraph* d_zj_MPF=new TGraph(); //Z+jet MPF
 
-  //D0 data and MC points
-  TGraph* mc_dj_MPF=new TGraph(); TGraph* d_dj_MPF=new TGraph(); //EM+jet MPF
-  TGraph* mc_gj_MPF=new TGraph(); TGraph* d_gj_MPF=new TGraph(); //gamma+jet MPF
-  TGraph* mc_gj_MPF_R07=new TGraph();
-  TGraph* d_gj_MPF_R07=new TGraph(); //gamma+jet MPF (R_cone=0.7)
-
-/* Can be uncommented when we have both IIa and IIb MPF points
-  ans ="";	//Reinit
-  cout << "Choose 1: use runIIa D0 data/MC reference points" << endl;
-  cout << "       2: use runIIb1 D0 data/MC reference points"<< endl;
-  while (ans!="1" && ans!="2")cin >> ans;
-  if (ans != "1") {
-
-  } else {
-
+  //CMS Z+jet MPF data points
+  for (int i=0; i!=nCMSdata_MPF; ++i) {
+    d_zj_MPF->SetPoint(i,zjEp_MPF[i],zjCMS_MPF[i]);
   }
-*/
-  //A will-do-for-now alternative to the code commented out immediately above
-  //D0 gamma+jet MPF MC simulation points
-  for (int i=0; i!=nD0MC_MPF_R07; ++i) {	//R_cone=0.7
-    mc_gj_MPF_R07->SetPoint(i, gjMCEp_MPF_R07[i], gjD0MC_MPF_R07[i]);  
+
+  //CMS Z+jet MPF MC simulation points
+  for (int i=0; i!=nCMSMC_MPF; ++i) {
+    mc_zj_MPF->SetPoint(i, zjMCEp_MPF[i], zjCMSMC_MPF[i]);  
   }
-  for (int i=0; i!=nD0MC_MPF; ++i) {
-    mc_gj_MPF->SetPoint(i, gjMCEp_MPF[i], gjD0MC_MPF[i]);  
-    mc_dj_MPF->SetPoint(i, djMCEp_MPF[i], djD0MC_MPF[i]);  
-  }
-  //D0 gamma+jet MPF data points
-  for (int i=0; i!=nD0_MPF_R07; ++i) {		//R_cone=0.7
-    d_gj_MPF_R07->SetPoint(i,gjEp_MPF_R07[i],gjD0_MPF_R07[i]);
-  }
-/*	Can be uncommented if we get D0 MPF detector data points
-  for (int i=0; i!=nD0_MPF; ++i) {
-    d_gj_MPF->SetPoint(i,gjEp_MPF[i],gjD0_MPF[i]);
-    d_dj_MPF->SetPoint(i,djEp_MPF[i],djD0_MPF[i]);
-  }
-*/
+
 
   //Canvas
   TCanvas* canv_MPF = new TCanvas("MPF","",500,500);
   canv_MPF->SetLeftMargin(0.12);	//To fit vertical axis labels
 
   //Style setup
-  hdj_MPF->SetLineColor(     kBlack);       hgj_MPF->SetLineColor(    kGreen+2);
-  hdj_MPF_D0->SetLineColor(  kGray);        hgj_MPF_D0->SetLineColor( kAzure+7);
-  mc_dj_MPF->SetMarkerStyle( kOpenCircle);  mc_dj_MPF->SetMarkerColor(kBlack  );
-  mc_gj_MPF->SetMarkerStyle( kOpenCircle);  mc_gj_MPF->SetMarkerColor(kGreen+2);
-  prdj_MPF_f->SetMarkerStyle(kFullDiamond);
-  prdj_MPF_f->SetMarkerColor(kGray+1);
-  hgj_MPF_f->SetMarkerStyle(kFullDiamond);  hgj_MPF_f->SetMarkerColor(kGreen-6);
-  d_dj_MPF->SetMarkerStyle(kFullCircle);    d_dj_MPF->SetMarkerColor(kBlack);
-  mc_gj_MPF_R07->SetMarkerStyle(kOpenCircle);
-  mc_gj_MPF_R07->SetMarkerColor(kAzure+7);
-  d_gj_MPF_R07->SetMarkerStyle(kFullCircle);
-  d_gj_MPF_R07->SetMarkerColor(kAzure+7);
+  hzj_MPF->SetLineColor(     kBlack);
+  hzj_MPF_D0->SetLineColor(  kGray);
+  mc_zj_MPF->SetMarkerStyle( kOpenCircle);  mc_zj_MPF->SetMarkerColor(kBlack  );
+
+  przj_MPF_f->SetMarkerStyle(kFullDiamond); // Not Drawn
+  przj_MPF_f->SetMarkerColor(kGray+1);      // Not Drawn
+
+  hzj_MPF_f->SetMarkerStyle(kFullDiamond);  hzj_MPF_f->SetMarkerColor(kGreen-6);
+  d_zj_MPF->SetMarkerStyle(kFullCircle);    d_zj_MPF->SetMarkerColor(kBlack);
+
 
   //Legend
-  TLegend* ld_MPF = new TLegend(0.15,0.70,0.52,0.89);
-  TLegend* lg_MPF = new TLegend(0.52,0.70,0.89,0.89);
-  ld_MPF->SetBorderSize(0);   lg_MPF->SetBorderSize(0);
-  lg_MPF->AddEntry(hgj_MPF,   "#font[132]{Our #gamma+jet MPF MC}",     "l");
-  lg_MPF->AddEntry(hgj_MPF_D0,
-                   "#font[132]{Our D#oslash style #gamma+jet MPF MC}", "l");
-  lg_MPF->AddEntry(hgj_MPF_f, "#font[132]{Our #gamma+jet MPF MC fit}", "p");
-  lg_MPF->AddEntry(d_gj_MPF_R07,
-                   "#font[132]{D#oslash #gamma+jet MPF data R=0.7}",   "p");
-  lg_MPF->AddEntry(mc_gj_MPF_R07,
-                   "#font[132]{D#oslash #gamma+jet MPF MC R=0.7}",     "p");
-  ld_MPF->AddEntry(hdj_MPF,   "#font[132]{Our EM+jet MPF MC}",         "l");
-  ld_MPF->AddEntry(hdj_MPF_D0,
-                   "#font[132]{Our D#oslash style EM+jet MPF MC}",     "l");
-  ld_MPF->AddEntry(hdj_MPF_f,"#font[132]{Our EM+jet MPF MC fit}",      "p");
-  ld_MPF->AddEntry(d_dj_MPF, "#font[132]{D#oslash EM+jet MPF data}",   "p");
-  ld_MPF->AddEntry(mc_dj_MPF,"#font[132]{D#oslash EM+jet MPF MC}",     "p");
+  TLegend* lz_MPF = new TLegend(0.52,0.70,0.89,0.89);
+  lz_MPF->SetBorderSize(0);
+  lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
+  lz_MPF->AddEntry(hzj_MPF_D0, "#font[132]{Our D0 style Z+jet MPF MC}", "l");
+  lz_MPF->AddEntry(hzj_MPF_f, "#font[132]{Our Z+jet MPF MC fit}", "p");
+
+  lz_MPF->AddEntry(d_zj_MPF,  "#font[132]{CMS jecsys Z+jet MPF data}", "p");
+  lz_MPF->AddEntry(mc_zj_MPF, "#font[132]{CMS jecsys Z+jet MPF MC}", "p");
+
 
   //Title and axis setup
-  hgj_MPF->SetStats(0);  hdj_MPF->SetStats(0);  //Suppress stat boxes
-  hgj_MPF->SetAxisRange(0.6,1.1,"Y");		//Vertical axis limits
-  hgj_MPF->GetYaxis()->SetTitleFont(133);
-  int titleSize = 18;				//Common title size everywhere
-  hgj_MPF->GetYaxis()->SetTitleSize(titleSize);
-  hgj_MPF->GetXaxis()->SetMoreLogLabels();
-  hgj_MPF->GetXaxis()->SetNoExponent();
-  hgj_MPF->GetXaxis()->SetTitleFont(133);
-  hgj_MPF->GetXaxis()->SetTitleSize(titleSize);
+  hzj_MPF->SetStats(0); //Suppress stat box
+  hzj_MPF->SetAxisRange(-1.0,2.0,"Y"); //Vertical axis limits
+  hzj_MPF->GetYaxis()->SetTitleFont(133);
+  int titleSize = 18; //Common title size everywhere
+  hzj_MPF->GetYaxis()->SetTitleSize(titleSize);
+  hzj_MPF->GetXaxis()->SetMoreLogLabels();
+  hzj_MPF->GetXaxis()->SetNoExponent();
+  hzj_MPF->GetXaxis()->SetTitleFont(133);
+  hzj_MPF->GetXaxis()->SetTitleSize(titleSize);
   canv_MPF->SetLogx();
-  hgj_MPF->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{#gamma+jet}");
-  hgj_MPF->GetXaxis()->SetTitleOffset(1);
+  hzj_MPF->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{Z+jet}");
+  hzj_MPF->GetXaxis()->SetTitleOffset(1);
 
   //Savefile name setup
-  string savename = "./plots/MPF_R";
-  string MPFtitle = hgj_MPF->GetTitle();
+  string savename = "./plots/MPF_zmmjet";
+  string MPFtitle = hzj_MPF->GetTitle();
   cout << MPFtitle << endl;
-  if      (MPFtitle.find("=0.7")!=string::npos) savename+="07";
-  else if (MPFtitle.find("=0.5")!=string::npos) savename+="05";
-  else savename += "_NA";	//R not available
-  if      (MPFtitle.find("D#oslash cone")!=string::npos) savename += "_D0rIIc";
-  else if (MPFtitle.find("_a-kT"        )!=string::npos) savename += "_a-kT";
-  if      (MPFtitle.find("ZS"      )!=string::npos) savename+="_ZS";
-  if      (MPFtitle.find("0.3 cm")!=string::npos) savename+="_ct3mm";
-  else if (MPFtitle.find("1 cm")  !=string::npos) savename+="_ct10mm";
-  else if (MPFtitle.find("2.5 cm")!=string::npos) savename+="_ct25mm";
-  else if (MPFtitle.find("5 cm")  !=string::npos) savename+="_ct50mm";
-  else if (MPFtitle.find("10 cm") !=string::npos) savename+="_ct100mm";
   savename+=".eps";
 
   //Plot
-  hgj_MPF->Draw();
-  hdj_MPF->Draw("SAME");
-  hgj_MPF_D0->Draw("SAME");
-  hdj_MPF_D0->Draw("SAME");
-  hgj_MPF_f->Draw("HISTO P SAME");
-  hdj_MPF_f->Draw("HISTO P SAME");
-  mc_gj_MPF_R07->Draw("P SAME");
-  d_gj_MPF_R07->Draw("P SAME");
-  mc_dj_MPF->Draw("P SAME");
-  mc_gj_MPF->Draw("P SAME");
-  //d_dj_MPF->Draw("P SAME");	//To be uncommented when we have D0 MPF data
-  //d_gj_MPF->Draw("P SAME");	//To be uncommented when we have D0 MPF data
-  lg_MPF->Draw();
-  ld_MPF->Draw();
+  hzj_MPF->Draw();
+  hzj_MPF_D0->Draw("SAME");
+  hzj_MPF_f->Draw("HISTO P SAME");
+  mc_zj_MPF->Draw("P SAME");
+  d_zj_MPF->Draw("P SAME");
+  lz_MPF->Draw();
 
   //Save plot
   canv_MPF->Print(savename.c_str());
  
 } //plotMPF
+
+
 //-----------------------------------------------------------------------------
 /* Avoid boiler plate and do axis setup in flavCorr() here */
 void axisSetup(TAxis* xAxis, TAxis* yAxis, string Xtitle, string Ytitle) {
