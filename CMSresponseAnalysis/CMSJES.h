@@ -174,10 +174,16 @@ public :
   double gjD0II[nD0data];
   double gjERII[nD0data];
 
-  //CMS pT-balance data points and errors zj for Z+jet
+  //CMS jecsys pT-balance data points and errors zj for Z+jet
   double zjEp[nCMSdata];
   double zjCMS[nCMSdata];
   double zjER[nCMSdata];
+
+  //CMS jecsys MPF data points and errors for Z+jet
+  static int const nCMSdata_MPF = 11;
+  double zjEp_MPF[nCMSdata_MPF];
+  double zjCMS_MPF[nCMSdata_MPF];
+  double zjER_MPF[nCMSdata_MPF];
 
   //RunIIa D0 PTB MC
   static int const nD0MC = 13;	//#MC sim. points available from D0
@@ -205,6 +211,14 @@ public :
   double zjMCEp[nCMSMC];	
   double zjCMSMC[nCMSMC];
   double zjCMSMCER[nCMSMC];
+
+  //CMS jecsys MPF MC points and errors for Z+jet
+  static int const nCMSMC_MPF = 11;
+  double zjMCEp_MPF[nCMSMC_MPF];
+  double zjCMSMC_MPF[nCMSMC_MPF];
+  double zjCMSMCER_MPF[nCMSMC_MPF];
+
+
 
   //Flags etc. for changing calculation properties
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
@@ -422,7 +436,9 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   ifstream inPTBdata_dj_a;   ifstream inPTBMC_dj_a;   //RunIIa dijet
   ifstream inPTBdata_gj_a;   ifstream inPTBMC_gj_a;   // -||-  gammajet
-  ifstream inPTBdata_zj;     ifstream inPTBMC_zj;     //CMS   Z+jet
+
+  ifstream inPTBdata_zj;     ifstream inPTBMC_zj;     //CMS jecdata pT Z+jet
+  ifstream inMPFdata_zj;     ifstream inMPFMC_zj;     //CMS jecdata MPF  Z+jet
 
   ifstream inMPFdata_gj;     ifstream inMPFMC_gj;     //MPF gammajet, run NA
   ifstream inMPFdata_dj;     ifstream inMPFMC_dj;
@@ -433,21 +449,28 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inPTBMC_dj_a.open(  "./data_and_MC_input/pTbal/runIIa/dijet_MC");
   inPTBMC_gj_a.open(  "./data_and_MC_input/pTbal/runIIa/gammajet_MC");
 
-  //CMS pT-balance
-  inPTBdata_zj.open("./data_and_MC_input/pTbal/jecdataGH/zmmjet_data");
-  inPTBMC_zj.open(  "./data_and_MC_input/pTbal/jecdataGH/zmmjet_mc");
-
   //MPF
   inMPFdata_gj_R07.open("./data_and_MC_input/MPF/D0/MPF_gammajet_data_R07");
   inMPFMC_gj_R07.open("./data_and_MC_input/MPF/D0/MPF_gammajet_MC_R07");
   inMPFMC_dj.open("./data_and_MC_input/MPF/D0/MPF_dijet_MC");
   inMPFMC_gj.open("./data_and_MC_input/MPF/D0/MPF_gammajet_MC");
-	//Whe D0 MPF detector data and MC points for different run epochs found,
-	//support for them can be added here as above
+
+  //CMS jecdataGH pT-balance
+  inPTBdata_zj.open("./data_and_MC_input/pTbal/jecdataGH/zmmjet_data");
+  inPTBMC_zj.open(  "./data_and_MC_input/pTbal/jecdataGH/zmmjet_mc");
+
+  //CMS jecdataGH MPF 
+  inMPFdata_zj.open("./data_and_MC_input/MPF/jecdataGH/MPF_zmmjet_data");
+  inMPFMC_zj.open("./data_and_MC_input/MPF/jecdataGH/MPF_zmmjet_mc");
+
+
+  //When D0 MPF detector data and MC points for different run epochs found,
+  //support for them can be added here as above
 
   if (!inPTBdata_dj_a.is_open()   || !inPTBMC_dj_a.is_open()   ||
       !inPTBdata_gj_a.is_open()   || !inPTBMC_gj_a.is_open()   ||
       !inPTBdata_zj.is_open()     || !inPTBMC_zj.is_open()     ||
+      !inMPFdata_zj.is_open()     || !inMPFMC_zj.is_open()     ||
       !inMPFMC_dj.is_open()       || !inMPFMC_gj.is_open()     ||
       !inMPFdata_gj_R07.is_open() || !inMPFMC_gj_R07.is_open()   )
   {
@@ -471,6 +494,13 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     inPTBMC_zj   >> zjMCEp[step] >> zjCMSMC[step] >> zjCMSMCER[step];
   }
 
+  for (int step=0; step != nCMSdata_MPF; ++step) {	//CMS jecsys MPF data
+    inMPFdata_zj   >> zjEp_MPF[step] >> zjCMS_MPF[step] >> zjER_MPF[step];
+  }
+  for (int step=0; step != nCMSMC_MPF; ++step) {	//CMS jecsys MPF MC points
+    inMPFMC_zj   >> zjMCEp_MPF[step] >> zjCMSMC_MPF[step] >> zjCMSMCER_MPF[step];
+  }
+
   for (int step=0; step != nD0_MPF_R07; ++step) {	//MPF data points
     inMPFdata_gj_R07 >> gjEp_MPF_R07[step] >> gjD0_MPF_R07[step];
   }
@@ -486,9 +516,11 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inPTBdata_dj_a.close();    
   inPTBdata_gj_a.close();
   inPTBdata_zj.close(); 
+  inMPFdata_zj.close();
   inPTBMC_dj_a.close();      
   inPTBMC_gj_a.close();
-  inPTBMC_zj.close(); 
+  inPTBMC_zj.close();
+  inMPFMC_zj.close(); 
   inMPFdata_gj_R07.close();  inMPFMC_gj_R07.close();
   inMPFMC_dj.close();        inMPFMC_gj.close();
 
