@@ -36,17 +36,19 @@ void CMSJES::Loop()
   //  here binsx = array containing bin limits.
   //int const nbins = 13;
   int const nbins = 7;
-  int const nbinsMPF = 15;
+  //int const nbinsMPF = 15;
+  int const nbinsMPF = 12;
   //const double binsx[nbins] = {31.0,  36.5,  41.5,  47.0,  52.0,  62.0, 72.5,
   //                             87.0, 107.0, 130.0, 180.0, 350.0, 550.0      };
 
   //Check values
   const double binsx[nbins] = {82.75, 105.25, 132.75, 173.25, 228.0, 299.0, 380.0}; 
+  const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5,
+                                        173.25, 228.25, 300.0, 391.25, 494.25};
 
-
-  const double binsxMPF[nbinsMPF] = {30.0,   39.0,  47.0,  55.0,  67.0,  78.0,
-                                     94.0,  107.0, 130.0, 160.0, 205.0, 310.0,
-                                     385.0, 470.0, 550.0                     };
+  //const double binsxMPF[nbinsMPF] = {30.0,   39.0,  47.0,  55.0,  67.0,  78.0,
+  //                                   94.0,  107.0, 130.0, 160.0, 205.0, 310.0,
+  //                                   385.0, 470.0, 550.0                     };
 
   // CMS, should have R_cone = 0.4
   string Rcone = "R_{cone}=0.4";	//R_cone info in string form
@@ -68,22 +70,21 @@ void CMSJES::Loop()
 
   ETitle += ";E_{probe} [GeV];p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prE   = new TProfile("prE",ETitle.c_str(),nbins-1,binsx);
+
   MPFTitle += ";E_{probe} [GeV];p_{T}^{reco}/p_{T}^{gen}";
-  TProfile* prMPF_D0 = new TProfile("prMPF_D0",
-                                    MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
+
+//  TProfile* prMPF_D0 = new TProfile("prMPF_D0",
+//                                    MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
+  TProfile* prMPF_CMS = new TProfile("prMPF_CMS", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
+
   EpMPFTitle += ";E' [GeV];R_{MPF}";
-  TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(),
-			            nbinsMPF-1, binsxMPF             );
-  TProfile* prMPF_EpFit = new TProfile("prMPF_EpFit", EpMPFTitle.c_str(),
-			               nbinsMPF-1, binsxMPF                );
+  TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPF_EpFit = new TProfile("prMPF_EpFit", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
-  TH1D* FFb = new TH1D("FFb",
-          "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
-  TH1D* FFg = new TH1D("FFg",
-          "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
-  TH1D* FFlq= new TH1D("FFlq",
-          "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
+  TH1D* FFb = new TH1D("FFb", "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
+  TH1D* FFg = new TH1D("FFg", "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
+  TH1D* FFlq= new TH1D("FFlq", "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
   TH1D* FFa = new TH1D("FFa", ";#font[12]{p}_{T} [GeV];",nbins-1,binsx); //All
   string FFstackTitle;
   FFstackTitle = "#font[132]{Run CMS}";
@@ -290,7 +291,8 @@ void CMSJES::Loop()
   double resp   = 1.0;	        //SPR value                (dummy init)
   double resp_f = 1.0;	        // -||- w/ fit params      (dummy init)
   double respEM = 1.0;	        // -||- for EM-object reco (dummy init)
-  double R_MPF_D0= 0;		//D0 style MPF response
+  //double R_MPF_D0 = 0;	//D0 style MPF response
+  double R_MPF_CMS = 0;		//CMS style MPF response?
   double R_MPF_r = 0;		//MC-reco'd MPF response
   double R_MPF_f = 0;		//Fit reco'd MPF response
   double R_EMc = 0.3;		//EM-cluster radius, contributes to tag
@@ -502,8 +504,7 @@ void CMSJES::Loop()
       for (int a=0; a!= prtn_tag->size(); ++a) {
         // Find highest parton level pT *prtn_pt)[a] and store it to prtnPt
         // mark that index as i_tag = a.
-        if ((*prtn_tag)[a]   == gTAG &&
-            (*prtn_pdgid)[a] == gPDG &&
+        if ((*prtn_tag)[a]   == gTAG && (*prtn_pdgid)[a] == gPDG &&
             (*prtn_pt)[a]    >  prtnPt ) {prtnPt=(*prtn_pt)[a];  i_tag=a;}
       }
 
@@ -524,7 +525,6 @@ void CMSJES::Loop()
     }
 
     /**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************/
-    // Find how many muons in the events
     
     int muPDG=13;  int muTAG=3; //mu PDGID and tag 
     if (studyMode == 3) {
@@ -956,6 +956,7 @@ void CMSJES::Loop()
 
     //MPF method
     MET_r = -1.0*NIJ_r;
+    //cout << MET_r << endl;
     MET_f = -1.0*NIJ_f;
     for (int i=0; i!=jets_r.size(); ++i) {
       if (studyMode==1 && i!=i_tag) {
@@ -967,8 +968,10 @@ void CMSJES::Loop()
     R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
     //Fill MPF histograms
-    R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
-    prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
+    //R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
+    R_MPF_CMS = -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
+    //prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
+    prMPF_CMS->Fill(   Ep, (!isnan(R_MPF_CMS) ? R_MPF_CMS : 0), weight);
     prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
 
@@ -1549,7 +1552,6 @@ void CMSJES::InputNameConstructor() {
 //constrain the fit more (or in other ways) have been provided for reference
 void CMSJES::FitGN()
 {
-
   //Fix some fit parameters to ineffective values. Set to false in D0 studies,
   //but implemented here for reference
   bool fixA = false;  bool fixB = false;  bool fixC = false;
@@ -2118,7 +2120,7 @@ void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
   TProfile *prdj_MPF_D0=0, *prdj_MPF=0, *prdj_MPF_f=0;  //EM+jet
 
   /* 1: dijet */
-  fdj->GetObject("prMPF_D0",prdj_MPF_D0);
+  fdj->GetObject("prMPF_CMS",prdj_MPF_D0);
   fdj->GetObject("prMPF_Ep",prdj_MPF);
   fdj->GetObject("prMPF_EpFit",prdj_MPF_f);
   TH1D* hdj_MPF_D0 = prdj_MPF_D0->ProjectionX();
@@ -2126,7 +2128,7 @@ void CMSJES::plotMPF(int gen,  int alg, int rad, int ct,
   TH1D* hdj_MPF_f  = prdj_MPF_f->ProjectionX();
 
   /* 2: gamma+jet */
-  fgj->GetObject("prMPF_D0",prgj_MPF_D0);
+  fgj->GetObject("prMPF_CMS",prgj_MPF_D0);
   fgj->GetObject("prMPF_Ep",prgj_MPF);
   fgj->GetObject("prMPF_EpFit",prgj_MPF_f);
   TH1D* hgj_MPF_D0 = prgj_MPF_D0->ProjectionX();
