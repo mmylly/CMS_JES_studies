@@ -2713,11 +2713,12 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
 
   //Set #events
   string num = "100000";
-  cout << "#Events (1) 100k (2) 10k (3) 1k" << endl;
-  while (Nevt<1 || Nevt>3) cin >> Nevt;
-  if      (Nevt==1) num = "100000";
+  cout << "#Events (1) 1k (2) 10k (3) 100k (4) 500k" << endl;
+  while (Nevt<1 || Nevt>4) cin >> Nevt;
+  if      (Nevt==1) num = "1000";
   else if (Nevt==2) num = "10000";
-  else if (Nevt==3) num = "1000";
+  else if (Nevt==3) num = "100000";
+  else if (Nevt==4) num = "500000";
 
   //Construct all-flavor filenames
   djstr = respStr + "dijet_"    + num + root;
@@ -2994,6 +2995,7 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
         h_F[0][s][a]->SetBinContent(i,FbS );
         h_F[1][s][a]->SetBinContent(i,FgS );
         h_F[2][s][a]->SetBinContent(i,FlqS);
+
         if (s==0) { //Does this make sense for Z+jet sample?
           h_FjetS[a]->SetBinContent(i, (FbSstd*Nb + FgS*Ng + FlqS*Nlq)
                                        /((double) Ntot)               );
@@ -3215,7 +3217,8 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
   TLegend* lgc;
   //Only gamma+jet drawn as comparison
   lgc = new TLegend(0.50, 0.15, 0.92, 0.50);
-  lgc->SetBorderSize(0);       lgc->SetFillStyle(0);
+  lgc->SetBorderSize(0);       
+  lgc->SetFillStyle(0);
   lgc->AddEntry(g_Fcorr[2][0][0], "#font[132]{Z+jet (#font[12]{u,d,s,c})-jets}", "p");
   lgc->AddEntry(g_Fcorr[0][0][0], "#font[132]{Z+jet #font[12]{b}-jets}","p");
   lgc->AddEntry(g_Fcorr[1][0][0], "#font[132]{Z+jet gluon jets}",    "p");
@@ -3225,7 +3228,7 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
   //Fcorr
   for (int a=0; a!=NI; ++a) {	//Horizontal axis interpretations
     h_Fcorr[1][0][a]->GetXaxis()->SetRangeUser(15,125);
-    h_Fcorr[1][0][a]->SetAxisRange(0.9,1.02,"Y");
+    h_Fcorr[1][0][a]->SetAxisRange(-1.0,1.0,"Y");
     h_Fcorr[1][0][a]->GetYaxis()->SetTitle("#font[132]{#font[12]{F}_{corr}}");
     h_Fcorr[1][0][a]->SetMarkerSize(0);
     h_Fcorr[1][0][a]->Draw("P HISTO");	//Ordering s.t. this one gives title
@@ -3234,13 +3237,13 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
       h_Fcorr[0][0][a]->Draw("E3 SAME");
       h_Fcorr[2][0][a]->Draw("E3 SAME");
     }
-    g_Fcorr[1][0][a]->Draw("P SAME" );	//Draw horizontally shifted points 
-    g_Fcorr[0][0][a]->Draw(             "P SAME");
-    g_Fcorr[2][0][a]->Draw(             "P SAME");
+    g_Fcorr[1][0][a]->Draw("P SAME"); //Draw horizontally shifted points 
+    g_Fcorr[0][0][a]->Draw("P SAME");
+    g_Fcorr[2][0][a]->Draw("P SAME");
     lgc->Draw();
     savename = "./plots/Fcorr/";
     savename = savename+"Fcorr_"+(a==0?"Ep_":"pTjet_")+genStr+nameAdd+".eps";
-    canv->Print(savename.c_str());	//Save plot
+    canv->Print(savename.c_str()); //Save plot
   } //Horizontal axis interpretations
 
   delete canv;  
