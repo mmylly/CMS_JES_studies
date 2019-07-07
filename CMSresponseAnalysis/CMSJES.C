@@ -74,7 +74,6 @@ void CMSJES::Loop()
   MPFTitle += ";E_{probe} [GeV];p_{T}^{reco}/p_{T}^{gen}";
 
   TProfile* prMPF_D0 = new TProfile("prMPF_D0", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
-//  TProfile* prMPF_CMS = new TProfile("prMPF_CMS", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
 
   EpMPFTitle += ";E' [GeV];R_{MPF}";
   TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -256,17 +255,13 @@ void CMSJES::Loop()
   double Ep   = 0;		//Jet energy estimator E' = pTtag*cosh(eta_gen)
   double pTp  = 0;		//pT' = E'/cosh(eta_det)
   double eta_gamma = 1.0;	//Max |eta| for photon in gamma+jet (ALT 1.0)
-  double eta_muon  = 1.0;
+  double eta_muon  = 4.0;	//Max |eta| for a single muon in Z+jet //Find value
+  double eta_tag_z = 1.0;	//Max |eta| for mumu tag object //Find value
   double eta_tag   = 0.4;	//Max |eta| for tag jet in dijet
   double eta_probe = 0.4;	//Max |eta| for probe jets
   vector<double> f_05;		//Fraction of jets' E w/in R<0.5 from jet axis
-  vector<double> f_CH;		//Fraction of jets' E left in coarse HCAL
-  vector<double> f_EM;		//Fraction of jets' E left in EMCAL
   double f_05jetMin = 0.5;	//Min. probe f_05 value  w/in [0,1], 0=inactive
   double f_05jetMinS= 0.1;	//^soft pT<15 GeV jets,  w/in [0,1], 0=inactive
-  double f_EMjetMin = 0.05;	//Min. probe f_EM value  w/in [0,1], 0=inactive
-  double f_EMjetMax = 0.95;	//Max. probe f_EM value  w/in [0,1], 1=inactive
-  double f_CHjetMax = 1;//0.44;	//Max. probe f_CH value  w/in [0,1], 1=inactive
   double softPt = 15;		//Jets below this [GeV] are considered soft
   vector<TLorentzVector> jets_g;//Gen lvl jet 4-vectors
   vector<TLorentzVector> jets_r;//MC reco'd jet 4-vectors
@@ -282,13 +277,12 @@ void CMSJES::Loop()
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
   double pTmin_gamma = 7;	//Minimum tag gamma p_T (GeV) (Meas. 7 GeV)
   double pTmin_muon = 0;        //Minimum single tag muon pT (GeV)
-  double pTmin_muon_tag = 0;    //Minimum tag muon pair pT (GeV)   
+  double pTmin_tag_z = 0;    //Minimum tag muon pair pT (GeV)   
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
   double resp   = 1.0;	        //SPR value                (dummy init)
   double resp_f = 1.0;	        // -||- w/ fit params      (dummy init)
   double respEM = 1.0;	        // -||- for EM-object reco (dummy init)
-  double R_MPF_D0 = 0;	//D0 style MPF response
-  //double R_MPF_CMS = 0;		//CMS style MPF response?
+  double R_MPF_D0 = 0;		//D0 style MPF response
   double R_MPF_r = 0;		//MC-reco'd MPF response
   double R_MPF_f = 0;		//Fit reco'd MPF response
   double R_EMc = 0.3;		//EM-cluster radius, contributes to tag
@@ -462,7 +456,8 @@ void CMSJES::Loop()
     p4r_probe.SetPtEtaPhiE(0,0,0,0);      p4r_tag.SetPtEtaPhiE(0,0,0,0);
     p4f_probe.SetPtEtaPhiE(0,0,0,0);      p4f_tag.SetPtEtaPhiE(0,0,0,0);
     p4EM_tag.SetPtEtaPhiE(0,0,0,0);
-    NIJ_g.SetPtEtaPhiE(0,0,0,0);          NIJ_r.SetPtEtaPhiE(0,0,0,0);
+    NIJ_g.SetPtEtaPhiE(0,0,0,0);          
+    NIJ_r.SetPtEtaPhiE(0,0,0,0);
     NIJ_f.SetPtEtaPhiE(0,0,0,0);
     MET_r.SetPtEtaPhiE(0,0,0,0);          MET_f.SetPtEtaPhiE(0,0,0,0);
     jets_g.clear();     jets_r.clear();   jets_f.clear();
@@ -471,14 +466,14 @@ void CMSJES::Loop()
     jets_g.resize(njets);   jets_r.resize(njets);
     jets_f.resize(njets);
     Fden.resize(njets);     Fnum.resize(njets);
-    f_05.resize(njets);     f_CH.resize(njets);     f_EM.resize(njets);
+    f_05.resize(njets);
     dAjetsE.resize(njets);  dAjetsX.resize(njets);  dAjetsY.resize(njets);
     dBjetsE.resize(njets);  dBjetsX.resize(njets);  dBjetsY.resize(njets);
     dCjetsE.resize(njets);  dCjetsX.resize(njets);  dCjetsY.resize(njets);
     for (int i=0; i!=jets_g.size(); ++i) {	//All objects have njets size
       jets_g[i].SetPtEtaPhiE(0,0,0,0);  jets_r[i].SetPtEtaPhiE(0,0,0,0);
       jets_f[i].SetPtEtaPhiE(0,0,0,0);
-      f_05[i] = 0;     f_CH[i] = 0;     f_EM[i] = 0;
+      f_05[i] = 0;
       Fden[i] = 0;     Fnum[i] = 0;
       dAjetsE[i] = 0;  dAjetsX[i] = 0;  dAjetsY[i] = 0;
       dBjetsE[i] = 0;  dBjetsX[i] = 0;  dBjetsY[i] = 0;
@@ -545,28 +540,32 @@ void CMSJES::Loop()
       tag.SetPtEtaPhiE((*prtn_pt)[i_tag1], (*prtn_eta)[i_tag1],
                        (*prtn_phi)[i_tag1],(*prtn_e)[i_tag1]);
 
-      //Fast gen lvl cuts, more strict reco lvl cuts below
+      //Fast gen lvl cuts, more strict reco lvl cuts below 
 
-      if (fabs(tag.Eta())>eta_gamma || tag.Pt()<pTmin_muon) continue;
+      if (fabs(tag.Eta())>eta_muon || tag.Pt()<pTmin_muon) continue;
 
+      //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag1],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                1, 0, 1, true, false, false, resp, resp_f, respEM       );
 
       p4g_tag  = tag;		//gen lvl
       p4r_tag  = tag*resp;	//MC lvl
 
-
       //***** 2nd muon ******
       tag.SetPtEtaPhiE((*prtn_pt)[i_tag2], (*prtn_eta)[i_tag2],
                        (*prtn_phi)[i_tag2],(*prtn_e)[i_tag2]);
 
-      if (fabs(tag.Eta())>eta_gamma || tag.Pt()<pTmin_muon) continue;
 
+      if (fabs(tag.Eta())>eta_muon || tag.Pt()<pTmin_muon) continue;
+
+      //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag2],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                1, 0, 1, true, false, false,  resp, resp_f, respEM       );
 
       p4g_tag  += tag;		//gen lvl
       p4r_tag  += tag*resp;	//MC lvl
+
+
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
@@ -594,16 +593,6 @@ void CMSJES::Loop()
 
       Fnum[JI]   += resp_f*p4.E();
       Fden[JI]   += resp*p4.E(); //F denominator reco'd w/ default params
-
-      //Hadrons in jets: check what is left in HCAL
-      if (PDG>99 && (GetStrangeB() || !isStrangeB(PDG))) {	// Hadrons
-        //1/4 of E_jet to coarse HCAL.
-        f_CH[JI] += resp*0.25*p4.E();
-        //1/2 of E_jet to EMCALroot 
-        f_EM[JI] += resp*0.5*p4.E();
-      } else if (PDG==20 || PDG==22 || PDG==11 || PDG==13) {	// EM-interactive
-        f_EM[JI] += resp*p4.E();
-      }
 
       //Fraction of jet E within R=0.5 from jet axis (n.b. D0 cone algorithm
       // may produce monstrous jets even with R=0.5)
@@ -639,11 +628,9 @@ void CMSJES::Loop()
 
     } //Loop particles in jets
 
-    //Turn f_CH and f_EM values into ratios
-    for (int i=0; i!=f_CH.size(); ++i) {
+    //Turn f_05 value into ratio
+    for (int i=0; i!=f_05.size(); ++i) {
       f_05[i]*=1.0/(jets_r[i].E());
-      f_CH[i]*=1.0/(jets_r[i].E());
-      f_EM[i]*=1.0/(jets_r[i].E());
     }
 
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
@@ -679,7 +666,7 @@ void CMSJES::Loop()
 
     #endif
 
-	//WIP, to be taken into account the EM tag & moved below for simplicity
+      //WIP, to be taken into account the EM tag & moved below for simplicity
       for (int i=0; i!=jets_r.size(); ++i) {
         NIJ_g += jets_g[i];  NIJ_r += jets_r[i];  NIJ_f += jets_f[i];
       }
@@ -731,13 +718,9 @@ void CMSJES::Loop()
 			     jets_f[i_probe].Phi(), jets_f[i_probe].E()  );
 
       //Assertions:
-      //-sufficiently little jet E left in coarse HCAL
-      if (f_CH[i_probe] > f_CHjetMax) continue;
-      //-probe E left in EMCAL is in the correct energy window
-      if (f_EM[i_probe] < f_EMjetMin || f_EM[i_probe] > f_EMjetMax) continue;
       //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
       if ((p4r_probe.Pt()<softPt && f_05[i_probe]<f_05jetMinS) ||
-          f_05[i_probe] < f_05jetMin                             ) continue;
+          f_05[i_probe] < f_05jetMin) continue;
       //-tag and probe in the right |eta| region with enough p_T
       if (fabs(p4EM_tag.Eta())  > eta_gamma   ||
           p4EM_tag.Pt()         < pTmin_gamma ||
@@ -781,17 +764,15 @@ void CMSJES::Loop()
 			     jets_f[i_probe].Phi(), jets_f[i_probe].E()  );
 
       //Assertions:
-      //-sufficiently little jet E left in coarse HCAL
-      if (f_CH[i_probe] > f_CHjetMax) continue;
-      //-probe E left in EMCAL is in the correct energy window
-      if (f_EM[i_probe] < f_EMjetMin || f_EM[i_probe] > f_EMjetMax) continue;
       //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
-      if ((p4r_probe.Pt()<softPt && f_05[i_probe]<f_05jetMinS) ||
-          f_05[i_probe] < f_05jetMin                             ) continue;
+      if ((p4r_probe.Pt()<softPt && f_05[i_probe] < f_05jetMinS) ||
+                                    f_05[i_probe] < f_05jetMin) {
+        cout << "f_05" << endl; continue;
+      }
 
       //-tag and probe in the right |eta| region with enough p_T
-      if (fabs(p4r_tag.Eta())  > eta_muon       ||
-          p4r_tag.Pt()         < pTmin_muon_tag ||
+      if (fabs(p4r_tag.Eta())  > eta_tag_z      ||
+          p4r_tag.Pt()         < pTmin_tag_z    ||
           fabs(p4r_probe.Eta()) > eta_probe     ||
           p4r_probe.Pt()        < pTmin_probe   ) continue;
 
@@ -965,9 +946,7 @@ void CMSJES::Loop()
 
     //Fill MPF histograms
     R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
-    //R_MPF_CMS = -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
     prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
-    //prMPF_CMS->Fill(   Ep, (!isnan(R_MPF_CMS) ? R_MPF_CMS : 0), weight);
     prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
 
