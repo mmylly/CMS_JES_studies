@@ -33,6 +33,10 @@ int main() {
       //d.plotPT(3, 0, false, false);
       //d.plotMPF(3,0);
       break;
+    case 5 :
+      d.Loop();
+      d.flavCorr(true, 3, 0);
+      break;
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }
 

@@ -120,7 +120,11 @@ void CMSJES::Loop()
     Fstr[i][2] += "#font[12]{F}_{#font[132]{#font[12]{g}}}";
     Fstr[i][3] += "#font[12]{F}_{#font[132]{#font[12]{(u,d,s,c)}}}";
   }
-  int nF=13;  int nFr=25;  double FL=15;  double FH=145;  double FHr=140;
+  //int nF=13;  int nFr=25;  double FL=15;  double FH=145;  double FHr=140;
+  int nF=15; double FL=100; double FH=3100; //Point from 30 to 3050 every 100
+  
+  int nFr=10; double FHr=3000;
+
   //As a function of E'
   TProfile* Fjet     = new TProfile("Fjet",    Fstr[0][0].c_str(), nF, FL,FH );
   TProfile* Fb       = new TProfile("Fb",      Fstr[0][1].c_str(), nF, FL,FH );
@@ -766,9 +770,8 @@ void CMSJES::Loop()
       //Assertions:
       //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
       if ((p4r_probe.Pt()<softPt && f_05[i_probe] < f_05jetMinS) ||
-                                    f_05[i_probe] < f_05jetMin) {
-        cout << "f_05" << endl; continue;
-      }
+                                    f_05[i_probe] < f_05jetMin) continue;
+      
 
       //-tag and probe in the right |eta| region with enough p_T
       if (fabs(p4r_tag.Eta())  > eta_tag_z      ||
@@ -2750,7 +2753,7 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
   //The TFiles to open
   TFile* fz;
 
-  /* gamma+jet */
+  /* z+jet */
   fz   = TFile::Open(in_z.c_str());
   if (!fz) {
     cout << "Error opening files! Exiting" << endl;
@@ -2791,6 +2794,7 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
     fz->GetObject("Flq_r", F[2][0][1]);  fz->GetObject("FlqSU_r",FSU[2][0][1]);
     fz->GetObject("Fjet_r",   Fjet[1]);  fz->GetObject("FjetSU_r",  FjetSU[1]);
   }
+
   //Project TProfiles to TH1Ds
   for (int a=0; a!=NI; ++a) {
     for (int s=0; s!=Ns; ++s) {
@@ -2948,7 +2952,9 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
         Nb  = 1e6*Fbstd[  a]->GetBinEntries(i); //The factors 1e6 guard...
         Ng  = 1e6*F[1][s][a]->GetBinEntries(i); //...for NaN, but will...
         Nlq = 1e6*F[2][s][a]->GetBinEntries(i); //...eventually cancel
+
         Ntot = Nb + Ng + Nlq;
+        
         init = F[1][s][a]->GetBinCenter(i); //g, lq have same initial binning
         if (a==0 && Eprm) {shift_b  = init -     fpTppRb->Eval(   init);
                            shift_g  = init -     fpTppRg->Eval(   init);
@@ -2976,8 +2982,7 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
         h_F[2][s][a]->SetBinContent(i,FlqS);
 
         if (s==0) { //Does this make sense for Z+jet sample?
-          h_FjetS[a]->SetBinContent(i, (FbSstd*Nb + FgS*Ng + FlqS*Nlq)
-                                       /((double) Ntot)               );
+          h_FjetS[a]->SetBinContent(i,(FbSstd*Nb + FgS*Ng + FlqS*Nlq) / ((double) Ntot));
           h_FjetS[a]->SetBinError(i,sqrt(pow(h_Fjet[  a]->GetBinError(  i),2)
                                         +pow(h_FjetSU[a]->GetBinContent(i),2)));
 
@@ -3148,10 +3153,9 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
   //Init legend etc.
   TLatex latexF;
   TLegend* lgF = new TLegend(0.50,0.15,0.92,0.50 );
-  TLegend* lgFD0  = new TLegend(0.45,0.15,0.55, 0.325);
-  lgF->AddEntry(g_F[2][0][0], "#font[132]{Z+jet (#font[12]{u,d,s,c})-jets}", "p");
+  lgF->AddEntry(g_F[2][0][0],"#font[132]{Z+jet (#font[12]{u,d,s,c})-jets}", "p");
   lgF->AddEntry(g_F[1][0][0],"#font[132]{Z+jet gluon jets}", "p");
-  lgF->AddEntry(g_F[0][0][0],"#font[132]{Z+jet #font[12]{b}-jets}","p");
+  lgF->AddEntry(g_F[0][0][0],"#font[132]{Z+jet #font[12]{b}-jets}", "p");
 
   //Setup the plots and draw
   for (int a=0; a!=NI; ++a) {	//Horizontal axis interpretations
@@ -3176,14 +3180,16 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
     gStyle->SetHatchesSpacing(1.3);	//Fill pattern sparsity
 
     //F plots
-    h_F[0][0][a]->SetAxisRange(0.0,2.0,"Y");
+    h_F[0][0][a]->SetAxisRange(-0.1,2.0,"Y");
     h_F[0][0][a]->GetYaxis()->SetTitle("#font[12]{F}");
-    h_F[0][0][a]->SetAxisRange(15,140,"X");
-    h_F[0][0][a]->Draw("P HISTO"     );
+    //h_F[0][0][a]->SetAxisRange(0,3000,"X");
+    h_F[0][0][a]->Draw("P HISTO"     ); //Plots also lowest data point corresponding to the 
+					//first Drawn object.
     h_F[1][0][a]->Draw("P HISTO SAME");
     h_F[2][0][a]->Draw("P HISTO SAME");
 
-    lgF->SetBorderSize(  0);  lgF->SetFillStyle(  0);
+    lgF->SetBorderSize(0);  
+    lgF->SetFillStyle(0);
     lgF->Draw();
     savename = "./plots/F/";
     savename = savename+"F_"+(a==0?"Ep_":"pTjet_")+genStr+nameAdd+".eps";
@@ -3206,8 +3212,9 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
 
   //Fcorr
   for (int a=0; a!=NI; ++a) {	//Horizontal axis interpretations
-    h_Fcorr[1][0][a]->GetXaxis()->SetRangeUser(15,125);
-    h_Fcorr[1][0][a]->SetAxisRange(-1.0,1.0,"Y");
+    h_Fcorr[1][0][a]->GetXaxis()->SetRangeUser(100,1300);//(15,125);
+    //h_Fcorr[1][0][a]->SetAxisRange(15,1000,"X");
+    h_Fcorr[1][0][a]->SetAxisRange(-1.0,3.0,"Y");
     h_Fcorr[1][0][a]->GetYaxis()->SetTitle("#font[132]{#font[12]{F}_{corr}}");
     h_Fcorr[1][0][a]->SetMarkerSize(0);
     h_Fcorr[1][0][a]->Draw("P HISTO");	//Ordering s.t. this one gives title
@@ -3224,6 +3231,12 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
     savename = savename+"Fcorr_"+(a==0?"Ep_":"pTjet_")+genStr+nameAdd+".eps";
     canv->Print(savename.c_str()); //Save plot
   } //Horizontal axis interpretations
+
+  //g_Fcorr[0][0][0]->Print("all");
+  //g_Fcorr[1][0][0]->Print("all");
+  //g_Fcorr[2][0][0]->Print("all");
+
+
 
   delete canv;  
   TCanvas* canvFit = new TCanvas("","",400,400);
