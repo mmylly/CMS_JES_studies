@@ -1,4 +1,0 @@
-#!/bin/bash
-rm runD0JES
-g++ -o runD0JES main.cpp D0JES.C D0JES.h `root-config --cflags --glibs`
-./runD0JES P6_dijet_D0rIIc_R05_ct10mm_30000
