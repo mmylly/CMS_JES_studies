@@ -539,6 +539,10 @@ void CMSJES::Loop()
       
       if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
 
+
+      // Invariant mass
+
+
       //***** 1st muon *****
       //Parton level first tag muon:
       tag.SetPtEtaPhiE((*prtn_pt)[i_tag1], (*prtn_eta)[i_tag1],
@@ -569,7 +573,12 @@ void CMSJES::Loop()
       p4g_tag  += tag;		//gen lvl
       p4r_tag  += tag*resp;	//MC lvl
 
+      //Invariant mass?
+      //double M = sqrt(pow( ( (*prtn_e)[i_tag1] + (*prtn_e)[i_tag2] ), 2) - pow(p4g_tag.P(),2));
 
+      //if ( M < 70 || M > 110) {
+      //  cout << M << endl;
+      //}
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
@@ -653,7 +662,7 @@ void CMSJES::Loop()
 
         //Reconstruction
         Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
-                 GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM );
+                 GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
 
         //Check for contributions to gamma+jet tag EM-cluster
         if (studyMode==2 && p4.DeltaR(tag)<R_EMc) {
@@ -935,8 +944,11 @@ void CMSJES::Loop()
     if (!isnan(dCfTMP)) dCf->Fill(Ep, dCfTMP, weight);
 
     //MPF method
+
     MET_r = -1.0*NIJ_r;
     MET_f = -1.0*NIJ_f;
+
+    //cout << "Dot: " << MET_r.Dot(tag) << endl;
 
     for (int i=0; i!=jets_r.size(); ++i) {
       if (studyMode==1 && i!=i_tag) {
@@ -944,6 +956,8 @@ void CMSJES::Loop()
         MET_f -= jets_f[i];
       }
     }
+
+
     R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
     R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
@@ -952,6 +966,7 @@ void CMSJES::Loop()
     prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
     prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
+
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
     //                   SUCH AS MC-DATA CORRECTION FACTORS F
@@ -2235,9 +2250,151 @@ void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
 //		fA,fB,fC	Param.s for fitting to D0 data
 //              MC, FIT, EM	Flags to find MC/fit/EM-lvl response
 //              ret**		References where to put the resulting response
-//				N=0 using IIa or default IIb
-//				N=1 using IIb*-P20ToP17
 //Returns:	The calculated response (>= 0) or -1 if event invalid
+
+
+// Now response = 1.0 for gamma, mu, e-, charged hadrons
+
+void CMSJES::Response(int id, double pseudorap, double energy, double pT,
+	             TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
+                     double fA,double fB,double fC,bool MC,bool FIT,bool EM,
+                     double& retMC, double& retFIT, double& retEM)
+{
+  //Init
+  bool zero = false; //Return zero responses (run index-wise)
+  double R_temp;
+  int PDG = abs(id);
+  //Check if particle outside good eta region
+  if (fabs(pseudorap) > 3.2) zero = true;
+  unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
+
+  //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
+  if (PDG==111 || PDG==221) {
+    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << PDG
+         << "Returning zero response" << endl;
+    zero = true;
+  }
+
+  //Neutrino responses are zero
+  if (isNeutrino(PDG)) zero = true;
+
+  //Particle must have enough pT to reach CMS detector volume
+  if (!fidCuts(PDG,pT)) zero = true;
+
+  //CALCULATE RESPONSES
+  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
+    frE->SetParameters(params_e[row][0], params_e[row][1],
+                       params_e[row][2], params_e[row][3],
+                       params_e[row][4]                       );
+    frG->SetParameters(params_gam[row][0], params_gam[row][1],
+                       params_gam[row][2], params_gam[row][3],
+                       params_gam[row][4], params_gam[row][5]);
+    frMU->SetParameters(params_mu[row][0], params_mu[row][1],
+                        params_mu[row][2], params_mu[row][3]);
+
+    //EM-reco always using photon response
+    R_temp = frG->Eval(energy);
+    retEM = R_temp;
+    switch (PDG) {
+      case 20 : retMC=1.0; retFIT=1.0; //Same for both photon IDs. No min pT or fit params A,B,C
+      case 22 : retMC=1.0; retFIT=1.0;	
+                break;
+      //LEPTONS: choose params to use. N.B. leptons have no fit params A,B,C
+      case 11 : retMC=1.0; retFIT=1.0;
+                break;
+      case 13 : retMC=1.0; retFIT=1.0;
+                break;
+      //HADRONS
+      case 211 : retMC = 1.0; retFIT=1.0; //pi^+-
+        break;
+      case 321 : retMC = 1.0; retFIT=1.0; //K^+-
+        break;
+      case 130 :		//K^0_L
+        frH->SetParameters(params_KL[row][0],params_KL[row][1],
+                           params_KL[row][2],      1,     0,    1  );
+        retMC = frH->Eval(energy);
+        break;
+      case 310 :		//K^0_S
+        frH->SetParameters(params_KS[row][0],params_KS[row][1],
+                           params_KS[row][2],      1,     0,    1  );
+        retMC = frH->Eval(energy);
+        break;
+      case 3122 :		//Lambda
+        frH->SetParameters(params_L[row][0],params_L[row][1],
+                           params_L[row][2],     1,     0,     1 );
+        retMC = frH->Eval(energy);
+        break;
+      case 2112 :		//n
+        frH->SetParameters(params_n[row][0],params_n[row][1],
+                           params_n[row][2],     1,     0,     1 );
+        retMC = frH->Eval(energy);
+        break;
+      case 2212 : retMC = 1.0;	retFIT=1.0;//p
+        break;
+      default: // ANSÄTZE FOR XI, SIGMA, OMEGA
+        //According to D0 JES, strange baryons may have had responses but such
+        //were not presented. As an Ansatz, we modify the responses of known
+        //hadrons by  R^MC_h(E=m_h) = 0 <=> p^(1)_h = (m_h/0.75)^(1-p^(2)_h).
+        //The different Ansätze below are based on different hadrons' params.
+        //To use the Ansätze, set StrangeB=true in CMSJES.h
+        if (GetStrangeB() && GetAnsatz()=="pi") {	//PION params
+          switch (PDG) {
+            case 3112 :		//Sigma^-
+              retMC = 1.0; retFIT=1.0;
+              break;
+            case 3212 :		//Sigma^0
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.192/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
+              break;
+            case 3222 :		//Sigma^+
+              retMC = 1.0; retFIT=1.0;
+              break;
+            case 3312 :		//Xi^-
+              retMC = 1.0; retFIT=1.0;
+              break;
+            case 3322 :		//Xi^0
+              frH->SetParameters(params_pi[row][0],
+                                 pow((1.315/0.75),1-params_pi[row][2]),
+                                 params_pi[row][2],   1,   0,   1     );
+              retMC = frH->Eval(energy);
+              break;
+            case 3334 :		//Omega^-
+              retMC = 1.0; retFIT=1.0;
+              break;
+            default : zero=true; continue;	 //Unknown particle
+          } //Switch PDG (pion Ansatz)
+        } else {
+          cout << "Unknown particle PDG: " << PDG << endl; zero=true;  break;
+        } //Unknown partcle, not observed
+    } //Switch PDG (before Ansätze)
+
+    //Neutral hadron responses
+    if (PDG==130 || PDG==310 || PDG==3122 || PDG==2112 || PDG==3212 || PDG==3322){
+      if (FIT && !zero) { //Had.: reset A,B,C; others same as MC
+        frH->SetParameter(3,fA);
+        frH->SetParameter(4,fB);
+        frH->SetParameter(5,fC);
+        retFIT = frH->Eval(energy);
+      }
+    }
+  } 
+
+  //Set results. Check for NaN and negative results if positive demanded
+  if (!MC || zero || isnan(retMC)  || (pos && retMC <0)) retMC =0;
+  if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<0)) retFIT=0;
+  if (!EM || zero || isnan(retEM)  || (pos && retEM <0)) retEM =0;
+
+} //Response
+
+
+
+
+
+
+
+/*
 void CMSJES::Response(int id, double pseudorap, double energy, double pT,
 	             TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                      double fA,double fB,double fC,bool MC,bool FIT,bool EM,
@@ -2475,6 +2632,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
   if (!EM || zero || isnan(retEM)  || (pos && retEM <0)) retEM =0;
 
 } //Response
+*/
 //-----------------------------------------------------------------------------
 //For studying the general properties TTree read in by the CMSJES object.
 void CMSJES::StudyTree()

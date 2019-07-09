@@ -14,10 +14,9 @@ int main() {
   // 2: FindFJtoMC
   // 3: Fit
   // 4: run many samples and produce their plots at once
+  // 5: Loop() + flavCorr for debug
   int mode = 4;
 
-  vector<string> runs = {"RunIIb1","RunIIb2","RunIIb34"};
-  
   switch (mode) {
     case 0 : d.Loop();       break;
     case 1 : d.MultiLoop();  break;

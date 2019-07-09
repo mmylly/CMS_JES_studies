@@ -494,7 +494,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     inPTBMC_zj   >> zjMCEp[step] >> zjCMSMC[step] >> zjCMSMCER[step];
   }
 
-
   for (int step=0; step != nCMSdata_MPF; ++step) {	//CMS jecsys MPF data
     inMPFdata_zj   >> zjEp_MPF[step] >> zjCMS_MPF[step] >> zjER_MPF[step];
   }
@@ -555,12 +554,18 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     //Default: use our A,B,C depending on generator
     else {
       if (ReadName.find("P8")!=string::npos) {
-        //A    = 1.91588;	B    = -7.74112;	C    = 1.16804; // with 100 000 sample
-	//A = -275.669;		B    = -57.1223;	C = -0.137663; // with 10 000 sample
+        // NEW with 10 000 sample and 500 loops
+	A    = -29.8281;	B    = -1.70343;	C    =  0.959501;
+	Aer  =   0.0529828;	Ber  =  0.0558275;	Cer  =  0.00833123;
+	ABer =  -0.00292137;	ACer =  0.00016457;	BCer = -0.000238565;
+	// NEW with 100 000 sample and 20 loops
+	//A   = -27.8065;		B    = -0.661071;	C    = 0.868749; 
+        //Aer  = 0.00593366;	Ber  =  0.00636191;	Cer  =  0.00918395;
+        //ABer = 0.0000134886;	ACer = -0.0000365345;	BCer = -0.0000543319;
 	// with 100 000 sample and 500 loops
-	A    = -13.4601;	B    = -2.06685;	C    = 1.04347; 
-        Aer  = 0.000274392;	Ber  =  0.162663;	Cer  = 0.00665224;
-        ABer = 0.0000415123;	ACer = -0.00000176575;	BCer = -0.00102026;
+	//A    = -13.4601;	B    = -2.06685;	C    = 1.04347; 
+        //Aer  = 0.000274392;	Ber  =  0.162663;	Cer  = 0.00665224;
+        //ABer = 0.0000415123;	ACer = -0.00000176575;	BCer = -0.00102026;
         cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
