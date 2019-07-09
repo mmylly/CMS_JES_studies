@@ -259,10 +259,10 @@ void CMSJES::Loop()
   double Ep   = 0;		//Jet energy estimator E' = pTtag*cosh(eta_gen)
   double pTp  = 0;		//pT' = E'/cosh(eta_det)
   double eta_gamma = 1.0;	//Max |eta| for photon in gamma+jet (ALT 1.0)
-  double eta_muon  = 4.0;	//Max |eta| for a single muon in Z+jet //Find value
-  double eta_tag_z = 1.0;	//Max |eta| for mumu tag object //Find value
+  double eta_muon  = 2.3;	//Max |eta| for a single muon in Z+jet       //CONFIRM
+  double eta_tag_z = 1.3;	//Max |eta| for mumu tag object //Find value //CONFIRM
   double eta_tag   = 0.4;	//Max |eta| for tag jet in dijet
-  double eta_probe = 0.4;	//Max |eta| for probe jets
+  double eta_probe = 1.3;//0.4; //Max |eta| for probe jets
   vector<double> f_05;		//Fraction of jets' E w/in R<0.5 from jet axis
   double f_05jetMin = 0.5;	//Min. probe f_05 value  w/in [0,1], 0=inactive
   double f_05jetMinS= 0.1;	//^soft pT<15 GeV jets,  w/in [0,1], 0=inactive
@@ -277,11 +277,11 @@ void CMSJES::Loop()
   int JI = 0;			//Shorthand, particle's jet index
   double phiMin = 3.0;		//Minimum azimuth angle between tag and probe
   double prtnPt = 0;		//Temp, find prtn lvl gamma w/ highest pT
-  double pTmin_probe = 6;	//Minimum probe jet p_T (GeV)
+  double pTmin_probe = 15;	//Minimum probe jet p_T (GeV)
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
   double pTmin_gamma = 7;	//Minimum tag gamma p_T (GeV) (Meas. 7 GeV)
-  double pTmin_muon = 0;        //Minimum single tag muon pT (GeV)
-  double pTmin_tag_z = 0;    //Minimum tag muon pair pT (GeV)   
+  double pTmin_muon = 15;       //Minimum single tag muon pT (GeV)
+  double pTmin_tag_z = 15;      //Minimum tag muon pair pT (GeV)   
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
   double resp   = 1.0;	        //SPR value                (dummy init)
   double resp_f = 1.0;	        // -||- w/ fit params      (dummy init)
@@ -328,9 +328,9 @@ void CMSJES::Loop()
 
   //Instantiate and setup composition histos if needed
   if (GetcontHistos()) {
-    int const nbins_h = 27;	//#Bins in particle composition histograms
+    int const nbins_h = 30;//27;	//#Bins in particle composition histograms
     const double bins_h_lo = 0.0;
-    const double bins_h_hi = 540.0;
+    const double bins_h_hi = 3000;//540.0;
     for (int n=0; n!=3; ++n) {	//Indices: 0=gen lvl, 1=MC reco, 2=fit reco
       h_e[n]     = new TH1F("", "", nbins_h, bins_h_lo, bins_h_hi); //e^+-
       h_gamma[n] = new TH1F("", "", nbins_h, bins_h_lo, bins_h_hi); //Photons
@@ -546,7 +546,7 @@ void CMSJES::Loop()
 
       //Fast gen lvl cuts, more strict reco lvl cuts below 
 
-      if (fabs(tag.Eta())>eta_muon || tag.Pt()<pTmin_muon) continue;
+      if (fabs(tag.Eta()) > eta_muon || tag.Pt() < pTmin_muon) continue;
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag1],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
@@ -774,10 +774,10 @@ void CMSJES::Loop()
       
 
       //-tag and probe in the right |eta| region with enough p_T
-      if (fabs(p4r_tag.Eta())  > eta_tag_z      ||
-          p4r_tag.Pt()         < pTmin_tag_z    ||
+      if (fabs(p4r_tag.Eta())   > eta_tag_z     ||
+          p4r_tag.Pt()          < pTmin_tag_z   ||
           fabs(p4r_probe.Eta()) > eta_probe     ||
-          p4r_probe.Pt()        < pTmin_probe   ) continue;
+          p4r_probe.Pt()        < pTmin_probe    ) continue;
 
     }// Z+JET: FIND PROBE
 
