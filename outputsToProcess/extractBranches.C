@@ -3,7 +3,7 @@
 void extractBranches() {
 
   int temp=-1;
-  bool NIJ = false;	//Saving also particles not in jets (NIJ)?
+  bool NIJ = true;	//Saving also particles not in jets (NIJ)?
 
   /* Specify event type of the file to convert */
 
@@ -29,14 +29,15 @@ void extractBranches() {
   }
 
   //#Events in the file
-  cout << "#Events? (1) 1M (2) 500k (3) 100k (4) 10k (5) 1k" << endl;
+  cout << "#Events? (1) 1M (2) 500k (3) 100k (4) 10k (5) 1k (6) 30k" << endl;
   temp=-1;	//Reinit
-  while (temp<1 || temp >5) cin >> temp;
+  while (temp<1 || temp >6) cin >> temp;
   int n_evts = 1000000;	//#Events in the file
   if      (temp==2) n_evts = 500000;
   else if (temp==3) n_evts = 100000;
   else if (temp==4) n_evts = 10000;
   else if (temp==5) n_evts = 1000;
+  else if (temp==6) n_evts = 30000;
 
 
   //Construct input filename

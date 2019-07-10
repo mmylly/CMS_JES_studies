@@ -73,7 +73,7 @@ void CMSJES::Loop()
 
   MPFTitle += ";E_{probe} [GeV];p_{T}^{reco}/p_{T}^{gen}";
 
-  TProfile* prMPF_D0 = new TProfile("prMPF_D0", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
+  //TProfile* prMPF_D0 = new TProfile("prMPF_D0", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
 
   EpMPFTitle += ";E' [GeV];R_{MPF}";
   TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -665,28 +665,28 @@ void CMSJES::Loop()
                  GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
 
         //Check for contributions to gamma+jet tag EM-cluster
-        if (studyMode==2 && p4.DeltaR(tag)<R_EMc) {
-          NIJ_r+=p4*respEM; //Reco as EM
-          NIJ_f+=p4*respEM;
-        } else {
-          NIJ_r+=p4*resp;
-          NIJ_f+=p4*resp_f;
-        }
+
+        NIJ_g+=p4;
+        NIJ_r+=p4*resp;
+        NIJ_f+=p4*resp_f;
+
+        /*
+        if (i == (prtclnij_pt->size()-1) ) {
+          cout << "Event: " << jentry << endl;
+          cout << "Gen lvl Pt: " << NIJ_g.Pt() << endl;
+          cout << "MC lvl Pt: " << NIJ_r.Pt() << endl;
+          cout << "FIT lvl Pt: " << NIJ_f.Pt() << endl;
+        }*/
 
       } //Loop particles not in jets
-
-    } else {	//Reco from jet inbalance 
-
-    #endif
-
-      //WIP, to be taken into account the EM tag & moved below for simplicity
+    } 
+    /*
+    if (!GetrecoMissing()) {	//Reco from jet inbalance 
       for (int i=0; i!=jets_r.size(); ++i) {
         NIJ_g += jets_g[i];  NIJ_r += jets_r[i];  NIJ_f += jets_f[i];
       }
       NIJ_r *= -1.0;         NIJ_f *= -1.0;
-
-    #ifdef NIJ
-    } //Reco from jet inbalance
+    } //Reco from jet inbalance */
     #endif
 
     /************************* GAMMA+JET: FIND PROBE *************************/
@@ -944,26 +944,27 @@ void CMSJES::Loop()
     if (!isnan(dCfTMP)) dCf->Fill(Ep, dCfTMP, weight);
 
     //MPF method
-
-    MET_r = -1.0*NIJ_r;
-    MET_f = -1.0*NIJ_f;
+    MET_r = NIJ_r;
+    MET_f = NIJ_f;
 
     //cout << "Dot: " << MET_r.Dot(tag) << endl;
 
-    for (int i=0; i!=jets_r.size(); ++i) {
-      if (studyMode==1 && i!=i_tag) {
-        MET_r -= jets_r[i];
-        MET_f -= jets_f[i];
-      }
-    }
+    //for (int i=0; i!=jets_r.size(); ++i) {
+    //  if (studyMode==1 && i!=i_tag) {
+    //    MET_r -= jets_r[i];
+    //    MET_f -= jets_f[i];
+    //  }
+    //}
+    R_MPF_r = 1.0 + MET_r.Dot(p4r_tag) / pow((p4r_tag.Pt()),2);
+    R_MPF_f = 1.0 + MET_f.Dot(p4f_tag) / pow((p4f_tag.Pt()),2);  
 
-
-    R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
-    R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
+    //R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
+    //R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
     //Fill MPF histograms
-    R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
-    prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
+    //R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
+
+    //prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
     prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
 
@@ -2108,14 +2109,15 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
   TFile* fzj = TFile::Open(zjetFile.c_str());
-  TProfile *przj_MPF_D0=0, *przj_MPF=0, *przj_MPF_f=0;  //Z+jet (_f = fit)
+  //TProfile *przj_MPF_D0=0, *przj_MPF=0, *przj_MPF_f=0;  //Z+jet (_f = fit)
+  TProfile *przj_MPF=0, *przj_MPF_f=0;
 
   /* 1: Z+jet */
-  fzj->GetObject("prMPF_D0"   ,przj_MPF_D0);
+  //fzj->GetObject("prMPF_D0"   ,przj_MPF_D0);
   fzj->GetObject("prMPF_Ep"   ,przj_MPF);
   fzj->GetObject("prMPF_EpFit",przj_MPF_f);
 
-  TH1D* hzj_MPF_D0 = przj_MPF_D0->ProjectionX();
+  //TH1D* hzj_MPF_D0 = przj_MPF_D0->ProjectionX();
   TH1D* hzj_MPF    = przj_MPF->ProjectionX();
   TH1D* hzj_MPF_f  = przj_MPF_f->ProjectionX();
   //CMS data and MC points
@@ -2125,6 +2127,8 @@ void CMSJES::plotMPF(int gen, int Nevt)
   for (int i=0; i!=nCMSdata_MPF; ++i) {
     d_zj_MPF->SetPoint(i,zjEp_MPF[i],zjCMS_MPF[i]);
   }
+
+
 
   //CMS Z+jet MPF MC simulation points
   for (int i=0; i!=nCMSMC_MPF; ++i) {
@@ -2138,7 +2142,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //Style setup
   hzj_MPF->SetLineColor(     kBlack);
-  hzj_MPF_D0->SetLineColor(  kGray);
+  //hzj_MPF_D0->SetLineColor(  kGray);
   mc_zj_MPF->SetMarkerStyle( kOpenCircle);  mc_zj_MPF->SetMarkerColor(kBlack  );
 
   przj_MPF_f->SetMarkerStyle(kFullDiamond); // Not Drawn
@@ -2152,7 +2156,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
   TLegend* lz_MPF = new TLegend(0.52,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
   lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
-  lz_MPF->AddEntry(hzj_MPF_D0, "#font[132]{Our D0 style Z+jet MPF MC}", "l");
+  //lz_MPF->AddEntry(hzj_MPF_D0, "#font[132]{Our D0 style Z+jet MPF MC}", "l");
   lz_MPF->AddEntry(hzj_MPF_f, "#font[132]{Our Z+jet MPF MC fit}", "p");
 
   lz_MPF->AddEntry(d_zj_MPF,  "#font[132]{CMS jecsys Z+jet MPF data}", "p");
@@ -2173,6 +2177,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{Z+jet}");
   hzj_MPF->GetXaxis()->SetTitleOffset(1);
 
+
   //Savefile name setup
   string savename = "./plots/MPF_zmmjet";
   string MPFtitle = hzj_MPF->GetTitle();
@@ -2181,7 +2186,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //Plot
   hzj_MPF->Draw();
-  hzj_MPF_D0->Draw("SAME");
+  //hzj_MPF_D0->Draw("SAME");
   hzj_MPF_f->Draw("HISTO P SAME");
   mc_zj_MPF->Draw("P SAME");
   d_zj_MPF->Draw("P SAME");
@@ -2853,12 +2858,14 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
 
   //Set #events
   string num = "100000";
-  cout << "#Events (1) 1k (2) 10k (3) 100k (4) 500k" << endl;
-  while (Nevt<1 || Nevt>4) cin >> Nevt;
+  cout << "#Events (1) 1k (2) 10k (3) 100k (4) 500k (5) 3k (6) 30k" << endl;
+  while (Nevt<1 || Nevt>6) cin >> Nevt;
   if      (Nevt==1) num = "1000";
   else if (Nevt==2) num = "10000";
   else if (Nevt==3) num = "100000";
   else if (Nevt==4) num = "500000";
+  else if (Nevt==5) num = "3000";
+  else if (Nevt==6) num = "30000";
 
   //Construct all-flavor filenames
   djstr = respStr + "dijet_"    + num + root;

@@ -63,7 +63,7 @@ using std::min;
 using std::ofstream;
 using std::stringstream;
 
-//#define NIJ //If uncommented, sample must have prtclsnij_ -branches
+#define NIJ //If uncommented, sample must have prtclsnij_ -branches
 
 class CMSJES {
 public :
@@ -246,7 +246,7 @@ public :
   double ABer=0,ACer=0,BCer=0;	//Off-diag. elem.s of covariance matrix
 
   #ifdef NIJ
-  bool recoMissing = false;	//Fully reconstruct also particles not in jets
+  bool recoMissing = true;	//Fully reconstruct also particles not in jets
   #endif
 
   //Setters
@@ -404,6 +404,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       files.push_back("P8_Zjet_10000" );
       files.push_back("P8_Zjet_100000");
       files.push_back("P8_Zjet_500000");
+      files.push_back("P8_Zjet_30000");
+      files.push_back("P8_Zjet_3000");      
       //User interface
       printf("No filename given, choose file (y = default file):\n");
       for (int i=0; i!=files.size(); ++i) {

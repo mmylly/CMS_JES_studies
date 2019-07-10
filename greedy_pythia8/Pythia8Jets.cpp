@@ -174,7 +174,6 @@ void Pythia8Jets::EventLoop()
         if (!IsolationProc()) continue;
         if (!JetLoop()) continue;
         mSelWgt += mWeight;
-        //cout << mEvtNo << endl;
 
         //mPythia.event.list();
         //PrintEvent();
@@ -390,12 +389,23 @@ bool Pythia8Jets::JetLoop()
                 mPartonInfo[prt].used = true;
             } else {
                 #ifdef STORE_PRTCLS
+                //cout << jet << endl; Only indices >= 0
                 ParticleAdd(prt,jet);
                 #endif
                 continue;
             }
         }
     }
+    /*
+    if (cfg::StoreNIJ) {//FIXME these do not conserve momentum. 
+                        //Not used for pT-bal, but maybe needed for MPF
+        vector<int> jetIndices = clustSeq.particle_jet_indices(mSortedJets);
+        for (int a=0; a!=jetIndices.size(); ++a) {
+            int prt = mJetInputs[a].user_index();
+            if (prt > 0 and jetIndices[a] == -1) ParticleAdd(prt,-1);
+        }
+    }
+    */
 
     for (unsigned prt = 0; prt < mPartonInfo.size(); ++prt) {
         if (mPartonInfo[prt].used)

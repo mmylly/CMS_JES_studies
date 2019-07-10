@@ -28,8 +28,8 @@ int main() {
       d.FitGN();
       break;
     case 4 :
-      d.flavCorr(true, 3, 0);
-      d.plotPT(3, 0, false, false);
+      //d.flavCorr(true, 3, 0);
+      //d.plotPT(3, 0, false, false);
       d.plotMPF(3,0);
       break;
     case 5 :
