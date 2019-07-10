@@ -9,6 +9,11 @@ Pythia8Jets::Pythia8Jets(string settings, string fileName, int mode) :
     mTotWgt(0.0),
     mSelWgt(0.0)
 {
+    #ifdef STORE_PRTCLS
+    cerr << "  Storing Final-State particles found in jets." << endl;
+    if (cfg::StoreNIJ) cerr << "  Storing also particles not in jets." << endl;
+    #endif
+
     mMode = mode;
 
     bool tmode = mMode == 4 || mMode ==5 || mMode == 6;
@@ -93,6 +98,12 @@ Pythia8Jets::Pythia8Jets(string settings, string fileName, int mode) :
     mTree->Branch("prtcl_eta",&mEta)->SetAutoDelete(kFALSE);
     mTree->Branch("prtcl_phi",&mPhi)->SetAutoDelete(kFALSE);
     mTree->Branch("prtcl_e",&mE)->SetAutoDelete(kFALSE);
+    /* Particle lvl for particles not in jets (nij) */
+    mTree->Branch("prtclnij_pdgid",  &mNIJPDGID )->SetAutoDelete(kFALSE);
+    mTree->Branch("prtclnij_pt",     &mNIJPt    )->SetAutoDelete(kFALSE);
+    mTree->Branch("prtclnij_eta",    &mNIJEta   )->SetAutoDelete(kFALSE);
+    mTree->Branch("prtclnij_phi",    &mNIJPhi   )->SetAutoDelete(kFALSE);
+    mTree->Branch("prtclnij_e",      &mNIJE     )->SetAutoDelete(kFALSE);
     /* Parton lvl */
     mTree->Branch("prtn_jet",&mPJetId)->SetAutoDelete(kFALSE);
     mTree->Branch("prtn_ptn",&mPPtnId)->SetAutoDelete(kFALSE);
@@ -211,6 +222,13 @@ bool Pythia8Jets::ParticleLoop()
     mEta.clear();
     mPhi.clear();
     mE.clear();
+    if (cfg::StoreNIJ) {
+        mNIJPDGID.clear();
+        mNIJPt   .clear();
+        mNIJEta  .clear();
+        mNIJPhi  .clear();
+        mNIJE    .clear();
+    }
     /* Parton lvl */
     mPJetId.clear();
     mPPtnId.clear();
@@ -288,7 +306,6 @@ void Pythia8Jets::PartonDescend(unsigned prt)
         if (mEvent[truth].isParton()) PartonDescend(truth);
     }
 }
-
 
 bool Pythia8Jets::ProcessParticle(unsigned prt)
 {
@@ -400,12 +417,22 @@ void Pythia8Jets::ParticleAdd(unsigned prt, char jetid)
     int pdgid = mEvent[prt].id();
     if (pdgid==22 and GammaChecker(prt)) pdgid = 20;
 
-    mJetId.push_back(jetid);
-    mPDGID.push_back(pdgid);
-    mPt.push_back(mEvent[prt].pT());
-    mEta.push_back(mEvent[prt].eta());
-    mPhi.push_back(mEvent[prt].phi());
-    mE.push_back(mEvent[prt].e());
+    if (jetid >= 0) { // Associated with jets
+        mJetId.push_back(jetid);
+        mPDGID.push_back(pdgid);
+        mPt.push_back(mEvent[prt].pT());
+        mEta.push_back(mEvent[prt].eta());
+        mPhi.push_back(mEvent[prt].phi());
+        mE.push_back(mEvent[prt].e());
+    } else if (cfg::StoreNIJ) { // No jet association
+        mNIJPDGID.push_back(pdgid);
+        mNIJPt.push_back(mEvent[prt].pT());
+        mNIJEta.push_back(mEvent[prt].eta());
+        mNIJPhi.push_back(mEvent[prt].phi());
+        mNIJE.push_back(mEvent[prt].e());
+    }
+
+
 } // ParticleAdd
 
 void Pythia8Jets::PartonAdd(unsigned prt, char jetid, char tag, int ptnid, int ownid)

@@ -51,6 +51,7 @@ namespace cfg {
     constexpr bool DOCorrParton   = false;
     /** Do we add uncorrected momentum values for signal leptons (idx 3)? */
     constexpr bool DOUnCorrLepton = false;
+    constexpr bool DOMuons = false;
     //@}
 
     /** @name D0 settings (generic) */
@@ -80,7 +81,7 @@ namespace cfg {
     /** Do we store the final state particles? */
     #define STORE_PRTCLS
     /** Store particles not in jets (NIJ), REQUIRES STORE_PRTCLS */
-    constexpr bool StoreNIJ = false;
+    constexpr bool StoreNIJ = true;
     //@}
 
     /** @name Photon isolation parameters (gamma+jets) */

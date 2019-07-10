@@ -104,14 +104,14 @@
 #include "../generic/help_functions.h"
 #include "../events/PrtclEvent.h"
 
-struct PartonHolder {
+/*struct PartonHolder {
     fastjet::PseudoJet p4;
     int id;
     char tag;
     int ptnid;
     int ownid;
     bool used;
-};
+};*/
 
 class Pythia6Jets
 {

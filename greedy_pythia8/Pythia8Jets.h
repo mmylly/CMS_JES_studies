@@ -244,6 +244,12 @@ protected:
     vector<float>         mEta;
     vector<float>         mPhi;
     vector<float>         mE;
+    /* Particle level for the particles not in jets (NIJ). */
+    vector<int>           mNIJPDGID;
+    vector<float>         mNIJPt;
+    vector<float>         mNIJEta;
+    vector<float>         mNIJPhi;
+    vector<float>         mNIJE;
     /* Parton level. */
     vector<char>          mPJetId;
     vector<int>           mPPtnId;
