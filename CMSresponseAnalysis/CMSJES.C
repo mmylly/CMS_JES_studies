@@ -575,9 +575,14 @@ void CMSJES::Loop()
       //Invariant mass?
       //double M = sqrt(pow( ( (*prtn_e)[i_tag1] + (*prtn_e)[i_tag2] ), 2) - pow(p4g_tag.P(),2));
 
-      //if ( M < 70 || M > 110) {
-      //  cout << M << endl;
-      //}
+      //cout << "Event: " << jentry << endl;
+      //cout << "Invariant mass by me: " << M << endl;
+      //cout << "Invariant mass TVector: " << p4g_tag.M() << endl; 
+
+      // Check that invariant mass is in range 70 - 110 GeV since Z boson mass is 91 GeV
+      double M = p4g_tag.M();
+      if ( M<70 || M>110) continue;
+
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
@@ -2856,14 +2861,15 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
 
   //Set #events
   string num = "100000";
-  cout << "#Events (1) 1k (2) 10k (3) 100k (4) 500k (5) 3k (6) 30k" << endl;
-  while (Nevt<1 || Nevt>6) cin >> Nevt;
+  cout << "#Events (1) 1k (2) 10k (3) 100k (4) 500k (5) 3k (6) 30k (7) 300k" << endl;
+  while (Nevt<1 || Nevt>7) cin >> Nevt;
   if      (Nevt==1) num = "1000";
   else if (Nevt==2) num = "10000";
   else if (Nevt==3) num = "100000";
   else if (Nevt==4) num = "500000";
   else if (Nevt==5) num = "3000";
   else if (Nevt==6) num = "30000";
+  else if (Nevt==7) num = "300000";
 
   //Construct all-flavor filenames
   djstr = respStr + "dijet_"    + num + root;
