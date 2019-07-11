@@ -73,8 +73,6 @@ void CMSJES::Loop()
 
   MPFTitle += ";E_{probe} [GeV];p_{T}^{reco}/p_{T}^{gen}";
 
-  //TProfile* prMPF_D0 = new TProfile("prMPF_D0", MPFTitle.c_str(),nbinsMPF-1,binsxMPF);
-
   EpMPFTitle += ";E' [GeV];R_{MPF}";
   TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPF_EpFit = new TProfile("prMPF_EpFit", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -286,7 +284,6 @@ void CMSJES::Loop()
   double resp   = 1.0;	        //SPR value                (dummy init)
   double resp_f = 1.0;	        // -||- w/ fit params      (dummy init)
   double respEM = 1.0;	        // -||- for EM-object reco (dummy init)
-  double R_MPF_D0 = 0;		//D0 style MPF response
   double R_MPF_r = 0;		//MC-reco'd MPF response
   double R_MPF_f = 0;		//Fit reco'd MPF response
   double R_EMc = 0.3;		//EM-cluster radius, contributes to tag
@@ -554,10 +551,11 @@ void CMSJES::Loop()
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag1],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
-               1, 0, 1, true, false, false, resp, resp_f, respEM       );
+               1, 0, 1, true, true, false, resp, resp_f, respEM       );
 
       p4g_tag  = tag;		//gen lvl
       p4r_tag  = tag*resp;	//MC lvl
+      p4f_tag  = tag*resp_f;    //FIT lvl
 
       //***** 2nd muon ******
       tag.SetPtEtaPhiE((*prtn_pt)[i_tag2], (*prtn_eta)[i_tag2],
@@ -568,10 +566,11 @@ void CMSJES::Loop()
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag2],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
-               1, 0, 1, true, false, false,  resp, resp_f, respEM       );
+               1, 0, 1, true, true, false,  resp, resp_f, respEM       );
 
       p4g_tag  += tag;		//gen lvl
       p4r_tag  += tag*resp;	//MC lvl
+      p4f_tag  += tag*resp_f;   //FIT lvl
 
       //Invariant mass?
       //double M = sqrt(pow( ( (*prtn_e)[i_tag1] + (*prtn_e)[i_tag2] ), 2) - pow(p4g_tag.P(),2));
@@ -955,16 +954,22 @@ void CMSJES::Loop()
     //    MET_f -= jets_f[i];
     //  }
     //}
-    R_MPF_r = 1.0 + MET_r.Dot(p4r_tag) / pow((p4r_tag.Pt()),2);
-    R_MPF_f = 1.0 + MET_f.Dot(p4f_tag) / pow((p4f_tag.Pt()),2);  
+    //cout << "Px: " << MET_r.Px() << " Py: " << MET_r.Py() <<  " Pz: " << MET_r.Pz() 
+    //<< " Pt: " << MET_r.Pt() << " P: " << MET_r.P() << endl;
+
+
+    //R_MPF_r = 1.0 + MET_r.Dot(p4r_tag) / pow((p4r_tag.Pt()),2);
+    //R_MPF_f = 1.0 + MET_f.Dot(p4f_tag) / pow((p4f_tag.Pt()),2);  
+
+    R_MPF_r = 1.0 + (MET_r.Px()*p4r_tag.Px() + MET_r.Py()*p4r_tag.Py()) / pow((p4r_tag.Pt()),2);
+    R_MPF_f = 1.0 + (MET_f.Px()*p4f_tag.Px() + MET_f.Py()*p4f_tag.Py()) / pow((p4f_tag.Pt()),2);
+
+    //cout << "My dot: " << MET_f.Px()*p4f_tag.Px() + MET_f.Py()*p4f_tag.Py() << endl;
 
     //R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
     //R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
     //Fill MPF histograms
-    //R_MPF_D0= -p4r_probe.Pt()*cos(p4r_tag.DeltaPhi(p4r_probe))/p4r_tag.Pt();
-
-    //prMPF_D0->Fill(   Ep, (!isnan(R_MPF_D0) ? R_MPF_D0 : 0), weight);
     prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
 
@@ -2113,11 +2118,9 @@ void CMSJES::plotMPF(int gen, int Nevt)
   TProfile *przj_MPF=0, *przj_MPF_f=0;
 
   /* 1: Z+jet */
-  //fzj->GetObject("prMPF_D0"   ,przj_MPF_D0);
   fzj->GetObject("prMPF_Ep"   ,przj_MPF);
   fzj->GetObject("prMPF_EpFit",przj_MPF_f);
 
-  //TH1D* hzj_MPF_D0 = przj_MPF_D0->ProjectionX();
   TH1D* hzj_MPF    = przj_MPF->ProjectionX();
   TH1D* hzj_MPF_f  = przj_MPF_f->ProjectionX();
   //CMS data and MC points
@@ -2142,7 +2145,6 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //Style setup
   hzj_MPF->SetLineColor(     kBlack);
-  //hzj_MPF_D0->SetLineColor(  kGray);
   mc_zj_MPF->SetMarkerStyle( kOpenCircle);  mc_zj_MPF->SetMarkerColor(kBlack  );
 
   przj_MPF_f->SetMarkerStyle(kFullDiamond); // Not Drawn
@@ -2156,16 +2158,14 @@ void CMSJES::plotMPF(int gen, int Nevt)
   TLegend* lz_MPF = new TLegend(0.52,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
   lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
-  //lz_MPF->AddEntry(hzj_MPF_D0, "#font[132]{Our D0 style Z+jet MPF MC}", "l");
   lz_MPF->AddEntry(hzj_MPF_f, "#font[132]{Our Z+jet MPF MC fit}", "p");
-
   lz_MPF->AddEntry(d_zj_MPF,  "#font[132]{CMS jecsys Z+jet MPF data}", "p");
   lz_MPF->AddEntry(mc_zj_MPF, "#font[132]{CMS jecsys Z+jet MPF MC}", "p");
 
 
   //Title and axis setup
   hzj_MPF->SetStats(0); //Suppress stat box
-  hzj_MPF->SetAxisRange(-1.0,2.0,"Y"); //Vertical axis limits
+  hzj_MPF->SetAxisRange(0.5,1.5,"Y"); //Vertical axis limits
   hzj_MPF->GetYaxis()->SetTitleFont(133);
   int titleSize = 18; //Common title size everywhere
   hzj_MPF->GetYaxis()->SetTitleSize(titleSize);
@@ -2186,7 +2186,6 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //Plot
   hzj_MPF->Draw();
-  //hzj_MPF_D0->Draw("SAME");
   hzj_MPF_f->Draw("HISTO P SAME");
   mc_zj_MPF->Draw("P SAME");
   d_zj_MPF->Draw("P SAME");
@@ -2218,8 +2217,7 @@ void CMSJES::axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd) {
   FJtoMC->SetTitle(title.c_str());
   FJtoMC->GetXaxis()->SetTitle("#font[132]{#font[12]{p}_{T,jet}^{FJ}}");
   FJtoMC->GetYaxis()->SetTitle("#font[132]{|#font[12]{#eta}_{jet}^{FJ}|}");
-  FJtoMC->GetZaxis()->SetTitle(
-          "#font[132]{#font[12]{p}_{T,MC-jet}/#font[12]{p}_{T,FJ-jet}}");
+  FJtoMC->GetZaxis()->SetTitle("#font[132]{#font[12]{p}_{T,MC-jet}/#font[12]{p}_{T,FJ-jet}}");
   FJtoMC->GetXaxis()->SetTitleOffset(1.8);
   FJtoMC->GetYaxis()->SetTitleOffset(2.0);
   FJtoMC->GetZaxis()->SetTitleOffset(1.45);
