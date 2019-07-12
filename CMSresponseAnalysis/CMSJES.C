@@ -647,7 +647,6 @@ void CMSJES::Loop()
         dCjetsX[JI] += p4.X()*dCRtemp;
         dCjetsY[JI] += p4.Y()*dCRtemp;
       } //Find derivatives
-
     } //Loop particles in jets
 
     //Turn f_05 value into ratio
@@ -998,7 +997,6 @@ void CMSJES::Loop()
     //Fill MPF histograms
     prMPF_Ep->Fill(Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
-
     prMPF_pTp->Fill(pTp, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
@@ -1324,6 +1322,7 @@ void* loopHandle(void* CMSJESToLoop) {
 //Params:	dj_in, gj_in	Ready-given CMSJES objects for dijet...
 //				...and gamma+jet whose Loop to call
 //		fitPars		If true, take A,B,C from this CMSJES object
+/*
 void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
 
   //Input filenames to read
@@ -1369,6 +1368,50 @@ void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
   delete t_dj;  delete t_gj;	//Threads always instantiated here
 
   if (noInputGiven) {delete resp_dj;  delete resp_gj;}
+
+} //MultiLoop*/
+
+void CMSJES::MultiLoop(CMSJES* zj_in, bool fitPars) {
+
+  //Input filenames to read
+  InputNameConstructor();
+
+  //Instantiate new CMSJES objects to be run in parallel
+  CMSJES* resp_zj;
+
+  bool noInputGiven = true;
+
+  //Instantiate new CMSJES objects where needed
+   if (zj_in) {	//Use given Z+jet CMSJES object
+    if (Getverbose()) cout<<"MultiLoop: using input CMSJES objects"<<endl;
+    resp_zj = zj_in;
+    noInputGiven = false;
+  } else {	//No Z+jet object given
+    if (Getverbose()) cout<<"MultiLoop: Instantiating new CMSJES object"<<endl;
+    resp_zj = new CMSJES(0,zjFile);
+  }
+
+  //MultiLoop may be called from FitHandle, ensure fit params. are taken from 
+  //this CMSJES object and not read from the header "as is"
+  if (fitPars) {
+    resp_zj->SetABC(GetA(),GetB(),GetC());
+  }
+
+  //Instantiate the threads
+  if (Getverbose()) cout<<"Instantiating threads"<<endl; 
+  TThread* t_zj;
+  t_zj = new TThread("t_zj", loopHandle, (void*) resp_zj);
+
+  //Start running the threads
+  t_zj->Run();
+
+  //Gather the threads together after execution
+  t_zj->Join();
+
+  //Free memory
+  delete t_zj; //Threads always instantiated here
+
+  if (noInputGiven) {delete resp_zj;}
 
 } //MultiLoop
 
@@ -1441,31 +1484,24 @@ void CMSJES::FitGN()
   bool fixA = false;  bool fixB = false;  bool fixC = false;
 
   //Ensure first that at least some fitting functionality is enabled
-  if (!GetdjFitting() && !GetgjFitting() && !GetzjFitting()) {
-    cout << "ERROR: neither gamma+jet, dijet nor Z+jet fitting enabled!" << endl;
+  if (!GetzjFitting()) {
+    cout << "ERROR: Z+jet fitting enabled!" << endl;
     return;
   }
 
   //To avoid boilerplate, store the following combinations in sampleIndices:
-  //  0		if fit to EM+jet (dijet) sample only
-  //  1		if fit to gamma+jet sample only
-  //  2		if fit to Z+jet sample only
-  //  0 and 1	if simultaneous fit to both samples
+  //  0		if fit to Z+jet sample only
+
   //The vector is to be used via:
   //  for (int s: sampleIndices) {index s picks components for studied samples}
   vector<int> sampleIndices;
-  if (GetdjFitting()) sampleIndices.push_back(0);
-  if (GetgjFitting()) sampleIndices.push_back(1);
-  if (GetzjFitting()) sampleIndices.push_back(2);
+  if (GetzjFitting()) sampleIndices.push_back(0);
 
   //Construct input and output files
-  InputNameConstructor();			//Input filenames to read
+  InputNameConstructor(); //Input filenames to read
 
-  string gjOut = "./output_ROOT_files/CMSJES_"+gjFile+".root";
-  string djOut = "./output_ROOT_files/CMSJES_"+djFile+".root";
   string zjOut = "./output_ROOT_files/CMSJES_"+zjFile+".root";
-  vector<string> outs;  outs.push_back(djOut);  outs.push_back(gjOut); 
-  outs.push_back(zjOut);//Handle
+  vector<string> outs; outs.push_back(zjOut);//Handle
 
   /* Fitting functionality starts here */
   
@@ -1503,67 +1539,46 @@ void CMSJES::FitGN()
   ABC.SetElements(vec_arr);
 
   //Objects to read CMSJES output
-  //[0]=dijet, [1]=gammajet, [2]=gammajet, xjdY=derivative of pTprobe/pTtag w.r.t. Y (x=d,g)
+  //[0]=dijet, [1]=gammajet, [2]=zjet, xjdY=derivative of pTprobe/pTtag w.r.t. Y (x=d,g)
   TFile*    file[3];  TProfile* prof[3];  //Files and prEpFit profiles
   TProfile* dA[3];    TProfile* dB[3];    TProfile* dC[3];
   double fit[3];      double fitdA[3];    double fitdB[3];  double fitdC[3];
 
-  //Get data points to vector handles, choose runIIa or IIb depending on flags
-  vector<double> djD0v, gjD0v, zjCMSv, djERv2, gjERv2, zjERv2;	//Last two: errors squared
-  for (int i=0; i!=nD0data; ++i) { //N.B. do not use "sampleIndices" here,...
-    if (GetdjFitting()) {          //...these vectors must first be allocated...
-      djD0v.push_back( djD0II[i]);  //...as such. Only later are...
-      djERv2.push_back(pow(djERII[i],2)); //...they stored into...
-    }                                                 //...handles allowing...
-    if (GetgjFitting()) {                             //...the use of...
-      gjD0v.push_back( gjD0II[i]);        //...sampleIndices
-      gjERv2.push_back(pow(gjERII[i],2));
-    }
-  }
+  //Get data points to vector handles
+  vector<double> zjCMSv, zjERv2; //ERv2: errors squared
   
   //Data points for CMS pT balance
   for (int i=0; i!=nCMSdata; ++i) { //Allocated here
     if (GetzjFitting()) {
-      zjCMSv.push_back(zjCMS[i]); //Not read yet
+      zjCMSv.push_back(zjCMS[i]);
       zjERv2.push_back(pow(zjER[i],2)); 
     }
   }  
 
   //Handles to the above data and uncertainty vectors to enable sample indexing
-  vector<vector<double>> D0v;   D0v.push_back( djD0v );  D0v.push_back( gjD0v );
-  D0v.push_back( zjCMSv ); //Change the name later
-  vector<vector<double>> ERv2;  ERv2.push_back(djERv2);  ERv2.push_back(gjERv2);
-  ERv2.push_back(zjERv2); //Change the name later
+  vector<vector<double>> CMSv; CMSv.push_back( zjCMSv ); //Change the name later
+  vector<vector<double>> ERv2; ERv2.push_back(zjERv2); //Change the name later
 
   //#D.O.F. for chi^2 normalization -- non-rigorous, but D0 apparently did this
-  //  #D.O.F.="Number of data points to fit to minus number of free fit parameters"
-  double n_dof = (GetgjFitting() ? (double) nD0data : 0)
-                +(GetdjFitting() ? (double) nD0data : 0)
-                +(GetzjFitting() ? (double) nCMSdata : 0) - (double) dim
+  //#D.O.F.="Number of data points to fit to minus number of free fit parameters"
+  double n_dof = (GetzjFitting() ? (double) nCMSdata : 0) - (double) dim
                 +(fixA || fabs(LA)>0.01 ? 1:0)  //Constrained param.s are not...
                 +(fixB || fabs(LB)>0.01 ? 1:0)  //...free, hence they do not...
                 +(fixC || fabs(LC)>0.01 ? 1:0); //...contribute to "-dim"
 
   if (n_dof<1) {cout << "ERROR: #D.O.F. < 1 in FitGN" << endl;  return;}
 
-  cout<<"Inverses of D0 data unertainties squared, weigh LSQ sum terms:"<<endl;
-  for (int i=0; i!=nD0data; ++i) {  //Don't use sampleIndices for print format
-    if (GetdjFitting()) printf("dj: 1/sigma^2[%d]=%-9.3f\t",i,1/ERv2[0][i]);
-    if (GetgjFitting()) printf("gj: 1/sigma^2[%d]=%-9.3f",  i,1/ERv2[1][i]);
-    if (GetzjFitting()) printf("zj: 1/sigma^2[%d]=%-9.3f",  i,1/ERv2[2][i]);
+  cout<<"Inverses of CMS data unertainties squared, weigh LSQ sum terms:"<<endl;
+  for (int i=0; i!=nCMSdata; ++i) {  //Don't use sampleIndices for print format
+    if (GetzjFitting()) printf("zj: 1/sigma^2[%d]=%-9.3f",  i,1/ERv2[0][i]);
     printf("\n");
   }
   cout<<"^The above factors may make |gradient| large, don't panic."<<endl;
 
-  //Instantiate and setup CMSJES objects to read in dijet, gamma+jet and Z+jet TTrees
-  CMSJES* dijet = new CMSJES(0,djFile);  CMSJES* gammajet = new CMSJES(0,gjFile);
+  //Instantiate and setup CMSJES objects to read in Z+jet TTree
   CMSJES* zjet = new CMSJES(0,zjFile);
-  dijet->SetprintProg(     false);     gammajet->SetprintProg(     false);
-  dijet->SetcontHistos(    false);     gammajet->SetcontHistos(    false);
   zjet->SetprintProg(     false);
   zjet->SetcontHistos(    false);
-  dijet->SetuseEarlierCuts(GetuseEarlierCuts());
-  gammajet->SetuseEarlierCuts(GetuseEarlierCuts());
   zjet->SetuseEarlierCuts(GetuseEarlierCuts());
 
   do { //The fit calculation loop
@@ -1578,27 +1593,18 @@ void CMSJES::FitGN()
     cout << "Constraint contributions to chi2: " << chi2 << endl;
 
     for (int i=0; i!=dim*dim; ++i) H[i]=0;
-    if (!fixA) {dijet->SetA(   ABC.GetMatrixArray()[iA]);
-                gammajet->SetA(ABC.GetMatrixArray()[iA]);
-                zjet->SetA(ABC.GetMatrixArray()[iA]);
+    if (!fixA) {zjet->SetA(ABC.GetMatrixArray()[iA]);
                 dAchi2 = 2*LA*(ABC.GetMatrixArray()[iA]-1);
                 H[dim*iA+iA]+=2*LA;                        }
-    if (!fixB) {dijet->SetB(   ABC.GetMatrixArray()[iB]);
-                gammajet->SetB(ABC.GetMatrixArray()[iB]);
-                zjet->SetB(ABC.GetMatrixArray()[iB]);
+    if (!fixB) {zjet->SetB(ABC.GetMatrixArray()[iB]);
                 dBchi2 =  2*LB*ABC.GetMatrixArray()[iB];
                 H[dim*iB+iB]+=2*LB;                        }
-    if (!fixC) {dijet->SetC(   ABC.GetMatrixArray()[iC]);
-                gammajet->SetC(ABC.GetMatrixArray()[iC]);
-                zjet->SetC(ABC.GetMatrixArray()[iC]);
+    if (!fixC) {zjet->SetC(ABC.GetMatrixArray()[iC]);
                 dCchi2 = 2*LC*(ABC.GetMatrixArray()[iC]-1);
                 H[dim*iC+iC]+=2*LC;                        }
 
     //Calculate new values
-    if (GetdjFitting() && GetgjFitting()) MultiLoop(dijet, gammajet, false);
-    else if (GetdjFitting()) dijet->Loop();
-    else if (GetgjFitting()) gammajet->Loop();
-    else zjet->Loop();
+    if (GetzjFitting()) zjet->Loop();
   
     //Retrieve CMSJES output
     for (int s : sampleIndices) {
@@ -1637,9 +1643,11 @@ void CMSJES::FitGN()
 
     for (int s : sampleIndices) {
       for (int i=0; i!=nCMSdata; ++i) { //GetBinContent indices start from 1
-        fit[s]=prof[s]->GetBinContent(i+1);  fitdA[s]=dA[s]->GetBinContent(i+1);
-        fitdB[s]=dB[s]->GetBinContent(i+1);  fitdC[s]=dC[s]->GetBinContent(i+1);
-        chi2 += pow(fit[s]-D0v[s][i],2)/ERv2[s][i]/n_dof;	//LSQ sum
+        fit[s]=prof[s]->GetBinContent(i+1);  
+        fitdA[s]=dA[s]->GetBinContent(i+1);
+        fitdB[s]=dB[s]->GetBinContent(i+1);  
+        fitdC[s]=dC[s]->GetBinContent(i+1);
+        chi2 += pow(fit[s]-CMSv[s][i],2)/ERv2[s][i]/n_dof; //LSQ sum
         //NaN check
         if (isnan(fitdA[s]) || isnan(fitdB[s]) || isnan(fitdC[s])) {
           cout << "Nonsensical gradient at dijet data point " << i << ": "
@@ -1647,9 +1655,9 @@ void CMSJES::FitGN()
           continue;
         }
         //Gradient components
-        if (!fixA) dAchi2 += 2*(fit[s]-D0v[s][i])*fitdA[s]/ERv2[s][i];
-        if (!fixB) dBchi2 += 2*(fit[s]-D0v[s][i])*fitdB[s]/ERv2[s][i];
-        if (!fixC) dCchi2 += 2*(fit[s]-D0v[s][i])*fitdC[s]/ERv2[s][i];
+        if (!fixA) dAchi2 += 2*(fit[s]-CMSv[s][i])*fitdA[s]/ERv2[s][i];
+        if (!fixB) dBchi2 += 2*(fit[s]-CMSv[s][i])*fitdB[s]/ERv2[s][i];
+        if (!fixC) dCchi2 += 2*(fit[s]-CMSv[s][i])*fitdC[s]/ERv2[s][i];
         //The relevant components of Gauss-Newton's Hessian  estimate
         if (!fixA         ) H[iA       ]+=2*fitdA[s]*fitdA[s]/ERv2[s][i];
         if (!fixA && !fixB) H[iB       ]+=2*fitdA[s]*fitdB[s]/ERv2[s][i];
@@ -1710,8 +1718,6 @@ void CMSJES::FitGN()
     ++nIter;			//Advance stepper
 
     //The next iteration should use the same set of events as earlier
-    dijet->SetuseEarlierCuts(true);
-    gammajet->SetuseEarlierCuts(true);
     zjet->SetuseEarlierCuts(true);
 
   } while (nIter!=GetmaxIter()); //The fit calculation loop
@@ -1726,7 +1732,7 @@ void CMSJES::FitGN()
   double BCer_temp = (fixB||fixC?0:          Cov.GetMatrixArray()[dim*iB+iC]  );
 
   //Free memory
-  delete dijet;  delete gammajet; delete zjet;
+  delete zjet;
 
   //Obtain uncertainty histograms using this CMSJES object's MultiLoop
   cout<<"* Finding uncert. histos *"<<endl;
@@ -1827,48 +1833,32 @@ void CMSJES::Plot2D()
 void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
 {
   bool plotOurMC  = true;
-  bool plotD0MC   = false; //true;
-  bool plotD0data = false; //true;
   bool plotCMSMC   = true;
   bool plotCMSdata = true;
   bool plotFit    = true;
 
-  /*
-  plotOurMC =(MConly ?true :plotOurMC );  plotD0MC=(MConly ?true :plotD0MC);
-  plotD0data=(MConly ?false:plotD0data);  plotFit =(MConly ?false:plotFit );
-  plotCMSdata=(MConly ?false:plotCMSdata);plotCMSMC=(MConly ?true :plotCMSMC);
-  plotOurMC =(fitOnly?false:plotOurMC );  plotD0MC=(fitOnly?false:plotD0MC);
-  plotD0data=(fitOnly?true :plotD0data);  plotFit =(fitOnly?true :plotFit );
-  */
-
   //Choose filenames to open
-  string nameAdd, dijetFile, gammajetFile, zjetFile;
-  plotQuery(nameAdd, dijetFile, gammajetFile, zjetFile, gen, Nevt);
+  string nameAdd, zjetFile;
+  plotQuery(nameAdd, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
 
-  TProfile* przj=0;      TProfile* przj_f=0; TProfile* przj_pTp=0;
+  TProfile* przj=0; TProfile* przj_f=0; TProfile* przj_pTp=0;
 
   /* Z+jet */
   fzj->GetObject("prEp",przj);		//Z+jet response
   fzj->GetObject("prpTp",przj_pTp);	//Z+jet response pTp
   fzj->GetObject("prEpFit0",przj_f);	//Z+jet fit to data
-  TH1D* hzj   = przj->ProjectionX();
-  TH1D* hzj_pTp   = przj_pTp->ProjectionX();
-  TH1D* hzj_f = przj_f->ProjectionX();
-
-  //D0 data points for gamma
-  TGraphErrors* dgj = new TGraphErrors();	//gamma+jet data
-  TGraph* mc_gj = new TGraph();			//gamma+jet MC
+  TH1D* hzj     = przj->ProjectionX();
+  TH1D* hzj_pTp = przj_pTp->ProjectionX();
+  TH1D* hzj_f   = przj_f->ProjectionX();
 
   //CMS data points for Z+jet
   TGraphErrors* dzj = new TGraphErrors();	//Z+jet data
   TGraph* mc_zj = new TGraph();			//Z+jet MC
 
   //Filled circle (4 hollow circle); 1 black, 2 red, 4 blue, 3/8 green
-  dgj->SetMarkerStyle(8);    dgj->SetMarkerColor(  kGreen+2);
-  mc_gj->SetMarkerStyle(4);  mc_gj->SetMarkerColor(kGreen+2);
   dzj->SetMarkerStyle(8);    dzj->SetMarkerColor(  kGreen+2);
   mc_zj->SetMarkerStyle(4);  mc_zj->SetMarkerColor(kGreen+2);
 
@@ -1876,17 +1866,6 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   hzj_pTp->SetLineColor(kBlack);
   hzj_f->SetMarkerStyle(kFullDiamond);  
   hzj_f->SetMarkerColor(kGreen-6);
-
-
-
-  //D0 pT-balance data points and errors
-  for (int i=0; i!=nD0data; ++i) {	//D0 pT-bal data
-    dgj->SetPoint(i, gjEpII[i], gjD0II[i]);
-    dgj->SetPointError(i, 0, gjERII[i]);
-  }
-  for (int i=0; i!=nD0MC; ++i) {	//D0 pT-bal. MC
-    mc_gj->SetPoint(i, gjMCEpII[i], gjD0MCII[i]);  
-  }
 
   //CMS pT-balance data points and errors
   for (int i=0; i!=nCMSdata; ++i) {	//CMS pT-bal data
@@ -1940,10 +1919,8 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   double vertical[2] = {0.13, 0.37};
   if (MConly || fitOnly) vertical[1] -= 0.12;
   else {
-    if (!plotD0MC  ) vertical[1] -= 0.06;  //Resize legends so that...
     if (!plotCMSMC  ) vertical[1] -= 0.06;
     if (!plotOurMC ) vertical[1] -= 0.06;  //...they appear properly...
-    if (!plotD0data) vertical[0] += 0.06;  //...with all combinations ...
     if (!plotCMSdata) vertical[0] += 0.06;
     if (!plotFit   ) vertical[0] += 0.06;  //...of plot flags
   }
@@ -1951,11 +1928,9 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   lz->SetBorderSize(0);	//No box around legend
   lz->SetFillStyle( 0);	//No background fill
 
-  if (plotD0MC  )  lz->AddEntry(mc_gj,"#font[132]{D#oslash #gamma+jet MC}", "p");
   if (plotCMSMC  ) lz->AddEntry(mc_zj,"#font[132]{CMS Z+jet MC}", "p");
   if (plotOurMC )  lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}", "l");
   if (plotOurMC )  lz->AddEntry(hzj_pTp,  "#font[132]{Our Z+jet MC pTp-bins}", "l");
-  if (plotD0data)  lz->AddEntry(dgj,  "#font[132]{D#oslash #gamma+jet data}","p");
   if (plotCMSdata) lz->AddEntry(dzj,  "#font[132]{CMS Z+jet data}","p");
   if (plotFit   )  lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
 
@@ -1964,14 +1939,10 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   setup->Draw();
   if (plotOurMC )  {hzj->Draw(  "SAME"       );}
   if (plotOurMC )  {hzj_pTp->Draw(  "SAME"       );}
-  if (plotD0data)  {dgj->Draw(  "P SAME"     );}
   if (plotCMSdata) {dzj->Draw(  "P SAME"     );}
   if (plotFit   )  {hzj_f->Draw("HIST P SAME");}
-  if (plotD0MC  )  {mc_gj->Draw("P SAME"     );}
   if (plotCMSMC  ) {mc_zj->Draw("P SAME"     );}
   lz->Draw();	//Legends
-
-
 
   //Save plot
   string saveTo = "./plots/pT-bal/";
@@ -1981,15 +1952,15 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
 
   //Free memory
   delete setup;  delete lz;   delete pad1;   delete canv;
-  delete dgj;  delete mc_gj;  delete dzj;  delete mc_zj;
+  delete dzj;  delete mc_zj;
 
 } //plotPT
 //-----------------------------------------------------------------------------
 //A handle for drawing "MC only" and "Fit+data only" pT-bal. plots at once
 void CMSJES::plotSepPT() {
   int gen=0, Nevt=0;
-  string nameDum, djdummy, gjdummy, zjdummy;
-  plotQuery(nameDum, djdummy, gjdummy, zjdummy, gen, Nevt);
+  string nameDum, zjdummy;
+  plotQuery(nameDum, zjdummy, gen, Nevt);
   plotPT(gen, Nevt, true,  false);
   plotPT(gen, Nevt, false, true );
 }
@@ -1998,8 +1969,8 @@ void CMSJES::plotSepPT() {
 void CMSJES::plotMPF(int gen, int Nevt)
 {
   //Choose filenames to open
-  string nameAdd, dummyFile, gammajetFile, zjetFile;
-  plotQuery(nameAdd, dummyFile, gammajetFile, zjetFile, gen, Nevt);
+  string nameAdd, zjetFile;
+  plotQuery(nameAdd, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
@@ -2722,8 +2693,7 @@ void CMSJES::PrintEvt()
 //		gen,alg,rad,...
 //		ct,XS	Preset values if user interface omitted
 //N.B. only the interesting cases are enabled in this function ATM
-void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
-                       string& zjstr, int& gen, int& Nevt)
+void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 {
   //Init
   string respStr = "./output_ROOT_files/CMSJES_";
@@ -2748,8 +2718,6 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   else if (Nevt==6) num = "300000";
 
   //Construct all-flavor filenames
-  djstr = respStr + "dijet_"    + num + root;
-  gjstr = respStr + "gammajet_" + num + root;
   zjstr = respStr + "Zjet_"     + num + root;
 
   //Additions in filename
@@ -2773,14 +2741,14 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
   int gray  = kGray+1;  int lred = 46;  int lblue = 33;	//Light shades
 
   //Choose filenames to open
-  string nameAdd, in_d, in_g, in_z;
-  plotQuery(nameAdd, in_d, in_g, in_z, gen,Nevt);
+  string nameAdd, in_z;
+  plotQuery(nameAdd, in_z, gen,Nevt);
 
   //Check which generator was used for producing the files asked for
   string genStr="";
-  if      (in_g.find("P6")!=string::npos) genStr="P6_";
-  else if (in_g.find("P8")!=string::npos) genStr="P8_";
-  else if (in_g.find("H7")!=string::npos) genStr="H7_";
+  if      (in_z.find("P6")!=string::npos) genStr="P6_";
+  else if (in_z.find("P8")!=string::npos) genStr="P8_";
+  else if (in_z.find("H7")!=string::npos) genStr="H7_";
 
   int const Nf=3;	//#Jet flavour classes: b, g, lq
   int const Ns=1;	//#Sample types: Z+jet

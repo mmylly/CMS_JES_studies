@@ -63,7 +63,7 @@ using std::min;
 using std::ofstream;
 using std::stringstream;
 
-#define NIJ //If uncommented, sample must have prtclsnij_ -branches
+//#define NIJ //If uncommented, sample must have prtclsnij_ -branches
 
 class CMSJES {
 public :
@@ -162,19 +162,11 @@ public :
   vector<vector<double>> params_pi;	//pion
   vector<vector<double>> params_p;	//proton
 
-  //For storing D0 dijet / EM+jet data points and errors
-  static int const nD0data = 10;	//#Data points available from D0
-  static int const nCMSdata = 6;	//#Data points available from CMS
+  //For storing CMS Z+jet data points and errors
 
-  //D0 pT-balance data points and errors. dj for dijet, gj for gamma+jet
-  double djEpII[nD0data];
-  double djD0II[nD0data];
-  double djERII[nD0data];
-  double gjEpII[nD0data];
-  double gjD0II[nD0data];
-  double gjERII[nD0data];
 
   //CMS jecsys pT-balance data points and errors zj for Z+jet
+  static int const nCMSdata = 6;	//#Data points available from CMS
   double zjEp[nCMSdata];
   double zjCMS[nCMSdata];
   double zjER[nCMSdata];
@@ -185,28 +177,7 @@ public :
   double zjCMS_MPF[nCMSdata_MPF];
   double zjER_MPF[nCMSdata_MPF];
 
-  //RunIIa D0 PTB MC
-  static int const nD0MC = 13;	//#MC sim. points available from D0
-  double djMCEpII[nD0MC];	//Dijet
-  double djD0MCII[nD0MC];
-  double gjMCEpII[nD0MC];	//Gamma+jet
-  double gjD0MCII[nD0MC];
-  //D0 gamma+jet MPF MC (run unknown) R_cone=0.7
-  static int const nD0MC_MPF_R07=16;	//#MC MPF points R=0.7 from D0
-  double gjMCEp_MPF_R07[nD0MC_MPF_R07];
-  double gjD0MC_MPF_R07[nD0MC_MPF_R07];
-  //D0 gamma+jet MPF data
-  static int const nD0_MPF_R07 = 11;  //#MC MPF data points available from D0
-  double gjEp_MPF_R07[nD0_MPF_R07];
-  double gjD0_MPF_R07[nD0_MPF_R07];
-  //D0 gamma+jet MPF ALT MC (run and R_cone unknown)
-  static int const nD0MC_MPF=11;	//#MC MPF points from D0
-  double gjMCEp_MPF[nD0MC_MPF];
-  double gjD0MC_MPF[nD0MC_MPF];
-  double djMCEp_MPF[nD0MC_MPF];
-  double djD0MC_MPF[nD0MC_MPF];
-
-  // Similar for CMS Z+jet with invented values
+  //CMS MC Z+jet with invented values
   static int const nCMSMC = 6;	
   double zjMCEp[nCMSMC];	
   double zjCMSMC[nCMSMC];
@@ -236,8 +207,6 @@ public :
   bool printProg = true;	//Print info on Loop() progress?
   bool useEarlierCuts  = false;	//True if events chosen based on readEvt
   bool useInitGuessABC = false;	//Use initial guess A,B,C; for starting fits
-  bool djFitting = false;	//Use EM+jet ("dijet") data points for fitting
-  bool gjFitting = false;	//Use gamma+jet data points for fitting
   bool zjFitting = true;	//Use Z+jet data points for fitting
   double epsilon = 0.01;	//Small step to take along gradient
   double epsilonMin = 1e-6;	//Fit converged when step smaller than this
@@ -265,8 +234,6 @@ public :
   void Setepsilon(   double val) {epsilon = val;}
   void SetepsilonMin(double val) {epsilonMin = val;}
   void SetuseEarlierCuts(bool flag) {useEarlierCuts = flag;}
-  void SetdjFitting( bool flag) {djFitting = flag;}
-  void SetgjFitting( bool flag) {gjFitting = flag;}
   void SetzjFitting( bool flag) {zjFitting = flag;}
   void SetrunCMS( bool flag)    {runCMS = flag;}
   void SetprintProg( bool flag) {printProg = flag;}
@@ -296,8 +263,6 @@ public :
   double Getepsilon()    {return epsilon;}
   double GetepsilonMin() {return epsilonMin;}
   bool GetuseEarlierCuts() {return useEarlierCuts;}
-  bool GetdjFitting() {return djFitting;}
-  bool GetgjFitting() {return gjFitting;}
   bool GetzjFitting() {return zjFitting;}
   bool GetrunCMS() {return runCMS;}
   bool GetprintProg() {return printProg;}
@@ -330,7 +295,7 @@ public :
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
   void   FitGN();		//Gauss-Newton fit function
-  void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
+  void   MultiLoop(CMSJES* zj_in=NULL, bool fitPars=true);
   void   plotPT(int gen=0,int Nevt=-1, bool MConly=false, bool fitOnly=false);
   void   plotSepPT();
   void   plotMPF(int gen=0, int Nevt=-1);
@@ -340,8 +305,7 @@ public :
                   double& retMC, double& retFIT, double& retEM);
   void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);
   void   flavCorr(bool plot=true, int gen=0, int Nevt=-1);
-  void   plotQuery(string& respStr, string& djstr,  string& gjstr, string& zjstr, 
-                   int& gen, int& Nevt);
+  void   plotQuery(string& respStr, string& zjstr, int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-
@@ -436,26 +400,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   /* Read D0 data and MC points */
 
-  ifstream inPTBdata_dj_a;   ifstream inPTBMC_dj_a;   //RunIIa dijet
-  ifstream inPTBdata_gj_a;   ifstream inPTBMC_gj_a;   // -||-  gammajet
-
   ifstream inPTBdata_zj;     ifstream inPTBMC_zj;     //CMS jecdata pT Z+jet
   ifstream inMPFdata_zj;     ifstream inMPFMC_zj;     //CMS jecdata MPF  Z+jet
-
-  ifstream inMPFdata_gj;     ifstream inMPFMC_gj;     //MPF gammajet, run NA
-  ifstream inMPFdata_dj;     ifstream inMPFMC_dj;
-  ifstream inMPFdata_gj_R07; ifstream inMPFMC_gj_R07;
-  //RunIIa pT-balance
-  inPTBdata_dj_a.open("./data_and_MC_input/pTbal/runIIa/dijet_data");
-  inPTBdata_gj_a.open("./data_and_MC_input/pTbal/runIIa/gammajet_data");
-  inPTBMC_dj_a.open(  "./data_and_MC_input/pTbal/runIIa/dijet_MC");
-  inPTBMC_gj_a.open(  "./data_and_MC_input/pTbal/runIIa/gammajet_MC");
-
-  //MPF
-  inMPFdata_gj_R07.open("./data_and_MC_input/MPF/D0/MPF_gammajet_data_R07");
-  inMPFMC_gj_R07.open("./data_and_MC_input/MPF/D0/MPF_gammajet_MC_R07");
-  inMPFMC_dj.open("./data_and_MC_input/MPF/D0/MPF_dijet_MC");
-  inMPFMC_gj.open("./data_and_MC_input/MPF/D0/MPF_gammajet_MC");
 
   //CMS jecdataGH pT-balance
   inPTBdata_zj.open("./data_and_MC_input/pTbal/jecdataGH/zmmjet_data");
@@ -469,33 +415,19 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   //When D0 MPF detector data and MC points for different run epochs found,
   //support for them can be added here as above
 
-  if (!inPTBdata_dj_a.is_open()   || !inPTBMC_dj_a.is_open()   ||
-      !inPTBdata_gj_a.is_open()   || !inPTBMC_gj_a.is_open()   ||
-      !inPTBdata_zj.is_open()     || !inPTBMC_zj.is_open()     ||
-      !inMPFdata_zj.is_open()     || !inMPFMC_zj.is_open()     ||
-      !inMPFMC_dj.is_open()       || !inMPFMC_gj.is_open()     ||
-      !inMPFdata_gj_R07.is_open() || !inMPFMC_gj_R07.is_open()   )
+  if (!inPTBdata_zj.is_open() || !inPTBMC_zj.is_open() ||
+      !inMPFdata_zj.is_open() || !inMPFMC_zj.is_open()  )
   {
     cout << "Error opening D0/CMS data/MC point files!" << endl;
     return;
   }
   
-  for (int step=0; step != nD0data; ++step) {	//D0 pT-balance data
-    inPTBdata_dj_a   >> djEpII[step] >> djD0II[step] >> djERII[step];
-    inPTBdata_gj_a   >> gjEpII[step] >> gjD0II[step] >> gjERII[step];
-  }
-  for (int step=0; step != nD0MC; ++step) {	//D0 pT-balance MC points
-    inPTBMC_dj_a   >> djMCEpII[step] >> djD0MCII[step];
-    inPTBMC_gj_a   >> gjMCEpII[step] >> gjD0MCII[step];
-  }
-
   for (int step=0; step != nCMSdata; ++step) {	//CMS pT-balance data
     inPTBdata_zj   >> zjEp[step] >> zjCMS[step] >> zjER[step];
   }
   for (int step=0; step != nCMSMC; ++step) {	//CMS pT-balance MC points
     inPTBMC_zj   >> zjMCEp[step] >> zjCMSMC[step] >> zjCMSMCER[step];
   }
-
   for (int step=0; step != nCMSdata_MPF; ++step) {	//CMS jecsys MPF data
     inMPFdata_zj   >> zjEp_MPF[step] >> zjCMS_MPF[step] >> zjER_MPF[step];
   }
@@ -503,28 +435,11 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     inMPFMC_zj   >> zjMCEp_MPF[step] >> zjCMSMC_MPF[step] >> zjCMSMCER_MPF[step];
   }
 
-  for (int step=0; step != nD0_MPF_R07; ++step) {	//MPF data points
-    inMPFdata_gj_R07 >> gjEp_MPF_R07[step] >> gjD0_MPF_R07[step];
-  }
-  for (int step=0; step != nD0MC_MPF_R07; ++step) {	//MPF MC points
-    inMPFMC_gj_R07 >> gjMCEp_MPF_R07[step] >> gjD0MC_MPF_R07[step];
-  }
-  for (int step=0; step != nD0MC_MPF; ++step) {	//MPF MC points
-    inMPFMC_gj >> gjMCEp_MPF[step] >> gjD0MC_MPF[step];
-    inMPFMC_dj >> djMCEp_MPF[step] >> djD0MC_MPF[step];
-  }
-
-  //Close the D0 MC / data point files
-  inPTBdata_dj_a.close();    
-  inPTBdata_gj_a.close();
+  //Close the CMS MC / data point files
   inPTBdata_zj.close(); 
   inMPFdata_zj.close();
-  inPTBMC_dj_a.close();      
-  inPTBMC_gj_a.close();
   inPTBMC_zj.close();
   inMPFMC_zj.close(); 
-  inMPFdata_gj_R07.close();  inMPFMC_gj_R07.close();
-  inMPFMC_dj.close();        inMPFMC_gj.close();
 
   /* Read params from files to matrices */
 
