@@ -11,28 +11,21 @@ int main() {
   //Available modes
   // 0: Loop single sample
   // 1: MultiLoop (multithreading: similar gamma+jet and b-enriched samples)
-  // 2: FindFJtoMC
-  // 3: Fit
-  // 4: run many samples and produce their plots at once
-  // 5: Loop() + flavCorr for debug
+  // 2: Fit
+  // 3: run many samples and produce their plots at once
+  // 4: Loop() + flavCorr for debug
   int mode = 4;
 
   switch (mode) {
     case 0 : d.Loop();       break;
     case 1 : d.MultiLoop();  break;
-    case 2 :	//IMPORTANT: you ought to choose a dijet file w/o/ eta cuts!
-      //RunIIa
-      d.FindFJtoMC();
-      break;
+    case 2 : d.FitGN();      break;
     case 3 :
-      d.FitGN();
+      d.flavCorr(true, 3, -1);
+      d.plotPT(3, -1, false, false);
+      d.plotMPF(3,-1);
       break;
     case 4 :
-      //d.flavCorr(true, 3, 0);
-      //d.plotPT(3, 0, false, false);
-      d.plotMPF(3,0);
-      break;
-    case 5 :
       d.Loop();
       d.flavCorr(true, 3, 0);
       break;

@@ -66,6 +66,7 @@ void CMSJES::Loop()
 
   EpTitle += ";E' [GeV];p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prEp    = new TProfile("prEp", EpTitle.c_str(),      nbins-1,binsx);
+  TProfile* prpTp    = new TProfile("prpTp", EpTitle.c_str(),      nbins-1,binsx);
   TProfile* prEpFit = new TProfile("prEpFit0", EpTitle.c_str(),  nbins-1,binsx);
 
   ETitle += ";E_{probe} [GeV];p_{T}^{probe}/p_{T}^{tag}";
@@ -75,6 +76,7 @@ void CMSJES::Loop()
 
   EpMPFTitle += ";E' [GeV];R_{MPF}";
   TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPF_pTp = new TProfile("prMPF_pTp", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPF_EpFit = new TProfile("prMPF_EpFit", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
@@ -292,6 +294,7 @@ void CMSJES::Loop()
   TLorentzVector NIJ_g;		//Gen lvl 4-vec sum of prtcls Not In Jets
   TLorentzVector NIJ_r;		//MC-reco lvl  -||-
   TLorentzVector NIJ_f;		//Fit reco lvl -||-
+  TLorentzVector MET_g;
   TLorentzVector MET_r;		//MET for MPF response (MC reco)
   TLorentzVector MET_f;		//         -||-        (fitted param reco)
   
@@ -457,10 +460,12 @@ void CMSJES::Loop()
     p4r_probe.SetPtEtaPhiE(0,0,0,0);      p4r_tag.SetPtEtaPhiE(0,0,0,0);
     p4f_probe.SetPtEtaPhiE(0,0,0,0);      p4f_tag.SetPtEtaPhiE(0,0,0,0);
     p4EM_tag.SetPtEtaPhiE(0,0,0,0);
-    NIJ_g.SetPtEtaPhiE(0,0,0,0);          
+    NIJ_g.SetPtEtaPhiE(0,0,0,0);
     NIJ_r.SetPtEtaPhiE(0,0,0,0);
     NIJ_f.SetPtEtaPhiE(0,0,0,0);
-    MET_r.SetPtEtaPhiE(0,0,0,0);          MET_f.SetPtEtaPhiE(0,0,0,0);
+    MET_g.SetPtEtaPhiE(0,0,0,0);
+    MET_r.SetPtEtaPhiE(0,0,0,0);
+    MET_f.SetPtEtaPhiE(0,0,0,0);
     jets_g.clear();     jets_r.clear();   jets_f.clear();
     Fden.clear();       Fnum.clear();  
     njets = (unsigned long)jet_pt->size();
@@ -655,6 +660,8 @@ void CMSJES::Loop()
 
     if (Getverbose()) cout<<"Reconstructing particles not in jets"<<endl;
 
+    //double avgResp = 0.0;
+
     //Reconstruct prtcls in nij vecs if any saved in tuple and flag true 
     if (GetrecoMissing() && prtclnij_pt->size()!=0) {
 
@@ -674,6 +681,10 @@ void CMSJES::Loop()
         NIJ_r+=p4*resp;
         NIJ_f+=p4*resp_f;
 
+        // Try different MPF equation
+        //avgResp += resp; 
+
+
         /*
         if (i == (prtclnij_pt->size()-1) ) {
           cout << "Event: " << jentry << endl;
@@ -683,6 +694,7 @@ void CMSJES::Loop()
         }*/
 
       } //Loop particles not in jets
+      //avgResp /= prtclnij_pt->size(); 
     } 
     /*
     if (!GetrecoMissing()) {	//Reco from jet inbalance 
@@ -783,7 +795,8 @@ void CMSJES::Loop()
       //Assertions:
       //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
       if ((p4r_probe.Pt()<softPt && f_05[i_probe] < f_05jetMinS) ||
-                                    f_05[i_probe] < f_05jetMin) continue;
+                                    f_05[i_probe] < f_05jetMin) {continue;
+       cout << "f_05" << endl;}
       
 
       //-tag and probe in the right |eta| region with enough p_T
@@ -928,6 +941,7 @@ void CMSJES::Loop()
     //Add the new values to TProfile histograms:
     //p_T balance method
     prEp->Fill(    Ep,            p4r_probe.Pt()/p4r_tag.Pt(), weight);
+    prpTp->Fill(    pTp,            p4r_probe.Pt()/p4r_tag.Pt(), weight);
     prE->Fill(     p4g_probe.E(), p4r_probe.Pt()/p4r_tag.Pt(), weight);
     prEpFit->Fill( Ep,            p4f_probe.Pt()/p4r_tag.Pt(), weight);
 
@@ -948,10 +962,16 @@ void CMSJES::Loop()
     if (!isnan(dCfTMP)) dCf->Fill(Ep, dCfTMP, weight);
 
     //MPF method
-    MET_r = NIJ_r;
-    MET_f = NIJ_f;
+    MET_g = -1*NIJ_g;
+    MET_r = -1*NIJ_r;
+    MET_f = -1*NIJ_f;
 
-    //cout << "Dot: " << MET_r.Dot(tag) << endl;
+    //cout << "Event: " << jentry << endl;
+    //cout << "Pt: " << MET_r.Pt() << " Eta: " << MET_r.Eta() << " Phi: " << MET_r.Phi() << " E: " << MET_r.E() << endl;
+    //cout << "Pt: " << NIJ_r.Pt() << " Eta: " << NIJ_r.Eta() << " Phi: " << NIJ_r.Phi() << " E: " << NIJ_r.E() << endl;
+    //cout << "Px: " << MET_r.Px() << " Py: " << MET_r.Py() << endl;
+    //cout << "Px: " << NIJ_r.Px() << " Py: " << NIJ_r.Py() << endl;
+
 
     //for (int i=0; i!=jets_r.size(); ++i) {
     //  if (studyMode==1 && i!=i_tag) {
@@ -959,25 +979,27 @@ void CMSJES::Loop()
     //    MET_f -= jets_f[i];
     //  }
     //}
-    //cout << "Px: " << MET_r.Px() << " Py: " << MET_r.Py() <<  " Pz: " << MET_r.Pz() 
-    //<< " Pt: " << MET_r.Pt() << " P: " << MET_r.P() << endl;
-
-
-    //R_MPF_r = 1.0 + MET_r.Dot(p4r_tag) / pow((p4r_tag.Pt()),2);
-    //R_MPF_f = 1.0 + MET_f.Dot(p4f_tag) / pow((p4f_tag.Pt()),2);  
-
+    
+    // From Mikko's slides
     R_MPF_r = 1.0 + (MET_r.Px()*p4r_tag.Px() + MET_r.Py()*p4r_tag.Py()) / pow((p4r_tag.Pt()),2);
     R_MPF_f = 1.0 + (MET_f.Px()*p4f_tag.Px() + MET_f.Py()*p4f_tag.Py()) / pow((p4f_tag.Pt()),2);
 
-    //cout << "My dot: " << MET_f.Px()*p4f_tag.Px() + MET_f.Py()*p4f_tag.Py() << endl;
+    // From Determination of... 
+    //R_MPF_r = avgResp + (MET_g.Px()*p4g_tag.Px() + MET_g.Py()*p4g_tag.Py()) / pow((p4g_tag.Pt()),2);
+
+
+    // Two ways to calculate the dot product
+    //cout << "My dot: " << MET_r.Px()*p4r_tag.Px() + MET_r.Py()*p4r_tag.Py() << endl;
+    //cout << "cos dot: " << fabs(p4r_tag.Pt())*fabs(MET_r.Pt())*cos(p4r_tag.DeltaPhi(MET_r)) << endl;
 
     //R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
     //R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
     //Fill MPF histograms
-    prMPF_Ep->Fill(   Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
+    prMPF_Ep->Fill(Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
 
+    prMPF_pTp->Fill(pTp, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
     //                   SUCH AS MC-DATA CORRECTION FACTORS F
@@ -1220,148 +1242,6 @@ void CMSJES::Loop()
 
 } //CMSJES::Loop
 
-
-//-----------------------------------------------------------------------------
-//A function to find an average correction factor from gen jet (as output by
-//FastJet) level to MC-recontructed level.
-//  N.B. This function is intended to be used on dijet samples w/o/ eta cuts
-void CMSJES::FindFJtoMC() {
-
-  Long64_t nbytes = 0, nb = 0;
-  if (fChain == 0) return;
-  Long64_t nentries = fChain->GetEntriesFast();
-
-  //Output file
-  string outname = "./output_ROOT_files/FJtoMC/";
-  string printname = "FJtoMC_";
-  outname = outname + printname + ".root";	//Filetype suffix
-  TFile *fout = new TFile(outname.c_str(),"RECREATE");
-
-  //Init.
-  TLorentzVector p4;			//Prtcl 4-momentum temp
-  TLorentzVector jet_r; 		//MC-reco'd jet
-  TLorentzVector jet_g; 		//Gen jet as output by FastJet
-  TLorentzVector jet_g_no_nu; 		//Gen jet w/o/ neutrinos
-  TLorentzVector tag; 			//Store prompt photon in gamma+jet
-  double R_MC =1.0;	//For storing responses...
-  double R_FIT=1.0;	//...at different...
-  double R_EM =1.0;	//...reconstruction levels
-  int PDG;				//Particle PDGID temp
-  double prtnPt=0;			//For finding photon w/ highest pT (g+j)
-  int i_tag = -1;			//Temp for tag photon prtn index (g+j)
-  double Fden=0;			//F denominator: sum_j R_i^MC   E_i^g
-  double Fnum=0;			//F numerator:   sum_i R_i^data E_i^g
-  
-  //Response functions, see CMSJES::Loop() for more info
-  TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x/0.75,[2]+[4]-1))",0,250);
-  string Rgam = "0.25*[0]*( 1 + erf( (x + [1])/sqrt(2*[2]*[2]) ) )";
-  Rgam +=               "*( 1 + erf( (x + [3])/sqrt(2*[4]*[4]) ) ) + [5]";
-  TF1* fr_gam = new TF1("frg",Rgam.c_str(),0.1,251);
-  string Re = "0.25*[0]*( 1 + erf( (x + [1])/sqrt(2*[2]*[2]) ) )";
-  Re +=               "*( 1 + erf( (x + [3])/sqrt(2*[4]*[4]) ) )";
-  TF1* fr_e  = new TF1("fre", Re.c_str(),0.1,251);
-  TF1* fr_mu = new TF1("frmu","([0]+[1]*x)*TMath::Landau(x,[2],[3])",0,251);
-  TF1* fr;
-
-  //Correction factors from FastJet gen lvl to MC reco level
-  //TProfile2D params: name, title, nbinsx, xlow, xup, nbinsy, ylow, yup, opts.
-  TProfile2D* FJtoMC_b  = new TProfile2D("b", "", 12,20,200, 8, 0,2.5, "");
-  TProfile2D* FJtoMC_lq = new TProfile2D("lq","", 18,20,200, 25, 0,2.5, "");
-  TProfile2D* FJtoMC_b_no_nu  = new TProfile2D("b_no_nu","",
-                                                  12,20,200, 8, 0,2.5, "");
-  TProfile2D* FJtoMC_lq_no_nu = new TProfile2D("lq_no_nu","",
-                                                  18,20,200, 25, 0,2.5, "");
-  FJtoMC_b->SetStats( 0);      FJtoMC_b_no_nu->SetStats( 0);
-  FJtoMC_lq->SetStats(0);      FJtoMC_lq_no_nu->SetStats(0);
-  axisSetupFJtoMC(FJtoMC_b,       "#font[12]{b}#font[132]{-jets, }");
-  axisSetupFJtoMC(FJtoMC_b_no_nu ,"#font[12]{b}#font[132]{-jets, no} #nu,");
-  axisSetupFJtoMC(FJtoMC_lq,      "#font[12]{lq}#font[132]{-jets, }");
-  axisSetupFJtoMC(FJtoMC_lq_no_nu,"#font[12]{lq}#font[132]{-jets,no} #nu, ");
-
-  //Loop Tree entries = events
-  for (Long64_t jentry=0; jentry<nentries; jentry++) {
-
-    //Print progress for long runs
-    if (jentry%10000==0) cout<<"Looping event "<<jentry<<" (FJtoMC)"<<endl;
-
-    Long64_t ientry = LoadTree(jentry);	//Load event
-    if (ientry < 0) break;		//When no more events
-    nb = fChain->GetEntry(jentry);   nbytes += nb;
-
-    //Study the leading jet (in a loop for ease of extending to more if need be)
-    for (int ijet = 0; ijet != min(1,int(jet_e->size())); ++ijet) {
-      //Reinit
-      jet_r.SetPtEtaPhiE(0,0,0,0);        jet_g.SetPtEtaPhiE(0,0,0,0);
-      jet_g_no_nu.SetPtEtaPhiE(0,0,0,0);  Fnum=0;    Fden=0;
-
-      //Loop over particles associated with jets in the event
-      for (unsigned int i = 0; i != prtcl_pdgid->size(); ++i) {
-        //See if the particle belongs to this jet
-        if ((*prtcl_jet)[i] == ijet) {
-          PDG=abs((*prtcl_pdgid)[i]);
-          p4.SetPtEtaPhiE( (*prtcl_pt)[i],  (*prtcl_eta)[i],
-                           (*prtcl_phi)[i], (*prtcl_e)[i]  );
-          Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,
-                   true,1,0,1,true,false,false,R_MC,R_FIT,R_EM       );
-          jet_r += R_MC*p4;
-          if (isNeutrino(PDG)) jet_g_no_nu += p4; //gen lvl 4-mom for neutrinos
-          Fnum += R_MC*p4.E(); // poista
-          Fden += R_MC*p4.E();
-	}
-      } //Loop particles
-
-      //Find correction factor from FastJet jets to avg. MC-reco jets.
-      jet_g.SetPtEtaPhiE((*jet_pt)[0], (*jet_eta)[0],  //FJ-lvl gen jet
-                         (*jet_phi)[0],(*jet_e)[0]  );
-      jet_g_no_nu = jet_g - jet_g_no_nu; //gen lvl 4-mom w/o/ neutrinos
-
-      //Loop partons to find jet flavour
-      for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
-        //prtn_tag=0 for outgoing hard process partons
-        if ((*prtn_jet)[j]==0 && (*prtn_tag)[j]==0) {
-          if (abs((*prtn_pdgid)[j])<5) {		//lq-jets
-            FJtoMC_lq->Fill(jet_g.Pt(),jet_g.Eta(),
-                       Fnum*jet_r.Pt()/(Fden*jet_g.Pt()),             weight);
-            FJtoMC_lq_no_nu->Fill(jet_g_no_nu.Pt(),jet_g_no_nu.Eta(),
-                             Fnum*jet_r.Pt()/(Fden*jet_g_no_nu.Pt()), weight);
-          } else if (abs((*prtn_pdgid)[j])==5) {	//b-jets
-            FJtoMC_b->Fill(jet_g.Pt(),jet_g.Eta(),
-                      Fnum*jet_r.Pt()/(Fden*jet_g.Pt()),              weight);
-            FJtoMC_b_no_nu->Fill(jet_g_no_nu.Pt(),jet_g_no_nu.Eta(),
-                            Fnum*jet_r.Pt()/(Fden*jet_g_no_nu.Pt()),  weight);
-          }
-        } //Find hard process partons
-      } //Loop partons
-    } //Loop jets
-  } //Loop events
-
-  //Plots
-  TCanvas canv("","",400,400);
-
-  FJtoMC_b->Draw("SURF 3");
-  string printname_b  = "./plots/" + printname + "_b.eps";
-  canv.Print(printname_b.c_str());
-
-  FJtoMC_lq->Draw("SURF 3");
-  string printname_lq = "./plots/" + printname + "_lq.eps";
-  canv.Print(printname_lq.c_str());
-
-  FJtoMC_b_no_nu->Draw("SURF 3");
-  string printname_b_no_nu  = "./plots/" + printname + "_b_no_nu.eps";
-  canv.Print(printname_b_no_nu.c_str());
-
-  FJtoMC_lq_no_nu->Draw("SURF 3");
-  string printname_lq_no_nu = "./plots/" + printname + "_lq_no_nu.eps";
-  canv.Print(printname_lq_no_nu.c_str());
-
-  //Free memory
-  delete fr_e;  delete fr_mu;  delete fr_gam;  delete fr_h;
-
-  //Save output ROOT file
-  fout->Write();
-  fout->Close();
-
-} //FindFJtoMC
 //-----------------------------------------------------------------------------
 //A function to check if gen-lvl particles are good for D0 particle level,
 //i.e. no neutrinos, muons or strange hadrons.
@@ -1968,12 +1848,14 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
 
-  TProfile* przj=0;      TProfile* przj_f=0;
+  TProfile* przj=0;      TProfile* przj_f=0; TProfile* przj_pTp=0;
 
   /* Z+jet */
   fzj->GetObject("prEp",przj);		//Z+jet response
+  fzj->GetObject("prpTp",przj_pTp);	//Z+jet response pTp
   fzj->GetObject("prEpFit0",przj_f);	//Z+jet fit to data
   TH1D* hzj   = przj->ProjectionX();
+  TH1D* hzj_pTp   = przj_pTp->ProjectionX();
   TH1D* hzj_f = przj_f->ProjectionX();
 
   //D0 data points for gamma
@@ -1991,6 +1873,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   mc_zj->SetMarkerStyle(4);  mc_zj->SetMarkerColor(kGreen+2);
 
   hzj->SetLineColor(kGreen+2);
+  hzj_pTp->SetLineColor(kBlack);
   hzj_f->SetMarkerStyle(kFullDiamond);  
   hzj_f->SetMarkerColor(kGreen-6);
 
@@ -2071,6 +1954,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   if (plotD0MC  )  lz->AddEntry(mc_gj,"#font[132]{D#oslash #gamma+jet MC}", "p");
   if (plotCMSMC  ) lz->AddEntry(mc_zj,"#font[132]{CMS Z+jet MC}", "p");
   if (plotOurMC )  lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}", "l");
+  if (plotOurMC )  lz->AddEntry(hzj_pTp,  "#font[132]{Our Z+jet MC pTp-bins}", "l");
   if (plotD0data)  lz->AddEntry(dgj,  "#font[132]{D#oslash #gamma+jet data}","p");
   if (plotCMSdata) lz->AddEntry(dzj,  "#font[132]{CMS Z+jet data}","p");
   if (plotFit   )  lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
@@ -2079,6 +1963,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   //Main plot
   setup->Draw();
   if (plotOurMC )  {hzj->Draw(  "SAME"       );}
+  if (plotOurMC )  {hzj_pTp->Draw(  "SAME"       );}
   if (plotD0data)  {dgj->Draw(  "P SAME"     );}
   if (plotCMSdata) {dzj->Draw(  "P SAME"     );}
   if (plotFit   )  {hzj_f->Draw("HIST P SAME");}
@@ -2119,15 +2004,17 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
   TFile* fzj = TFile::Open(zjetFile.c_str());
-  //TProfile *przj_MPF_D0=0, *przj_MPF=0, *przj_MPF_f=0;  //Z+jet (_f = fit)
-  TProfile *przj_MPF=0, *przj_MPF_f=0;
+  TProfile *przj_MPF=0, *przj_MPF_f=0, *przj_MPF_pTp=0;
 
   /* 1: Z+jet */
   fzj->GetObject("prMPF_Ep"   ,przj_MPF);
   fzj->GetObject("prMPF_EpFit",przj_MPF_f);
+  fzj->GetObject("prMPF_pTp"  ,przj_MPF_pTp);
 
   TH1D* hzj_MPF    = przj_MPF->ProjectionX();
   TH1D* hzj_MPF_f  = przj_MPF_f->ProjectionX();
+  TH1D* hzj_MPF_pTp= przj_MPF_pTp->ProjectionX();
+
   //CMS data and MC points
   TGraph* mc_zj_MPF=new TGraph(); TGraph* d_zj_MPF=new TGraph(); //Z+jet MPF
 
@@ -2136,13 +2023,10 @@ void CMSJES::plotMPF(int gen, int Nevt)
     d_zj_MPF->SetPoint(i,zjEp_MPF[i],zjCMS_MPF[i]);
   }
 
-
-
   //CMS Z+jet MPF MC simulation points
   for (int i=0; i!=nCMSMC_MPF; ++i) {
     mc_zj_MPF->SetPoint(i, zjMCEp_MPF[i], zjCMSMC_MPF[i]);  
   }
-
 
   //Canvas
   TCanvas* canv_MPF = new TCanvas("MPF","",500,500);
@@ -2150,7 +2034,9 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //Style setup
   hzj_MPF->SetLineColor(     kBlack);
-  mc_zj_MPF->SetMarkerStyle( kOpenCircle);  mc_zj_MPF->SetMarkerColor(kBlack  );
+  hzj_MPF_pTp->SetLineColor( kGreen);
+  mc_zj_MPF->SetMarkerStyle( kOpenCircle);  
+  mc_zj_MPF->SetMarkerColor( kBlack  );
 
   przj_MPF_f->SetMarkerStyle(kFullDiamond); // Not Drawn
   przj_MPF_f->SetMarkerColor(kGray+1);      // Not Drawn
@@ -2163,6 +2049,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
   TLegend* lz_MPF = new TLegend(0.52,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
   lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
+  lz_MPF->AddEntry(hzj_MPF_pTp, "#font[132]{Our Z+jet MPF MC with pTp binning}", "l");
   lz_MPF->AddEntry(hzj_MPF_f, "#font[132]{Our Z+jet MPF MC fit}", "p");
   lz_MPF->AddEntry(d_zj_MPF,  "#font[132]{CMS jecsys Z+jet MPF data}", "p");
   lz_MPF->AddEntry(mc_zj_MPF, "#font[132]{CMS jecsys Z+jet MPF MC}", "p");
@@ -2184,14 +2071,15 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
 
   //Savefile name setup
-  string savename = "./plots/MPF_zmmjet";
+  string savename = "./plots/mpf/MPF_zmmjet";
   string MPFtitle = hzj_MPF->GetTitle();
   cout << MPFtitle << endl;
   savename+=".eps";
 
   //Plot
   hzj_MPF->Draw();
-  hzj_MPF_f->Draw("HISTO P SAME");
+  hzj_MPF_pTp->Draw("SAME");
+  //hzj_MPF_f->Draw("HISTO P SAME"); // Fit now disabled from the plot
   mc_zj_MPF->Draw("P SAME");
   d_zj_MPF->Draw("P SAME");
   lz_MPF->Draw();
@@ -2214,19 +2102,7 @@ void axisSetup(TAxis* xAxis, TAxis* yAxis, string Xtitle, string Ytitle) {
   xAxis->SetTitleSize(18);
   xAxis->SetTitleOffset(0.9);
 }
-//-----------------------------------------------------------------------------
-/* A handle to set up TProfile2D object axis in FindFJtoMC */
-void CMSJES::axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd) {
-  string title = titleAdd + " #font[132]{MC vs gen, ";
-  title += "}";
-  FJtoMC->SetTitle(title.c_str());
-  FJtoMC->GetXaxis()->SetTitle("#font[132]{#font[12]{p}_{T,jet}^{FJ}}");
-  FJtoMC->GetYaxis()->SetTitle("#font[132]{|#font[12]{#eta}_{jet}^{FJ}|}");
-  FJtoMC->GetZaxis()->SetTitle("#font[132]{#font[12]{p}_{T,MC-jet}/#font[12]{p}_{T,FJ-jet}}");
-  FJtoMC->GetXaxis()->SetTitleOffset(1.8);
-  FJtoMC->GetYaxis()->SetTitleOffset(2.0);
-  FJtoMC->GetZaxis()->SetTitleOffset(1.45);
-}
+
 //-----------------------------------------------------------------------------
 /* A handle to axisSetup for TH1D objects */
 void histoSetup(TH1D* h, string Xtitle, string Ytitle) {
@@ -2851,7 +2727,7 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
 {
   //Init
   string respStr = "./output_ROOT_files/CMSJES_";
-  string root = ".root";	//File suffix
+  string root = ".root";
 
   /* User interface */
   //Choose generator
@@ -2860,16 +2736,16 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   respStr += (gen==3 ? "P8_": (gen==1 ? "P6_": (gen==2 ? "H7_" : "")));
 
   //Set #events
-  string num = "100000";
-  cout << "#Events (1) 1k (2) 10k (3) 100k (4) 500k (5) 3k (6) 30k (7) 300k" << endl;
-  while (Nevt<1 || Nevt>7) cin >> Nevt;
-  if      (Nevt==1) num = "1000";
-  else if (Nevt==2) num = "10000";
-  else if (Nevt==3) num = "100000";
-  else if (Nevt==4) num = "500000";
-  else if (Nevt==5) num = "3000";
-  else if (Nevt==6) num = "30000";
-  else if (Nevt==7) num = "300000";
+  string num;
+  cout << "#Events (0) 1k (1) 10k (2) 100k (3) 500k (4) 3k (5) 30k (6) 300k" << endl;
+  while (Nevt<0 || Nevt>7) cin >> Nevt;
+  if      (Nevt==0) num = "1000";
+  else if (Nevt==1) num = "10000";
+  else if (Nevt==2) num = "100000";
+  else if (Nevt==3) num = "500000";
+  else if (Nevt==4) num = "3000";
+  else if (Nevt==5) num = "30000";
+  else if (Nevt==6) num = "300000";
 
   //Construct all-flavor filenames
   djstr = respStr + "dijet_"    + num + root;
@@ -2879,7 +2755,6 @@ void CMSJES::plotQuery(string& nameAdd, string& djstr, string& gjstr,
   //Additions in filename
   nameAdd = num;
 } //plotQuery
-
 
 
 //A function to find and plot flavor dependent correction factors.

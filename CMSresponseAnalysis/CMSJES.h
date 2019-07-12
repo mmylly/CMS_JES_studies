@@ -324,24 +324,22 @@ public :
   //Other memeber functions
   virtual void     InputNameConstructor();
   virtual void     Loop();
-  virtual void     FindFJtoMC();
   virtual void     Plot2D();
   virtual void     StudyTree();
   virtual void     PrintEvt();
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
-  void   axisSetupFJtoMC(TProfile2D* FJtoMC, string titleAdd);
   void   FitGN();		//Gauss-Newton fit function
   void   MultiLoop(CMSJES* dj_in=NULL, CMSJES* gj_in=NULL, bool fitPars=true);
-  void   plotPT(int gen=0,int Nevt=0, bool MConly=false, bool fitOnly=false);
+  void   plotPT(int gen=0,int Nevt=-1, bool MConly=false, bool fitOnly=false);
   void   plotSepPT();
-  void   plotMPF(int gen=0, int Nevt=0);
+  void   plotMPF(int gen=0, int Nevt=-1);
   void   Response(int id, double pseudorap, double energy,   double pT,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
                   double& retMC, double& retFIT, double& retEM);
   void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);
-  void   flavCorr(bool plot=true, int gen=0, int Nevt=0);
+  void   flavCorr(bool plot=true, int gen=0, int Nevt=-1);
   void   plotQuery(string& respStr, string& djstr,  string& gjstr, string& zjstr, 
                    int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);
@@ -404,9 +402,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       files.push_back("P8_Zjet_10000" );
       files.push_back("P8_Zjet_100000");
       files.push_back("P8_Zjet_500000");
-      files.push_back("P8_Zjet_300000");
+      files.push_back("P8_Zjet_3000");
       files.push_back("P8_Zjet_30000");
-      files.push_back("P8_Zjet_3000"); 
+      files.push_back("P8_Zjet_300000");
+
       //User interface
       printf("No filename given, choose file (y = default file):\n");
       for (int i=0; i!=files.size(); ++i) {
