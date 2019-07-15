@@ -63,7 +63,7 @@ using std::min;
 using std::ofstream;
 using std::stringstream;
 
-//#define NIJ //If uncommented, sample must have prtclsnij_ -branches
+#define NIJ //If uncommented, sample must have prtclsnij_ -branches
 
 class CMSJES {
 public :
@@ -76,12 +76,9 @@ public :
   TTree* fChain;	//Pointer to the analyzed TTree or TChain
   Int_t  fCurrent;	//Current Tree number in a TChain
 
-  string gjFile="";	//gamma+jet filename compatible with this object
-  string djFile="";	//EM+jet -||-
   string zjFile="";	//Z+jet -||-
 
-// Fixed size dimensions of array or collections stored in the TTree if any.
-
+  // Fixed size dimensions of array or collections stored in the TTree if any.
   // Declaration of leaf types
   Float_t         weight;		// Event weight
   //Particle lvl
@@ -162,11 +159,9 @@ public :
   vector<vector<double>> params_pi;	//pion
   vector<vector<double>> params_p;	//proton
 
-  //For storing CMS Z+jet data points and errors
-
 
   //CMS jecsys pT-balance data points and errors zj for Z+jet
-  static int const nCMSdata = 6;	//#Data points available from CMS
+  static int const nCMSdata = 6; //#Data points available from CMS
   double zjEp[nCMSdata];
   double zjCMS[nCMSdata];
   double zjER[nCMSdata];
@@ -295,7 +290,7 @@ public :
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
   void   FitGN();		//Gauss-Newton fit function
-  void   MultiLoop(CMSJES* zj_in=NULL, bool fitPars=true);
+  void   MultiLoop(CMSJES* zj_in=NULL, bool fitPars=true); //Only for Z+jet at the moment
   void   plotPT(int gen=0,int Nevt=-1, bool MConly=false, bool fitOnly=false);
   void   plotSepPT();
   void   plotMPF(int gen=0, int Nevt=-1);
@@ -348,7 +343,6 @@ void CMSJES::ParamReader(string file, int n1, int n2,
   params = M;
   M.clear();
   in.close();
-
 } //ParamReader
 
 
@@ -399,7 +393,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   Init(tree);	//Setup branch adresses etc.
 
   /* Read D0 data and MC points */
-
   ifstream inPTBdata_zj;     ifstream inPTBMC_zj;     //CMS jecdata pT Z+jet
   ifstream inMPFdata_zj;     ifstream inMPFMC_zj;     //CMS jecdata MPF  Z+jet
 
@@ -410,10 +403,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   //CMS jecdataGH MPF 
   inMPFdata_zj.open("./data_and_MC_input/MPF/jecdataGH/MPF_zmmjet_data");
   inMPFMC_zj.open("./data_and_MC_input/MPF/jecdataGH/MPF_zmmjet_mc");
-
-
-  //When D0 MPF detector data and MC points for different run epochs found,
-  //support for them can be added here as above
 
   if (!inPTBdata_zj.is_open() || !inPTBMC_zj.is_open() ||
       !inMPFdata_zj.is_open() || !inMPFMC_zj.is_open()  )
@@ -444,12 +433,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   /* Read params from files to matrices */
 
   //Open file and initializations for reading
-  ifstream in0;	//RunIIa
   int line = 0;	//Stepper
-
-  //Init dummies to read into
-  double ap0=0,ap1=0,ap2=0,ap3=0,ap4=0,ap5=0;
-  double bp0=0,bp1=0,bp2=0,bp3=0,bp4=0,bp5=0;
 
   //Param reading works the same way for all hadrons
   ParamReader("/photon.txt",   32, 6, params_gam);
@@ -466,40 +450,23 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   /* Plug fit parameter values here for fit reco */
   if (runCMS) {
     //Initial guess to start fitting from
-    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
-                          Aer = 0.0;     Ber = 0.0;       Cer = 0.0;    }
-    //Default: use our A,B,C depending on generator
-    else {
-      if (ReadName.find("P8")!=string::npos) {
-        // NEW with 10 000 sample and 500 loops
-	A    = -29.8281;	B    = -1.70343;	C    =  0.959501;
-	Aer  =   0.0529828;	Ber  =  0.0558275;	Cer  =  0.00833123;
-	ABer =  -0.00292137;	ACer =  0.00016457;	BCer = -0.000238565;
-	// NEW with 100 000 sample and 20 loops
-	//A   = -27.8065;		B    = -0.661071;	C    = 0.868749; 
-        //Aer  = 0.00593366;	Ber  =  0.00636191;	Cer  =  0.00918395;
-        //ABer = 0.0000134886;	ACer = -0.0000365345;	BCer = -0.0000543319;
-	// with 100 000 sample and 500 loops
-	//A    = -13.4601;	B    = -2.06685;	C    = 1.04347; 
-        //Aer  = 0.000274392;	Ber  =  0.162663;	Cer  = 0.00665224;
-        //ABer = 0.0000415123;	ACer = -0.00000176575;	BCer = -0.00102026;
-        cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
-      } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
-    }
-  } else { //RunIIa parameters
-    //Initial guess to start fitting from
-    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C = 1.0;
+    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C   = 1.0;
                           Aer = 0.0;     Ber = 0.0;       Cer = 0.0;}
     //Default: use our A,B,C depending on generator
     else {
-      if (ReadName.find("P6")!=string::npos) {
-        A    = 1.45399;	B    = 0.0115405;	C    = 1.00865;
-        Aer  = 0.0572361;	Ber  = 0.0287636;	Cer  = 0.0105337;
-        ABer = -0.00148885;	ACer = -0.000124997;	BCer = 0.000180898;
-      } else if (ReadName.find("H7")!=string::npos) {
-        A    = 1.23482;	B    = 0.0333262;	C    = 1.0047;
-        Aer  = 0.0559627;	Ber  = 0.0321562;	Cer  = 0.0105726;
-        ABer = -0.00160909;	ACer = -7.75965e-05;	BCer = 0.00018794;     
+      if (ReadName.find("P8")!=string::npos) {
+        // With 10k sample and 500 loops
+	//A    = -29.8281;	B    = -1.70343;	C    =  0.959501;
+	//Aer  =   0.0529828;	Ber  =  0.0558275;	Cer  =  0.00833123;
+	ABer =  -0.00292137;	ACer =  0.00016457;	BCer = -0.000238565;
+	// With 100k sample and 20 loops
+	//A   = -27.8065;		B    = -0.661071;	C    = 0.868749; 
+        //Aer  = 0.00593366;	Ber  =  0.00636191;	Cer  =  0.00918395;
+        //ABer = 0.0000134886;	ACer = -0.0000365345;	BCer = -0.0000543319;
+        // With 30k sample 269 loops
+	A    = 0.0733748;	B    = 0.36875;		C    =  0.968427;
+	Aer  = 0.375176;	Ber  = 0.0960518;	Cer  =  0.0104257;
+        cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
       } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
     }
   }
