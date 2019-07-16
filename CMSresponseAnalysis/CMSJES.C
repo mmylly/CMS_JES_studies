@@ -1225,7 +1225,6 @@ void CMSJES::Loop()
 
   //Free single-particle response functions from memory
   delete fr_mu;      delete fr_e;       delete fr_gam;     delete fr_h;
-
 } //CMSJES::Loop
 
 //-----------------------------------------------------------------------------
@@ -2091,13 +2090,15 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
   bool zero = false; //Return zero responses (run index-wise)
   double R_temp;
   int PDG = abs(id);
+ 
+  frH->SetParameters(1.0, 0.000000429497, -15, 1, 0, 1);
+  double retMCCH = frH->Eval(energy);
 
-  
-  double retMCNH = 0.0;
-  double retMCCH = 0.0;
+  frH->SetParameters(1.0, 4294967296, -15, 1, 0, 1);
+  double retMCNH = frH->Eval(energy);
 
-  if (energy > 3.0) retMCNH = 1.0;
-  if (energy > 0.3) retMCCH = 1.0; 
+  if (energy < 3.0) retMCNH = 0.0;
+  if (energy < 0.3) retMCCH = 0.0; 
 
 
   //Check if particle outside good eta region
@@ -2115,7 +2116,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
   if (isNeutrino(PDG)) zero = true;
 
   //Particle must have enough pT to reach CMS detector volume
-  if (!fidCuts(PDG,pT)) zero = true;
+  //if (!fidCuts(PDG,pT)) zero = true;
 
   //CALCULATE RESPONSES
   for (int i_r=0; i_r<(zero?0:1); ++i_r) {
@@ -2227,246 +2228,6 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
 
 } //Response
 
-
-/*
-void CMSJES::Response(int id, double pseudorap, double energy, double pT,
-	             TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
-                     double fA,double fB,double fC,bool MC,bool FIT,bool EM,
-                     double& retMC, double& retFIT,
-                     double& retEM                                  )
-{
-  //Init
-  bool zero = false; //Return zero responses (run index-wise)
-  bool pTm[2] = {false,true};	     //Hadron pT cut at m_h (true) or 0.3 GeV (false)
-  double R_temp;
-  int PDG = abs(id);
-
-  //Check if particle outside good eta region
-  if (fabs(pseudorap) > 3.2) zero = true;
-  unsigned int row = int(fabs(pseudorap)*10);	//Param matrix row from |eta|
-
-  //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
-  if (PDG==111 || PDG==221) {
-    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << PDG
-         << "Returning zero response" << endl;
-    zero = true;
-  }
-
-  //Neutrino responses are zero
-  if (isNeutrino(PDG)) zero = true;
-
-  //Particle must have enough pT to reach D0 detector volume
-  if (!fidCuts(PDG,pT)) zero = true;
-
-  //CALCULATE RESPONSES
-  //  Loop structure to go over IIa/IIb default & IIb-P20ToP17 params
-  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
-    frE->SetParameters(params_e[row][0], params_e[row][1],
-                       params_e[row][2], params_e[row][3],
-                       params_e[row][4]                       );
-    frG->SetParameters(params_gam[row][0], params_gam[row][1],
-                       params_gam[row][2], params_gam[row][3],
-                       params_gam[row][4], params_gam[row][5]);
-    frMU->SetParameters(params_mu[row][0], params_mu[row][1],
-                        params_mu[row][2], params_mu[row][3]);
-
-    //EM-reco always using photon response
-    R_temp = frG->Eval(energy);
-    retEM = R_temp;
-    switch (PDG) {
-      case 20 : //Same for both photon IDs. No min pT or fit params A,B,C
-      case 22 : retMC=R_temp;  retFIT=R_temp;	
-                break;
-      //LEPTONS: choose params to use. N.B. leptons have no fit params A,B,C
-      case 11 : R_temp = frE->Eval(energy);
-                retMC=R_temp;  retFIT=R_temp;
-                break;
-//***********************************************************************************************
-      case 13 : R_temp = frG->Eval(energy);//frMU->Eval(energy); Change this
-//***********************************************************************************************
-                retMC=R_temp;  retFIT=R_temp;
-                break;
-      //HADRONS
-      case 211 :		//pi^+-
-        frH->SetParameters(params_pi[row][0],params_pi[row][1],
-                           params_pi[row][2],     1,    0,    1    );
-        retMC = frH->Eval(energy);
-        break;
-      case 321 : 		//K^+-
-        frH->SetParameters(params_K[row][0], params_K[row][1],
-                           params_K[row][2],       1,     0,    1 );
-        retMC = frH->Eval(energy);
-        break;
-      case 130 :		//K^0_L
-        frH->SetParameters(params_KL[row][0],params_KL[row][1],
-                           params_KL[row][2],      1,     0,    1  );
-        retMC = frH->Eval(energy);
-        break;
-      case 310 :		//K^0_S
-        frH->SetParameters(params_KS[row][0],params_KS[row][1],
-                           params_KS[row][2],      1,     0,    1  );
-        retMC = frH->Eval(energy);
-        break;
-      case 3122 :		//Lambda
-        frH->SetParameters(params_L[row][0],params_L[row][1],
-                           params_L[row][2],     1,     0,     1 );
-        retMC = frH->Eval(energy);
-        break;
-      case 2112 :		//n
-        frH->SetParameters(params_n[row][0],params_n[row][1],
-                           params_n[row][2],     1,     0,     1 );
-        retMC = frH->Eval(energy);
-        break;
-      case 2212 :		//p
-        frH->SetParameters(params_p[row][0],params_p[row][1],
-                           params_p[row][2],     1,     0,    1  );
-        retMC = frH->Eval(energy);
-        break;
-      default: // ANSÄTZE FOR XI, SIGMA, OMEGA
-        //According to D0 JES, strange baryons may have had responses but such
-        //were not presented. As an Ansatz, we modify the responses of known
-        //hadrons by  R^MC_h(E=m_h) = 0 <=> p^(1)_h = (m_h/0.75)^(1-p^(2)_h).
-        //The different Ansätze below are based on different hadrons' params.
-        //To use the Ansätze, set StrangeB=true in CMSJES.h
-        if (GetStrangeB() && GetAnsatz()=="pn") { //PROTON & NEUTRON params
-          switch (PDG) {
-            case 3112 :		//Sigma^-
-              frH->SetParameters(params_p[row][0],
-                                 pow((1.197/0.75),1-params_p[row][2]),
-                                 params_p[row][2],   1,    0,   1    );
-              retMC = frH->Eval(energy);
-              break;
-            case 3212 :		//Sigma^0
-              frH->SetParameters(params_n[row][0],
-                                 pow((1.192/0.75),1-params_n[row][2]),
-                                 params_n[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3222 :		//Sigma^+
-              frH->SetParameters(params_p[row][0],
-                                 pow((1.189/0.75),1-params_p[row][2]),
-                                 params_p[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3312 :		//Xi^-
-              frH->SetParameters(params_p[row][0],
-                                 pow((1.322/0.75),1-params_p[row][2]),
-                                 params_p[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3322 :		//Xi^0
-              frH->SetParameters(params_n[row][0],
-                                 pow((1.315/0.75),1-params_n[row][2]),
-                                 params_n[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3334 :		//Omega^-
-              frH->SetParameters(params_p[row][0],
-                                 pow((1.67245/0.75),1-params_p[row][2]),
-                                 params_p[row][2],    1,    0,   1     );
-              retMC = frH->Eval(energy);
-             break;
-            default : zero=true; continue;	 //Unknown particle
-          } //Switch PDG (proton & neutron Ansatz)
-        } else if (GetStrangeB() && GetAnsatz()=="L") { //LAMBDA params
-          switch (PDG) {
-            case 3112 :		//Sigma^-
-              frH->SetParameters(params_L[row][0],
-                                 pow((1.197/0.75),1-params_L[row][2]),
-                                 params_L[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3212 :		//Sigma^0
-              frH->SetParameters(params_L[row][0],
-                                 pow((1.192/0.75),1-params_L[row][2]),
-                                 params_L[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3222 :		//Sigma^+
-              frH->SetParameters(params_L[row][0],
-                                 pow((1.189/0.75),1-params_L[row][2]),
-                                 params_L[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3312 :		//Xi^-
-              frH->SetParameters(params_L[row][0],
-                                 pow((1.322/0.75),1-params_L[row][2]),
-                                 params_L[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3322 :		//Xi^0
-              frH->SetParameters(params_L[row][0],
-                                 pow((1.315/0.75),1-params_L[row][2]),
-                                 params_L[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3334 :		//Omega^-
-              frH->SetParameters(params_L[row][0],
-                                 pow((1.67245/0.75),1-params_L[row][2]),
-                                 params_L[row][2],    1,    0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            default : zero=true; continue;	 //Unknown particle
-          } //Switch PDG (Lambda Ansatz)
-        } else if (GetStrangeB() && GetAnsatz()=="pi") {	//PION params
-          switch (PDG) {
-            case 3112 :		//Sigma^-
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.197/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3212 :		//Sigma^0
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.192/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3222 :		//Sigma^+
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.189/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3312 :		//Xi^-
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.322/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3322 :		//Xi^0
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.315/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],   1,   0,   1     );
-              retMC = frH->Eval(energy);
-              break;
-            case 3334 :		//Omega^-
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.67245/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],    1,    0,   1     );
-              retMC = (MC ? frH->Eval(energy) : 0);
-              break;
-            default : zero=true; continue;	 //Unknown particle
-          } //Switch PDG (pion Ansatz)
-        } else {zero=true;  break;} //Unknown partcle, not observed
-    } //Switch PDG (before Ansätze)
-
-    if (PDG>99 && FIT && !zero) { //Had.: reset A,B,C; others same as MC
-      frH->SetParameter(3,fA);
-      frH->SetParameter(4,fB);
-      frH->SetParameter(5,fC);
-      retFIT = frH->Eval(energy);
-    }
-
-  } 
-
-  //Set results. Check for NaN and negative results if positive demanded
-  if (!MC || zero || isnan(retMC)  || (pos && retMC <0)) retMC =0;
-  if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<0)) retFIT=0;
-  if (!EM || zero || isnan(retEM)  || (pos && retEM <0)) retEM =0;
-
-} //Response
-*/
 //-----------------------------------------------------------------------------
 //For studying the general properties TTree read in by the CMSJES object.
 void CMSJES::StudyTree()
