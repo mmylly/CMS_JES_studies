@@ -50,12 +50,14 @@ void CMSJES::Loop()
   string EpTitle = Rcone;     EpTitle    += "RunCMS"; 
   string ETitle = Rcone;      ETitle     += "RunCMS"; 
   string MPFTitle = Rcone;    MPFTitle   += "RunCMS"; 
-  string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS"; 
+  string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS";
+  string pTpMPFTitle = Rcone;  pTpMPFTitle += "RunCMS"; 
 
   //Time scale: // C_tau -> 10mm
   string ctauStr;
   ctauStr = ", c#tau=1 cm"; // Might have to change this
   EpTitle+=ctauStr;  ETitle+=ctauStr;  MPFTitle+=ctauStr;  EpMPFTitle+=ctauStr;
+  pTpMPFTitle+=ctauStr;
 
   EpTitle += ";E' [GeV];p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prEp    = new TProfile("prEp", EpTitle.c_str(),      nbins-1,binsx);
@@ -66,10 +68,11 @@ void CMSJES::Loop()
   TProfile* prE   = new TProfile("prE",ETitle.c_str(),nbins-1,binsx);
 
   MPFTitle += ";E_{probe} [GeV];p_{T}^{reco}/p_{T}^{gen}";
-
+  // ;#font[132]{#font[12]{p}_{T,probe}^{MC} [GeV]}
   EpMPFTitle += ";E' [GeV];R_{MPF}";
+  pTpMPFTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]};R_{MPF}";
   TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
-  TProfile* prMPF_pTp = new TProfile("prMPF_pTp", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPF_pTp = new TProfile("prMPF_pTp", pTpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPF_EpFit = new TProfile("prMPF_EpFit", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
@@ -195,6 +198,7 @@ void CMSJES::Loop()
   //Fit params. A=[3], B=[4], C=[5] only used for fitting to D0 data
   //  R_h^{data} = C*p_h^(0)*( 1 - A*p_h^(1)*(E/0.75)^(p_h^(2)+B-1) )
   TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x/0.75,[2]+[4]-1))",0,250);
+
   //gamma, e and mu response ~same in data and MC, no A B C fit params.
   //Photon response
   string Rgam = "0.25*[0]*( 1 + erf( (x + [1])/sqrt(2*[2]*[2]) ) )";
@@ -953,13 +957,6 @@ void CMSJES::Loop()
     MET_r = -1*NIJ_r;
     MET_f = -1*NIJ_f;
 
-    //cout << "Event: " << jentry << endl;
-    //cout << "Pt: " << MET_r.Pt() << " Eta: " << MET_r.Eta() << " Phi: " << MET_r.Phi() << " E: " << MET_r.E() << endl;
-    //cout << "Pt: " << NIJ_r.Pt() << " Eta: " << NIJ_r.Eta() << " Phi: " << NIJ_r.Phi() << " E: " << NIJ_r.E() << endl;
-    //cout << "Px: " << MET_r.Px() << " Py: " << MET_r.Py() << endl;
-    //cout << "Px: " << NIJ_r.Px() << " Py: " << NIJ_r.Py() << endl;
-
-
     //for (int i=0; i!=jets_r.size(); ++i) {
     //  if (studyMode==1 && i!=i_tag) {
     //    MET_r -= jets_r[i];
@@ -972,7 +969,8 @@ void CMSJES::Loop()
     R_MPF_f = 1.0 + (MET_f.Px()*p4f_tag.Px() + MET_f.Py()*p4f_tag.Py()) / pow((p4f_tag.Pt()),2);
 
     // From Determination of... 
-    //R_MPF_r = avgResp + (MET_g.Px()*p4g_tag.Px() + MET_g.Py()*p4g_tag.Py()) / pow((p4g_tag.Pt()),2);
+    //R_MPF_r = avgResp + (MET_g.Px()*p4g_tag.Px() + MET_g.Py()*p4g_tag.Py()) /
+    //          pow((p4g_tag.Pt()),2);
 
 
     // Two ways to calculate the dot product
@@ -1232,13 +1230,15 @@ void CMSJES::Loop()
 //i.e. no neutrinos, muons or strange hadrons.
 //Params:	id	Particle PDGID
 //		pT	
-//Returns: true if prtcl should be included in D0 prtcl lvl, false if not
+//Returns: true if prtcl should be included in CMS prtcl lvl, false if not
 bool CMSJES::fidCuts(int id, double pT) {
   int PDG = abs(id);
   if (isNeutrino(PDG)) return false;
   if (isStrangeB(PDG) && !GetStrangeB()) return false;
-  //else if (GetrunCMS()) {	//Same pT threshold for all hadrons & leptons
+
+  // Photon or if pT higher than 0.3 GeV
   if (PDG==20 || PDG==22 || pT>0.3) return true;
+
   else return false;
 
   /*
@@ -1975,8 +1975,8 @@ void CMSJES::plotMPF(int gen, int Nevt)
   canv_MPF->SetLeftMargin(0.12);	//To fit vertical axis labels
 
   //Style setup
-  hzj_MPF->SetLineColor(     kBlack);
-  hzj_MPF_pTp->SetLineColor( kGreen);
+  hzj_MPF->SetLineColor(     kGreen);
+  hzj_MPF_pTp->SetLineColor( kBlack);
   mc_zj_MPF->SetMarkerStyle( kOpenCircle);  
   mc_zj_MPF->SetMarkerColor( kBlack  );
 
@@ -1990,7 +1990,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Legend
   TLegend* lz_MPF = new TLegend(0.52,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
-  lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
+  //lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
   lz_MPF->AddEntry(hzj_MPF_pTp, "#font[132]{Our Z+jet MPF MC with pTp binning}", "l");
   lz_MPF->AddEntry(hzj_MPF_f, "#font[132]{Our Z+jet MPF MC fit}", "p");
   lz_MPF->AddEntry(d_zj_MPF,  "#font[132]{CMS jecsys Z+jet MPF data}", "p");
@@ -1998,18 +1998,19 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
 
   //Title and axis setup
-  hzj_MPF->SetStats(0); //Suppress stat box
-  hzj_MPF->SetAxisRange(0.5,1.5,"Y"); //Vertical axis limits
-  hzj_MPF->GetYaxis()->SetTitleFont(133);
+  hzj_MPF_pTp->SetStats(0); //Suppress stat box
+  hzj_MPF_pTp->SetAxisRange(0.6,1.3,"Y"); //Vertical axis limits
+  hzj_MPF_pTp->GetYaxis()->SetTitleFont(133);
   int titleSize = 18; //Common title size everywhere
-  hzj_MPF->GetYaxis()->SetTitleSize(titleSize);
-  hzj_MPF->GetXaxis()->SetMoreLogLabels();
-  hzj_MPF->GetXaxis()->SetNoExponent();
-  hzj_MPF->GetXaxis()->SetTitleFont(133);
-  hzj_MPF->GetXaxis()->SetTitleSize(titleSize);
+  hzj_MPF_pTp->GetYaxis()->SetTitleSize(titleSize);
+  hzj_MPF_pTp->GetXaxis()->SetMoreLogLabels();
+  hzj_MPF_pTp->GetXaxis()->SetNoExponent();
+  hzj_MPF_pTp->GetXaxis()->SetTitleFont(133);
+  hzj_MPF_pTp->GetXaxis()->SetTitleSize(titleSize);
   canv_MPF->SetLogx();
-  hzj_MPF->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{Z+jet}");
-  hzj_MPF->GetXaxis()->SetTitleOffset(1);
+  hzj_MPF_pTp->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{Z+jet}");
+  hzj_MPF_pTp->GetXaxis()->SetTitleOffset(1);
+
 
 
   //Savefile name setup
@@ -2019,9 +2020,10 @@ void CMSJES::plotMPF(int gen, int Nevt)
   savename+=".eps";
 
   //Plot
-  hzj_MPF->Draw();
-  hzj_MPF_pTp->Draw("SAME");
-  hzj_MPF_f->Draw("HISTO P SAME"); // Fit now disabled from the plot
+  //hzj_MPF->Draw();
+  //hzj_MPF_pTp->Draw("SAME");
+  hzj_MPF_pTp->Draw();
+  //hzj_MPF_f->Draw("HISTO P SAME"); // Fit now disabled from the plot
   mc_zj_MPF->Draw("P SAME");
   d_zj_MPF->Draw("P SAME");
   lz_MPF->Draw();
@@ -2078,60 +2080,45 @@ void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
 //              ret**		References where to put the resulting response
 //Returns:	The calculated response (>= 0) or -1 if event invalid
 
-
-// Now response = 1.0 for gamma, mu, e-, charged hadrons
-
-void CMSJES::Response(int id, double pseudorap, double energy, double pT,
-	             TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
-                     double fA,double fB,double fC,bool MC,bool FIT,bool EM,
-                     double& retMC, double& retFIT, double& retEM)
+void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* frE, 
+                      TF1* frMU, TF1* frG, TF1* frH, bool pos, double fA, double fB,
+                      double fC, bool MC, bool FIT,bool EM, double& retMC, double& retFIT, 
+                      double& retEM)
 {
   //Init
   bool zero = false; //Return zero responses (run index-wise)
-  double R_temp;
   int PDG = abs(id);
- 
-  frH->SetParameters(1.0, 0.000000429497, -15, 1, 0, 1);
+
+  frH->SetParameters(1.0, 0.004096, -5, 1, 0, 1);
   double retMCCH = frH->Eval(energy);
 
-  frH->SetParameters(1.0, 4294967296, -15, 1, 0, 1);
+  frH->SetParameters(1.0, 4096, -5, 1, 0, 1);
   double retMCNH = frH->Eval(energy);
-
-  if (energy < 3.0) retMCNH = 0.0;
-  if (energy < 0.3) retMCCH = 0.0; 
-
 
   //Check if particle outside good eta region
   if (fabs(pseudorap) > 3.2) zero = true;
   unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
 
   //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
-  if (PDG==111 || PDG==221) {
+  if (PDG==111 || PDG==221) { 
     cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << PDG
          << "Returning zero response" << endl;
     zero = true;
   }
 
-  //Neutrino responses are zero
+  //Neutrino responses are zero, (checked in fidCuts also).
   if (isNeutrino(PDG)) zero = true;
 
-  //Particle must have enough pT to reach CMS detector volume
-  //if (!fidCuts(PDG,pT)) zero = true;
+  //pT>0.3 or photon
+  if (!fidCuts(PDG,pT)) zero = true;
 
   //CALCULATE RESPONSES
   for (int i_r=0; i_r<(zero?0:1); ++i_r) {
-    frE->SetParameters(params_e[row][0], params_e[row][1],
-                       params_e[row][2], params_e[row][3],
-                       params_e[row][4]);
-    frG->SetParameters(params_gam[row][0], params_gam[row][1],
-                       params_gam[row][2], params_gam[row][3],
-                       params_gam[row][4], params_gam[row][5]);
-    frMU->SetParameters(params_mu[row][0], params_mu[row][1],
-                        params_mu[row][2], params_mu[row][3]);
+    frG->SetParameters(params_gam[row][0], params_gam[row][1], params_gam[row][2], 
+                       params_gam[row][3], params_gam[row][4], params_gam[row][5]);
 
     //EM-reco always using photon response
-    R_temp = frG->Eval(energy);
-    retEM = R_temp;
+    retEM = frG->Eval(energy);
 
     switch (PDG) {
       case 20 : retMC =retMCCH; 
@@ -2145,31 +2132,32 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
       case 13 : retMC=retMCCH; retFIT=retMCCH;
                 break;
       //HADRONS
-      case 211 : retMC = retMCCH; retFIT=retMCCH; //pi^+-
+      case 211 : //pi^+-
+        //HHe
+        frH->SetParameters(1.103, 1.256, 0.397, 1, 0, 1);
+        retMC = 0.45 * frH->Eval(energy);
+        //EHE
+        frH->SetParameters(1.029, 1.676, 0.553, 1, 0, 1);
+        retMC += 0.55 * frH->Eval(energy);
         break;
-      case 321 : retMC = retMCCH; retFIT=retMCCH; //K^+-
+
+      case 321 : //K^+-
+        retMC = retMCCH; retFIT=retMCCH; 
         break;
-      case 130 :		//K^0_L
-        frH->SetParameters(params_KL[row][0],params_KL[row][1],
-                           params_KL[row][2],      1,     0,    1  );
+      case 130 : //K^0_L
         retMC = retMCNH;
         break;
-      case 310 :		//K^0_S
-        frH->SetParameters(params_KS[row][0],params_KS[row][1],
-                           params_KS[row][2],      1,     0,    1  );
+      case 310 : //K^0_S
         retMC = retMCNH;
         break;
-      case 3122 :		//Lambda
-        frH->SetParameters(params_L[row][0],params_L[row][1],
-                           params_L[row][2],     1,     0,     1 );
+      case 3122 : //Lambda
         retMC = retMCNH;
         break;
-      case 2112 :		//n
-        frH->SetParameters(params_n[row][0],params_n[row][1],
-                           params_n[row][2],     1,     0,     1 );
+      case 2112 : //n
         retMC = retMCNH;
         break;
-      case 2212 : retMC = retMCCH; retFIT=retMCCH;//p
+      case 2212 : //p
+        retMC = retMCCH; retFIT=retMCCH;
         break;
       default: // ANSÄTZE FOR XI, SIGMA, OMEGA
         //According to D0 JES, strange baryons may have had responses but such
@@ -2183,9 +2171,6 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
               retMC = retMCCH; retFIT=retMCCH;
               break;
             case 3212 :		//Sigma^0
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.192/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],   1,   0,   1     );
               retMC = retMCNH;
               break;
             case 3222 :		//Sigma^+
@@ -2195,9 +2180,6 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
               retMC = retMCCH; retFIT=retMCCH;
               break;
             case 3322 :		//Xi^0
-              frH->SetParameters(params_pi[row][0],
-                                 pow((1.315/0.75),1-params_pi[row][2]),
-                                 params_pi[row][2],   1,   0,   1     );
               retMC = retMCNH;
               break;
             case 3334 :		//Omega^-
@@ -2220,11 +2202,13 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT,
       }
     }
   } 
-
+  
   //Set results. Check for NaN and negative results if positive demanded
   if (!MC || zero || isnan(retMC)  || (pos && retMC <0)) retMC =0;
   if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<0)) retFIT=0;
   if (!EM || zero || isnan(retEM)  || (pos && retEM <0)) retEM =0;
+
+
 
 } //Response
 

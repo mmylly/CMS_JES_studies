@@ -21,7 +21,7 @@ int main() {
     case 1 : d.MultiLoop();  break;
     case 2 : d.FitGN();      break;
     case 3 :
-      d.flavCorr(true, 3, -1);
+      //d.flavCorr(true, 3, -1);
       d.plotPT(3, -1, false, false);
       d.plotMPF(3,-1);
       break;

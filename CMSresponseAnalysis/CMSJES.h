@@ -407,8 +407,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   if (!inPTBdata_zj.is_open() || !inPTBMC_zj.is_open() ||
       !inMPFdata_zj.is_open() || !inMPFMC_zj.is_open()  )
   {
-    cout << "Error opening D0/CMS data/MC point files!" << endl;
-    return;
+    cout << "Error opening CMS data/MC point files!" << endl; return;
   }
   
   for (int step=0; step != nCMSdata; ++step) {	//CMS pT-balance data
