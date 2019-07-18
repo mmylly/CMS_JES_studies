@@ -651,7 +651,6 @@ void CMSJES::Loop()
 
     if (Getverbose()) cout<<"Reconstructing particles not in jets"<<endl;
 
-    //double avgResp = 0.0;
 
     //Reconstruct prtcls in nij vecs if any saved in tuple and flag true 
     if (GetrecoMissing() && prtclnij_pt->size()!=0) {
@@ -666,24 +665,9 @@ void CMSJES::Loop()
         Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                  GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
 
-        //Check for contributions to gamma+jet tag EM-cluster
-
         NIJ_g+=p4;
         NIJ_r+=p4*resp;
         NIJ_f+=p4*resp_f;
-
-        // Try different MPF equation
-        //avgResp += resp; 
-
-
-        /*
-        if (i == (prtclnij_pt->size()-1) ) {
-          cout << "Event: " << jentry << endl;
-          cout << "Gen lvl Pt: " << NIJ_g.Pt() << endl;
-          cout << "MC lvl Pt: " << NIJ_r.Pt() << endl;
-          cout << "FIT lvl Pt: " << NIJ_f.Pt() << endl;
-        }*/
-
       } //Loop particles not in jets
       //avgResp /= prtclnij_pt->size(); 
     } 
@@ -967,10 +951,10 @@ void CMSJES::Loop()
     // From Mikko's slides
     R_MPF_r = 1.0 + (MET_r.Px()*p4r_tag.Px() + MET_r.Py()*p4r_tag.Py()) / pow((p4r_tag.Pt()),2);
     R_MPF_f = 1.0 + (MET_f.Px()*p4f_tag.Px() + MET_f.Py()*p4f_tag.Py()) / pow((p4f_tag.Pt()),2);
-
-    // From Determination of... 
-    //R_MPF_r = avgResp + (MET_g.Px()*p4g_tag.Px() + MET_g.Py()*p4g_tag.Py()) /
-    //          pow((p4g_tag.Pt()),2);
+    
+    // https://arxiv.org/pdf/1107.4277.pdf#cite.jes_d0 
+    //double R_Z = p4r_tag.E() / p4g_tag.E();
+    //R_MPF_r = R_Z + (MET_r.Px()*p4g_tag.Px() + MET_r.Py()*p4g_tag.Py()) / pow((p4g_tag.Pt()),2);
 
 
     // Two ways to calculate the dot product
@@ -981,9 +965,19 @@ void CMSJES::Loop()
     //R_MPF_f = 1.0 + MET_f.Pt()*cos(p4r_tag.DeltaPhi(MET_f))/p4r_tag.Pt();
 
     //Fill MPF histograms
-    prMPF_Ep->Fill(Ep, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
+    prMPF_Ep->Fill(Ep,    (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
-    prMPF_pTp->Fill(pTp, (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
+    prMPF_pTp->Fill(pTp,  (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
+
+
+    
+    //Jet energies
+    //cout << "Event " << jentry << endl;
+    //for (int i=0; i!=jets_r.size(); ++i) {
+    //  cout << i << " pT " << jets_r[i].E() << endl;
+    //}
+
+
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
     //                   SUCH AS MC-DATA CORRECTION FACTORS F
@@ -2114,11 +2108,11 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
 
   //CALCULATE RESPONSES
   for (int i_r=0; i_r<(zero?0:1); ++i_r) {
-    frG->SetParameters(params_gam[row][0], params_gam[row][1], params_gam[row][2], 
-                       params_gam[row][3], params_gam[row][4], params_gam[row][5]);
+    //frG->SetParameters(params_gam[row][0], params_gam[row][1], params_gam[row][2], 
+    //                   params_gam[row][3], params_gam[row][4], params_gam[row][5]);
 
     //EM-reco always using photon response
-    retEM = frG->Eval(energy);
+    //retEM = frG->Eval(energy);
 
     switch (PDG) {
       case 20 : retMC =retMCCH; 
@@ -2133,14 +2127,13 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
                 break;
       //HADRONS
       case 211 : //pi^+-
-        //HHe
-        frH->SetParameters(1.103, 1.256, 0.397, 1, 0, 1);
-        retMC = 0.45 * frH->Eval(energy);
-        //EHE
-        frH->SetParameters(1.029, 1.676, 0.553, 1, 0, 1);
-        retMC += 0.55 * frH->Eval(energy);
+        frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                           params_pi_EHE[row][2], 1, 0, 1); 
+        retMC = 0.55 * frH->Eval(energy);
+        frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                           params_pi_HHe[row][2], 1, 0, 1); 
+        retMC += 0.45 * frH->Eval(energy);
         break;
-
       case 321 : //K^+-
         retMC = retMCCH; retFIT=retMCCH; 
         break;

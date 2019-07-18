@@ -148,6 +148,7 @@ public :
   //  1st index: |eta| region. 32 entries for this index
   //  2nd index: the parameters p^(i)_{particle type} in the SPR functions
   //             3rd index has 3 entries unless otherwise stated
+  /*
   vector<vector<double>> params_e;	//electron //3rd index 5 entries
   vector<vector<double>> params_K;	//Kaon
   vector<vector<double>> params_KL;	//Kaon_long
@@ -158,7 +159,9 @@ public :
   vector<vector<double>> params_gam;	//photon //3rd index 6 entries
   vector<vector<double>> params_pi;	//pion
   vector<vector<double>> params_p;	//proton
-
+  */
+  vector<vector<double>> params_pi_EHE;	//pion EHE
+  vector<vector<double>> params_pi_HHe;	//pion HHe
 
   //CMS jecsys pT-balance data points and errors zj for Z+jet
   static int const nCMSdata = 6; //#Data points available from CMS
@@ -314,8 +317,7 @@ public :
 //Params:	file		The filename to read as a string
 //		n1,n2		Dimensions of the params tensor
 //		params		Reference to the tensor to read parameters into
-void CMSJES::ParamReader(string file, int n1, int n2,
-                        vector<vector<double>> &params)
+void CMSJES::ParamReader(string file, int n1, int n2, vector<vector<double>> &params)
 {
   //Init temps to read into
   double p=0;
@@ -324,7 +326,8 @@ void CMSJES::ParamReader(string file, int n1, int n2,
   //Read the parameters from files
   ifstream in;
   string paramFile;
-  paramFile = "./spr_mc/RunIIa" + file; 
+  //paramFile = "./spr_mc/RunIIa" + file; 
+  paramFile = "./spr_mc/CMS" + file; 
 
   in.open(paramFile);
   if (!in.is_open()) {
@@ -435,6 +438,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   int line = 0;	//Stepper
 
   //Param reading works the same way for all hadrons
+  /*
   ParamReader("/photon.txt",   32, 6, params_gam);
   ParamReader("/electron.txt", 32, 5, params_e  );
   ParamReader("/muon.txt",     32, 4, params_mu );
@@ -445,6 +449,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   ParamReader("/neutron.txt",  32, 3, params_n  );
   ParamReader("/pion.txt",     32, 3, params_pi );
   ParamReader("/proton.txt",   32, 3, params_p  );
+  */
+
+  ParamReader("/pion_EHE.txt", 32, 3, params_pi_EHE);
+  ParamReader("/pion_HHe.txt", 32, 3, params_pi_HHe);
 
   /* Plug fit parameter values here for fit reco */
   if (runCMS) {
