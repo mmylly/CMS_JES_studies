@@ -37,6 +37,45 @@ void readValues() {
 	TFile* f4 = new TFile("zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06.root");
         TGraphErrors* MPFMCnotypeI = (TGraphErrors*)f4->Get("MC_MPF-notypeI_CHS_a30_eta_00_13_L1L2L3");
 	MPFMCnotypeI->Print();
+
+	cout << endl;
+
+        cout << "2018-03-06 Data pTbal" << endl;
+	TFile* f5 = new TFile("zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06.root");
+        TGraphErrors* pTbaldata = (TGraphErrors*)f5->Get("Data_PtBal_CHS_a30_eta_00_13_L1L2L3");
+	pTbaldata->Print();
+
+        cout << endl;
+
+        cout << "2018-03-06 MC pTbal" << endl;
+	TFile* f6 = new TFile("zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06.root");
+        TGraphErrors* pTbalMC = (TGraphErrors*)f6->Get("MC_PtBal_CHS_a30_eta_00_13_L1L2L3");
+	pTbalMC->Print();
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

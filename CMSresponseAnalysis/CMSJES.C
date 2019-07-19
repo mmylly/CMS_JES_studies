@@ -35,19 +35,25 @@ void CMSJES::Loop()
   //  "name", "header;x_axis;y_axis", nbinsx, binsx
   //  here binsx = array containing bin limits.
 
-  int const nbins = 7;
+  int const nbins = 11;
   int const nbinsMPF = 12;
 
   //Check values
-  const double binsx[nbins] = {82.75, 105.25, 132.75, 173.25, 228.0, 299.0, 380.0}; 
+  //const double binsx[nbins] = {82.75, 105.25, 132.75, 173.25, 228.0, 299.0, 380.0}; 
+  const double binsx[nbins] = {31.75, 41.0, 50.5, 63.5, 82.75, 105.25, 132.5, 173.5, 
+                               228.5, 299.5, 380.75}; 
+  /*const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5,
+                                     173.25, 228.25, 300.0, 391.25, 503.75, 681.75, 
+                                     951.5,1258.25};*/
   const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5,
-                                        173.25, 228.25, 300.0, 391.25, 494.25};
+                                     173.25, 228.25, 300.0, 391.25, 494.25};
 
   // CMS, should have R_cone = 0.4
   string Rcone = "R_{cone}=0.4";	//R_cone info in string form
   R_cone = 0.4;
 
-  string EpTitle = Rcone;     EpTitle    += "RunCMS"; 
+  string EpTitle = Rcone;     EpTitle    += "RunCMS";
+  string pTpTitle = Rcone;     pTpTitle    += "RunCMS"; 
   string ETitle = Rcone;      ETitle     += "RunCMS"; 
   string MPFTitle = Rcone;    MPFTitle   += "RunCMS"; 
   string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS";
@@ -56,12 +62,13 @@ void CMSJES::Loop()
   //Time scale: // C_tau -> 10mm
   string ctauStr;
   ctauStr = ", c#tau=1 cm"; // Might have to change this
-  EpTitle+=ctauStr;  ETitle+=ctauStr;  MPFTitle+=ctauStr;  EpMPFTitle+=ctauStr;
+  EpTitle+=ctauStr;  ETitle+=ctauStr; pTpTitle+=ctauStr;  MPFTitle+=ctauStr;  EpMPFTitle+=ctauStr;
   pTpMPFTitle+=ctauStr;
 
   EpTitle += ";E' [GeV];p_{T}^{probe}/p_{T}^{tag}";
+  pTpTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]}; p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prEp    = new TProfile("prEp", EpTitle.c_str(),      nbins-1,binsx);
-  TProfile* prpTp    = new TProfile("prpTp", EpTitle.c_str(),      nbins-1,binsx);
+  TProfile* prpTp    = new TProfile("prpTp", pTpTitle.c_str(),      nbins-1,binsx);
   TProfile* prEpFit = new TProfile("prEpFit0", EpTitle.c_str(),  nbins-1,binsx);
 
   ETitle += ";E_{probe} [GeV];p_{T}^{probe}/p_{T}^{tag}";
@@ -1800,7 +1807,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   bool plotOurMC  = true;
   bool plotCMSMC   = true;
   bool plotCMSdata = true;
-  bool plotFit    = true;
+  bool plotFit    = false;
 
   //Choose filenames to open
   string nameAdd, zjetFile;
@@ -1809,13 +1816,14 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
 
-  TProfile* przj=0; TProfile* przj_f=0; TProfile* przj_pTp=0;
+  //TProfile* przj=0; 
+  TProfile* przj_f=0; TProfile* przj_pTp=0;
 
   /* Z+jet */
-  fzj->GetObject("prEp",przj);		//Z+jet response
+  //fzj->GetObject("prEp",przj);		//Z+jet response
   fzj->GetObject("prpTp",przj_pTp);	//Z+jet response pTp
   fzj->GetObject("prEpFit0",przj_f);	//Z+jet fit to data
-  TH1D* hzj     = przj->ProjectionX();
+  //TH1D* hzj     = przj->ProjectionX();
   TH1D* hzj_pTp = przj_pTp->ProjectionX();
   TH1D* hzj_f   = przj_f->ProjectionX();
 
@@ -1827,7 +1835,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   dzj->SetMarkerStyle(8);    dzj->SetMarkerColor(  kGreen+2);
   mc_zj->SetMarkerStyle(4);  mc_zj->SetMarkerColor(kGreen+2);
 
-  hzj->SetLineColor(kGreen+2);
+  //hzj->SetLineColor(kGreen+2);
   hzj_pTp->SetLineColor(kBlack);
   hzj_f->SetMarkerStyle(kFullDiamond);  
   hzj_f->SetMarkerColor(kGreen-6);
@@ -1856,17 +1864,17 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   pad1->SetBottomMargin(0.115);
   pad1->cd();			//Go to pad1
   pad1->SetLogx();		//Logarithmic horizontal axis
-  hzj->GetXaxis()->SetRangeUser(10,1000);
+  hzj_pTp->GetXaxis()->SetRangeUser(10,1000);
 
   //Suppress stat boxes
-  hzj->SetStats(0);
+  hzj_pTp->SetStats(0);
 
   //Axis setup. New dummy TH1 for easy usage in multiple plots
-  TH1D* setup = new TH1D("setup",""/*hdj->GetTitle()*/, hzj->GetXaxis()->GetNbins(),
-			 hzj->GetXaxis()->GetXmin(),    hzj->GetXaxis()->GetXmax());
+  TH1D* setup = new TH1D("setup",""/*hdj->GetTitle()*/, hzj_pTp->GetXaxis()->GetNbins(),
+			 hzj_pTp->GetXaxis()->GetXmin(),    hzj_pTp->GetXaxis()->GetXmax());
   setup->SetStats(0);				//Suppress stat box
-  setup->GetXaxis()->SetTitle(hzj->GetXaxis()->GetTitle());
-  setup->GetYaxis()->SetTitle(hzj->GetYaxis()->GetTitle());
+  setup->GetXaxis()->SetTitle(hzj_pTp->GetXaxis()->GetTitle());
+  setup->GetYaxis()->SetTitle(hzj_pTp->GetYaxis()->GetTitle());
   setup->SetAxisRange(0.6, 1.0,"Y");		//Vertical axis limits
   setup->GetYaxis()->SetTitleFont(133);
   int titleSize = 18;				//Common title size everywhere
@@ -1894,7 +1902,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   lz->SetFillStyle( 0);	//No background fill
 
   if (plotCMSMC  ) lz->AddEntry(mc_zj,"#font[132]{CMS Z+jet MC}", "p");
-  if (plotOurMC )  lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}", "l");
+  //if (plotOurMC )  lz->AddEntry(hzj,  "#font[132]{Our Z+jet MC}", "l");
   if (plotOurMC )  lz->AddEntry(hzj_pTp,  "#font[132]{Our Z+jet MC pTp-bins}", "l");
   if (plotCMSdata) lz->AddEntry(dzj,  "#font[132]{CMS Z+jet data}","p");
   if (plotFit   )  lz->AddEntry(hzj_f,"#font[132]{Our Z+jet data fit}","p");
@@ -1902,7 +1910,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
 
   //Main plot
   setup->Draw();
-  if (plotOurMC )  {hzj->Draw(  "SAME"       );}
+  //if (plotOurMC )  {hzj->Draw(  "SAME"       );}
   if (plotOurMC )  {hzj_pTp->Draw(  "SAME"       );}
   if (plotCMSdata) {dzj->Draw(  "P SAME"     );}
   if (plotFit   )  {hzj_f->Draw("HIST P SAME");}

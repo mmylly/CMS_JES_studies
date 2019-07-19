@@ -164,13 +164,13 @@ public :
   vector<vector<double>> params_pi_HHe;	//pion HHe
 
   //CMS jecsys pT-balance data points and errors zj for Z+jet
-  static int const ndata_pTbal = 6; //#Data points available from CMS
+  static int const ndata_pTbal = 10; //#Data points available from CMS
   double zj_pTp[ndata_pTbal];
   double zj_pTbal[ndata_pTbal];
   double zj_pTbal_ER[ndata_pTbal];
 
   //CMS jecsys pT-balance MC points
-  static int const nMC_pTbal = 6;	
+  static int const nMC_pTbal = 10;	
   double zj_MC_pTp[nMC_pTbal];	
   double zj_MC_pTbal[nMC_pTbal];
   double zj_MC_pTbal_ER[nMC_pTbal];
@@ -188,13 +188,13 @@ public :
   double zj_MC_MPF_ER[nMC_MPF];
 
   //CMS jecsys MPF-notypeI data points and errors for Z+jet
-  static int const ndata_MPFntI = 14;
+  static int const ndata_MPFntI = 11; //14 points but ignore last ones maybe since large err.?
   double zj_pTp_MPFntI[ndata_MPFntI];
   double zj_MPFntI[ndata_MPFntI];
   double zj_MPFntI_ER[ndata_MPFntI];
 
   //CMS jecsys MPF-notypeI MC points and errors for Z+jet
-  static int const nMC_MPFntI = 14;
+  static int const nMC_MPFntI = 11;
   double zj_MC_pTp_MPFntI[nMC_MPFntI];
   double zj_MC_MPFntI[nMC_MPFntI];
   double zj_MC_MPFntI_ER[nMC_MPFntI];
@@ -407,14 +407,14 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   Init(tree);	//Setup branch adresses etc.
 
   /* Read D0 data and MC points */
-  ifstream inzj_data_pTbal;   ifstream inzj_MC_pTbal;       //CMS jecdata pT Z+jet
-  ifstream inzj_data_MPF;     ifstream inzj_MC_MPF;       //CMS jecdata MPF  Z+jet
-  ifstream inzj_data_MPFntI;  ifstream inzj_MC_MPFntI;    //CMS jecdata MPF-notypeI  Z+jet
+  ifstream inzj_data_pTbal;   ifstream inzj_MC_pTbal; //CMS jecdata pT Z+jet
+  ifstream inzj_data_MPF;     ifstream inzj_MC_MPF;   //CMS jecdata MPF Z+jet
+  ifstream inzj_data_MPFntI;  ifstream inzj_MC_MPFntI;//CMS jecdata MPF-notypeI Z+jet
 
 
   //CMS jecdataGH pT-balance
-  inzj_data_pTbal.open("./data_and_MC_input/pTbal/jecdataGH/zmmjet_data");
-  inzj_MC_pTbal.open(  "./data_and_MC_input/pTbal/jecdataGH/zmmjet_mc");
+  inzj_data_pTbal.open("./data_and_MC_input/pTbal/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/zmmjet_data");
+  inzj_MC_pTbal.open("./data_and_MC_input/pTbal/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/zmmjet_mc");
 
   //CMS jecdataGH MPF 
   inzj_data_MPF.open("./data_and_MC_input/MPF/jecdataGH/MPF_zmmjet_data");
@@ -431,7 +431,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     cout << "Error opening CMS data/MC point files!" << endl; return;
   }
   
-  for (int step=0; step != ndata_pTbal; ++step) {	//CMS pT-balance data
+  for (int step=0; step != ndata_pTbal; ++step) { //CMS pT-balance data
     inzj_data_pTbal   >> zj_pTp[step] >> zj_pTbal[step] >> zj_pTbal_ER[step];
   }
   for (int step=0; step != nMC_pTbal; ++step) {	//CMS pT-balance MC points
@@ -440,13 +440,13 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   for (int step=0; step != ndata_MPF; ++step) {	//CMS jecsys MPF data
     inzj_data_MPF   >> zj_pTp_MPF[step] >> zj_MPF[step] >> zj_MPF_ER[step];
   }
-  for (int step=0; step != nMC_MPF; ++step) {	//CMS jecsys MPF MC points
+  for (int step=0; step != nMC_MPF; ++step) { //CMS jecsys MPF MC points
     inzj_MC_MPF   >> zj_MC_pTp_MPF[step] >> zj_MC_MPF[step] >> zj_MC_MPF_ER[step];
   }
-  for (int step=0; step != ndata_MPFntI; ++step) {	//CMS jecsys MPF-notypeI data
+  for (int step=0; step != ndata_MPFntI; ++step) { //CMS jecsys MPF-notypeI data
     inzj_data_MPFntI   >> zj_pTp_MPFntI[step] >> zj_MPFntI[step] >> zj_MPFntI_ER[step];
   }
-  for (int step=0; step != nMC_MPFntI; ++step) {	//CMS jecsys MPF-notypeI MC points
+  for (int step=0; step != nMC_MPFntI; ++step) { //CMS jecsys MPF-notypeI MC points
     inzj_MC_MPFntI   >> zj_MC_pTp_MPFntI[step] >> zj_MC_MPFntI[step] >> zj_MC_MPFntI_ER[step];
   }
 
