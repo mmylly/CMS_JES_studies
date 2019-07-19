@@ -1953,6 +1953,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //CMS data and MC points
   TGraph* mc_zj_MPF=new TGraph(); TGraph* d_zj_MPF=new TGraph(); //Z+jet MPF
+  TGraph* mc_zj_MPFntI=new TGraph(); TGraph* d_zj_MPFntI=new TGraph(); //Z+jet MPF-notypeI
 
   //CMS Z+jet MPF data points
   for (int i=0; i!=nCMSdata_MPF; ++i) {
@@ -1964,6 +1965,19 @@ void CMSJES::plotMPF(int gen, int Nevt)
     mc_zj_MPF->SetPoint(i, zjMCEp_MPF[i], zjCMSMC_MPF[i]);  
   }
 
+  //CMS Z+jet MPF-notypeI data points
+  for (int i=0; i!=nCMSdata_MPFntI; ++i) {
+    d_zj_MPFntI->SetPoint(i, zjEp_MPFntI[i], zjCMS_MPFntI[i]);
+  }
+
+  //CMS Z+jet MPF-notypeI MC simulation points
+  for (int i=0; i!=nCMSMC_MPFntI; ++i) {
+    mc_zj_MPFntI->SetPoint(i, zjMCEp_MPFntI[i], zjCMSMC_MPFntI[i]);  
+  }
+
+
+
+
   //Canvas
   TCanvas* canv_MPF = new TCanvas("MPF","",500,500);
   canv_MPF->SetLeftMargin(0.12);	//To fit vertical axis labels
@@ -1971,14 +1985,16 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Style setup
   hzj_MPF->SetLineColor(     kGreen);
   hzj_MPF_pTp->SetLineColor( kBlack);
-  mc_zj_MPF->SetMarkerStyle( kOpenCircle);  
-  mc_zj_MPF->SetMarkerColor( kBlack  );
+  mc_zj_MPF->SetMarkerStyle( kOpenCircle);    mc_zj_MPF->SetMarkerColor( kBlack  );
+  mc_zj_MPFntI->SetMarkerStyle( kOpenSquare); mc_zj_MPFntI->SetMarkerColor( kBlack  );
 
   przj_MPF_f->SetMarkerStyle(kFullDiamond); // Not Drawn
   przj_MPF_f->SetMarkerColor(kGray+1);      // Not Drawn
 
   hzj_MPF_f->SetMarkerStyle(kFullDiamond);  hzj_MPF_f->SetMarkerColor(kGreen-6);
   d_zj_MPF->SetMarkerStyle(kFullCircle);    d_zj_MPF->SetMarkerColor(kBlack);
+  d_zj_MPFntI->SetMarkerStyle(kFullSquare); d_zj_MPFntI->SetMarkerColor(kBlack);
+
 
 
   //Legend
@@ -1988,8 +2004,9 @@ void CMSJES::plotMPF(int gen, int Nevt)
   lz_MPF->AddEntry(hzj_MPF_pTp, "#font[132]{Our Z+jet MPF MC with pTp binning}", "l");
   lz_MPF->AddEntry(hzj_MPF_f, "#font[132]{Our Z+jet MPF MC fit}", "p");
   lz_MPF->AddEntry(d_zj_MPF,  "#font[132]{CMS jecsys Z+jet MPF data}", "p");
+  lz_MPF->AddEntry(d_zj_MPFntI,  "#font[132]{CMS jecsys Z+jet MPF-notypeI data}", "p");
   lz_MPF->AddEntry(mc_zj_MPF, "#font[132]{CMS jecsys Z+jet MPF MC}", "p");
-
+  lz_MPF->AddEntry(mc_zj_MPFntI, "#font[132]{CMS jecsys Z+jet MPF-notypeI MC}", "p");
 
   //Title and axis setup
   hzj_MPF_pTp->SetStats(0); //Suppress stat box
@@ -2014,13 +2031,14 @@ void CMSJES::plotMPF(int gen, int Nevt)
   savename+=".eps";
 
   //Plot
-  //hzj_MPF->Draw();
-  //hzj_MPF_pTp->Draw("SAME");
   hzj_MPF_pTp->Draw();
   //hzj_MPF_f->Draw("HISTO P SAME"); // Fit now disabled from the plot
   mc_zj_MPF->Draw("P SAME");
+  mc_zj_MPFntI->Draw("P SAME");
   d_zj_MPF->Draw("P SAME");
+  d_zj_MPFntI->Draw("P SAME");
   lz_MPF->Draw();
+
 
   //Save plot
   canv_MPF->Print(savename.c_str());
