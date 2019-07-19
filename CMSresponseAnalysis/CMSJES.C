@@ -1513,10 +1513,10 @@ void CMSJES::FitGN()
   vector<double> zjCMSv, zjERv2; //ERv2: errors squared
   
   //Data points for CMS pT balance
-  for (int i=0; i!=nCMSdata; ++i) { //Allocated here
+  for (int i=0; i!=ndata_pTbal; ++i) { //Allocated here
     if (GetzjFitting()) {
-      zjCMSv.push_back(zjCMS[i]);
-      zjERv2.push_back(pow(zjER[i],2)); 
+      zjCMSv.push_back(zj_pTbal[i]);
+      zjERv2.push_back(pow(zj_pTbal_ER[i],2)); 
     }
   }  
 
@@ -1526,7 +1526,7 @@ void CMSJES::FitGN()
 
   //#D.O.F. for chi^2 normalization -- non-rigorous, but D0 apparently did this
   //#D.O.F.="Number of data points to fit to minus number of free fit parameters"
-  double n_dof = (GetzjFitting() ? (double) nCMSdata : 0) - (double) dim
+  double n_dof = (GetzjFitting() ? (double) ndata_pTbal : 0) - (double) dim
                 +(fixA || fabs(LA)>0.01 ? 1:0)  //Constrained param.s are not...
                 +(fixB || fabs(LB)>0.01 ? 1:0)  //...free, hence they do not...
                 +(fixC || fabs(LC)>0.01 ? 1:0); //...contribute to "-dim"
@@ -1534,7 +1534,7 @@ void CMSJES::FitGN()
   if (n_dof<1) {cout << "ERROR: #D.O.F. < 1 in FitGN" << endl;  return;}
 
   cout<<"Inverses of CMS data unertainties squared, weigh LSQ sum terms:"<<endl;
-  for (int i=0; i!=nCMSdata; ++i) {  //Don't use sampleIndices for print format
+  for (int i=0; i!=ndata_pTbal; ++i) {  //Don't use sampleIndices for print format
     if (GetzjFitting()) printf("zj: 1/sigma^2[%d]=%-9.3f",  i,1/ERv2[0][i]);
     printf("\n");
   }
@@ -1607,7 +1607,7 @@ void CMSJES::FitGN()
     */
 
     for (int s : sampleIndices) {
-      for (int i=0; i!=nCMSdata; ++i) { //GetBinContent indices start from 1
+      for (int i=0; i!=ndata_pTbal; ++i) { //GetBinContent indices start from 1
         fit[s]=prof[s]->GetBinContent(i+1);  
         fitdA[s]=dA[s]->GetBinContent(i+1);
         fitdB[s]=dB[s]->GetBinContent(i+1);  
@@ -1833,12 +1833,12 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   hzj_f->SetMarkerColor(kGreen-6);
 
   //CMS pT-balance data points and errors
-  for (int i=0; i!=nCMSdata; ++i) {	//CMS pT-bal data
-    dzj->SetPoint(i, zjEp[i], zjCMS[i]);
-    dzj->SetPointError(i, 0, zjER[i]);
+  for (int i=0; i!=ndata_pTbal; ++i) {	//CMS pT-bal data
+    dzj->SetPoint(i, zj_pTp[i], zj_pTbal[i]);
+    dzj->SetPointError(i, 0, zj_pTbal_ER[i]);
   }
-  for (int i=0; i!=nCMSMC; ++i) {	//CMS pT-bal. MC
-    mc_zj->SetPoint(i, zjMCEp[i], zjCMSMC[i]); //Can add errors since those exist
+  for (int i=0; i!=nMC_pTbal; ++i) {	//CMS pT-bal. MC
+    mc_zj->SetPoint(i, zj_MC_pTp[i], zj_MC_pTbal[i]); //Can add errors since those exist
   }
 
   //Savefile name setup
@@ -1956,23 +1956,23 @@ void CMSJES::plotMPF(int gen, int Nevt)
   TGraph* mc_zj_MPFntI=new TGraph(); TGraph* d_zj_MPFntI=new TGraph(); //Z+jet MPF-notypeI
 
   //CMS Z+jet MPF data points
-  for (int i=0; i!=nCMSdata_MPF; ++i) {
-    d_zj_MPF->SetPoint(i,zjEp_MPF[i],zjCMS_MPF[i]);
+  for (int i=0; i!=ndata_MPF; ++i) {
+    d_zj_MPF->SetPoint(i,zj_pTp_MPF[i],zj_MPF[i]);
   }
 
   //CMS Z+jet MPF MC simulation points
-  for (int i=0; i!=nCMSMC_MPF; ++i) {
-    mc_zj_MPF->SetPoint(i, zjMCEp_MPF[i], zjCMSMC_MPF[i]);  
+  for (int i=0; i!=nMC_MPF; ++i) {
+    mc_zj_MPF->SetPoint(i, zj_MC_pTp_MPF[i], zj_MC_MPF[i]);  
   }
 
   //CMS Z+jet MPF-notypeI data points
-  for (int i=0; i!=nCMSdata_MPFntI; ++i) {
-    d_zj_MPFntI->SetPoint(i, zjEp_MPFntI[i], zjCMS_MPFntI[i]);
+  for (int i=0; i!=ndata_MPFntI; ++i) {
+    d_zj_MPFntI->SetPoint(i, zj_pTp_MPFntI[i], zj_MPFntI[i]);
   }
 
   //CMS Z+jet MPF-notypeI MC simulation points
-  for (int i=0; i!=nCMSMC_MPFntI; ++i) {
-    mc_zj_MPFntI->SetPoint(i, zjMCEp_MPFntI[i], zjCMSMC_MPFntI[i]);  
+  for (int i=0; i!=nMC_MPFntI; ++i) {
+    mc_zj_MPFntI->SetPoint(i, zj_MC_pTp_MPFntI[i], zj_MC_MPFntI[i]);  
   }
 
 
