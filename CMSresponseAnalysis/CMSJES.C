@@ -2109,11 +2109,19 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
   bool zero = false; //Return zero responses (run index-wise)
   int PDG = abs(id);
 
-  frH->SetParameters(1.0, 0.004096, -5, 1, 0, 1);
-  double retMCCH = frH->Eval(energy);
+  double retMCCH = 0.0;
+  double retMCNH = 0.0;
 
-  frH->SetParameters(1.0, 4096, -5, 1, 0, 1);
-  double retMCNH = frH->Eval(energy);
+  double sfCh = 0.0;
+  double sfN = 0.0;
+
+  //cout << "PDGID: " << id << " energy: " << energy << endl;
+  if (energy > 0.3) sfCh = 1.0; // Step function for charged particles
+  if (energy > 3.0) sfN = 1.0; // Step function for neutral particles
+
+  //cout << "PDGID: " << id << " energy: " << energy << " sfCh: " << sfCh << " sfN " << sfN << endl;
+
+
 
   //Check if particle outside good eta region
   if (fabs(pseudorap) > 3.2) zero = true;
@@ -2141,42 +2149,66 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
     //retEM = frG->Eval(energy);
 
     switch (PDG) {
-      case 20 : retMC =retMCCH; 
-                retFIT=retMCCH; //Same for both photon IDs. No min pT or fit params A,B,C
-      case 22 : retMC =retMCCH; 
-                retFIT=retMCCH;	
+      case 20 : retMC  = sfCh; 
+                retFIT = sfCh; //Same for both photon IDs. No min pT or fit params A,B,C
+      case 22 : retMC  = sfCh; 
+                retFIT = sfCh;	
                 break;
       //LEPTONS: choose params to use. N.B. leptons have no fit params A,B,C
-      case 11 : retMC=retMCCH; retFIT=retMCCH;
+      case 11 : retMC  = sfCh; 
+                retFIT = sfCh;
                 break;
-      case 13 : retMC=retMCCH; retFIT=retMCCH;
+      case 13 : retMC  = sfCh; 
+                retFIT = sfCh;
                 break;
       //HADRONS
       case 211 : //pi^+-
+        retMC  = sfCh;
+        retFIT = sfN;
+        break;
+      case 321 : //K^+-
+        retMC  = sfCh; 
+        retFIT = sfCh; 
+        break;
+      case 130 : //K^0_L
         frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
                            params_pi_EHE[row][2], 1, 0, 1); 
         retMC = 0.55 * frH->Eval(energy);
         frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
                            params_pi_HHe[row][2], 1, 0, 1); 
         retMC += 0.45 * frH->Eval(energy);
-        break;
-      case 321 : //K^+-
-        retMC = retMCCH; retFIT=retMCCH; 
-        break;
-      case 130 : //K^0_L
-        retMC = retMCNH;
+        retMC = retMC*sfN;
         break;
       case 310 : //K^0_S
-        retMC = retMCNH;
+        frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                           params_pi_EHE[row][2], 1, 0, 1); 
+        retMC = 0.55 * frH->Eval(energy);
+        frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                           params_pi_HHe[row][2], 1, 0, 1); 
+        retMC += 0.45 * frH->Eval(energy);
+        retMC = retMC*sfN;
         break;
       case 3122 : //Lambda
-        retMC = retMCNH;
+        frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                           params_pi_EHE[row][2], 1, 0, 1); 
+        retMC = 0.55 * frH->Eval(energy);
+        frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                           params_pi_HHe[row][2], 1, 0, 1); 
+        retMC += 0.45 * frH->Eval(energy);
+        retMC = retMC*sfN;
         break;
       case 2112 : //n
-        retMC = retMCNH;
+        frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                           params_pi_EHE[row][2], 1, 0, 1); 
+        retMC = 0.55 * frH->Eval(energy);
+        frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                           params_pi_HHe[row][2], 1, 0, 1); 
+        retMC += 0.45 * frH->Eval(energy);
+        retMC = retMC*sfN;
         break;
       case 2212 : //p
-        retMC = retMCCH; retFIT=retMCCH;
+        retMC  = sfCh; 
+        retFIT = sfCh;
         break;
       default: // ANSÄTZE FOR XI, SIGMA, OMEGA
         //According to D0 JES, strange baryons may have had responses but such
@@ -2187,22 +2219,38 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
         if (GetStrangeB() && GetAnsatz()=="pi") {	//PION params
           switch (PDG) {
             case 3112 :		//Sigma^-
-              retMC = retMCCH; retFIT=retMCCH;
+              retMC  = sfCh; 
+              retFIT = sfCh;
               break;
             case 3212 :		//Sigma^0
-              retMC = retMCNH;
+              frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                                 params_pi_EHE[row][2], 1, 0, 1); 
+              retMC = 0.55 * frH->Eval(energy);
+              frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                                 params_pi_HHe[row][2], 1, 0, 1); 
+              retMC += 0.45 * frH->Eval(energy);
+              retMC = retMC*sfN;
               break;
             case 3222 :		//Sigma^+
-              retMC = retMCCH; retFIT=retMCCH;
+              retMC  = sfCh; 
+              retFIT = sfCh;
               break;
             case 3312 :		//Xi^-
-              retMC = retMCCH; retFIT=retMCCH;
+              retMC  = sfCh; 
+              retFIT = sfCh;
               break;
             case 3322 :		//Xi^0
-              retMC = retMCNH;
+              frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                                 params_pi_EHE[row][2], 1, 0, 1); 
+              retMC = 0.55 * frH->Eval(energy);
+              frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                                 params_pi_HHe[row][2], 1, 0, 1); 
+              retMC += 0.45 * frH->Eval(energy);
+              retMC = retMC*sfN;
               break;
             case 3334 :		//Omega^-
-              retMC = retMCCH; retFIT=retMCCH;
+              retMC  = sfCh; 
+              retFIT = sfCh;
               break;
             default : zero=true; continue;	 //Unknown particle
           } //Switch PDG (pion Ansatz)
@@ -2214,10 +2262,11 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
     //Neutral hadron responses
     if (PDG==130 || PDG==310 || PDG==3122 || PDG==2112 || PDG==3212 || PDG==3322){
       if (FIT && !zero) { //Had.: reset A,B,C; others same as MC
-        frH->SetParameter(3,fA);
-        frH->SetParameter(4,fB);
-        frH->SetParameter(5,fC);
-        retFIT = frH->Eval(energy);
+        //frH->SetParameter(3,fA);
+        //frH->SetParameter(4,fB);
+        //frH->SetParameter(5,fC);
+        //retFIT = frH->Eval(energy);
+        retFIT = sfN;
       }
     }
   } 
