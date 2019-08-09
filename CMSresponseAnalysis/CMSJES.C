@@ -52,12 +52,12 @@ void CMSJES::Loop()
   string Rcone = "R_{cone}=0.4";	//R_cone info in string form
   R_cone = 0.4;
 
-  string EpTitle = Rcone;     EpTitle    += "RunCMS";
-  string pTpTitle = Rcone;     pTpTitle    += "RunCMS"; 
-  string ETitle = Rcone;      ETitle     += "RunCMS"; 
-  string MPFTitle = Rcone;    MPFTitle   += "RunCMS"; 
-  string EpMPFTitle = Rcone;  EpMPFTitle += "RunCMS";
-  string pTpMPFTitle = Rcone;  pTpMPFTitle += "RunCMS"; 
+  string EpTitle = Rcone;     EpTitle      += "RunCMS";
+  string pTpTitle = Rcone;    pTpTitle     += "RunCMS"; 
+  string ETitle = Rcone;      ETitle       += "RunCMS"; 
+  string MPFTitle = Rcone;    MPFTitle     += "RunCMS"; 
+  string EpMPFTitle = Rcone;  EpMPFTitle   += "RunCMS";
+  string pTpMPFTitle = Rcone; pTpMPFTitle  += "RunCMS"; 
 
   //Time scale: // C_tau -> 10mm
   string ctauStr;
@@ -75,7 +75,7 @@ void CMSJES::Loop()
   TProfile* prE   = new TProfile("prE",ETitle.c_str(),nbins-1,binsx);
 
   MPFTitle += ";E_{probe} [GeV];p_{T}^{reco}/p_{T}^{gen}";
-  // ;#font[132]{#font[12]{p}_{T,probe}^{MC} [GeV]}
+
   EpMPFTitle += ";E' [GeV];R_{MPF}";
   pTpMPFTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]};R_{MPF}";
   TProfile* prMPF_Ep = new TProfile("prMPF_Ep", EpMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -204,7 +204,8 @@ void CMSJES::Loop()
   //  R_h^{MC} = p_h^(0)*( 1 - p_h^(1)*(E/0.75)^(p_h^(2)-1) )
   //Fit params. A=[3], B=[4], C=[5] only used for fitting to D0 data
   //  R_h^{data} = C*p_h^(0)*( 1 - A*p_h^(1)*(E/0.75)^(p_h^(2)+B-1) )
-  TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x/0.75,[2]+[4]-1))",0,250);
+  //TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x/0.75,[2]+[4]-1))",0,250);
+  TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x/0.75,[2]+[4]-1))",0,4000);
 
   //gamma, e and mu response ~same in data and MC, no A B C fit params.
   //Photon response
@@ -526,7 +527,7 @@ void CMSJES::Loop()
 
     /**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************/
     
-    int muPDG=13;  int muTAG=3; //mu PDGID and tag 
+    int muPDG=13;  int muTAG=3; //mu PDGID and tag
     if (studyMode == 3) {
       if (Getverbose()) cout << "Entering Z+JET: FIND TAG" << endl;
 
@@ -535,13 +536,12 @@ void CMSJES::Loop()
       for (int a=0; a!= prtn_tag->size(); ++a) {
         // Find muons with tag == 3 and store those in i_tag1 and i_tag2
         if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
-          if (i_tag1 == -137) i_tag1 = a;
+          if (i_tag1 == -137)      i_tag1 = a;
           else if (i_tag2 == -731) i_tag2 = a;
           else {cout << "More than two muons with tag 3 in an event." << endl;
                 continue;}
         }
       }
-      
       if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
 
       //***** 1st muon *****
@@ -585,7 +585,7 @@ void CMSJES::Loop()
 
       // Check that invariant mass is in range 70 - 110 GeV since Z boson mass is 91 GeV
       double M = p4g_tag.M();
-      if ( M<70 || M>110) continue;
+      if ( M<70.0 || M>110.0) continue;
 
     }
 
@@ -676,7 +676,6 @@ void CMSJES::Loop()
         NIJ_r+=p4*resp;
         NIJ_f+=p4*resp_f;
       } //Loop particles not in jets
-      //avgResp /= prtclnij_pt->size(); 
     } 
     /*
     if (!GetrecoMissing()) {	//Reco from jet inbalance 
@@ -777,8 +776,7 @@ void CMSJES::Loop()
       //Assertions:
       //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
       if ((p4r_probe.Pt()<softPt && f_05[i_probe] < f_05jetMinS) ||
-                                    f_05[i_probe] < f_05jetMin) {continue;
-       cout << "f_05" << endl;}
+                                    f_05[i_probe] < f_05jetMin ) continue;
       
 
       //-tag and probe in the right |eta| region with enough p_T
@@ -890,8 +888,8 @@ void CMSJES::Loop()
                                  (resp_f*p4).E());
               } //Xi, Sigma, Omega^-
               //List further unknown particle PDGIDs
-              if (find(otherIDs.begin(),otherIDs.end(),PDG)==otherIDs.end() &&
-                  !GetStrangeB() && !isNeutrino(PDG)  ) otherIDs.push_back(PDG);
+              //if (find(otherIDs.begin(),otherIDs.end(),PDG)==otherIDs.end() &&
+              //    !GetStrangeB() && !isNeutrino(PDG)  ) otherIDs.push_back(PDG);
           } //Switch PDG (general)
           h_ptr[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
           h_ptr[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp*p4).E() );
@@ -915,15 +913,16 @@ void CMSJES::Loop()
     // Modified for Z+jet usage, most of the p4EM_tag changed to p4r_tag
     Ep   = p4r_tag.Pt()*cosh(probe.Eta());
     pTp  = p4r_tag.Pt();
+ 
+    //if (pTp < 80.0) {cout << pTp << endl;}
 
     //Data<->MC & MC'<->MC factors
     F    = Fnum[i_probe]/Fden[i_probe];
 
-
     //Add the new values to TProfile histograms:
     //p_T balance method
     prEp->Fill(    Ep,            p4r_probe.Pt()/p4r_tag.Pt(), weight);
-    prpTp->Fill(    pTp,            p4r_probe.Pt()/p4r_tag.Pt(), weight);
+    prpTp->Fill(   pTp,           p4r_probe.Pt()/p4r_tag.Pt(), weight);
     prE->Fill(     p4g_probe.E(), p4r_probe.Pt()/p4r_tag.Pt(), weight);
     prEpFit->Fill( Ep,            p4f_probe.Pt()/p4r_tag.Pt(), weight);
 
@@ -1235,7 +1234,6 @@ void CMSJES::Loop()
 bool CMSJES::fidCuts(int id, double pT) {
   int PDG = abs(id);
   if (isNeutrino(PDG)) return false;
-  if (isStrangeB(PDG) && !GetStrangeB()) return false;
 
   // Photon or if pT higher than 0.3 GeV
   if (PDG==20 || PDG==22 || pT>0.3) return true;
@@ -1430,7 +1428,8 @@ void CMSJES::InputNameConstructor() {
   zjFile += "Zjet_";
 
   //#events
-  if      (ReadName.find("500000") !=string::npos) num = "500000";
+  if      (ReadName.find("600000") !=string::npos) num = "600000";
+  else if (ReadName.find("500000") !=string::npos) num = "500000";
   else if (ReadName.find("300000") !=string::npos) num = "300000";
   else if (ReadName.find("100000") !=string::npos) num = "100000";
   else if (ReadName.find("30000")  !=string::npos) num = "30000";
@@ -2109,19 +2108,13 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
   bool zero = false; //Return zero responses (run index-wise)
   int PDG = abs(id);
 
-  double retMCCH = 0.0;
-  double retMCNH = 0.0;
-
   double sfCh = 0.0;
   double sfN = 0.0;
 
-  //cout << "PDGID: " << id << " energy: " << energy << endl;
   if (energy > 0.3) sfCh = 1.0; // Step function for charged particles
   if (energy > 3.0) sfN = 1.0; // Step function for neutral particles
 
   //cout << "PDGID: " << id << " energy: " << energy << " sfCh: " << sfCh << " sfN " << sfN << endl;
-
-
 
   //Check if particle outside good eta region
   if (fabs(pseudorap) > 3.2) zero = true;
@@ -2164,7 +2157,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
       //HADRONS
       case 211 : //pi^+-
         retMC  = sfCh;
-        retFIT = sfN;
+        retFIT = sfCh;
         break;
       case 321 : //K^+-
         retMC  = sfCh; 
@@ -2210,53 +2203,44 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
         retMC  = sfCh; 
         retFIT = sfCh;
         break;
-      default: // ANSÄTZE FOR XI, SIGMA, OMEGA
-        //According to D0 JES, strange baryons may have had responses but such
-        //were not presented. As an Ansatz, we modify the responses of known
-        //hadrons by  R^MC_h(E=m_h) = 0 <=> p^(1)_h = (m_h/0.75)^(1-p^(2)_h).
-        //The different Ansätze below are based on different hadrons' params.
-        //To use the Ansätze, set StrangeB=true in CMSJES.h
-        if (GetStrangeB() && GetAnsatz()=="pi") {	//PION params
-          switch (PDG) {
-            case 3112 :		//Sigma^-
-              retMC  = sfCh; 
-              retFIT = sfCh;
-              break;
-            case 3212 :		//Sigma^0
-              frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
-                                 params_pi_EHE[row][2], 1, 0, 1); 
-              retMC = 0.55 * frH->Eval(energy);
-              frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
-                                 params_pi_HHe[row][2], 1, 0, 1); 
-              retMC += 0.45 * frH->Eval(energy);
-              retMC = retMC*sfN;
-              break;
-            case 3222 :		//Sigma^+
-              retMC  = sfCh; 
-              retFIT = sfCh;
-              break;
-            case 3312 :		//Xi^-
-              retMC  = sfCh; 
-              retFIT = sfCh;
-              break;
-            case 3322 :		//Xi^0
-              frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
-                                 params_pi_EHE[row][2], 1, 0, 1); 
-              retMC = 0.55 * frH->Eval(energy);
-              frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
-                                 params_pi_HHe[row][2], 1, 0, 1); 
-              retMC += 0.45 * frH->Eval(energy);
-              retMC = retMC*sfN;
-              break;
-            case 3334 :		//Omega^-
-              retMC  = sfCh; 
-              retFIT = sfCh;
-              break;
-            default : zero=true; continue;	 //Unknown particle
-          } //Switch PDG (pion Ansatz)
-        } else {
-          cout << "Unknown particle PDG: " << PDG << endl; zero=true;  break;
-        } //Unknown partcle, not observed
+      case 3112 :		//Sigma^-
+        retMC  = sfCh; 
+        retFIT = sfCh;
+        break;
+      case 3212 :		//Sigma^0
+        frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                           params_pi_EHE[row][2], 1, 0, 1); 
+        retMC = 0.55 * frH->Eval(energy);
+        frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                           params_pi_HHe[row][2], 1, 0, 1); 
+        retMC += 0.45 * frH->Eval(energy);
+        retMC = retMC*sfN;
+        break;
+      case 3222 :		//Sigma^+
+        retMC  = sfCh; 
+        retFIT = sfCh;
+        break;
+      case 3312 :		//Xi^-
+        retMC  = sfCh; 
+        retFIT = sfCh;
+        break;
+      case 3322 :		//Xi^0
+        frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                           params_pi_EHE[row][2], 1, 0, 1); 
+        retMC = 0.55 * frH->Eval(energy);
+        frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                           params_pi_HHe[row][2], 1, 0, 1); 
+        retMC += 0.45 * frH->Eval(energy);
+        retMC = retMC*sfN;
+        break;
+      case 3334 :		//Omega^-
+        retMC  = sfCh; 
+        retFIT = sfCh;
+        break;
+      default : 
+        zero=true;
+        cout << "Unknown particle PDG: " << PDG << endl;
+        continue;	 //Unknown particle
     } //Switch PDG (before Ansätze)
 
     //Neutral hadron responses
@@ -2276,7 +2260,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
   if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<0)) retFIT=0;
   if (!EM || zero || isnan(retEM)  || (pos && retEM <0)) retEM =0;
 
-
+  //cout << "PDGID: " << id << " energy: " << energy << " retMC: " << retMC << endl;
 
 } //Response
 
@@ -2500,7 +2484,7 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 
   //Set #events
   string num;
-  cout << "#Events (0) 1k (1) 10k (2) 100k (3) 500k (4) 3k (5) 30k (6) 300k" << endl;
+  cout << "#Events (0) 1k (1) 10k (2) 100k (3) 500k (4) 3k (5) 30k (6) 300k (7) 600k" << endl;
   while (Nevt<0 || Nevt>7) cin >> Nevt;
   if      (Nevt==0) num = "1000";
   else if (Nevt==1) num = "10000";
@@ -2509,6 +2493,7 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
   else if (Nevt==4) num = "3000";
   else if (Nevt==5) num = "30000";
   else if (Nevt==6) num = "300000";
+  else if (Nevt==7) num = "600000";
 
   //Construct all-flavor filenames
   zjstr = respStr + "Zjet_"     + num + root;

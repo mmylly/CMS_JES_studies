@@ -208,11 +208,6 @@ public :
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
   bool runCMS = true;		//Use CMS parameters
 
-  bool StrangeB = true;		//Use Ansätze for strange baryon response
-  //string Ansatz = "pn";   	//If StrangeB=true, use p & n  based Ansätze
-  //string Ansatz = "L";  	//        -||-         Lambda     -||-
-  string Ansatz = "pi";  	//        -||-         pion       -||-
-
   bool printProg = true;	//Print info on Loop() progress?
   bool useEarlierCuts  = false;	//True if events chosen based on readEvt
   bool useInitGuessABC = false;	//Use initial guess A,B,C; for starting fits
@@ -248,11 +243,7 @@ public :
   void SetprintProg( bool flag) {printProg = flag;}
   void SetcontHistos(bool flag) {contHistos=flag;}
   void SetMPFmode( bool flag ) {MPFmode = flag;}
-  void SetStrangeB(bool flag ) {StrangeB = flag;}
-  void SetAnsatz(  string val) {
-   if (val=="pn" || val=="L" || val=="pi") Ansatz = val;
-   else cout << "SetAnsatz: value "<< val << " unknown, wont apply" << endl;
-  }
+
   #ifdef NIJ
   void SetrecoMissing(bool flag) {recoMissing = flag;}
   #endif
@@ -277,8 +268,7 @@ public :
   bool GetprintProg() {return printProg;}
   bool GetcontHistos() {return contHistos;}
   bool GetMPFmode()  {return MPFmode;}
-  bool GetStrangeB() {return StrangeB;}
-  string GetAnsatz() {return Ansatz;}
+
   #ifdef NIJ
   bool GetrecoMissing() {return recoMissing;}
   #endif
@@ -374,10 +364,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       files.push_back("P8_Zjet_10000" );
       files.push_back("P8_Zjet_100000");
       files.push_back("P8_Zjet_500000");
-      files.push_back("P8_Zjet_3000");
-      files.push_back("P8_Zjet_30000");
+      files.push_back("P8_Zjet_3000"  );
+      files.push_back("P8_Zjet_30000" );
       files.push_back("P8_Zjet_300000");
-
+      files.push_back("P8_Zjet_600000");
       //User interface
       printf("No filename given, choose file (y = default file):\n");
       for (int i=0; i!=files.size(); ++i) {
