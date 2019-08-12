@@ -39,12 +39,8 @@ void CMSJES::Loop()
   int const nbinsMPF = 12;
 
   //Check values
-  //const double binsx[nbins] = {82.75, 105.25, 132.75, 173.25, 228.0, 299.0, 380.0}; 
   const double binsx[nbins] = {31.75, 41.0, 50.5, 63.5, 82.75, 105.25, 132.5, 173.5, 
                                228.5, 299.5, 380.75}; 
-  /*const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5,
-                                     173.25, 228.25, 300.0, 391.25, 503.75, 681.75, 
-                                     951.5,1258.25};*/
   const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5,
                                      173.25, 228.25, 300.0, 391.25, 494.25};
 
@@ -52,23 +48,24 @@ void CMSJES::Loop()
   string Rcone = "R_{cone}=0.4";	//R_cone info in string form
   R_cone = 0.4;
 
-  string EpTitle = Rcone;     EpTitle      += "RunCMS";
-  string pTpTitle = Rcone;    pTpTitle     += "RunCMS"; 
-  string ETitle = Rcone;      ETitle       += "RunCMS"; 
-  string MPFTitle = Rcone;    MPFTitle     += "RunCMS"; 
-  string EpMPFTitle = Rcone;  EpMPFTitle   += "RunCMS";
-  string pTpMPFTitle = Rcone; pTpMPFTitle  += "RunCMS"; 
+  string EpTitle     = Rcone;     EpTitle += "RunCMS";
+  string pTpTitle    = Rcone;    pTpTitle += "RunCMS"; 
+  string ETitle      = Rcone;      ETitle += "RunCMS"; 
+  string MPFTitle    = Rcone;    MPFTitle += "RunCMS"; 
+  string EpMPFTitle  = Rcone;  EpMPFTitle += "RunCMS";
+  string pTpMPFTitle = Rcone; pTpMPFTitle += "RunCMS"; 
 
   //Time scale: // C_tau -> 10mm
   string ctauStr;
   ctauStr = ", c#tau=1 cm"; // Might have to change this
-  EpTitle+=ctauStr;  ETitle+=ctauStr; pTpTitle+=ctauStr;  MPFTitle+=ctauStr;  EpMPFTitle+=ctauStr;
+  EpTitle+=ctauStr;   ETitle+=ctauStr; pTpTitle+=ctauStr;  
+  MPFTitle+=ctauStr;  EpMPFTitle+=ctauStr;
   pTpMPFTitle+=ctauStr;
 
   EpTitle += ";E' [GeV];p_{T}^{probe}/p_{T}^{tag}";
   pTpTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]}; p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prEp    = new TProfile("prEp", EpTitle.c_str(),      nbins-1,binsx);
-  TProfile* prpTp    = new TProfile("prpTp", pTpTitle.c_str(),      nbins-1,binsx);
+  TProfile* prpTp   = new TProfile("prpTp", pTpTitle.c_str(),    nbins-1,binsx);
   TProfile* prEpFit = new TProfile("prEpFit0", EpTitle.c_str(),  nbins-1,binsx);
 
   ETitle += ";E_{probe} [GeV];p_{T}^{probe}/p_{T}^{tag}";
@@ -88,7 +85,7 @@ void CMSJES::Loop()
   TH1D* FFlq= new TH1D("FFlq", "Jet flavour fraction;#font[12]{p}_{T} [GeV];",nbins-1,binsx);
   TH1D* FFa = new TH1D("FFa", ";#font[12]{p}_{T} [GeV];",nbins-1,binsx); //All
   string FFstackTitle;
-  FFstackTitle = "#font[132]{Run CMS}";
+  FFstackTitle  = "#font[132]{Run CMS}";
   FFstackTitle += ";#font[12]{E'} #font[132]{[GeV]}";
   FFstackTitle += ";#font[132]{Jet flavour fraction}";
   THStack* FFstack = new THStack("", FFstackTitle.c_str());
@@ -261,10 +258,10 @@ void CMSJES::Loop()
   double Ep   = 0;		//Jet energy estimator E' = pTtag*cosh(eta_gen)
   double pTp  = 0;		//pT' = E'/cosh(eta_det)
   double eta_gamma = 1.0;	//Max |eta| for photon in gamma+jet (ALT 1.0)
-  double eta_muon  = 2.3;	//Max |eta| for a single muon in Z+jet       //CONFIRM
-  double eta_tag_z = 1.3;	//Max |eta| for mumu tag object //Find value //CONFIRM
+  double eta_muon  = 2.3;	//Max |eta| for a single muon in Z+jet      
+  double eta_tag_z = 1.3;	//Max |eta| for mumu tag object
   double eta_tag   = 0.4;	//Max |eta| for tag jet in dijet
-  double eta_probe = 1.3;//0.4; //Max |eta| for probe jets
+  double eta_probe = 1.3;       //Max |eta| for probe jets
   vector<double> f_05;		//Fraction of jets' E w/in R<0.5 from jet axis
   double f_05jetMin = 0.5;	//Min. probe f_05 value  w/in [0,1], 0=inactive
   double f_05jetMinS= 0.1;	//^soft pT<15 GeV jets,  w/in [0,1], 0=inactive
@@ -277,7 +274,7 @@ void CMSJES::Loop()
   double F;			//Temps to store F values for the probe jet
   int PDG = 1;			//Shorthand, to store a particle's PDGID
   int JI = 0;			//Shorthand, particle's jet index
-  double phiMin = 3.0;		//Minimum azimuth angle between tag and probe
+  double phiMin = 2.8;		//Minimum azimuth angle between tag and probe
   double prtnPt = 0;		//Temp, find prtn lvl gamma w/ highest pT
   double pTmin_probe = 15;	//Minimum probe jet p_T (GeV)
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
@@ -437,9 +434,20 @@ void CMSJES::Loop()
     }
   } else for (long l=0; l != nentries; ++l) passedCuts.push_back(false);
 
+  // eventcount
+  int all = 0;
+  int mu1Cut = 0;
+  int mu2Cut = 0;
+  int invM = 0;
+  int noJets = 0;
+  int f05Cut = 0;
+  int tagProbeCut = 0;
+  int b2b = 0;
+  int lowMet = 0;
+
   //Loop Tree entries = events
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
-
+    all ++; //eventcount
     //Print progress for long runs
     if ((GetprintProg() && jentry % 1000==0) || Getverbose()) {
       cout << "Looping event " << jentry;
@@ -448,10 +456,10 @@ void CMSJES::Loop()
       else if (studyMode==3) cout << " in Z+jet";
       cout << endl;
     }
-
     //Skip events that didn't pass cuts earlier. Useful in e.g. repeating Loop
     if (GetuseEarlierCuts() && passedCuts.size()>jentry && !passedCuts[jentry]) continue;
  
+
     Long64_t ientry = LoadTree(jentry);	//Load new event
     if (ientry < 0) break;		//When no more events
     nb = fChain->GetEntry(jentry);   nbytes += nb;
@@ -530,10 +538,10 @@ void CMSJES::Loop()
     int muPDG=13;  int muTAG=3; //mu PDGID and tag
     if (studyMode == 3) {
       if (Getverbose()) cout << "Entering Z+JET: FIND TAG" << endl;
-
       int i_tag1 = -137;	// These values won't change if...
       int i_tag2 = -731;	// ...muons not found.
       for (int a=0; a!= prtn_tag->size(); ++a) {
+
         // Find muons with tag == 3 and store those in i_tag1 and i_tag2
         if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
           if (i_tag1 == -137)      i_tag1 = a;
@@ -552,6 +560,7 @@ void CMSJES::Loop()
       //Fast gen lvl cuts, more strict reco lvl cuts below 
 
       if (fabs(tag.Eta()) > eta_muon || tag.Pt() < pTmin_muon) continue;
+      mu1Cut ++; //eventcount
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag1],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
@@ -567,6 +576,7 @@ void CMSJES::Loop()
 
 
       if (fabs(tag.Eta())>eta_muon || tag.Pt()<pTmin_muon) continue;
+      mu2Cut ++;
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag2],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
@@ -586,6 +596,7 @@ void CMSJES::Loop()
       // Check that invariant mass is in range 70 - 110 GeV since Z boson mass is 91 GeV
       double M = p4g_tag.M();
       if ( M<70.0 || M>110.0) continue;
+      invM ++;
 
     }
 
@@ -653,15 +664,44 @@ void CMSJES::Loop()
       f_05[i]*=1.0/(jets_r[i].E());
     }
 
+    /******************** SHADOWING *********************/
+
+    //  TH2* h2 = new TH2D("h2", "", 100, -5.0, 3.0, 100, -TMath::Pi(), TMath::Pi());
+    //p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI], (*jet_phi)[JI],(*jet_e)[JI]);      
+
+    for (int i=0; i!=jet_pt->size(); ++i) {
+      cout << "Number of jets: " << i << endl;
+
+      float phiJet = (*jet_phi)[i];
+      float etaJet = (*jet_eta)[i];
+
+
+      TH2* cht = new TH2D("cht", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
+      //TH2* chc = new TH2D("chc", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
+      //TH2* cht = new TH2D("cht", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
+      
+      for (int j=0; j != prtcl_pt->size(); ++j) {
+        if ((*prtcl_jet)[j] == i) {
+          p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i], //Current prtcl 4-vec
+                          (*prtcl_phi)[i],(*prtcl_e)[i] );
+          
+          
+        }
+      }
+    } 
+
+
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     #ifdef NIJ
 
     if (Getverbose()) cout<<"Reconstructing particles not in jets"<<endl;
 
 
+
     //Reconstruct prtcls in nij vecs if any saved in tuple and flag true 
     if (GetrecoMissing() && prtclnij_pt->size()!=0) {
 
+      // Loop over all particles in an event
       for (int i=0; i!=prtclnij_pt->size(); ++i) {
 
         PDG = abs((*prtclnij_pdgid)[i]);
@@ -675,8 +715,9 @@ void CMSJES::Loop()
         NIJ_g+=p4;
         NIJ_r+=p4*resp;
         NIJ_f+=p4*resp_f;
-      } //Loop particles not in jets
+      } //Loop over all particles in event
     } 
+
     /*
     if (!GetrecoMissing()) {	//Reco from jet inbalance 
       for (int i=0; i!=jets_r.size(); ++i) {
@@ -684,6 +725,7 @@ void CMSJES::Loop()
       }
       NIJ_r *= -1.0;         NIJ_f *= -1.0;
     } //Reco from jet inbalance */
+
     #endif
 
     /************************* GAMMA+JET: FIND PROBE *************************/
@@ -750,12 +792,11 @@ void CMSJES::Loop()
         case 1 :		//Take the only jet as a probe 
           i_probe = 0;
           break;
-        default :		//One excess high-pT jet OK if confused w/ tag
-
+        default :
           //if more than two high energy jets
-          //if (jets_r.size()>2 && jets_r[2].Pt()>pTmin_probe) continue;
           i_probe = 0;
       }
+      noJets ++;
 
       p4.SetPtEtaPhiE(0,0,0,0);	//Reinit
 
@@ -769,7 +810,7 @@ void CMSJES::Loop()
       //MC SPR reco
       p4r_probe.SetPtEtaPhiE(jets_r[i_probe].Pt(),  jets_r[i_probe].Eta(),
 			     jets_r[i_probe].Phi(), jets_r[i_probe].E()  );
-      //Data reco
+      //FIT reco
       p4f_probe.SetPtEtaPhiE(jets_f[i_probe].Pt(),  jets_f[i_probe].Eta(),
 			     jets_f[i_probe].Phi(), jets_f[i_probe].E()  );
 
@@ -777,14 +818,16 @@ void CMSJES::Loop()
       //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
       if ((p4r_probe.Pt()<softPt && f_05[i_probe] < f_05jetMinS) ||
                                     f_05[i_probe] < f_05jetMin ) continue;
-      
+      f05Cut ++;
+
 
       //-tag and probe in the right |eta| region with enough p_T
-      if (fabs(p4r_tag.Eta())   > eta_tag_z     ||
-          p4r_tag.Pt()          < pTmin_tag_z   ||
-          fabs(p4r_probe.Eta()) > eta_probe     ||
-          p4r_probe.Pt()        < pTmin_probe    ) continue;
-
+      if (fabs(p4r_tag.Eta())   > eta_tag_z   ||
+          p4r_tag.Pt()          < pTmin_tag_z ||
+          fabs(p4r_probe.Eta()) > eta_probe   ||
+          p4r_probe.Pt()        < pTmin_probe  ) continue; 
+      tagProbeCut ++;
+       
     }// Z+JET: FIND PROBE
 
 
@@ -792,8 +835,8 @@ void CMSJES::Loop()
     if (Getverbose()) cout << "Entering COMMON CUTS" << endl;
     
     //Tag object and probe jet back-to-back. Note ROOT DeltaPhi is in [-pi,pi]
-
     if (fabs(tag.DeltaPhi(probe)) < phiMin) continue;
+    b2b ++;
 
     //Assert probe is not confused with tag
 
@@ -806,6 +849,7 @@ void CMSJES::Loop()
     else if (p4r_tag.Pt() > 15 && met > 1.2*p4r_tag.Pt()) continue;
     else if (                     met > 2.0*p4r_tag.Pt()) continue;
     if      (met/p4r_probe.Pt()       > 0.7             ) continue;
+    lowMet ++;
 
     /************** FIND DERIVATIVES IN CASE i_probe > 1 (RARE) **************/
 
@@ -891,14 +935,12 @@ void CMSJES::Loop()
               //if (find(otherIDs.begin(),otherIDs.end(),PDG)==otherIDs.end() &&
               //    !GetStrangeB() && !isNeutrino(PDG)  ) otherIDs.push_back(PDG);
           } //Switch PDG (general)
-          h_ptr[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
-          h_ptr[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp*p4).E() );
-          h_ptr[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                         (resp_f*p4).E() );
-          h_all[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
-          h_all[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(resp*p4).E() );
-          h_all[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]],
-                         (resp_f*p4).E() );
+          h_ptr[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (*prtcl_e)[i]  );
+          h_ptr[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (resp*p4).E()  );
+          h_ptr[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (resp_f*p4).E());
+          h_all[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (*prtcl_e)[i]  );
+          h_all[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (resp*p4).E()  );
+          h_all[2]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (resp_f*p4).E());
         } //Particle content histograms
 	
       } //If ptcl in the studied probe or tag
@@ -1217,6 +1259,16 @@ void CMSJES::Loop()
 
   } //Particle composition histograms
 
+  cout << "all events:        " << all         << endl;
+  cout << "1st muon cut:      " << mu1Cut      << endl;
+  cout << "2nd muon cut:      " << mu2Cut      << endl;
+  cout << "Invariant mass:    " << invM        << endl;
+  cout << "0 jets:            " << noJets      << endl;
+  cout << "F05:               " << f05Cut      << endl;
+  cout << "Tag probe cuts:    " << tagProbeCut << endl;
+  cout << "btb tag and probe: " << b2b         << endl;
+  cout << "Low met:           " << lowMet      << endl;
+
   //Save CMSJES TTree
   fout->Write();
   fout->Close();
@@ -1308,55 +1360,6 @@ void* loopHandle(void* CMSJESToLoop) {
 //Params:	dj_in, gj_in	Ready-given CMSJES objects for dijet...
 //				...and gamma+jet whose Loop to call
 //		fitPars		If true, take A,B,C from this CMSJES object
-/*
-void CMSJES::MultiLoop(CMSJES* dj_in, CMSJES* gj_in, bool fitPars) {
-
-  //Input filenames to read
-  InputNameConstructor();
-
-  //Instantiate new CMSJES objects to be run in parallel
-  CMSJES* resp_dj;  CMSJES* resp_gj;
-
-  bool noInputGiven = true;
-
-  //Instantiate new CMSJES objects where needed
-   if (dj_in && gj_in) {	//Use given dijet & gamma+jet CMSJES objects
-    if (Getverbose()) cout<<"MultiLoop: using input CMSJES objects"<<endl;
-    resp_dj = dj_in;
-    resp_gj = gj_in;
-    noInputGiven = false;
-  } else {	//No dijet & gamma+jet objects given
-    if (Getverbose()) cout<<"MultiLoop: Instantiating new CMSJES objects"<<endl;
-    resp_dj = new CMSJES(0,djFile);
-    resp_gj = new CMSJES(0,gjFile);
-  }
-
-  //MultiLoop may be called from FitHandle, ensure fit params. are taken from 
-  //this CMSJES object and not read from the header "as is"
-  if (fitPars) {
-    resp_dj->SetABC(GetA(),GetB(),GetC());
-    resp_gj->SetABC(GetA(),GetB(),GetC());
-  }
-
-  //Instantiate the threads
-  if (Getverbose()) cout<<"Instantiating threads"<<endl; 
-  TThread* t_dj;  TThread* t_gj;
-  t_dj = new TThread("t_dj", loopHandle, (void*) resp_dj);
-  t_gj = new TThread("t_gj", loopHandle, (void*) resp_gj);
-
-  //Start running the threads
-  t_dj->Run();	t_gj->Run();
-
-  //Gather the threads together after execution
-  t_dj->Join();	t_gj->Join();
-
-  //Free memory
-  delete t_dj;  delete t_gj;	//Threads always instantiated here
-
-  if (noInputGiven) {delete resp_dj;  delete resp_gj;}
-
-} //MultiLoop*/
-
 void CMSJES::MultiLoop(CMSJES* zj_in, bool fitPars) {
 
   //Input filenames to read
@@ -1584,34 +1587,6 @@ void CMSJES::FitGN()
       file[s]->GetObject("dBf",dB[s]);         file[s]->GetObject("dCf",dC[s]);
     }
 
-    //Read the first 10 bins of CMSJES output histos, compare to D0 data
-    /*
-    for (int s : sampleIndices) {
-      for (int i=0; i!=nD0data; ++i) { //GetBinContent indices start from 1
-        fit[s]=prof[s]->GetBinContent(i+1);  fitdA[s]=dA[s]->GetBinContent(i+1);
-        fitdB[s]=dB[s]->GetBinContent(i+1);  fitdC[s]=dC[s]->GetBinContent(i+1);
-        chi2 += pow(fit[s]-D0v[s][i],2)/ERv2[s][i]/n_dof;	//LSQ sum
-        //NaN check
-        if (isnan(fitdA[s]) || isnan(fitdB[s]) || isnan(fitdC[s])) {
-          cout << "Nonsensical gradient at dijet data point " << i << ": "
-               << fitdA[s]<<", "<<fitdB[s]<<", "<<fitdC[s]<<", skip" << endl;  
-          continue;
-        }
-        //Gradient components
-        if (!fixA) dAchi2 += 2*(fit[s]-D0v[s][i])*fitdA[s]/ERv2[s][i];
-        if (!fixB) dBchi2 += 2*(fit[s]-D0v[s][i])*fitdB[s]/ERv2[s][i];
-        if (!fixC) dCchi2 += 2*(fit[s]-D0v[s][i])*fitdC[s]/ERv2[s][i];
-        //The relevant components of Gauss-Newton's Hessian  estimate
-        if (!fixA         ) H[iA       ]+=2*fitdA[s]*fitdA[s]/ERv2[s][i];
-        if (!fixA && !fixB) H[iB       ]+=2*fitdA[s]*fitdB[s]/ERv2[s][i];
-        if (!fixA && !fixC) H[iC       ]+=2*fitdA[s]*fitdC[s]/ERv2[s][i];
-        if (!fixB         ) H[dim*iB+iB]+=2*fitdB[s]*fitdB[s]/ERv2[s][i];
-        if (!fixB && !fixC) H[dim*iB+iC]+=2*fitdB[s]*fitdC[s]/ERv2[s][i];
-        if (!fixC         ) H[dim*iC+iC]+=2*fitdC[s]*fitdC[s]/ERv2[s][i];
-      }
-    }
-    */
-
     for (int s : sampleIndices) {
       for (int i=0; i!=ndata_pTbal; ++i) { //GetBinContent indices start from 1
         fit[s]=prof[s]->GetBinContent(i+1);  
@@ -1819,16 +1794,16 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly, bool fitOnly)
   TProfile* przj_f=0; TProfile* przj_pTp=0;
 
   /* Z+jet */
-  //fzj->GetObject("prEp",przj);		//Z+jet response
-  fzj->GetObject("prpTp",przj_pTp);	//Z+jet response pTp
-  fzj->GetObject("prEpFit0",przj_f);	//Z+jet fit to data
+  //fzj->GetObject("prEp",przj);        //Z+jet response
+  fzj->GetObject("prpTp", przj_pTp);	//Z+jet response pTp
+  fzj->GetObject("prEpFit0",przj_f);    //Z+jet fit to data
   //TH1D* hzj     = przj->ProjectionX();
   TH1D* hzj_pTp = przj_pTp->ProjectionX();
   TH1D* hzj_f   = przj_f->ProjectionX();
 
   //CMS data points for Z+jet
-  TGraphErrors* dzj = new TGraphErrors();	//Z+jet data
-  TGraph* mc_zj = new TGraph();			//Z+jet MC
+  TGraphErrors* dzj = new TGraphErrors(); //Z+jet data
+  TGraph* mc_zj = new TGraph();	          //Z+jet MC
 
   //Filled circle (4 hollow circle); 1 black, 2 red, 4 blue, 3/8 green
   dzj->SetMarkerStyle(8);    dzj->SetMarkerColor(  kGreen+2);
