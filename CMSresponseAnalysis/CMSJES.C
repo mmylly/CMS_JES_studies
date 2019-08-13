@@ -259,12 +259,9 @@ void CMSJES::Loop()
   double pTp  = 0;		//pT' = E'/cosh(eta_det)
   double eta_gamma = 1.0;	//Max |eta| for photon in gamma+jet (ALT 1.0)
   double eta_muon  = 2.3;	//Max |eta| for a single muon in Z+jet      
-  double eta_tag_z = 1.3;	//Max |eta| for mumu tag object
+  double eta_tag_z = 2.5;	//Max |eta| for mumu tag object
   double eta_tag   = 0.4;	//Max |eta| for tag jet in dijet
   double eta_probe = 1.3;       //Max |eta| for probe jets
-  vector<double> f_05;		//Fraction of jets' E w/in R<0.5 from jet axis
-  double f_05jetMin = 0.5;	//Min. probe f_05 value  w/in [0,1], 0=inactive
-  double f_05jetMinS= 0.1;	//^soft pT<15 GeV jets,  w/in [0,1], 0=inactive
   double softPt = 15;		//Jets below this [GeV] are considered soft
   vector<TLorentzVector> jets_g;//Gen lvl jet 4-vectors
   vector<TLorentzVector> jets_r;//MC reco'd jet 4-vectors
@@ -279,7 +276,7 @@ void CMSJES::Loop()
   double pTmin_probe = 15;	//Minimum probe jet p_T (GeV)
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
   double pTmin_gamma = 7;	//Minimum tag gamma p_T (GeV) (Meas. 7 GeV)
-  double pTmin_muon = 15;       //Minimum single tag muon pT (GeV)
+  double pTmin_muon  = 15;      //Minimum single tag muon pT (GeV)
   double pTmin_tag_z = 15;      //Minimum tag muon pair pT (GeV)   
   bool   tagIsJet = false;	//Tag is among jets in gamma+jet mode
   double resp   = 1.0;	        //SPR value                (dummy init)
@@ -293,9 +290,9 @@ void CMSJES::Loop()
   TLorentzVector NIJ_g;		//Gen lvl 4-vec sum of prtcls Not In Jets
   TLorentzVector NIJ_r;		//MC-reco lvl  -||-
   TLorentzVector NIJ_f;		//Fit reco lvl -||-
-  TLorentzVector MET_g;
-  TLorentzVector MET_r;		//MET for MPF response (MC reco)
-  TLorentzVector MET_f;		//         -||-        (fitted param reco)
+  TLorentzVector MET_g;         //Gen lvl event MET
+  TLorentzVector MET_r;		//MC    -||-
+  TLorentzVector MET_f;		//FIT   -||-
   
   //Histograms to contain the particles in probe jet
   //[0]=gen lvl, [1]=reco lvl using r^MC, [2]=reco lvl using R^data 
@@ -440,9 +437,9 @@ void CMSJES::Loop()
   int mu2Cut = 0;
   int invM = 0;
   int noJets = 0;
-  int f05Cut = 0;
   int tagProbeCut = 0;
   int b2b = 0;
+  int alpha = 0;
   int lowMet = 0;
 
   //Loop Tree entries = events
@@ -484,14 +481,12 @@ void CMSJES::Loop()
     jets_g.resize(njets);   jets_r.resize(njets);
     jets_f.resize(njets);
     Fden.resize(njets);     Fnum.resize(njets);
-    f_05.resize(njets);
     dAjetsE.resize(njets);  dAjetsX.resize(njets);  dAjetsY.resize(njets);
     dBjetsE.resize(njets);  dBjetsX.resize(njets);  dBjetsY.resize(njets);
     dCjetsE.resize(njets);  dCjetsX.resize(njets);  dCjetsY.resize(njets);
     for (int i=0; i!=jets_g.size(); ++i) {	//All objects have njets size
       jets_g[i].SetPtEtaPhiE(0,0,0,0);  jets_r[i].SetPtEtaPhiE(0,0,0,0);
       jets_f[i].SetPtEtaPhiE(0,0,0,0);
-      f_05[i] = 0;
       Fden[i] = 0;     Fnum[i] = 0;
       dAjetsE[i] = 0;  dAjetsX[i] = 0;  dAjetsY[i] = 0;
       dBjetsE[i] = 0;  dBjetsX[i] = 0;  dBjetsY[i] = 0;
@@ -544,7 +539,7 @@ void CMSJES::Loop()
 
         // Find muons with tag == 3 and store those in i_tag1 and i_tag2
         if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
-          if (i_tag1 == -137)      i_tag1 = a;
+          if      (i_tag1 == -137) i_tag1 = a;
           else if (i_tag2 == -731) i_tag2 = a;
           else {cout << "More than two muons with tag 3 in an event." << endl;
                 continue;}
@@ -554,50 +549,72 @@ void CMSJES::Loop()
 
       //***** 1st muon *****
       //Parton level first tag muon:
-      tag.SetPtEtaPhiE((*prtn_pt)[i_tag1], (*prtn_eta)[i_tag1],
-                       (*prtn_phi)[i_tag1],(*prtn_e)[i_tag1]);
+      p4.SetPtEtaPhiE((*prtn_pt )[i_tag1], (*prtn_eta)[i_tag1], // p4 is a temporary 4-vector
+                      (*prtn_phi)[i_tag1], (*prtn_e  )[i_tag1]);
 
       //Fast gen lvl cuts, more strict reco lvl cuts below 
 
-      if (fabs(tag.Eta()) > eta_muon || tag.Pt() < pTmin_muon) continue;
+      if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
       mu1Cut ++; //eventcount
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
-      Response((*prtn_pdgid)[i_tag1],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
-               1, 0, 1, true, true, false, resp, resp_f, respEM       );
+      Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
+               1, 0, 1, true, true, false, resp, resp_f, respEM);
 
-      p4g_tag  = tag;		//gen lvl
-      p4r_tag  = tag*resp;	//MC lvl
-      p4f_tag  = tag*resp_f;    //FIT lvl
+      tag     = p4;        //gen lvl
+      p4r_tag = p4*resp;   //MC lvl
+      p4f_tag = p4*resp_f; //FIT lvl
+
+
+      TLorentzVector muon1 = p4;
 
       //***** 2nd muon ******
-      tag.SetPtEtaPhiE((*prtn_pt)[i_tag2], (*prtn_eta)[i_tag2],
-                       (*prtn_phi)[i_tag2],(*prtn_e)[i_tag2]);
+      p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
+                      (*prtn_phi)[i_tag2], (*prtn_e  )[i_tag2]);
 
 
-      if (fabs(tag.Eta())>eta_muon || tag.Pt()<pTmin_muon) continue;
+      if (fabs(p4.Eta())>eta_muon || p4.Pt()<pTmin_muon) continue;
       mu2Cut ++;
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
-      Response((*prtn_pdgid)[i_tag2],tag.Eta(),tag.E(),tag.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
-               1, 0, 1, true, true, false,  resp, resp_f, respEM       );
+      Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
+               1, 0, 1, true, true, false,  resp, resp_f, respEM);
 
-      p4g_tag  += tag;		//gen lvl
-      p4r_tag  += tag*resp;	//MC lvl
-      p4f_tag  += tag*resp_f;   //FIT lvl
+      tag      += p4;	     //gen lvl
+      p4r_tag  += p4*resp;   //MC lvl
+      p4f_tag  += p4*resp_f; //FIT lvl
 
-      //Invariant mass?
-      //double M = sqrt(pow( ( (*prtn_e)[i_tag1] + (*prtn_e)[i_tag2] ), 2) - pow(p4g_tag.P(),2));
+      TLorentzVector muon2 = p4;
 
-      //cout << "Event: " << jentry << endl;
-      //cout << "Invariant mass by me: " << M << endl;
-      //cout << "Invariant mass TVector: " << p4g_tag.M() << endl; 
+      TLorentzVector probeJet;
+
+      probeJet.SetPtEtaPhiE((*jet_pt )[0], (*jet_eta)[0],
+                            (*jet_phi)[0], (*jet_e  )[0]);
 
       // Check that invariant mass is in range 70 - 110 GeV since Z boson mass is 91 GeV
-      double M = p4g_tag.M();
+      double M = tag.M();
       if ( M<70.0 || M>110.0) continue;
       invM ++;
+      /*
+      //if (fabs(muon1.DeltaR(probeJet))<0.2 || fabs(muon2.DeltaR(probeJet))< 0.2){
+        cout << endl;
+        cout << "1st muon, Eta: " << (*prtn_eta)[i_tag1] << " Phi: " << (*prtn_phi)[i_tag1] 
+             << " pT: " << (*prtn_pt)[i_tag1] << " E: " << (*prtn_e)[i_tag1] << endl;
+        cout << "2nd muon, Eta: " << (*prtn_eta)[i_tag2] << " Phi: " << (*prtn_phi)[i_tag2] 
+             << " pT: " << (*prtn_pt)[i_tag2] << " E: " << (*prtn_e)[i_tag2] << endl;
+        cout << "Tag,      Eta: " << tag.Eta() << " Phi: " << tag.Phi() 
+             << " pT: " << tag.Pt() << " E: " << tag.E() << endl;
 
+        cout << "Jet1,    Eta: " << (*jet_eta)[0] << " Phi: " <<(*jet_phi)[0]
+             << " pT: " << (*jet_pt)[0] << endl;
+        cout << "Jet2,    Eta: " << (*jet_eta)[1] << " Phi: " <<(*jet_phi)[1]
+             << " pT: " << (*jet_pt)[1] << endl;
+        cout << "Jet3,    Eta: " << (*jet_eta)[2] << " Phi: " <<(*jet_phi)[2]
+             << " pT: " << (*jet_pt)[2] << endl;
+      
+        //cout << "mu1-probe: " << fabs(muon1.DeltaR(probeJet)) << 
+        //        " mu2-probe: " << fabs(muon2.DeltaR(probeJet)) << endl;
+      //}*/
     }
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
@@ -609,8 +626,8 @@ void CMSJES::Loop()
 
       JI = (*prtcl_jet)[i];	                        //Which jet this particle belongs to
       PDG = abs((*prtcl_pdgid)[i]);
-      p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i],	//Current prtcl 4-vec
-                      (*prtcl_phi)[i],(*prtcl_e)[i]  );
+      p4.SetPtEtaPhiE((*prtcl_pt )[i], (*prtcl_eta)[i],	//Current prtcl 4-vec
+                      (*prtcl_phi)[i], (*prtcl_e  )[i]);
 
       //Calculate responses. Store results to [resp, resp_f, respEM] tuples
       Response(PDG, p4.Eta(), p4.E(), p4.Pt(), fr_e, fr_mu, fr_gam, fr_h, true,
@@ -618,21 +635,13 @@ void CMSJES::Loop()
 
       //Reconstruct jets
       //jets_g[ JI] += (PDG==13||!fidCuts(PDG,(*prtcl_pt)[i])?0:1)*p4;//Gen lvl
-      jets_g[ JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;           //Gen lvl
-      jets_r[ JI] += p4*resp;   //MC reco
-      jets_f[ JI] += p4*resp_f; //Fit reco
+      jets_g[JI] += (PDG==13 || isNeutrino(PDG) ? 0:1)*p4;           //Gen lvl
+      jets_r[JI] += p4*resp;   //MC reco
+      jets_f[JI] += p4*resp_f; //Fit reco
 
 
       Fnum[JI]   += resp_f*p4.E();
       Fden[JI]   += resp*p4.E(); //F denominator reco'd w/ default params
-
-      //Fraction of jet E within R=0.5 from jet axis (n.b. D0 cone algorithm
-      // may produce monstrous jets even with R=0.5)
-      p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI],	//Gen jet 4-vec
-                       (*jet_phi)[JI],(*jet_e)[JI]  );
-      if (p4.DeltaR(p4j)<0.5) { // Should this be 0.4??
-        f_05[JI] += resp*p4.E();
-      }
       
       //Find derivatives of hadron (PDG>100) responses for 2 leading jets
       //Most likely probe candidates are the jets w/ indices 0 or 1. Thus to
@@ -659,36 +668,32 @@ void CMSJES::Loop()
       } //Find derivatives
     } //Loop particles in jets
 
-    //Turn f_05 value into ratio
-    for (int i=0; i!=f_05.size(); ++i) {
-      f_05[i]*=1.0/(jets_r[i].E());
-    }
-
     /******************** SHADOWING *********************/
-
     //  TH2* h2 = new TH2D("h2", "", 100, -5.0, 3.0, 100, -TMath::Pi(), TMath::Pi());
     //p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI], (*jet_phi)[JI],(*jet_e)[JI]);      
-
+    //cout << endl;    
     for (int i=0; i!=jet_pt->size(); ++i) {
-      cout << "Number of jets: " << i << endl;
 
-      float phiJet = (*jet_phi)[i];
-      float etaJet = (*jet_eta)[i];
+      //float phiJet = (*jet_phi)[i];
+      //float etaJet = (*jet_eta)[i];
+      //p4j.SetPtEtaPhiE((*jet_pt)[i], (*jet_eta)[i], (*jet_phi)[i],(*jet_e)[i]); 
 
 
-      TH2* cht = new TH2D("cht", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
+      //cout << "JI: " << i << " pT: " << p4j.Pt() << " E: " << p4j.E() << endl;
+
+      //TH2* cht = new TH2D("cht", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
       //TH2* chc = new TH2D("chc", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
       //TH2* cht = new TH2D("cht", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
       
-      for (int j=0; j != prtcl_pt->size(); ++j) {
-        if ((*prtcl_jet)[j] == i) {
-          p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i], //Current prtcl 4-vec
-                          (*prtcl_phi)[i],(*prtcl_e)[i] );
+      //for (int j=0; j != prtcl_pt->size(); ++j) {
+      //  if ((*prtcl_jet)[j] == i) {
+      //    p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i], //Current prtcl 4-vec
+      //                    (*prtcl_phi)[i],(*prtcl_e)[i] );
           
           
-        }
-      }
-    } 
+      //  }
+      //}
+    }
 
 
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
@@ -705,8 +710,8 @@ void CMSJES::Loop()
       for (int i=0; i!=prtclnij_pt->size(); ++i) {
 
         PDG = abs((*prtclnij_pdgid)[i]);
-        p4.SetPtEtaPhiE((*prtclnij_pt)[i], (*prtclnij_eta)[i],
-                        (*prtclnij_phi)[i],(*prtclnij_e)[i]  );
+        p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i],
+                        (*prtclnij_phi)[i], (*prtclnij_e  )[i]);
 
         //Reconstruction
         Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
@@ -769,10 +774,6 @@ void CMSJES::Loop()
       p4f_probe.SetPtEtaPhiE(jets_f[i_probe].Pt(),  jets_f[i_probe].Eta(),
 			     jets_f[i_probe].Phi(), jets_f[i_probe].E()  );
 
-      //Assertions:
-      //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
-      if ((p4r_probe.Pt()<softPt && f_05[i_probe]<f_05jetMinS) ||
-          f_05[i_probe] < f_05jetMin) continue;
       //-tag and probe in the right |eta| region with enough p_T
       if (fabs(p4EM_tag.Eta())  > eta_gamma   ||
           p4EM_tag.Pt()         < pTmin_gamma ||
@@ -804,28 +805,21 @@ void CMSJES::Loop()
       //Gen lvl as output by FastJet
       probe.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
 			 (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
-      //Gen lvl for particles that reach D0 detector volume
+      //Gen lvl for particles that reach CMC detector volume
       p4g_probe.SetPtEtaPhiE(jets_g[i_probe].Pt(),  jets_g[i_probe].Eta(),
-			     jets_g[i_probe].Phi(), jets_g[i_probe].E()  );
+			     jets_g[i_probe].Phi(), jets_g[i_probe].E() );
       //MC SPR reco
       p4r_probe.SetPtEtaPhiE(jets_r[i_probe].Pt(),  jets_r[i_probe].Eta(),
-			     jets_r[i_probe].Phi(), jets_r[i_probe].E()  );
+			     jets_r[i_probe].Phi(), jets_r[i_probe].E() );
       //FIT reco
       p4f_probe.SetPtEtaPhiE(jets_f[i_probe].Pt(),  jets_f[i_probe].Eta(),
-			     jets_f[i_probe].Phi(), jets_f[i_probe].E()  );
-
-      //Assertions:
-      //-half (10%) of probe E within R<0.5 of the jet axis for hard (soft) jets
-      if ((p4r_probe.Pt()<softPt && f_05[i_probe] < f_05jetMinS) ||
-                                    f_05[i_probe] < f_05jetMin ) continue;
-      f05Cut ++;
-
+			     jets_f[i_probe].Phi(), jets_f[i_probe].E() );
 
       //-tag and probe in the right |eta| region with enough p_T
       if (fabs(p4r_tag.Eta())   > eta_tag_z   ||
-          p4r_tag.Pt()          < pTmin_tag_z ||
+               p4r_tag.Pt()     < pTmin_tag_z ||
           fabs(p4r_probe.Eta()) > eta_probe   ||
-          p4r_probe.Pt()        < pTmin_probe  ) continue; 
+               p4r_probe.Pt()   < pTmin_probe  ) continue; 
       tagProbeCut ++;
        
     }// Z+JET: FIND PROBE
@@ -838,10 +832,10 @@ void CMSJES::Loop()
     if (fabs(tag.DeltaPhi(probe)) < phiMin) continue;
     b2b ++;
 
-    //Assert probe is not confused with tag
 
-    // How can this be true if already required back to back
-    // if (fabs(tag.DeltaR(probe)) < 0.2) continue;
+    //Alpha cut
+    if (jets_r[1].Pt() > 0.3*p4r_tag.Pt()) continue;
+    alpha ++;
 
     //Assert sufficiently low MET w.r.t. tag pT and leading jet (we use probe)
     if      (p4r_tag.Pt() > 50 && met > 0.9*p4r_tag.Pt()) continue;
@@ -1067,24 +1061,24 @@ void CMSJES::Loop()
           EpEptr   = EpE_g;   EpPptr   = EpP_g;
           FFg->Fill(Ep, weight);
         } else continue;			//Undetermined flavour
-        EpP->Fill(     Ep,             p4r_probe.Pt(),                weight);
-        EpPptr->Fill(  Ep,             p4r_probe.Pt(),                weight);
-        EpE->Fill(     p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
-        EpEptr->Fill(  p4r_probe.E(),  Ep/p4r_probe.E(),              weight);
-        Fptr_p->Fill(  pTp,            F,                             weight);
-        Fjet_p->Fill(  pTp,            F,                             weight);
-        Fptr_r->Fill(  p4r_probe.Pt(), F,                             weight);
-        Fjet_r->Fill(  p4r_probe.Pt(), F,                             weight);
-        Fptr_g->Fill(  p4g_probe.Pt(), F,                             weight);
-        Fjet_g->Fill(  p4g_probe.Pt(), F,                             weight);
-        Fptr->Fill(    Ep,             F,                             weight);
-        Fjet->Fill(    Ep,             F,                             weight);
-        pTEp->Fill(    pTp,            p4g_probe.Pt()/pTp,            weight);
-        FFa->Fill(     Ep,                                            weight);
-        pRpGptr->Fill( p4g_probe.Pt(), p4r_probe.Pt(),                weight);
-        pRpGa->Fill(   p4g_probe.Pt(), p4r_probe.Pt(),                weight);
-        pTppRptr->Fill(  pTp,          p4r_probe.Pt(),                weight);
-        pTppRa->Fill(  pTp,            p4r_probe.Pt(),                weight);
+        EpP->Fill(     Ep,             p4r_probe.Pt(),     weight);
+        EpPptr->Fill(  Ep,             p4r_probe.Pt(),     weight);
+        EpE->Fill(     p4r_probe.E(),  Ep/p4r_probe.E(),   weight);
+        EpEptr->Fill(  p4r_probe.E(),  Ep/p4r_probe.E(),   weight);
+        Fptr_p->Fill(  pTp,            F,                  weight);
+        Fjet_p->Fill(  pTp,            F,                  weight);
+        Fptr_r->Fill(  p4r_probe.Pt(), F,                  weight);
+        Fjet_r->Fill(  p4r_probe.Pt(), F,                  weight);
+        Fptr_g->Fill(  p4g_probe.Pt(), F,                  weight);
+        Fjet_g->Fill(  p4g_probe.Pt(), F,                  weight);
+        Fptr->Fill(    Ep,             F,                  weight);
+        Fjet->Fill(    Ep,             F,                  weight);
+        pTEp->Fill(    pTp,            p4g_probe.Pt()/pTp, weight);
+        FFa->Fill(     Ep,                                 weight);
+        pRpGptr->Fill( p4g_probe.Pt(), p4r_probe.Pt(),     weight);
+        pRpGa->Fill(   p4g_probe.Pt(), p4r_probe.Pt(),     weight);
+        pTppRptr->Fill(  pTp,          p4r_probe.Pt(),     weight);
+        pTppRa->Fill(  pTp,            p4r_probe.Pt(),     weight);
         //Systematic uncertainties
         dA_E=dAjetsE[i_probe];  dB_E=dBjetsE[i_probe];  dC_E=dCjetsE[i_probe];
           if (!isnan(dA_E) && !isnan(dB_E) && !isnan(dC_E)) {
@@ -1095,14 +1089,14 @@ void CMSJES::Loop()
                      +2*GetABer()*dA_E*dB_E //Covar. matrix is symmetric => 2*
                      +2*GetACer()*dA_E*dC_E
                      +2*GetBCer()*dB_E*dC_E )/p4r_probe.E();
-          FptrSU->Fill(  Ep,                                     FSU, weight);
-          FjetSU->Fill(  Ep,                                     FSU, weight);
-          FptrSU_p->Fill(pTp,                                    FSU, weight);
-          FjetSU_p->Fill(pTp,                                    FSU, weight);
-          FptrSU_r->Fill(p4r_probe.Pt(),                         FSU, weight);
-          FjetSU_r->Fill(p4r_probe.Pt(),                         FSU, weight);
-          FptrSU_g->Fill(p4g_probe.Pt(),                         FSU, weight);
-          FjetSU_g->Fill(p4g_probe.Pt(),                         FSU, weight);
+          FptrSU->Fill(  Ep,             FSU, weight);
+          FjetSU->Fill(  Ep,             FSU, weight);
+          FptrSU_p->Fill(pTp,            FSU, weight);
+          FjetSU_p->Fill(pTp,            FSU, weight);
+          FptrSU_r->Fill(p4r_probe.Pt(), FSU, weight);
+          FjetSU_r->Fill(p4r_probe.Pt(), FSU, weight);
+          FptrSU_g->Fill(p4g_probe.Pt(), FSU, weight);
+          FjetSU_g->Fill(p4g_probe.Pt(), FSU, weight);
         }
         continue;	//Only one flavour may be associated with a jet
       }
@@ -1264,9 +1258,9 @@ void CMSJES::Loop()
   cout << "2nd muon cut:      " << mu2Cut      << endl;
   cout << "Invariant mass:    " << invM        << endl;
   cout << "0 jets:            " << noJets      << endl;
-  cout << "F05:               " << f05Cut      << endl;
   cout << "Tag probe cuts:    " << tagProbeCut << endl;
   cout << "btb tag and probe: " << b2b         << endl;
+  cout << "alpha cut:         " << alpha       << endl;
   cout << "Low met:           " << lowMet      << endl;
 
   //Save CMSJES TTree
