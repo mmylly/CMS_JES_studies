@@ -29,7 +29,10 @@ int main() {
       d.Loop();
       d.plotPT(3, -1, false, false);
       d.plotMPF(3,-1);
+      //d.Plot2D();
       break;
+    case 5 :
+      d.Plot2D();
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }
 

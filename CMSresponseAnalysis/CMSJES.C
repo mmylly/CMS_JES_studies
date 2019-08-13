@@ -262,7 +262,6 @@ void CMSJES::Loop()
   double eta_tag_z = 2.5;	//Max |eta| for mumu tag object
   double eta_tag   = 0.4;	//Max |eta| for tag jet in dijet
   double eta_probe = 1.3;       //Max |eta| for probe jets
-  double softPt = 15;		//Jets below this [GeV] are considered soft
   vector<TLorentzVector> jets_g;//Gen lvl jet 4-vectors
   vector<TLorentzVector> jets_r;//MC reco'd jet 4-vectors
   vector<TLorentzVector> jets_f;//Fit reco'd jet 4-vectors
@@ -274,6 +273,7 @@ void CMSJES::Loop()
   double phiMin = 2.8;		//Minimum azimuth angle between tag and probe
   double prtnPt = 0;		//Temp, find prtn lvl gamma w/ highest pT
   double pTmin_probe = 15;	//Minimum probe jet p_T (GeV)
+  //double pTmin_probe = 12;	// -||- analysis notesta
   double pTmin_tag   = 6; 	//Minimum tag p_T (GeV) in dijet
   double pTmin_gamma = 7;	//Minimum tag gamma p_T (GeV) (Meas. 7 GeV)
   double pTmin_muon  = 15;      //Minimum single tag muon pT (GeV)
@@ -436,15 +436,22 @@ void CMSJES::Loop()
   int mu1Cut = 0;
   int mu2Cut = 0;
   int invM = 0;
-  int noJets = 0;
   int tagProbeCut = 0;
   int b2b = 0;
   int alpha = 0;
   int lowMet = 0;
 
+//***********************************************************************************************
+
+  TCanvas *c2          = new TCanvas("c2","c2",600,400);
+  TH2F* cutHist        = new TH2F("cutHist", "Cut Histogram", 10, 0, 500, 7, 0, 7);
+  const char *cuts[7]  = {"All", "Muon cut", "Invariant mass", "Tag probe cuts", "b2b", "Alpha cut", "Low met"};
+
+//***********************************************************************************************
+
   //Loop Tree entries = events
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
-    all ++; //eventcount
+    //all ++; //eventcount
     //Print progress for long runs
     if ((GetprintProg() && jentry % 1000==0) || Getverbose()) {
       cout << "Looping event " << jentry;
@@ -554,8 +561,12 @@ void CMSJES::Loop()
 
       //Fast gen lvl cuts, more strict reco lvl cuts below 
 
-      if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
-      mu1Cut ++; //eventcount
+      bool muonCut = 0;
+
+      //if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+      //mu1Cut ++; //eventcount
+      if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) muonCut = 1;
+      else mu1Cut ++;
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
@@ -566,15 +577,14 @@ void CMSJES::Loop()
       p4f_tag = p4*resp_f; //FIT lvl
 
 
-      TLorentzVector muon1 = p4;
-
       //***** 2nd muon ******
       p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
                       (*prtn_phi)[i_tag2], (*prtn_e  )[i_tag2]);
 
-
-      if (fabs(p4.Eta())>eta_muon || p4.Pt()<pTmin_muon) continue;
-      mu2Cut ++;
+      //if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+      //mu2Cut ++;
+      if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) muonCut = 1;
+      else if (!muonCut) mu2Cut ++;
 
       //Have to reconsider how muon is detected in CMS and how the 4 vector is determined.
       Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
@@ -584,17 +594,20 @@ void CMSJES::Loop()
       p4r_tag  += p4*resp;   //MC lvl
       p4f_tag  += p4*resp_f; //FIT lvl
 
-      TLorentzVector muon2 = p4;
+      all++;
+      cutHist->Fill(tag.Pt(), cuts[0], 1);      
 
-      TLorentzVector probeJet;
+      if (muonCut) continue;
 
-      probeJet.SetPtEtaPhiE((*jet_pt )[0], (*jet_eta)[0],
-                            (*jet_phi)[0], (*jet_e  )[0]);
+      cutHist->Fill(tag.Pt(), cuts[1], 1);     
 
       // Check that invariant mass is in range 70 - 110 GeV since Z boson mass is 91 GeV
       double M = tag.M();
       if ( M<70.0 || M>110.0) continue;
       invM ++;
+      cutHist->Fill(tag.Pt(), cuts[2], 1);
+
+
       /*
       //if (fabs(muon1.DeltaR(probeJet))<0.2 || fabs(muon2.DeltaR(probeJet))< 0.2){
         cout << endl;
@@ -797,7 +810,6 @@ void CMSJES::Loop()
           //if more than two high energy jets
           i_probe = 0;
       }
-      noJets ++;
 
       p4.SetPtEtaPhiE(0,0,0,0);	//Reinit
 
@@ -820,7 +832,10 @@ void CMSJES::Loop()
                p4r_tag.Pt()     < pTmin_tag_z ||
           fabs(p4r_probe.Eta()) > eta_probe   ||
                p4r_probe.Pt()   < pTmin_probe  ) continue; 
+
       tagProbeCut ++;
+
+      cutHist->Fill(tag.Pt(), cuts[3], 1);
        
     }// Z+JET: FIND PROBE
 
@@ -832,10 +847,14 @@ void CMSJES::Loop()
     if (fabs(tag.DeltaPhi(probe)) < phiMin) continue;
     b2b ++;
 
+    cutHist->Fill(tag.Pt(), cuts[4], 1);
+
 
     //Alpha cut
     if (jets_r[1].Pt() > 0.3*p4r_tag.Pt()) continue;
     alpha ++;
+
+    cutHist->Fill(tag.Pt(), cuts[5], 1);
 
     //Assert sufficiently low MET w.r.t. tag pT and leading jet (we use probe)
     if      (p4r_tag.Pt() > 50 && met > 0.9*p4r_tag.Pt()) continue;
@@ -844,6 +863,8 @@ void CMSJES::Loop()
     else if (                     met > 2.0*p4r_tag.Pt()) continue;
     if      (met/p4r_probe.Pt()       > 0.7             ) continue;
     lowMet ++;
+
+    cutHist->Fill(tag.Pt(), cuts[6], 1);
 
     /************** FIND DERIVATIVES IN CASE i_probe > 1 (RARE) **************/
 
@@ -941,7 +962,6 @@ void CMSJES::Loop()
 
     } //Loop over particles
 
-
     /**************************** FILL HISTOGRAMS ****************************/
     //Jet energy estimator: E' = p_T_tag cosh(eta_probe) and pT'.
     //- Jet direction change in reconstruction is usually negligible, though.
@@ -1010,14 +1030,6 @@ void CMSJES::Loop()
     prMPF_Ep->Fill(Ep,    (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
     prMPF_EpFit->Fill(Ep, (!isnan(R_MPF_f)  ? R_MPF_f  : 0), weight);
     prMPF_pTp->Fill(pTp,  (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
-
-
-    
-    //Jet energies
-    //cout << "Event " << jentry << endl;
-    //for (int i=0; i!=jets_r.size(); ++i) {
-    //  cout << i << " pT " << jets_r[i].E() << endl;
-    //}
 
 
 
@@ -1257,11 +1269,17 @@ void CMSJES::Loop()
   cout << "1st muon cut:      " << mu1Cut      << endl;
   cout << "2nd muon cut:      " << mu2Cut      << endl;
   cout << "Invariant mass:    " << invM        << endl;
-  cout << "0 jets:            " << noJets      << endl;
   cout << "Tag probe cuts:    " << tagProbeCut << endl;
   cout << "btb tag and probe: " << b2b         << endl;
   cout << "alpha cut:         " << alpha       << endl;
   cout << "Low met:           " << lowMet      << endl;
+
+  // Cut histogram
+  cutHist->GetXaxis()->SetTitle("Gen lvl tag pT");
+
+  cutHist->Draw("LEGO");
+  string savename = "./cutHist.C";
+  c2->Print(savename.c_str());
 
   //Save CMSJES TTree
   fout->Write();
@@ -1727,7 +1745,7 @@ void CMSJES::Plot2D()
 
   Long64_t nentries = fChain->GetEntriesFast();
   //Output file
-  string outname = "plot2D_" + ReadName;
+  string outname = "plot2D_" + ReadName + ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
   
   //2D Histogram
@@ -1739,7 +1757,7 @@ void CMSJES::Plot2D()
   Long64_t nbytes = 0, nb = 0;
   //Loop Tree entries = events
   //Plot only the first event for now
-  for (Long64_t jentry=0; jentry</*nentries*/1;jentry++) {
+  for (Long64_t jentry=0; jentry<nentries;jentry++) {
     Long64_t ientry = LoadTree(jentry);	//Load new event
     if (ientry < 0) break;		//When no more events
     nb = fChain->GetEntry(jentry);   nbytes += nb;
@@ -2074,6 +2092,9 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
                       double& retEM)
 {
   //Init
+
+
+
   bool zero = false; //Return zero responses (run index-wise)
   int PDG = abs(id);
 
