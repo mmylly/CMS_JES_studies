@@ -1,7 +1,7 @@
-void cutHist()
+void cutHist_600k()
 {
 //=========Macro generated from canvas: c2/c2
-//=========  (Wed Aug 14 17:14:48 2019) by ROOT version6.06/04
+//=========  (Wed Aug 14 11:33:51 2019) by ROOT version6.06/04
    TCanvas *c2 = new TCanvas("c2", "c2",0,0,600,400);
    c2->SetHighLightColor(2);
    c2->Range(0,0,1,1);
@@ -66,29 +66,29 @@ void cutHist()
    cutHist__1->SetBinContent(69,15421);
    cutHist__1->SetBinContent(70,15006);
    cutHist__1->SetBinContent(71,228586);
-   cutHist__1->SetBinContent(73,218);
-   cutHist__1->SetBinContent(74,3254);
-   cutHist__1->SetBinContent(75,7405);
-   cutHist__1->SetBinContent(76,10323);
-   cutHist__1->SetBinContent(77,12242);
-   cutHist__1->SetBinContent(78,13324);
-   cutHist__1->SetBinContent(79,13983);
-   cutHist__1->SetBinContent(80,13971);
-   cutHist__1->SetBinContent(81,13850);
-   cutHist__1->SetBinContent(82,13461);
-   cutHist__1->SetBinContent(83,211348);
-   cutHist__1->SetBinContent(85,218);
-   cutHist__1->SetBinContent(86,3242);
-   cutHist__1->SetBinContent(87,7387);
-   cutHist__1->SetBinContent(88,10306);
-   cutHist__1->SetBinContent(89,12216);
-   cutHist__1->SetBinContent(90,13307);
-   cutHist__1->SetBinContent(91,13971);
-   cutHist__1->SetBinContent(92,13957);
-   cutHist__1->SetBinContent(93,13837);
-   cutHist__1->SetBinContent(94,13450);
-   cutHist__1->SetBinContent(95,211244);
-   cutHist__1->SetEntries(2904042);
+   cutHist__1->SetBinContent(73,234);
+   cutHist__1->SetBinContent(74,3325);
+   cutHist__1->SetBinContent(75,7478);
+   cutHist__1->SetBinContent(76,10401);
+   cutHist__1->SetBinContent(77,12290);
+   cutHist__1->SetBinContent(78,13367);
+   cutHist__1->SetBinContent(79,14012);
+   cutHist__1->SetBinContent(80,13991);
+   cutHist__1->SetBinContent(81,13854);
+   cutHist__1->SetBinContent(82,13470);
+   cutHist__1->SetBinContent(83,211366);
+   cutHist__1->SetBinContent(85,234);
+   cutHist__1->SetBinContent(86,3313);
+   cutHist__1->SetBinContent(87,7460);
+   cutHist__1->SetBinContent(88,10384);
+   cutHist__1->SetBinContent(89,12264);
+   cutHist__1->SetBinContent(90,13350);
+   cutHist__1->SetBinContent(91,14000);
+   cutHist__1->SetBinContent(92,13977);
+   cutHist__1->SetBinContent(93,13841);
+   cutHist__1->SetBinContent(94,13459);
+   cutHist__1->SetBinContent(95,211262);
+   cutHist__1->SetEntries(2904860);
 
    Int_t ci;      // for color index setting
    TColor *color; // for color definition with alpha

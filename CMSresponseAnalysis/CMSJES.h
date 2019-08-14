@@ -467,8 +467,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   ParamReader("/proton.txt",   32, 3, params_p  );
   */
 
-  ParamReader("/pion_EHE.txt", 32, 3, params_pi_EHE);
-  ParamReader("/pion_HHe.txt", 32, 3, params_pi_HHe);
+  ParamReader("/pion_EHE.txt", 52, 3, params_pi_EHE);
+  ParamReader("/pion_HHe.txt", 52, 3, params_pi_HHe);
 
   /* Plug fit parameter values here for fit reco */
   if (runCMS) {

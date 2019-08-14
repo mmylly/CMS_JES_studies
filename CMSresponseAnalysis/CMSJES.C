@@ -444,8 +444,12 @@ void CMSJES::Loop()
 //***********************************************************************************************
 
   TCanvas *c2          = new TCanvas("c2","c2",600,400);
-  TH2F* cutHist        = new TH2F("cutHist", "Cut Histogram", 10, 0, 500, 7, 0, 7);
+  TH2D* cutHist        = new TH2D("cutHist", "Cut Histogram", 10, 0, 500, 7, 0, 7);
   const char *cuts[7]  = {"All", "Muon cut", "Invariant mass", "Tag probe cuts", "b2b", "Alpha cut", "Low met"};
+
+  //TH2D* cht = new TH2D("cht", "", 72, -TMath::Pi(), TMath::Pi(), 73, -3.2, 3.2);
+  //TH2D* chc = new TH2D("chc", "", 72, -TMath::Pi(), TMath::Pi(), 73, -3.2, 3.2);
+  //TH2D* nh  = new TH2D("nh",  "", 72, -TMath::Pi(), TMath::Pi(), 73, -3.2, 3.2);
 
 //***********************************************************************************************
 
@@ -681,47 +685,20 @@ void CMSJES::Loop()
       } //Find derivatives
     } //Loop particles in jets
 
-    /******************** SHADOWING *********************/
-    //  TH2* h2 = new TH2D("h2", "", 100, -5.0, 3.0, 100, -TMath::Pi(), TMath::Pi());
-    //p4j.SetPtEtaPhiE((*jet_pt)[JI], (*jet_eta)[JI], (*jet_phi)[JI],(*jet_e)[JI]);      
-    //cout << endl;    
-    for (int i=0; i!=jet_pt->size(); ++i) {
-
-      //float phiJet = (*jet_phi)[i];
-      //float etaJet = (*jet_eta)[i];
-      //p4j.SetPtEtaPhiE((*jet_pt)[i], (*jet_eta)[i], (*jet_phi)[i],(*jet_e)[i]); 
-
-
-      //cout << "JI: " << i << " pT: " << p4j.Pt() << " E: " << p4j.E() << endl;
-
-      //TH2* cht = new TH2D("cht", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
-      //TH2* chc = new TH2D("chc", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
-      //TH2* cht = new TH2D("cht", "", 11, phiJet-0.5, phiJet+0.5, 11, etaJet-0.5, etaJet+0.5);
-      
-      //for (int j=0; j != prtcl_pt->size(); ++j) {
-      //  if ((*prtcl_jet)[j] == i) {
-      //    p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i], //Current prtcl 4-vec
-      //                    (*prtcl_phi)[i],(*prtcl_e)[i] );
-          
-          
-      //  }
-      //}
-    }
-
 
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     #ifdef NIJ
 
-    if (Getverbose()) cout<<"Reconstructing particles not in jets"<<endl;
-
-
+    if (Getverbose()) cout << "Reconstructing particles not in jets" << endl;
 
     //Reconstruct prtcls in nij vecs if any saved in tuple and flag true 
     if (GetrecoMissing() && prtclnij_pt->size()!=0) {
 
       // Loop over all particles in an event
       for (int i=0; i!=prtclnij_pt->size(); ++i) {
-
+        
+        
+        
         PDG = abs((*prtclnij_pdgid)[i]);
         p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i],
                         (*prtclnij_phi)[i], (*prtclnij_e  )[i]);
@@ -730,6 +707,7 @@ void CMSJES::Loop()
         Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                  GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
 
+
         NIJ_g+=p4;
         NIJ_r+=p4*resp;
         NIJ_f+=p4*resp_f;
@@ -737,13 +715,43 @@ void CMSJES::Loop()
     } 
 
     /*
-    if (!GetrecoMissing()) {	//Reco from jet inbalance 
-      for (int i=0; i!=jets_r.size(); ++i) {
-        NIJ_g += jets_g[i];  NIJ_r += jets_r[i];  NIJ_f += jets_f[i];
-      }
-      NIJ_r *= -1.0;         NIJ_f *= -1.0;
-    } //Reco from jet inbalance */
+    // Shadowing effect
+    for (int i=0; i!=prtclnij_pt->size(); ++i) {
 
+      //double respH = 0.0;
+
+      //fr_h->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+      //                   params_pi_EHE[row][2], 1, 0, 1); 
+      //respH  = 0.55*fr_h->Eval(energy);
+      //fr_h->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+      //                   params_pi_HHe[row][2], 1, 0, 1); 
+      //respH += 0.45*fr_h->Eval(energy);
+
+      PDG = abs((*prtclnij_pdgid)[i]);
+
+      p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],(*prtclnij_phi)[i],(*prtclnij_e)[i]);
+
+      //Reconstruction
+      Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
+               GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
+     
+      int pdgCH[7]  = {211, 321, 2212, 3112, 3222, 3312, 3334};   //PDGID's of ch hadrons
+      int pdgNHy[8] = {20, 22, 130, 310, 3122, 2112, 3212, 3322}; //PDGID's of n hadrons+phtn
+      int pdgLept[2] = {11, 13}; //PDGID's of leptons
+
+      if (std::find(std::begin(pdgCH), std::end(pdgCH), PDG) != std::end(pdgCH)){
+        cht->Fill(p4.Phi(), p4.Eta(), p4.E());
+        p4 = resp*p4;
+        chc->Fill(p4.Phi(), p4.Eta(), p4.E());
+      } 
+      else if (std::find(std::begin(pdgNHy), std::end(pdgNHy), PDG) != std::end(pdgNHy)){
+        p4 = resp*p4;        
+        nh->Fill
+      }
+      
+ 
+
+    } //Loop over all particles in event */
     #endif
 
     /************************* GAMMA+JET: FIND PROBE *************************/
@@ -1276,10 +1284,10 @@ void CMSJES::Loop()
 
   // Cut histogram
   cutHist->GetXaxis()->SetTitle("Gen lvl tag pT");
-
   cutHist->Draw("LEGO");
   string savename = "./cutHist.C";
   c2->Print(savename.c_str());
+  delete c2; delete cutHist;
 
   //Save CMSJES TTree
   fout->Write();
@@ -2092,6 +2100,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
                       double& retEM)
 {
   //Init
+
   retFIT = 0.0; //For now
   bool zero = false; //If true, return zero responses
   int PDG = abs(id);
@@ -2103,7 +2112,8 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
   if (energy > 3.0) sfN  = 1.0; // Step function for neutral particles
 
   //Check if particle outside good eta region
-  if (fabs(pseudorap) > 3.2) zero = true;
+
+  if (fabs(pseudorap) > 5.2) zero = true;
 
   unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
 
@@ -2122,7 +2132,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
 
   //CALCULATE RESPONSES
   for (int i_r=0; i_r<(zero?0:1); ++i_r) {
-
+    
     //Hadron response from pi fit
     frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
                        params_pi_EHE[row][2], 1, 0, 1); 
@@ -2139,11 +2149,10 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
         break;
 
       //LEPTONS
-      case 11 : 
-        if (fabs(pseudorap) > 2.5) retMC = respH;
-        else retMC = sfCh; 
+      case 11 : //e
+        retMC = sfCh; 
         break;
-      case 13 :
+      case 13 : //mu
         if (fabs(pseudorap) > 2.5) retMC = 0.0; //If outside tracker -> 0 response
         else retMC = sfCh; 
         break;
@@ -2156,8 +2165,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
       case 3222 : //Sigma^+
       case 3312 : //Xi^-
       case 3334 : //Omega^-
-        //Check if out of tracker
-        if (fabs(pseudorap) > 2.5) retMC = respH;
+        if (fabs(pseudorap) > 2.5) retMC = respH*sfN; //Check if out of tracker
         else retMC = sfCh; 
         break;
 
