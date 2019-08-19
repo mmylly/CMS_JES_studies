@@ -447,9 +447,19 @@ void CMSJES::Loop()
   TH2D* cutHist        = new TH2D("cutHist", "Cut Histogram", 10, 0, 500, 7, 0, 7);
   const char *cuts[7]  = {"All", "Muon cut", "Invariant mass", "Tag probe cuts", "b2b", "Alpha cut", "Low met"};
 
-  //TH2D* cht = new TH2D("cht", "", 72, -TMath::Pi(), TMath::Pi(), 73, -3.2, 3.2);
-  //TH2D* chc = new TH2D("chc", "", 72, -TMath::Pi(), TMath::Pi(), 73, -3.2, 3.2);
-  //TH2D* nh  = new TH2D("nh",  "", 72, -TMath::Pi(), TMath::Pi(), 73, -3.2, 3.2);
+  //Shadowing
+  TCanvas *c3  = new TCanvas("c3","c3",600,400);
+  TH2D* eHist  = new TH2D("eHist" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* ptHist = new TH2D("ptHist", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+
+  TH2D* cht   = new TH2D("cht", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* chtPt = new TH2D("chtPt", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* chc   = new TH2D("chc", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* sigma = new TH2D("sigma", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* nh    = new TH2D("nh" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* ne    = new TH2D("ne" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+
+  TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2])", 3, 1000);
 
 //***********************************************************************************************
 
@@ -457,7 +467,7 @@ void CMSJES::Loop()
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
     //all ++; //eventcount
     //Print progress for long runs
-    if ((GetprintProg() && jentry % 1000==0) || Getverbose()) {
+    if ((GetprintProg() && jentry % 1000==0)) {
       cout << "Looping event " << jentry;
       if      (studyMode==1) cout << " in EM+jet";
       else if (studyMode==2) cout << " in gamma+jet";
@@ -543,7 +553,6 @@ void CMSJES::Loop()
     
     int muPDG=13;  int muTAG=3; //mu PDGID and tag
     if (studyMode == 3) {
-      if (Getverbose()) cout << "Entering Z+JET: FIND TAG" << endl;
       int i_tag1 = -137;	// These values won't change if...
       int i_tag2 = -731;	// ...muons not found.
       for (int a=0; a!= prtn_tag->size(); ++a) {
@@ -636,8 +645,6 @@ void CMSJES::Loop()
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
 
-    if (Getverbose()) cout<<"Reconstructing jets and particles in jets"<<endl;
-
     //Note that only the 2 leading jets are likely to be probe or tag candidates
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
@@ -689,14 +696,22 @@ void CMSJES::Loop()
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     #ifdef NIJ
 
-    if (Getverbose()) cout << "Reconstructing particles not in jets" << endl;
+    //Reset histograms
+    eHist ->Reset();
+    ptHist->Reset();
+    cht   ->Reset();
+    chtPt ->Reset();
+    chc   ->Reset();
+    sigma ->Reset();
+    nh    ->Reset();
+    ne    ->Reset();
 
+    /*
     //Reconstruct prtcls in nij vecs if any saved in tuple and flag true 
     if (GetrecoMissing() && prtclnij_pt->size()!=0) {
 
       // Loop over all particles in an event
       for (int i=0; i!=prtclnij_pt->size(); ++i) {
-        
         
         
         PDG = abs((*prtclnij_pdgid)[i]);
@@ -708,57 +723,133 @@ void CMSJES::Loop()
                  GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
 
 
-        NIJ_g+=p4;
-        NIJ_r+=p4*resp;
-        NIJ_f+=p4*resp_f;
+        //NIJ_g+=p4;
+        //NIJ_r+=p4*resp;
+        //NIJ_f+=p4*resp_f;
+       
+
+        p4 *= resp;
+
+        //eHist ->Fill(p4.Phi(), p4.Eta(), p4.E() );
+        //ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+
       } //Loop over all particles in event
     } 
-
-    /*
+    */
+  
+    // ***************** Loop over NIJ particles ******************
     // Shadowing effect
+
+    double respH = 0.0; //Hadron response from pi parameters
+    double resolution = 0.0; //Resolution for a single particle from jerg_A    
+
+
     for (int i=0; i!=prtclnij_pt->size(); ++i) {
 
-      //double respH = 0.0;
-
-      //fr_h->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
-      //                   params_pi_EHE[row][2], 1, 0, 1); 
-      //respH  = 0.55*fr_h->Eval(energy);
-      //fr_h->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
-      //                   params_pi_HHe[row][2], 1, 0, 1); 
-      //respH += 0.45*fr_h->Eval(energy);
-
       PDG = abs((*prtclnij_pdgid)[i]);
+      p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
+                      (*prtclnij_phi)[i],(*prtclnij_e)[i]);
 
-      p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],(*prtclnij_phi)[i],(*prtclnij_e)[i]);
+      unsigned int row = int(fabs(p4.Eta())*10); 
 
+      //Hadron response from pi fit
+      if (fabs(p4.Eta()) > 5.2 || p4.Pt() < 3.0){
+        respH = 0.0;
+      } else {
+        fr_h->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                            params_pi_EHE[row][2], 1, 0, 1); 
+        respH  = 0.55*fr_h->Eval(p4.E());
+        fr_h->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                            params_pi_HHe[row][2], 1, 0, 1); 
+        respH += 0.45*fr_h->Eval(p4.E());
+      }
+      
+      if (respH*p4.Pt() < 0.5 ) respH = 0.0;
+      
       //Reconstruction
       Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
-     
-      int pdgCH[7]  = {211, 321, 2212, 3112, 3222, 3312, 3334};   //PDGID's of ch hadrons
-      int pdgNHy[8] = {20, 22, 130, 310, 3122, 2112, 3212, 3322}; //PDGID's of n hadrons+phtn
-      int pdgLept[2] = {11, 13}; //PDGID's of leptons
 
-      if (std::find(std::begin(pdgCH), std::end(pdgCH), PDG) != std::end(pdgCH)){
-        cht->Fill(p4.Phi(), p4.Eta(), p4.E());
-        p4 = resp*p4;
-        chc->Fill(p4.Phi(), p4.Eta(), p4.E());
-      } 
-      else if (std::find(std::begin(pdgNHy), std::end(pdgNHy), PDG) != std::end(pdgNHy)){
-        p4 = resp*p4;        
-        nh->Fill
-      }
+      p4 *= resp;
+
+      eHist ->Fill(p4.Phi(), p4.Eta(), p4.E() );
+      ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
       
- 
+      switch (PDG) {
+        //PHOTON
+        case 20 : case 22 : 
+          ne->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          break;
+        //Leptons
+        case 11 : case 13 :
+          cht  ->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+          break;    
+        //CHARGED HADRONS
+        case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 : 
+          cht->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
 
-    } //Loop over all particles in event */
+          p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
+                          (*prtclnij_phi)[i],(*prtclnij_e)[i]);
+          p4 *= respH;
+          chc  ->Fill(p4.Phi(), p4.Eta(), p4.E()); //Calorimeter response
+
+          sigma->Fill(p4.Phi(), p4.Eta(), resolution);
+
+          break;
+        //NEUTRAL HADRONS
+        case 130 : case 310 : case 3122 : case 2112 : case 3212 : case 3322 :
+          nh->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          break; 
+        default : 
+          if (PDG != 12 && PDG != 14 && PDG != 16) cout << "PDGID " << PDG << endl;
+      }
+
+      //Four vector for a cell
+      
+    } //Shadowing effect particle loop
+
+    // ***************** Loop over cells ******************
+    double cellPhi; double cellEta; double cellE; double cellPt;
+    double caloMeas = 0.0;
+    double caloPred = 0.0;
+    double delta    = 0.0;
+    double sigma    = 0.0;
+    
+    for (int i=1; i!=eHist->GetNbinsX()+1; ++i) {
+      for (int j=1; j!=eHist->GetNbinsY()+1; ++j) {
+
+        cellPhi = eHist->GetXaxis()->GetBinCenter(i);
+        cellEta = eHist->GetYaxis()->GetBinCenter(j);
+        cellE   = eHist->GetBinContent(i,j);
+        cellPt  = ptHist->GetBinContent(i,j);
+        
+        caloMeas = chc->GetBinContent(i,j) + nh->GetBinContent(i,j) + ne->GetBinContent(i,j);
+        caloPred = chc->GetBinContent(i,j);
+
+        delta = caloMeas - caloPred;
+        sigma = sqrt(chc->GetBinContent(i,j));
+
+
+        if (delta < sigma) {
+          cellE  = cht->GetBinContent(i,j);
+          cellPt = chtPt->GetBinContent(i,j);
+        } else { //Normal case
+          cellE  = cht->GetBinContent(i,j) + delta; //eHist?
+          cellPt = ptHist->GetBinContent(i,j);
+        }
+
+        p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
+        NIJ_r += p4;
+      }
+    }
+    
     #endif
 
     /************************* GAMMA+JET: FIND PROBE *************************/
 
     if (studyMode == 2) {
-
-      if (Getverbose()) cout << "Entering GAMMA+JET: FIND PROBE" << endl;
 
       switch (jets_r.size()) {
         case 0 : continue;      //No jets
@@ -807,8 +898,6 @@ void CMSJES::Loop()
 
     if (studyMode == 3) {
 
-      if (Getverbose()) cout << "Entering Z+JET: FIND PROBE" << endl;
-
       switch (jets_r.size()) {
         case 0 : continue;      //No jets
         case 1 :		//Take the only jet as a probe 
@@ -849,7 +938,6 @@ void CMSJES::Loop()
 
 
     /****************************** COMMON CUTS FOR Z+JET ******************************/
-    if (Getverbose()) cout << "Entering COMMON CUTS" << endl;
     
     //Tag object and probe jet back-to-back. Note ROOT DeltaPhi is in [-pi,pi]
     if (fabs(tag.DeltaPhi(probe)) < phiMin) continue;
@@ -1392,11 +1480,11 @@ void CMSJES::MultiLoop(CMSJES* zj_in, bool fitPars) {
 
   //Instantiate new CMSJES objects where needed
    if (zj_in) {	//Use given Z+jet CMSJES object
-    if (Getverbose()) cout<<"MultiLoop: using input CMSJES objects"<<endl;
+    //MultiLoop: using input CMSJES objects
     resp_zj = zj_in;
     noInputGiven = false;
   } else {	//No Z+jet object given
-    if (Getverbose()) cout<<"MultiLoop: Instantiating new CMSJES object"<<endl;
+    //MultiLoop: Instantiating new CMSJES object
     resp_zj = new CMSJES(0,zjFile);
   }
 
@@ -1407,7 +1495,6 @@ void CMSJES::MultiLoop(CMSJES* zj_in, bool fitPars) {
   }
 
   //Instantiate the threads
-  if (Getverbose()) cout<<"Instantiating threads"<<endl; 
   TThread* t_zj;
   t_zj = new TThread("t_zj", loopHandle, (void*) resp_zj);
 
@@ -1717,7 +1804,7 @@ void CMSJES::FitGN()
   if (!fixC) {SetC(ABC.GetMatrixArray()[iC]);  SetCer(Cer_temp);}
 
   SetuseEarlierCuts(false);
-  Setverbose(true);
+
   MultiLoop(); // Has to be fixed for Z+jet probably
 
   //Write results to terminal and file
@@ -2025,7 +2112,6 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF_pTp->GetXaxis()->SetTitleOffset(1);
 
 
-
   //Savefile name setup
   string savename = "./plots/mpf/MPF_zmmjet";
   string MPFtitle = hzj_MPF->GetTitle();
@@ -2040,7 +2126,6 @@ void CMSJES::plotMPF(int gen, int Nevt)
   d_zj_MPF->Draw("P SAME");
   d_zj_MPFntI->Draw("P SAME");
   lz_MPF->Draw();
-
 
   //Save plot
   canv_MPF->Print(savename.c_str());
@@ -2100,16 +2185,20 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
                       double& retEM)
 {
   //Init
-
   retFIT = 0.0; //For now
   bool zero = false; //If true, return zero responses
   int PDG = abs(id);
+
   double sfCh = 0.0;  //Charged particle step function
   double sfN = 0.0;   //Neutral hadron step function
   double respH = 0.0; //Hadron response from pi parameters
 
-  if (energy > 0.3) sfCh = 1.0; // Step function for charged particles
-  if (energy > 3.0) sfN  = 1.0; // Step function for neutral particles
+  //if (energy > 0.3) sfCh = 1.0; // Step function for charged particles
+  //if (energy > 3.0) sfN  = 1.0; // Step function for neutral particles
+
+  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles
+  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
+
 
   //Check if particle outside good eta region
 
@@ -2153,8 +2242,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
         retMC = sfCh; 
         break;
       case 13 : //mu
-        if (fabs(pseudorap) > 2.5) retMC = 0.0; //If outside tracker -> 0 response
-        else retMC = sfCh; 
+        retMC = sfCh; 
         break;
 
       //CHARGED HADRONS
@@ -2185,7 +2273,10 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
         continue;	 
     }
   } 
-  
+
+  if (retMC*pT < 0.5) zero = true; //pT cut 
+
+
   //Set results. Check for NaN and negative results if positive demanded
   if (!MC || zero || isnan(retMC)  || (pos && retMC <0)) retMC =0;
   if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<0)) retFIT=0;

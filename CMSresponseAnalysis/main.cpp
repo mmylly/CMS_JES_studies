@@ -14,7 +14,7 @@ int main() {
   // 2: Fit
   // 3: run many samples and produce their plots at once
   // 4: Loop() + flavCorr for debug
-  int mode = 4;
+  int mode = 5;
 
   switch (mode) {
     case 0 : d.Loop();       break;
@@ -29,10 +29,10 @@ int main() {
       d.Loop();
       //d.plotPT(3, -1, false, false);
       d.plotMPF(3,-1);
-      //d.Plot2D();
       break;
     case 5 :
-      d.Plot2D();
+      d.plotMPF(3,-1);
+      d.plotPT();
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }
 

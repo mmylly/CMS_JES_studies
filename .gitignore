@@ -11,3 +11,5 @@ plots/pT-bal/our_MC_D0_param/OMCD0P*
 *.save
 *.swp
 CMSresponseAnalysis/backup/
+*cutHist*
+*enHist*

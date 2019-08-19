@@ -18,7 +18,7 @@ tune = 3
 # PtHat min and max should be chosen by the user, unless it's a ttbar event
 # Tranche 1:  80 - 320
 # Tranche 2: 180 - 420
-minPth = 20.0
+minPth = 10.0 #Earlier 20.0
 maxPth = 10000.0
 # PtHat weighting (in non-ttbar events)
 weighted=True
@@ -135,8 +135,8 @@ if mode<4:
     if weighted:
         f.write("! Event weighting\n")
         f.write("PhaseSpace:bias2Selection = on\n")
-        f.write("PhaseSpace:bias2SelectionPow = 4.5\n")
-        f.write("PhaseSpace:bias2SelectionRef = 15.\n\n")
+        f.write("PhaseSpace:bias2SelectionPow = 3.0\n") #Earlier 4.5 -> 3.5 -> 3.0
+        f.write("PhaseSpace:bias2SelectionRef = 10.\n\n") #Earlier 15.
 
 if mode>0:
     f.write("Tune:preferLHAPDF = 2\n")

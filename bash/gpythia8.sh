@@ -37,26 +37,26 @@ for (( i=1; i<=$NUM_PROC; i++ ))
 do
     wait ${pidArr[$i]}
 done
-MERGE="pjets_pythia8_"$BODY".root"
-echo $NAMES
-echo $MERGE
-echo $NUM_PROC
+#MERGE="pjets_pythia8_"$BODY".root"
+#echo $NAMES
+#echo $MERGE
+#echo $NUM_PROC
 
-if [ $NUM_PROC -gt 1 ]; then
-    hadd -f $MERGE $NAMES
+#if [ $NUM_PROC -gt 1 ]; then
+#    hadd -f $MERGE $NAMES
 
-    for tmp in $NAMES
-    do
-        rm $tmp
-    done
-else
-    mv $NAMES $MERGE
-fi
+#    for tmp in $NAMES
+#    do
+#        rm $tmp
+#    done
+#else
+#    mv $NAMES $MERGE
+#fi
 
-if [ $DEBUG -eq 0 ]; then
-    rm $BODY*.cmnd
-fi
+#if [ $DEBUG -eq 0 ]; then
+#    rm $BODY*.cmnd
+#fi
 
-mv $MERGE ..
+#mv $MERGE ..
 
 exit

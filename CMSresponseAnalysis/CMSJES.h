@@ -203,7 +203,6 @@ public :
   //Flags etc. for changing calculation properties
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
   unsigned int maxIter=500;	//Maximum #iterations in fitting
-  bool verbose = false;		//Print additional information in Loop
   bool contHistos = true;	//Produce probe particle content histograms
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
   bool runCMS = true;		//Use CMS parameters
@@ -248,7 +247,6 @@ public :
   void SetrecoMissing(bool flag) {recoMissing = flag;}
   #endif
   void SetmaxIter(unsigned int val) {maxIter = val;}
-  void Setverbose(bool flag) {verbose = flag;}
 
   //Getters
   double GetA() {return A;}
@@ -273,7 +271,6 @@ public :
   bool GetrecoMissing() {return recoMissing;}
   #endif
   unsigned int GetmaxIter() {return maxIter;}
-  bool Getverbose() {return verbose;}
 
   //Constructor and destructor
   CMSJES(TTree *tree=0, string="");
