@@ -441,6 +441,10 @@ void CMSJES::Loop()
   int alpha = 0;
   int lowMet = 0;
 
+  int nmbOfCells = 0;
+  int deltaLessThanSigma = 0;
+
+
 //***********************************************************************************************
 
   TCanvas *c2          = new TCanvas("c2","c2",600,400);
@@ -695,17 +699,6 @@ void CMSJES::Loop()
 
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     #ifdef NIJ
-
-    //Reset histograms
-    eHist ->Reset();
-    ptHist->Reset();
-    cht   ->Reset();
-    chtPt ->Reset();
-    chc   ->Reset();
-    sigma ->Reset();
-    nh    ->Reset();
-    ne    ->Reset();
-
     /*
     //Reconstruct prtcls in nij vecs if any saved in tuple and flag true 
     if (GetrecoMissing() && prtclnij_pt->size()!=0) {
@@ -736,7 +729,18 @@ void CMSJES::Loop()
       } //Loop over all particles in event
     } 
     */
-  
+
+    //Reset histograms
+    eHist ->Reset();
+    ptHist->Reset();
+    cht   ->Reset();
+    chtPt ->Reset();
+    chc   ->Reset();
+    sigma ->Reset();
+    nh    ->Reset();
+    ne    ->Reset();
+
+ 
     // ***************** Loop over NIJ particles ******************
     // Shadowing effect
 
@@ -763,7 +767,6 @@ void CMSJES::Loop()
                             params_pi_HHe[row][2], 1, 0, 1); 
         respH += 0.45*fr_h->Eval(p4.E());
       }
-      
       if (respH*p4.Pt() < 0.5 ) respH = 0.0;
       
       //Reconstruction
@@ -774,7 +777,10 @@ void CMSJES::Loop()
 
       eHist ->Fill(p4.Phi(), p4.Eta(), p4.E() );
       ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
-      
+
+      //jerg_A->SetParameters(0,1.19825,0.10047);                //From jerg_A->Fit(f1)
+      jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);//Fit using also respH
+
       switch (PDG) {
         //PHOTON
         case 20 : case 22 : 
@@ -787,13 +793,17 @@ void CMSJES::Loop()
           break;    
         //CHARGED HADRONS
         case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 : 
-          cht->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() ); //Normal response
           chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
 
           p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                           (*prtclnij_phi)[i],(*prtclnij_e)[i]);
+
           p4 *= respH;
-          chc  ->Fill(p4.Phi(), p4.Eta(), p4.E()); //Calorimeter response
+          chc->Fill(p4.Phi(), p4.Eta(), p4.E()); //Calorimeter response
+
+          resolution  = jerg_A->Eval((*prtclnij_pt)[i]); // pT or energy?
+          resolution *= respH; //Ei suurta vaikutusta
 
           sigma->Fill(p4.Phi(), p4.Eta(), resolution);
 
@@ -804,18 +814,16 @@ void CMSJES::Loop()
           break; 
         default : 
           if (PDG != 12 && PDG != 14 && PDG != 16) cout << "PDGID " << PDG << endl;
-      }
-
-      //Four vector for a cell
+      }//Four vector for a cell
       
     } //Shadowing effect particle loop
 
     // ***************** Loop over cells ******************
     double cellPhi; double cellEta; double cellE; double cellPt;
-    double caloMeas = 0.0;
-    double caloPred = 0.0;
-    double delta    = 0.0;
-    double sigma    = 0.0;
+    double caloMeas  = 0.0;
+    double caloPred  = 0.0;
+    double delta     = 0.0;
+    double cellSigma = 0.0;
     
     for (int i=1; i!=eHist->GetNbinsX()+1; ++i) {
       for (int j=1; j!=eHist->GetNbinsY()+1; ++j) {
@@ -829,10 +837,13 @@ void CMSJES::Loop()
         caloPred = chc->GetBinContent(i,j);
 
         delta = caloMeas - caloPred;
-        sigma = sqrt(chc->GetBinContent(i,j));
 
+        cellSigma = sigma->GetBinContent(i,j);
+        //cellSigma = sqrt(chc->GetBinContent(i,j));
 
-        if (delta < sigma) {
+        if (cellE != 0) nmbOfCells++;
+        if (delta < cellSigma) {
+          deltaLessThanSigma++;
           cellE  = cht->GetBinContent(i,j);
           cellPt = chtPt->GetBinContent(i,j);
         } else { //Normal case
@@ -1369,6 +1380,10 @@ void CMSJES::Loop()
   cout << "btb tag and probe: " << b2b         << endl;
   cout << "alpha cut:         " << alpha       << endl;
   cout << "Low met:           " << lowMet      << endl;
+
+  cout << "delta less than sigma: " << deltaLessThanSigma <<  " number of cells where E!=0: " 
+       << nmbOfCells << endl;
+  cout << double(deltaLessThanSigma) / double(nmbOfCells) << endl;
 
   // Cut histogram
   cutHist->GetXaxis()->SetTitle("Gen lvl tag pT");
@@ -2196,7 +2211,7 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, TF1* f
   //if (energy > 0.3) sfCh = 1.0; // Step function for charged particles
   //if (energy > 3.0) sfN  = 1.0; // Step function for neutral particles
 
-  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles
+  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles 
   if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
 
 

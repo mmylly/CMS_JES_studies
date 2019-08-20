@@ -29,17 +29,18 @@ void extractBranches() {
   }
 
   //#Events in the file
-  cout << "#Events? (1) 1M (2) 500k (3) 100k (4) 10k (5) 1k (6) 30k (7) 300k (8) 600k" << endl;
+  cout << "#Events? (1) 1M (2) 500k (3) 100k (4) 10k (5) 1k (6) 3k (7) 30k (8) 300k (9) 600k" << endl;
   temp=-1;	//Reinit
-  while (temp<1 || temp >8) cin >> temp;
+  while (temp<1 || temp >9) cin >> temp;
   int n_evts = 1000000;	//#Events in the file
   if      (temp==2) n_evts = 500000;
   else if (temp==3) n_evts = 100000;
   else if (temp==4) n_evts = 10000;
   else if (temp==5) n_evts = 1000;
-  else if (temp==6) n_evts = 30000;
-  else if (temp==7) n_evts = 300000;
-  else if (temp==8) n_evts = 600000;
+  else if (temp==6) n_evts = 3000;
+  else if (temp==7) n_evts = 30000;
+  else if (temp==8) n_evts = 300000;
+  else if (temp==9) n_evts = 600000;
 
   //Construct input filename
   stringstream instream;

@@ -1,7 +1,7 @@
 void cutHist()
 {
 //=========Macro generated from canvas: c2/c2
-//=========  (Mon Aug 19 14:24:25 2019) by ROOT version6.06/04
+//=========  (Tue Aug 20 11:33:09 2019) by ROOT version6.06/04
    TCanvas *c2 = new TCanvas("c2", "c2",0,0,600,400);
    c2->SetHighLightColor(2);
    c2->Range(0,0,1,1);

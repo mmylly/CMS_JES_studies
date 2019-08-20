@@ -14,7 +14,7 @@ int main() {
   // 2: Fit
   // 3: run many samples and produce their plots at once
   // 4: Loop() + flavCorr for debug
-  int mode = 5;
+  int mode = 4;
 
   switch (mode) {
     case 0 : d.Loop();       break;
