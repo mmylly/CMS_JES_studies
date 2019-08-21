@@ -463,7 +463,9 @@ void CMSJES::Loop()
   TH2D* nh    = new TH2D("nh" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
   TH2D* ne    = new TH2D("ne" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
 
-  TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2])", 3, 1000);
+  //TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2])", 0, 1000);
+
+  TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2]) * (0.55*1.02900*(1-1.6758*pow(x/0.75,0.553456-1)) + 0.45*1.10286*(1-1.25613*pow(x/0.75,0.397034-1)))", 0, 1000);
 
 //***********************************************************************************************
 
@@ -743,7 +745,6 @@ void CMSJES::Loop()
  
     // ***************** Loop over NIJ particles ******************
     // Shadowing effect
-
     double respH = 0.0; //Hadron response from pi parameters
     double resolution = 0.0; //Resolution for a single particle from jerg_A    
 
@@ -757,7 +758,7 @@ void CMSJES::Loop()
       unsigned int row = int(fabs(p4.Eta())*10); 
 
       //Hadron response from pi fit
-      if (fabs(p4.Eta()) > 5.2 || p4.Pt() < 3.0){
+      if (fabs(p4.Eta()) > 5.2 || p4.Pt() < 3.0){ 
         respH = 0.0;
       } else {
         fr_h->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
@@ -768,7 +769,7 @@ void CMSJES::Loop()
         respH += 0.45*fr_h->Eval(p4.E());
       }
       if (respH*p4.Pt() < 0.5 ) respH = 0.0;
-      
+
       //Reconstruction
       Response(PDG,p4.Eta(),p4.E(),p4.Pt(),fr_e,fr_mu,fr_gam,fr_h,true,
                GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respEM);
@@ -778,7 +779,7 @@ void CMSJES::Loop()
       eHist ->Fill(p4.Phi(), p4.Eta(), p4.E() );
       ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
 
-      //jerg_A->SetParameters(0,1.19825,0.10047);                //From jerg_A->Fit(f1)
+      //jerg_A->SetParameters(0,1.19825,0.10047);              //From jerg_A->Fit(f1)
       jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);//Fit using also respH
 
       switch (PDG) {
@@ -803,10 +804,15 @@ void CMSJES::Loop()
           chc->Fill(p4.Phi(), p4.Eta(), p4.E()); //Calorimeter response
 
           resolution  = jerg_A->Eval((*prtclnij_pt)[i]); // pT or energy?
-          resolution *= respH; //Ei suurta vaikutusta
+          //resolution *= respH; 
+          //==================
+          resolution *= (*prtclnij_pt )[i];
+          //==================
+
 
           sigma->Fill(p4.Phi(), p4.Eta(), resolution);
 
+          
           break;
         //NEUTRAL HADRONS
         case 130 : case 310 : case 3122 : case 2112 : case 3212 : case 3322 :
@@ -850,7 +856,6 @@ void CMSJES::Loop()
           cellE  = cht->GetBinContent(i,j) + delta; //eHist?
           cellPt = ptHist->GetBinContent(i,j);
         }
-
         p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
         NIJ_r += p4;
       }
