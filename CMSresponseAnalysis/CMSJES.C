@@ -797,22 +797,36 @@ void CMSJES::Loop()
           cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() ); //Normal response
           chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
 
+
+          //Track curvature in chc:
+          double newPhi;
+
+          if ((*prtclnij_pt )[i] > 0.72) { //No interaction with cal, pT < 0.3*B*0.5*Rt
+            newPhi = trackDeltaPhi((*prtclnij_pdgid)[i], (*prtclnij_phi)[i], (*prtclnij_pt )[i]);
+          
+            p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
+                          newPhi,(*prtclnij_e)[i]);
+            p4 *= respH;
+
+            chc->Fill(p4.Phi(), p4.Eta(), p4.E());
+
+            resolution  = jerg_A->Eval((*prtclnij_pt)[i]); // pT or energy?
+            resolution *= (*prtclnij_pt )[i];
+
+            sigma->Fill(p4.Phi(), p4.Eta(), resolution);
+          }
+          /*
+          
           p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                           (*prtclnij_phi)[i],(*prtclnij_e)[i]);
-
           p4 *= respH;
           chc->Fill(p4.Phi(), p4.Eta(), p4.E()); //Calorimeter response
 
           resolution  = jerg_A->Eval((*prtclnij_pt)[i]); // pT or energy?
-          //resolution *= respH; 
-          //==================
           resolution *= (*prtclnij_pt )[i];
-          //==================
 
+          sigma->Fill(p4.Phi(), p4.Eta(), resolution);*/
 
-          sigma->Fill(p4.Phi(), p4.Eta(), resolution);
-
-          
           break;
         //NEUTRAL HADRONS
         case 130 : case 310 : case 3122 : case 2112 : case 3212 : case 3322 :
@@ -3235,4 +3249,116 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
     }
   }
 } //flavCorr
+
+//Phi value where particle hits the calorimeter
+double CMSJES::trackDeltaPhi(int pdgid, double phi, double pT) {
+
+  double Rt = 1.2; //Or 1.1 meters
+  double B = 4; //Tesla
+  double Rp = pT/(0.3*B);
+  double dPhi;
+  double newPhi;
+
+  //What is the correct sign here?
+  dPhi = Charge(pdgid) * (TMath::Pi()/2 - TMath::ACos(Rt/(2*Rp)));
+
+  newPhi = phi + dPhi;
+
+  if ( newPhi > TMath::Pi() )       newPhi -= TMath::Pi();
+  else if ( newPhi < -TMath::Pi() ) newPhi += TMath::Pi();
+
+  return newPhi;
+}
+
+
+int CMSJES::Charge(int pdgid) {
+  int charge;
+
+  switch (pdgid) {
+    //Neutral
+    case    20 ://photon
+    case    22 ://photon from pi0
+    case   130 ://K_L0
+    case   310 ://K_S0
+    case  3122 ://Lambda0
+    case -3122 ://anti-Lambda0
+    case  2112 ://n
+    case -2112 ://anti-n
+    case  3212 ://Sigma0
+    case -3212 ://anti-Sigma0
+    case  3322 ://Xi0
+    case -3322 ://anti-Xi0
+      charge = 0;
+      break;
+
+    //Positive charge
+    case   -11 ://e+
+    case   -13 ://mu+
+    case   211 ://pi+
+    case   321 ://K+
+    case  2212 ://p+
+    case -3112 ://anti-Sigma+
+    case  3222 ://Sigma+
+    case -3312 ://anti-Xi+
+    case -3334 ://anti-Omega+
+      charge = 1;
+      break;  
+  
+    //Negative charge
+    case    11 ://e-
+    case    13 ://mu-
+    case  -211 ://pi-
+    case  -321 ://K-
+    case -2212 ://anti-p
+    case  3112 ://Sigma-
+    case -3222 ://anti-Sigma-
+    case  3312 ://Xi-
+    case  3334 ://Omega-
+      charge = -1;
+      break;
+    default : 
+         cout << "Unknown particle: " << pdgid << endl;
+  }
+  return charge;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
