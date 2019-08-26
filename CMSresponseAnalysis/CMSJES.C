@@ -441,8 +441,6 @@ void CMSJES::Loop()
   int alpha = 0;
   int lowMet = 0;
 
-  int nmbOfCells = 0;
-  int deltaLessThanSigma = 0;
 
 
 //***********************************************************************************************
@@ -456,16 +454,17 @@ void CMSJES::Loop()
   TH2D* eHist  = new TH2D("eHist" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
   TH2D* ptHist = new TH2D("ptHist", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
 
-  TH2D* cht   = new TH2D("cht", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* cht   = new TH2D("cht"  , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
   TH2D* chtPt = new TH2D("chtPt", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* chc   = new TH2D("chc", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* chc   = new TH2D("chc"  , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
   TH2D* sigma = new TH2D("sigma", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* nh    = new TH2D("nh" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* ne    = new TH2D("ne" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* nh    = new TH2D("nh"   , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  TH2D* ne    = new TH2D("ne"   , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
 
   //TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2])", 0, 1000);
 
   TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2]) * (0.55*1.02900*(1-1.6758*pow(x/0.75,0.553456-1)) + 0.45*1.10286*(1-1.25613*pow(x/0.75,0.397034-1)))", 0, 1000);
+  //TF1* jerg_A_HHe = new TF1("jerg_A_HHe", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2]) * (1.10286*(1-1.25613*pow(x/0.75,0.397034-1)))", 0, 1000);
 
 //***********************************************************************************************
 
@@ -745,7 +744,7 @@ void CMSJES::Loop()
  
     // ***************** Loop over NIJ particles ******************
     // Shadowing effect
-    double respH = 0.0; //Hadron response from pi parameters
+    double respH      = 0.0; //Hadron response from pi parameters
     double resolution = 0.0; //Resolution for a single particle from jerg_A    
 
 
@@ -777,28 +776,51 @@ void CMSJES::Loop()
       p4 *= resp;
 
       eHist ->Fill(p4.Phi(), p4.Eta(), p4.E() );
-      ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+      //ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt()); //uncomment?
 
       //jerg_A->SetParameters(0,1.19825,0.10047);              //From jerg_A->Fit(f1)
       jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);//Fit using also respH
+      //jerg_A_HHe->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);//Fit using only HHe response
 
       switch (PDG) {
         //PHOTON
         case 20 : case 22 : 
           ne->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
           break;
         //Leptons
         case 11 : case 13 :
-          cht  ->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
-          chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
-          break;    
+          cht   ->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+          chtPt ->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+          break;
         //CHARGED HADRONS
-        case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 : 
-          cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() ); //Normal response
-          chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+        case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 :
+          
+          //Tracking failure quick test
+          for (int ijet = 0; ijet != int(jets_r.size()); ++ijet) {
+            if (p4.DeltaR(jets_r[ijet]) < 0.1 && jets_r[ijet].Pt() > 300) {
+              if ( ((double) rand() / (RAND_MAX)) > 0.5 ) {
+                cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
+                chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+                ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+                break;
+              }
+            } 
+            else if (ijet == (int(jets_r.size()) - 1)) {
+              cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
+              chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+              ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+              break;             
+            }
+          }
+
+          //cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() ); //Normal response
+          //chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
 
 
-          //Track curvature in chc:
+
+          //Track curvature in calorimeter energy deposit:
           double newPhi;
 
           if ((*prtclnij_pt )[i] > 0.72) { //No interaction with cal, pT < 0.3*B*0.5*Rt
@@ -811,12 +833,12 @@ void CMSJES::Loop()
             chc->Fill(p4.Phi(), p4.Eta(), p4.E());
 
             resolution  = jerg_A->Eval((*prtclnij_pt)[i]); // pT or energy?
+            //resolution = jerg_A_HHe->Eval((*prtclnij_pt)[i]);
             resolution *= (*prtclnij_pt )[i];
 
             sigma->Fill(p4.Phi(), p4.Eta(), resolution);
           }
           /*
-          
           p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                           (*prtclnij_phi)[i],(*prtclnij_e)[i]);
           p4 *= respH;
@@ -831,12 +853,17 @@ void CMSJES::Loop()
         //NEUTRAL HADRONS
         case 130 : case 310 : case 3122 : case 2112 : case 3212 : case 3322 :
           nh->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
+          ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
           break; 
         default : 
           if (PDG != 12 && PDG != 14 && PDG != 16) cout << "PDGID " << PDG << endl;
       }//Four vector for a cell
       
     } //Shadowing effect particle loop
+
+    //Tracker failing
+    //Loop over jets
+
 
     // ***************** Loop over cells ******************
     double cellPhi; double cellEta; double cellE; double cellPt;
@@ -861,9 +888,7 @@ void CMSJES::Loop()
         cellSigma = sigma->GetBinContent(i,j);
         //cellSigma = sqrt(chc->GetBinContent(i,j));
 
-        if (cellE != 0) nmbOfCells++;
         if (delta < cellSigma) {
-          deltaLessThanSigma++;
           cellE  = cht->GetBinContent(i,j);
           cellPt = chtPt->GetBinContent(i,j);
         } else { //Normal case
@@ -1399,10 +1424,6 @@ void CMSJES::Loop()
   cout << "btb tag and probe: " << b2b         << endl;
   cout << "alpha cut:         " << alpha       << endl;
   cout << "Low met:           " << lowMet      << endl;
-
-  cout << "delta less than sigma: " << deltaLessThanSigma <<  " number of cells where E!=0: " 
-       << nmbOfCells << endl;
-  cout << double(deltaLessThanSigma) / double(nmbOfCells) << endl;
 
   // Cut histogram
   cutHist->GetXaxis()->SetTitle("Gen lvl tag pT");
@@ -3260,7 +3281,7 @@ double CMSJES::trackDeltaPhi(int pdgid, double phi, double pT) {
   double newPhi;
 
   //What is the correct sign here?
-  dPhi = Charge(pdgid) * (TMath::Pi()/2 - TMath::ACos(Rt/(2*Rp)));
+  dPhi = -1 * Charge(pdgid) * (TMath::Pi()/2 - TMath::ACos(Rt/(2*Rp)));
 
   newPhi = phi + dPhi;
 
