@@ -9,7 +9,7 @@ void readValues() {
 }
 */
 
-
+/*
 void readValues() {
 
         cout << "2018-03-06 Data MPF" << endl;
@@ -54,10 +54,18 @@ void readValues() {
 
 
 }
+*/
 
 
-
-
+void readValues() {
+	TFile* filein = new TFile("pchf.root");
+	TProfile* pchf = (TProfile*)filein->Get("pchf");
+        //TDirectory* dir2 = dir->GetDirectory("eta00-13");
+        //TGraphErrors* ffile = (TGraphErrors*)dir2->Get("mpfchs1_zmmjet_a30");
+        for (int i=1; i!=pchf->GetNbinsX()+1; ++i) {
+          cout << pchf->GetBinCenter(i)  << " " << pchf->GetBinContent(i) << endl;
+        }
+}
 
 
 

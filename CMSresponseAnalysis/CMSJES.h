@@ -295,7 +295,7 @@ public :
   void   plotPT(int gen=0,int Nevt=-1, bool MConly=false, bool fitOnly=false);
   void   plotSepPT();
   void   plotMPF(int gen=0, int Nevt=-1);
-  void   Response(int id, double pseudorap, double energy,   double pT,
+  void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
 	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
                   double& retMC, double& retFIT, double& retEM);
@@ -305,7 +305,7 @@ public :
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-
-  double trackDeltaPhi(int pdgid, double phi, double pT); //New phi where particle hits the calo
+  double trackDeltaPhi(int pdgid, double phi, double pT, double Rt, double B); //New phi where particle hits the calo
   int    Charge(int pdgid); //Charge of the particle
 };
 
