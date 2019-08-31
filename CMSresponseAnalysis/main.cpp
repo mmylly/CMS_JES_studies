@@ -32,7 +32,7 @@ int main() {
       break;
     case 5 :
       d.plotMPF(3,-1);
-      d.plotPT();
+      //d.plotPT();
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }
 
