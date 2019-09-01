@@ -285,9 +285,6 @@ public :
   //Other memeber functions
   virtual void     InputNameConstructor();
   virtual void     Loop();
-  virtual void     Plot2D();
-  virtual void     StudyTree();
-  virtual void     PrintEvt();
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
   void   FitGN();		//Gauss-Newton fit function
@@ -296,7 +293,7 @@ public :
   void   plotSepPT();
   void   plotMPF(int gen=0, int Nevt=-1);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
-	          TF1* frE, TF1* frMU, TF1* frG, TF1* frH, bool pos,
+	          TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool FIT, bool EM,
                   double& retMC, double& retFIT, double& retEM);
   void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);
