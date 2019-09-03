@@ -268,6 +268,7 @@ void CMSJES::Loop()
 
   //Histograms for particle content from cells
   TH1F* h_all_c; TH1F* h_ch_c; TH1F* h_nh_c; TH1F* h_gamma_c;
+  TH1F* h_jetPt;
 
   //Machinery for histogram stacking
   vector<string> hTitles;
@@ -281,19 +282,21 @@ void CMSJES::Loop()
 
   //Instantiate and setup composition histos if needed
   if (GetcontHistos()) {
-    int const nbins_h = 30; int const nbins_h_c = 20; //#Bins in particle composition histograms
+    int const nbins_h = 30; int const nbins_h_c = 20;
     const double bins_h_lo = 0.0; const double bins_h_lo_c = 30.0;
     const double bins_h_hi = 3000; const double bins_h_hi_c = 2000;
 
     //Particle content from cells in function of jet energy
-    h_all_c    = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
-    h_ch_c     = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
-    h_nh_c     = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
-    h_gamma_c  = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
+    h_all_c   = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
+    h_ch_c    = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
+    h_nh_c    = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
+    h_gamma_c = new TH1F("", "", nbins_h_c, bins_h_lo_c, bins_h_hi_c);
+    h_jetPt   = new TH1F("", "", 20, 0.0, 3000.0);
+
     h_ch_c->SetFillColor(46); h_ch_c->SetLineWidth(1); h_ch_c->SetLineColor(kBlack);
-    h_nh_c->SetFillColor(8); h_nh_c->SetLineWidth(1); h_nh_c->SetLineColor(kBlack);
+    h_nh_c->SetFillColor(8);  h_nh_c->SetLineWidth(1); h_nh_c->SetLineColor(kBlack);
     h_gamma_c->SetFillColor(38); h_gamma_c->SetLineWidth(1); h_gamma_c->SetLineColor(kBlack);
-    hstack_c = new THStack("", hTitles[1].c_str());
+    hstack_c = new THStack("", "#font[132]{Z#mu#mu jet particle content in |#eta| < 1.3}");
 
     for (int n=0; n!=3; ++n) {	//Indices: 0=gen lvl, 1=MC reco, 2=fit reco
       h_e[n]     = new TH1F("", "", nbins_h, bins_h_lo, bins_h_hi); //e^+-
@@ -429,6 +432,8 @@ void CMSJES::Loop()
   TF1* pchf = new TF1("pchf","[2]*pow(x,2) + [1]*x + [0]", 0, 5000);
   pchf->SetParameters(0.622235, 3.35233e-05, -2.01696e-07);
 
+  TF1* pchf_prtcl = new TF1("pchf_prtcl","[2]*pow(x,2) + [1]*x + [0]", 0, 5000);
+
   TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2]) * (0.55*1.02900*(1-1.6758*pow(x/0.75,0.553456-1)) + 0.45*1.10286*(1-1.25613*pow(x/0.75,0.397034-1)))", 0, 1000);
   jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);
 
@@ -507,7 +512,6 @@ void CMSJES::Loop()
                       (*prtn_phi)[i_tag1], (*prtn_e  )[i_tag1]);
 
       //Fast gen lvl cuts, more strict reco lvl cuts below 
-
       bool muonCut = 0;
 
       //if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
@@ -747,7 +751,7 @@ void CMSJES::Loop()
           ne->Fill(p4.Phi(), p4.Eta(), p4.E()); //Normal response
           break;
 
-        //Leptons:
+        //LEPTONS
         case 13 : case 11 :
           NIJ_r += p4; //Straight to the MET
           break;
@@ -755,13 +759,18 @@ void CMSJES::Loop()
         //CHARGED HADRONS
         case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 :
 
-          double eff; double rnmb; bool trckFail;
+          
+          double eff; double rnmb; bool trckFail; double effConst;
           trckFail = 0;
-          double effConst; effConst = 0.0003781;
+          effConst = 0.0;
           eff = 1.0 - effConst * (*prtclnij_pt )[i];
+          if (eff < 0.0) eff = 0.0;         
+
+          //pchf_prtcl->SetParameters(1.3, 0.0, -3e-05);
+          //eff = pchf_prtcl->Eval(p4.Pt());
+          //if (eff < 0.0) eff = 0.0; 
 
           rnmb = ((double)rand() / (double)RAND_MAX);
-
           if (rnmb > eff ) trckFail = 1;
 
           if (!trckFail) {
@@ -789,6 +798,7 @@ void CMSJES::Loop()
           if (resolution < 0.0) resolution = 0.0;
 
           sigma->Fill(p4.Phi(), p4.Eta(), resolution);
+
           break;
 
         //NEUTRAL HADRONS
@@ -804,35 +814,65 @@ void CMSJES::Loop()
     double caloMeas = 0.0; double caloPred  = 0.0;
     double delta    = 0.0; double cellSigma = 0.0;
 
+    //Fill jet pT in function of pT histogram
+    for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
+      h_jetPt->Fill(jets_r[ijet].Pt(), jets_r[ijet].Pt());
+    }
 
     // ***************** Loop over cells ******************
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
-
         cellPhi = cht->GetXaxis()->GetBinCenter(i);
         cellEta = cht->GetYaxis()->GetBinCenter(j);
+
         
+        //cellPt = (nh->GetBinContent(i,j) + ne->GetBinContent(i,j))/cosh(cellEta) 
+        //         + chtPt->GetBinContent(i,j); //Full pt of the cell
+
+        //double eff_c;
+        //double effConst_c; 
+        //effConst_c = 0.0003781;
+        //eff_c = 1.0 - effConst_c * cellPt;
+        //if (eff_c < 0.0) eff_c = 0.0;
+
+        //pchf_prtcl->SetParameters(1.0, 0.0, -4e-07);
+        //eff_c = pchf_prtcl->Eval(cellPt);
+        //if (eff_c < 0.0) eff_c = 0.0; 
+
+
+        //cht  ->SetBinContent(i,j, eff_c*cht->GetBinContent(i,j));
+        //chtPt->SetBinContent(i,j, eff_c*chtPt->GetBinContent(i,j));
+        //nh->Fill(cellPhi, cellEta, (1-eff_c)*chc->GetBinContent(i,j));
+        
+
         caloMeas = chc->GetBinContent(i,j) + nh->GetBinContent(i,j) + ne->GetBinContent(i,j);
         caloPred = chc->GetBinContent(i,j);
+
 
         delta = caloMeas - caloPred;
         cellSigma = sigma->GetBinContent(i,j);
 
         p4.SetPtEtaPhiE(delta/cosh(cellEta) + chtPt->GetBinContent(i,j), cellEta, cellPhi,
                        delta + cht->GetBinContent(i,j));
+        
 
-        // eta < 1.3 requirement
+        //Charged hadron fraction
         for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
-          if (jets_r[ijet].Eta() < 1.3) {
+          if (jets_r[ijet].Eta() < 1.3) { //From the plot
             if (p4.DeltaR(jets_r[ijet]) < 0.4) {
-              h_ch_c   ->Fill(jets_r[ijet].Pt(), cht->GetBinContent(i,j));
-              h_nh_c   ->Fill(jets_r[ijet].Pt(), nh->GetBinContent(i,j));
-              h_gamma_c->Fill(jets_r[ijet].Pt(), ne->GetBinContent(i,j));
-              h_all_c  ->Fill(jets_r[ijet].Pt(), delta+cht->GetBinContent(i,j));
+              if (delta < cellSigma) {
+                h_ch_c   ->Fill(jets_r[ijet].Pt(), cht->GetBinContent(i,j));
+                h_all_c  ->Fill(jets_r[ijet].Pt(), cht->GetBinContent(i,j));
+              } else {
+                h_ch_c   ->Fill(jets_r[ijet].Pt(), cht->GetBinContent(i,j));
+                h_nh_c   ->Fill(jets_r[ijet].Pt(), nh->GetBinContent(i,j));
+                h_gamma_c->Fill(jets_r[ijet].Pt(), ne->GetBinContent(i,j));
+                h_all_c  ->Fill(jets_r[ijet].Pt(), delta+cht->GetBinContent(i,j));
+              }
             }
           }
         }
-
+        
         if (delta < cellSigma) { //Shadowing
           //Tracker
           cellE  = cht->GetBinContent(i,j);
@@ -846,7 +886,6 @@ void CMSJES::Loop()
           cellPt = delta/cosh(cellEta);
           p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
           NIJ_r += p4;
-
           //Tracker
           cellE  = cht->GetBinContent(i,j);
           cellPt = chtPt->GetBinContent(i,j);
@@ -961,8 +1000,6 @@ void CMSJES::Loop()
     // Modified for Z+jet usage
     Ep   = p4r_tag.Pt()*cosh(probe.Eta());
     pTp  = p4r_tag.Pt();
- 
-    //if (pTp < 80.0) {cout << pTp << endl;}
 
     //Data<->MC & MC'<->MC factors
     F    = Fnum[i_probe]/Fden[i_probe];
@@ -1102,38 +1139,49 @@ void CMSJES::Loop()
     if (!GetuseEarlierCuts()) passedCuts[jentry]=true;
   } //Loop Tree entries
 
+  TCanvas* canv_jetPt = new TCanvas("jetPt","",1000,1000);
+  TLegend* lg_jetPt   = new TLegend(0.865, 0.1, 1.0,  0.9);
+  //lg_jetPt->AddEntry(h_jetPt, " #font[12]{MC jet}", "f");
+  h_jetPt->Draw();
+  //lg_jetPt->Draw();
+  canv_jetPt->SetLogx();
+  canv_jetPt->Print("./plots/particleComposition/jetPt.eps");
+
   //Canvas and related setup
   string canvName = ReadName + "_prtclCont_cells";
-  TCanvas* canv_c = new TCanvas(canvName.c_str(),"",1000,1000);
-  TLegend* lg_c = new TLegend(0.865, 0.1, 1.0,  0.9);
+  TCanvas* canv_c = new TCanvas(canvName.c_str(),"",1200,1200);
+  TLegend* lg_c = new TLegend(0.9, 0.1, 1.0,  0.9);
   lg_c->SetBorderSize(0); //No frame
+  lg_c->SetTextSize(0.028);
+  //lg_c->SetTextFont(133);
   lg_c->SetFillStyle(0);  //No background fill
+  canv_c->SetLogx();
 
   //Normalize histograms by the sum of all ptcls and add to stack
-  //h_gamma[n]->Divide(h_all[n]);	  hstack[n]->Add(h_gamma[n]);
   h_ch_c   ->Divide(h_all_c); hstack_c->Add(h_ch_c);
   h_gamma_c->Divide(h_all_c); hstack_c->Add(h_gamma_c);
   h_nh_c   ->Divide(h_all_c); hstack_c->Add(h_nh_c);
 
   //Legend setup
-  lg_c->AddEntry(h_nh_c,    " #font[12]{Neutral hadrons}", "f");
-  lg_c->AddEntry(h_gamma_c, " #gamma",                     "f");
-  lg_c->AddEntry(h_ch_c,    " #font[12]{Charged hadrons}", "f");
+  lg_c->AddEntry(h_nh_c,    "#font[132]{NH}", "f");
+  lg_c->AddEntry(h_gamma_c, "#gamma",         "f");
+  lg_c->AddEntry(h_ch_c,    "#font[132]{CH}", "f");
 
   hstack_c->Draw("HISTO");
   hstack_c->GetYaxis()->SetRange(0.0,1.0);
-  hstack_c->GetXaxis()->SetTitle("#font[12]{E}_{jet}^{gen} [GeV]");
-  hstack_c->GetYaxis()->SetTitle("Fraction of jet #font[12]{E}");
+  hstack_c->GetXaxis()->SetTitle("#font[12]{p}_{T}^{MC} [GeV]");
+  hstack_c->GetYaxis()->SetTitle("Jet energy fraction");
   hstack_c->GetYaxis()->SetTitleFont(133);
-  hstack_c->GetYaxis()->SetTitleSize(20);
+  hstack_c->GetYaxis()->SetTitleSize(35);
   hstack_c->GetXaxis()->SetTitleFont(133);
-  hstack_c->GetXaxis()->SetTitleSize(20);
-  hstack_c->GetXaxis()->SetTitleOffset(1.8);
-  hstack_c->GetYaxis()->SetTitleOffset(2.0);
+  hstack_c->GetXaxis()->SetTitleSize(35);
+  hstack_c->GetXaxis()->SetTitleOffset(1.5);
+  hstack_c->GetYaxis()->SetTitleOffset(1.5);
+  hstack_c->GetYaxis()->SetNdivisions(20);
   lg_c->Draw();
 
   //Save particle content histogram plot
-  string plotName = "./plots/particleComposition/PC_cells.eps";
+  string plotName = "./plots/particleComposition/PC_jets.eps";
   canv_c->Print(plotName.c_str());
 
   //Normalize flavour fraction histograms, add to stack and plot
@@ -1278,7 +1326,7 @@ void CMSJES::Loop()
     }
     delete canv; delete canv_c;
     delete h_all_c; delete h_ch_c; delete h_nh_c; delete h_gamma_c;
-    delete hstack_c;
+    delete hstack_c; delete h_jetPt;
   } //Particle composition histograms
 
   cout << "all events:        " << all         << endl;
@@ -2071,8 +2119,8 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, double
     switch (PDG) {
       //PHOTON
       case 20 :
-      case 22 : 
-        retMC = sfCh; 	
+      case 22 :
+        retMC = sfCh;
         break;
 
       //LEPTONS
