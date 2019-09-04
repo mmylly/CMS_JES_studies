@@ -437,6 +437,9 @@ void CMSJES::Loop()
   TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2]) * (0.55*1.02900*(1-1.6758*pow(x/0.75,0.553456-1)) + 0.45*1.10286*(1-1.25613*pow(x/0.75,0.397034-1)))", 0, 1000);
   jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);
 
+  //TF1* jerg_A2 = new TF1("jerg_A2", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2])", 0, 1000);
+  //jerg_A2->SetParameters(7.49347e-06, 1.19825e+00, 1.00470e-01);
+
   TF1* pionReso = new TF1("pionRes","[1]*x + [0]", 0, 5000);
   pionReso->SetParameters(0.01336, 8.548e-5);
 
@@ -793,7 +796,9 @@ void CMSJES::Loop()
 
           if (respH != 0.0) {
             resolution = jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt )[i];
+            //resolution = jerg_A2->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt )[i];
             //resolution = pionReso->Eval((*prtclnij_pt)[i]);
+            //resolution = 0.0; //no shadowing
           } else resolution = 0.0;
           if (resolution < 0.0) resolution = 0.0;
 
@@ -811,7 +816,6 @@ void CMSJES::Loop()
     } //Shadowing effect particle loop
 
     double cellPhi; double cellEta; double cellE; double cellPt;
-    double caloMeas = 0.0; double caloPred  = 0.0;
     double delta    = 0.0; double cellSigma = 0.0;
 
     //Fill jet pT in function of pT histogram
@@ -822,6 +826,7 @@ void CMSJES::Loop()
     // ***************** Loop over cells ******************
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
+
         cellPhi = cht->GetXaxis()->GetBinCenter(i);
         cellEta = cht->GetYaxis()->GetBinCenter(j);
 
@@ -844,17 +849,11 @@ void CMSJES::Loop()
         //chtPt->SetBinContent(i,j, eff_c*chtPt->GetBinContent(i,j));
         //nh->Fill(cellPhi, cellEta, (1-eff_c)*chc->GetBinContent(i,j));
         
-
-        caloMeas = chc->GetBinContent(i,j) + nh->GetBinContent(i,j) + ne->GetBinContent(i,j);
-        caloPred = chc->GetBinContent(i,j);
-
-
-        delta = caloMeas - caloPred;
+        delta     = nh->GetBinContent(i,j) + ne->GetBinContent(i,j);
         cellSigma = sigma->GetBinContent(i,j);
 
         p4.SetPtEtaPhiE(delta/cosh(cellEta) + chtPt->GetBinContent(i,j), cellEta, cellPhi,
                        delta + cht->GetBinContent(i,j));
-        
 
         //Charged hadron fraction
         for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
@@ -898,7 +897,6 @@ void CMSJES::Loop()
 
 
     /************** FIND DERIVATIVES IN CASE i_probe > 1 (RARE) **************/
-
     if (i_probe>1) {
       for (int i=0; i!=prtcl_pdgid->size(); ++i) {
         PDG = abs((*prtcl_pdgid)[i]);
@@ -928,7 +926,6 @@ void CMSJES::Loop()
     }
 
     /************************** PARTICLE COMPOSITION **************************/
-
     //Loop all particles associated with jets
     for (unsigned int i=0; i!=(GetcontHistos() ? prtcl_pdgid->size():0); ++i) {
       JI = (*prtcl_jet)[i];
@@ -2727,9 +2724,6 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
     canv->Print(savename.c_str()); //Save plot
   } //Horizontal axis interpretations
 
-  //g_Fcorr[0][0][0]->Print("all");
-  //g_Fcorr[1][0][0]->Print("all");
-  //g_Fcorr[2][0][0]->Print("all");
 
 
 
