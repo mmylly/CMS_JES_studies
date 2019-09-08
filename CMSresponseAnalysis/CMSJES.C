@@ -22,13 +22,13 @@ void CMSJES::Loop()
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
   int const nbins = 11;
-  int const nbinsMPF = 12;
+  int const nbinsMPF = 15;
 
   //Check values
   const double binsx[nbins] = {31.75, 41.0, 50.5, 63.5, 82.75, 105.25, 132.5, 173.5, 
                                228.5, 299.5, 380.75}; 
-  const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5,
-                                     173.25, 228.25, 300.0, 391.25, 494.25};
+  const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25,
+                                    228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
 
   string Rcone = "R_{cone}=0.4"; //R_cone info in string form
   R_cone = 0.4;
@@ -765,8 +765,11 @@ void CMSJES::Loop()
           
           double eff; double rnmb; bool trckFail; double effConst;
           trckFail = 0;
-          effConst = 0.0;
-          eff = 1.0 - effConst * (*prtclnij_pt )[i];
+          //eff = 1.0;
+          //effConst = 0.001;
+          //eff = 0.92 - effConst * (*prtclnij_pt )[i];
+          eff = 0.5283767 + (0.9269862 - 0.5283767)/               //From PF-paper
+                (1 + pow(((*prtclnij_pt )[i]/88.76311),1.224631));
           if (eff < 0.0) eff = 0.0;         
 
           //pchf_prtcl->SetParameters(1.3, 0.0, -3e-05);
@@ -802,7 +805,8 @@ void CMSJES::Loop()
           } else resolution = 0.0;
           if (resolution < 0.0) resolution = 0.0;
 
-          sigma->Fill(p4.Phi(), p4.Eta(), resolution);
+          //sigma->Fill(p4.Phi(), p4.Eta(), resolution);
+          sigma->Fill(p4.Phi(), p4.Eta(), pow(resolution,2)); //neliösumma
 
           break;
 
@@ -849,13 +853,15 @@ void CMSJES::Loop()
         //chtPt->SetBinContent(i,j, eff_c*chtPt->GetBinContent(i,j));
         //nh->Fill(cellPhi, cellEta, (1-eff_c)*chc->GetBinContent(i,j));
         
-        delta     = nh->GetBinContent(i,j) + ne->GetBinContent(i,j);
-        cellSigma = sigma->GetBinContent(i,j);
+        delta = nh->GetBinContent(i,j) + ne->GetBinContent(i,j);
+
+        cellSigma = sqrt(sigma->GetBinContent(i,j)); //neliösumma
 
         p4.SetPtEtaPhiE(delta/cosh(cellEta) + chtPt->GetBinContent(i,j), cellEta, cellPhi,
                        delta + cht->GetBinContent(i,j));
 
-        //Charged hadron fraction
+        //Charged hadron fraction plotting
+        
         for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
           if (jets_r[ijet].Eta() < 1.3) { //From the plot
             if (p4.DeltaR(jets_r[ijet]) < 0.4) {
@@ -1960,14 +1966,14 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF->SetLineColor(     kGreen);
   hzj_MPF_pTp->SetLineColor( kBlack);
   mc_zj_MPF->SetMarkerStyle( kOpenCircle);    mc_zj_MPF->SetMarkerColor( kBlack  );
-  mc_zj_MPFntI->SetMarkerStyle( kOpenSquare); mc_zj_MPFntI->SetMarkerColor( kBlack  );
+  mc_zj_MPFntI->SetMarkerStyle( kOpenCircle); mc_zj_MPFntI->SetMarkerColor( kBlack  );
 
   przj_MPF_f->SetMarkerStyle(kFullDiamond); // Not Drawn
   przj_MPF_f->SetMarkerColor(kGray+1);      // Not Drawn
 
   hzj_MPF_f->SetMarkerStyle(kFullDiamond);  hzj_MPF_f->SetMarkerColor(kGreen-6);
   d_zj_MPF->SetMarkerStyle(kFullCircle);    d_zj_MPF->SetMarkerColor(kBlack);
-  d_zj_MPFntI->SetMarkerStyle(kFullSquare); d_zj_MPFntI->SetMarkerColor(kBlack);
+  d_zj_MPFntI->SetMarkerStyle(kFullCircle); d_zj_MPFntI->SetMarkerColor(kBlack);
 
 
 
@@ -2045,9 +2051,6 @@ void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
 
 //-----------------------------------------------------------------------------
 //A function to calculate the MC hadron response R 
-//  D0 single-particle response parameters for different particles & eta 
-//  regions extracted from D0 analysis notes 6143 and 6368.
-//  Note that IIb parameters are identical for all epochs b1, b2 and b3-4.
 //Params:	id		Particle PDGID
 //		pseudorap	Particle pseudorapidity eta
 //		energy		Particle energy
@@ -2062,7 +2065,6 @@ void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
 //		fA,fB,fC	Param.s for fitting to D0 data
 //              MC, FIT, HR	Flags to find MC/fit/hadron response
 //              ret**		References where to put the resulting response
-//Returns:	The calculated response (>= 0) or -1 if event invalid
 
 void CMSJES::Response(int id, double pseudorap, double energy, double pT, double Rt, 
                       double Bfield, TF1* frH, bool pos, 
@@ -2073,11 +2075,10 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, double
   //Init
   retFIT = 0.0; //For now
   bool zero = false; //If true, return zero responses
-  int PDG = abs(id);
 
   double sfCh  = 0.0; //Charged particle step function
   double sfN   = 0.0; //Neutral hadron step function
-  double respH = 0.0; 
+  double cat1 = 0.0; double cat2 = 0.0; double cat3 = 0.0; //Responses for different groups
 
   if (pT > 0.3) sfCh = 1.0; // Step function for charged particles 
   if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
@@ -2091,8 +2092,8 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, double
   unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
 
   //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
-  if (PDG==111 || PDG==221) { 
-    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << PDG
+  if (abs(id)==111 || abs(id)==221) { 
+    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << id
          << "Returning zero response" << endl; zero = true;
   }
 
@@ -2100,20 +2101,32 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, double
   if ( fabs(Charge(id)) && (pT < 0.3*Bfield*0.5*Rt) ) zero = true;
 
   //Neutrino responses are zero
-  if (isNeutrino(PDG)) zero = true;
+  if (isNeutrino(abs(id))) zero = true;
 
   //CALCULATE RESPONSES
   for (int i_r=0; i_r<(zero?0:1); ++i_r) {
     
     //Hadron response from pi fit
-    frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
-                       params_pi_EHE[row][2], 1, 0, 1); 
-    respH  = 0.55*frH->Eval(energy);
-    frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
-                       params_pi_HHe[row][2], 1, 0, 1); 
-    respH += 0.45*frH->Eval(energy);
+    //frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+    //                   params_pi_EHE[row][2], 1, 0, 1); 
+    //respH  = 0.55*frH->Eval(energy);
+    //frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+    //                   params_pi_HHe[row][2], 1, 0, 1); 
+    //respH += 0.45*frH->Eval(energy);
 
-    switch (PDG) {
+    frH->SetParameters(params_cat1[row][0], params_cat1[row][1],
+                       params_cat1[row][2], 1, 0, 1);
+    cat1 = frH->Eval(energy);
+
+    frH->SetParameters(params_cat2[row][0], params_cat2[row][1],
+                       params_cat2[row][2], 1, 0, 1);
+    cat2 = frH->Eval(energy);
+
+    frH->SetParameters(params_cat3[row][0], params_cat3[row][1],
+                       params_cat3[row][2], 1, 0, 1);
+    cat3 = frH->Eval(energy);
+
+    switch (id) {
       //PHOTON
       case 20 :
       case 22 :
@@ -2121,13 +2134,56 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, double
         break;
 
       //LEPTONS
-      case 11 : //e
+      case  11 : //e
+      case -11 : //e
         retMC = sfCh; 
         break;
-      case 13 : //mu
+      case  13 : //mu
+      case -13 : //mu
         retMC = sfCh; 
         break;
 
+      //cat1: antineutron, K0S, K0L, pi+, pi-
+      case -2112 : //nbar
+      case   310 : //K^0_S
+      case   130 : //K^0_L
+      case   211 : //pi+
+      case  -211 : //pi-
+      case  3122 : //Lambda
+      case  3212 : //Sigma^0
+      case  3322 : //Xi^0 cat = 0
+      case  3312 : //Xi^-
+      case  3334 : //Omega^- cat=0
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(id))) retMC = sfCh; //Charged inside tracker
+        else retMC = cat1*sfN; 
+        break;
+
+      //cat2: neutron, antiproton, K+, K-
+      case  2112 : //n
+      case -2212 : //pbar
+      case   321 : //K+
+      case  -321 : //K-
+      case -3211 : //Lambda
+      case -3212 : //Sigma^0
+      case  3112 : //Sigma^-
+      case  3222 : //Sigma^+
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(id))) retMC = sfCh; //Charged inside tracker
+        else retMC = cat2*sfN; 
+        break;
+
+      //cat3: proton
+      case  2212 : //p
+      case -3322 : //anti-Xi^0
+      case -3312 : //Xi^- ?? cat = 4
+      case -3112 : //anti-Sigma^-
+      case -3222 : //anti-Sigma^+
+      case -3334 : //anti-Omega^- cat=5
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(id))) retMC = sfCh; //Charged inside tracker
+        else retMC = cat3*sfN; 
+        break;
+
+
+      /*
       //CHARGED HADRONS
       case 211 :  //pi^+-
       case 321 :  //K^+-
@@ -2149,15 +2205,15 @@ void CMSJES::Response(int id, double pseudorap, double energy, double pT, double
       case 3322 : //Xi^0
         retMC = respH*sfN;
         break;
-
+      */
       default : 
         zero=true;
-        cout << "Unknown particle PDG: " << PDG << endl;
+        cout << "Unknown particle PDG: " << id << endl;
         continue;	 
     }
   } 
 
-  retH = respH*sfN;
+  retH = cat1*sfN;
 
   //Set results. Check for NaN and negative results if positive demanded
   if (!MC || zero || isnan(retMC)  || (pos && retMC <0)) retMC =0;
@@ -2904,7 +2960,7 @@ double CMSJES::trackDeltaPhi(int pdgid, double phi, double pT, double Rt, double
   double newPhi;
 
   //What is the correct sign here?
-  dPhi = -1 * Charge(pdgid) * (TMath::Pi()/2 - TMath::ACos(Rt/(2*Rp)));
+  dPhi = Charge(pdgid) * (TMath::Pi()/2 - TMath::ACos(Rt/(2*Rp)));
 
   newPhi = phi + dPhi;
 

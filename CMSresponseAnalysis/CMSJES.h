@@ -162,6 +162,10 @@ public :
   */
   vector<vector<double>> params_pi_EHE;	//pion EHE
   vector<vector<double>> params_pi_HHe;	//pion HHe
+  //Params for hadron groups and combined H + EH response
+  vector<vector<double>> params_cat1;
+  vector<vector<double>> params_cat2;
+  vector<vector<double>> params_cat3;
 
   //CMS jecsys pT-balance data points and errors zj for Z+jet
   static int const ndata_pTbal = 10; //#Data points available from CMS
@@ -188,13 +192,13 @@ public :
   double zj_MC_MPF_ER[nMC_MPF];
 
   //CMS jecsys MPF-notypeI data points and errors for Z+jet
-  static int const ndata_MPFntI = 11; //14 points but ignore last ones maybe since large err.?
+  static int const ndata_MPFntI = 14; //14 points but ignore last ones maybe since large err.?
   double zj_pTp_MPFntI[ndata_MPFntI];
   double zj_MPFntI[ndata_MPFntI];
   double zj_MPFntI_ER[ndata_MPFntI];
 
   //CMS jecsys MPF-notypeI MC points and errors for Z+jet
-  static int const nMC_MPFntI = 11;
+  static int const nMC_MPFntI = 14;
   double zj_MC_pTp_MPFntI[nMC_MPFntI];
   double zj_MC_MPFntI[nMC_MPFntI];
   double zj_MC_MPFntI_ER[nMC_MPFntI];
@@ -465,6 +469,9 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   ParamReader("/pion_EHE.txt", 52, 3, params_pi_EHE);
   ParamReader("/pion_HHe.txt", 52, 3, params_pi_HHe);
+  ParamReader("/cat1.txt", 52, 3, params_cat1);
+  ParamReader("/cat2.txt", 52, 3, params_cat2);
+  ParamReader("/cat3.txt", 52, 3, params_cat3);
 
   /* Plug fit parameter values here for fit reco */
   if (runCMS) {
