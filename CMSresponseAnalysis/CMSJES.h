@@ -308,6 +308,7 @@ public :
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-
   double trackDeltaPhi(int pdgid, double phi, double pT, double Rt, double B); //New phi where particle hits the calo
   int    Charge(int pdgid); //Charge of the particle
+  bool   isChHadron(int pdgid); //Returns true if particle is charged hadron
 };
 
 #endif
