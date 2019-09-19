@@ -970,10 +970,12 @@ void CMSJES::Loop()
         //cellPt = ptHist->GetBinContent(i,j);
         cellPt = chtPt->GetBinContent(i,j);
 
+        //Add neutral hadrons to the cell efficiency calculation
+        //cellPt = chtPt->GetBinContent(i,j) + nh->GetBinContent(i,j);
+
         double eff_c;
         //eff_c = 1.0;
         eff_c = 1.0 - 0.0003781 * cellPt;
-
         //eff_c = trkFailHist->GetBinContent(i,j);
 
         if (eff_c < 0.0) eff_c = 0.0;
