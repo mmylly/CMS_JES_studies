@@ -294,7 +294,6 @@ public :
   void   FitGN();		//Gauss-Newton fit function
   void   MultiLoop(CMSJES* zj_in=NULL, bool fitPars=true); //Only for Z+jet at the moment
   void   plotPT(int gen=0,int Nevt=-1, bool MConly=false, bool fitOnly=false);
-  void   plotSepPT();
   void   plotMPF(int gen=0, int Nevt=-1);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
 	          TF1* frH, bool pos,
