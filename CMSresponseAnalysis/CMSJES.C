@@ -628,68 +628,20 @@ void CMSJES::Loop()
     ptHist     ->Reset();
     trkFailHist->Reset();
 
-    /*
-    //Reconstruct prtcls in nij vecs if any saved in tuple and flag true 
-    if (GetrecoMissing() && prtclnij_pt->size()!=0) {
-
-      // Loop over all particles in an event
-      for (int i=0; i!=prtclnij_pt->size(); ++i) {
-        
-        PDG = abs((*prtclnij_pdgid)[i]);
-        p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i],
-                        (*prtclnij_phi)[i], (*prtclnij_e  )[i]);
-
-        //Reconstruction
-        Response(PDG,p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,fr_h,true,
-                 GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respH);
-
-        //NIJ_g+=p4;
-        //NIJ_r+=p4*resp;
-        //NIJ_f+=p4*resp_f;
-       
-        //p4 *= resp;
-
-        //eHist ->Fill(p4.Phi(), p4.Eta(), p4.E() );
-        //ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt());
-
-      } //Loop over all particles in event
-    } 
-
-    double cellPhi; double cellEta; double cellE; double cellPt; 
-
-    for (int i=1; i!=eHist->GetNbinsX()+1; ++i) {
-      for (int j=1; j!=eHist->GetNbinsY()+1; ++j) {
-
-        cellPhi = eHist ->GetXaxis()->GetBinCenter(i);
-        cellEta = eHist ->GetYaxis()->GetBinCenter(j);
-        cellE   = eHist ->GetBinContent(i,j);
-        cellPt  = ptHist->GetBinContent(i,j);            
-
-        p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
-        NIJ_r += p4;
-      }
-    }*/
-
-
-    
+    // Initialization of the tracking fail histogram
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
         trkFailHist->SetBinContent(i,j,1);
       }
     }
-    
- 
 
     // ***************** Loop over all particles ******************
-
     for (int i=0; i!=prtclnij_pt->size(); ++i) {
-      double resolution = 0.0; double E_HCAL = 0.0; double nhcalib = 0.0;
+      double resolution = 0.0;
 
       PDG = fabs((*prtclnij_pdgid)[i]);
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                       (*prtclnij_phi)[i],(*prtclnij_e)[i]);
-
-      //ptHist->Fill(p4.Phi(), p4.Eta(), p4.Pt()); //Gen level pt
 
       Response((*prtclnij_pdgid)[i],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,fr_h,true,
                GetA(),GetB(),GetC(),true,true,true,resp,resp_f,respH);
@@ -710,24 +662,16 @@ void CMSJES::Loop()
         case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 :
           double eff; bool trkFail; double effConst; double newPhi;
           trkFail = 0;
-          eff = 1.0; //no track failing
+          eff = 1.0; //no particle level track failing
           //eff = 1.0 - 0.0003781 * (*prtclnij_pt )[i];
-          //eff = 1.0 - 0.002* (*prtclnij_pt )[i];
-          //eff = 0.9;
-          //eff = 0.5283767+(0.9269862-0.5283767)/
-          //                (1+pow(((*prtclnij_pt )[i]/88.76311),1.224631));
-          //if ((*prtclnij_pt )[i] < 0.9) eff = 0.15 + (0.35/0.4)*(*prtclnij_pt )[i];
-
+          //eff = 0.5284 + 0.3986/(1+pow(((*prtclnij_pt )[i]/88.76),1.22));
+          //if ((*prtclnij_pt )[i] < 0.9) eff = 0.2514 + 0.7429*(*prtclnij_pt )[i];
           //if (eff < 0.0) eff = 0.0;
           //if (p4.Eta() > 2.5) eff = 0.0;
 
-          //3D vector to store phiIdx [0,71] etaIdx [0,119] prtclindices
-          //vector<vector<vector<int>>> cellPrtclIdx(72,vector<vector<int>>(119,vector<int>(prtclnij_pt->size())));
-
           double phiStep; phiStep = 2*TMath::Pi() / 72;
           double etaStep; etaStep = 10.4 / 119;
-          int etaIdx;
-          int phiIdx; 
+          int etaIdx; int phiIdx; 
 
           // Tracking fail histogram
           if (fabs((*prtclnij_eta)[i]) < 5.2) {
@@ -749,7 +693,6 @@ void CMSJES::Loop()
           newPhi = trackDeltaPhi((*prtclnij_pdgid)[i], (*prtclnij_phi)[i], 
                                  (*prtclnij_pt )[i], Rt, Bfield);
 
-
           p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],newPhi,(*prtclnij_e)[i]);
           p4 *= respH;
 
@@ -764,37 +707,10 @@ void CMSJES::Loop()
           sigma->Fill(p4.Phi(), p4.Eta(), pow(resolution,2));
 
           if (trkFail) {
-
-            /*
-            //Normal response
-            nh->Fill(p4.Phi(), p4.Eta(), p4.E()); 
-            */
-
-            /*
-            //Calibration from cells
-            p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],newPhi,(*prtclnij_e)[i]);
-
-            fr_h->SetParameters(params_pi_EHE[0][0], params_pi_EHE[0][1], //EHE
-                                params_pi_EHE[0][2], 1, 0, 1);
-
-            if (fr_h->Eval(p4.E()) > 0.0) { 
-              nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*0.55*fr_h->Eval(p4.E())*p4.E()); //HCAL
-              nh    ->Fill(p4.Phi(), p4.Eta(), 0.5*0.55*fr_h->Eval(p4.E())*p4.E()); //ECAL
-            }
-
-            fr_h->SetParameters(params_pi_HHe[0][0], params_pi_HHe[0][1], //HHe
-                                params_pi_HHe[0][2], 1, 0, 1);
-
-            if (fr_h->Eval(p4.E()) > 0.0) {
-              nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.45*fr_h->Eval(p4.E())*p4.E());
-            }
-            */
-
             //Calibration from cells with random numbers
             p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],newPhi,(*prtclnij_e)[i]);
 
             if ( ((double)rand() / (double)RAND_MAX) > 0.45 ) { //EHE hadron path
-          
               fr_h->SetParameters(params_pi_EHE[0][0], params_pi_EHE[0][1],
                                   params_pi_EHE[0][2], 1, 0, 1);
 
@@ -816,33 +732,7 @@ void CMSJES::Loop()
 
         //NEUTRAL HADRONS
         case 130 : case 310 : case 3122 : case 2112 : case 3212 : case 3322 :
-
-          /*
-          //Normal response
-          nh->Fill(p4.Phi(), p4.Eta(), p4.E()); 
-          */
-      
-          /*
-          //Calibration from cells
-          p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
-                          (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
-
-          fr_h->SetParameters(params_pi_EHE[0][0], params_pi_EHE[0][1], //EHE
-                              params_pi_EHE[0][2], 1, 0, 1);
-
-          if (fr_h->Eval(p4.E()) > 0.0) { 
-            nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*0.55*fr_h->Eval(p4.E())*p4.E()); //HCAL
-            nh    ->Fill(p4.Phi(), p4.Eta(), 0.5*0.55*fr_h->Eval(p4.E())*p4.E()); //ECAL
-          }
-
-          fr_h->SetParameters(params_pi_HHe[0][0], params_pi_HHe[0][1], //HHe
-                              params_pi_HHe[0][2], 1, 0, 1);
-
-          if (fr_h->Eval(p4.E()) > 0.0) {
-            nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.45*fr_h->Eval(p4.E())*p4.E());
-          }
-          */
-          
+       
           //Calibration from cells with random number
           p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                           (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
@@ -861,17 +751,17 @@ void CMSJES::Loop()
                               params_pi_HHe[0][2], 1, 0, 1);
 
             if (fr_h->Eval(p4.E()) > 0.0) {
-              nhHCAL->Fill(p4.Phi(), p4.Eta(), fr_h->Eval(p4.E())*p4.E());
+              nhHCAL->Fill(p4.Phi(), p4.Eta(), fr_h->Eval(p4.E())*p4.E()); //HCAL
             }
           }
           break;
-
+          
         default : 
           if (fabs(PDG) != 12 && fabs(PDG) != 14 && fabs(PDG) != 16) {
             cout << "PDGID " << PDG << endl;
           }
       }
-    } //Shadowing effect particle loop
+    } //Particle loop
 
     double cellPhi; double cellEta; double cellE; double cellPt;
     double delta = 0.0; double cellSigma = 0.0;
@@ -879,37 +769,26 @@ void CMSJES::Loop()
     // ***************** Loop over cells ******************
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
-
-        double E_HCAL = 0.0;
+        double E_HCAL = 0.0; double eff_c;
 
         cellPhi = cht->GetXaxis()->GetBinCenter(i);
         cellEta = cht->GetYaxis()->GetBinCenter(j);
         
+        //With HCAL calibration
         if (nhHCAL->GetBinContent(i,j) > 0.0 ) {
           E_HCAL = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
         }
+        //Without HCAL calibration
+        //E_HCAL = nhHCAL->GetBinContent(i,j); 
 
-        //E_HCAL = nhHCAL->GetBinContent(i,j); // Without calibration
-
-        //Total pt of the cell
-        //cellPt = (nh->GetBinContent(i,j)+ne->GetBinContent(i,j)+E_HCAL)/cosh(cellEta) 
-        //                                +chtPt->GetBinContent(i,j);
-        //cellPt = ptHist->GetBinContent(i,j);
-        cellPt = chtPt->GetBinContent(i,j);
-
-        //Add neutral hadrons to the cell efficiency calculation
-        //cellPt = chtPt->GetBinContent(i,j) + nh->GetBinContent(i,j);
-
-        double eff_c;
-        //eff_c = 1.0;
-        eff_c = 1.0 - 0.0003781 * cellPt;
-        //eff_c = trkFailHist->GetBinContent(i,j);
-
+        eff_c = 1.0; //No tracking fail
+        //eff_c = 1.0 - 0.0003781 * chtPt->GetBinContent(i,j);
+        eff_c = trkFailHist->GetBinContent(i,j);
         if (eff_c < 0.0) eff_c = 0.0;
         if (eff_c > 1.0) eff_c = 1.0;
 
-        
-        //Single particle efficiency
+        /*
+        //Single particle efficiency plot
         int etaIdx; int phiIdx;
         double phiStep; phiStep = 2*TMath::Pi() / 72;
         double etaStep; etaStep = 10.4 / 119;
@@ -917,6 +796,10 @@ void CMSJES::Loop()
         if (fabs(cellEta) < 2.5) {
           for (int k=0; k!=prtclnij_pt->size(); ++k) {
             if ( (fabs((*prtclnij_eta)[k]) < 2.5) && isChHadron((*prtclnij_pdgid)[k])) {
+
+              //phiIdx = floor(((*prtclnij_phi)[k]+TMath::Pi())/phiStep) + 1;
+              //etaIdx = floor(((*prtclnij_eta)[k]+5.2)/etaStep) + 1;
+
               phiIdx = floor(((*prtclnij_phi)[k]+TMath::Pi())/phiStep) + 1;
               etaIdx = floor(((*prtclnij_eta)[k]+5.2)/etaStep) + 1;
 
@@ -925,26 +808,20 @@ void CMSJES::Loop()
               }
             }
           }
-        }
+        }*/
+        
 
         if ( ((double)rand() / (double)RAND_MAX) > eff_c ) {
-          nh->Fill(i,j,cht->GetBinContent(i,j));
+          nh->Fill(i,j,cht->GetBinContent(i,j)); //Calorimeters are calibrated?
           cht  ->SetBinContent(i,j,0.0);
           chtPt->SetBinContent(i,j,0.0);
         }
 
-        
-        //cht  ->SetBinContent(i,j,eff_c*cht->GetBinContent(i,j));
-        //chtPt->SetBinContent(i,j,eff_c*chtPt->GetBinContent(i,j));
-
-        //nh->Fill(i,j,(1-eff_c)*cht->GetBinContent(i,j)); //Rest to neutral hadrons
-        
         delta = nh->GetBinContent(i,j) + ne->GetBinContent(i,j) + E_HCAL;
         cellSigma = sqrt(sigma->GetBinContent(i,j));
         
-
         /*
-        //Charged hadron fraction plotting
+        //Jet composition
         p4.SetPtEtaPhiE(delta/cosh(cellEta) + chtPt->GetBinContent(i,j), 
                        cellEta, cellPhi, delta + cht->GetBinContent(i,j));
 
@@ -963,15 +840,14 @@ void CMSJES::Loop()
             }
           }
         }*/
-        
+
         if (delta < cellSigma) { //Shadowing
           //Tracker
           cellE  = cht->GetBinContent(i,j);
           cellPt = chtPt->GetBinContent(i,j);
           p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
           NIJ_r += p4;
-        
-        } else { //Normal case*/
+        } else { //Normal case
           // Neutral hadrons and photons
           cellE  = delta;
           cellPt = delta/cosh(cellEta);
@@ -985,7 +861,6 @@ void CMSJES::Loop()
         }
       }
     }
-
     #endif
 
     /************** FIND DERIVATIVES IN CASE i_probe > 1 (RARE) **************/
@@ -1079,11 +954,11 @@ void CMSJES::Loop()
     //- Jet direction change in reconstruction is usually negligible, though.
 
     // Modified for Z+jet usage
-    Ep   = p4r_tag.Pt()*cosh(probe.Eta());
-    pTp  = p4r_tag.Pt();
+    Ep  = p4r_tag.Pt()*cosh(probe.Eta());
+    pTp = p4r_tag.Pt();
 
     //Data<->MC & MC'<->MC factors
-    F    = Fnum[i_probe]/Fden[i_probe];
+    F = Fnum[i_probe]/Fden[i_probe];
 
     //Add the new values to TProfile histograms:
     //p_T balance method
@@ -1432,7 +1307,7 @@ void CMSJES::Loop()
   gStyle->SetOptStat();
   c4->SetLogx();
   chhEff->Draw();
-  string savename = "./trackingEff.png";
+  string savename = "./plots/trackingEff.eps";
   c4->Print(savename.c_str());
 
 
@@ -1577,13 +1452,10 @@ void CMSJES::InputNameConstructor() {
 
   //#events
   if      (ReadName.find("600000") !=string::npos) num = "600000";
-  else if (ReadName.find("500000") !=string::npos) num = "500000";
   else if (ReadName.find("300000") !=string::npos) num = "300000";
-  else if (ReadName.find("100000") !=string::npos) num = "100000";
   else if (ReadName.find("30000")  !=string::npos) num = "30000";
   else if (ReadName.find("10000")  !=string::npos) num = "10000";
   else if (ReadName.find("3000")   !=string::npos) num = "3000";
-  else if (ReadName.find("1000")   !=string::npos) num = "1000";
   else {
     cout << "ERROR: fitting not supported for this file" << endl;
     return;
@@ -2044,9 +1916,9 @@ void CMSJES::plotMPF(int gen, int Nevt)
   }
 
   //Canvas
-  TCanvas* canv_MPF = new TCanvas("MPF","",500,500);
-  canv_MPF->SetLeftMargin(0.12);	//To fit vertical axis labels
-
+  TCanvas* canv_MPF = new TCanvas("MPF","",600,600);
+  canv_MPF->SetLeftMargin(0.13);	//To fit vertical axis labels
+  canv_MPF->SetBottomMargin(0.13);
   //Style setup
   hzj_MPF ->SetLineColor( kBlack);
   mc_zj_MPF->SetMarkerStyle( kOpenCircle);    mc_zj_MPF->SetMarkerColor( kBlack  );
@@ -2056,20 +1928,25 @@ void CMSJES::plotMPF(int gen, int Nevt)
   d_zj_MPFntI->SetMarkerStyle(kFullCircle); d_zj_MPFntI->SetMarkerColor(kBlack);
 
   //Legend
-  TLegend* lz_MPF = new TLegend(0.52,0.70,0.89,0.89);
+  TLegend* lz_MPF = new TLegend(0.62,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
-  lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
+  //lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
+  lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our toy MC      }", "l");
+
   //lz_MPF->AddEntry(d_zj_MPF,  "#font[132]{CMS jecsys Z+jet MPF data}", "p");
   //lz_MPF->AddEntry(d_zj_MPFntI,  "#font[132]{CMS jecsys Z+jet MPF-notypeI data}", "p");
   //lz_MPF->AddEntry(mc_zj_MPF, "#font[132]{CMS jecsys Z+jet MPF MC}", "p");
-  lz_MPF->AddEntry(mc_zj_MPFntI, "#font[132]{CMS Z+jet MPF-notypeI MC}", "p");
+
+  //lz_MPF->AddEntry(mc_zj_MPFntI, "#font[132]{CMS Z+jet MPF-notypeI MC}", "p");
+  lz_MPF->AddEntry(mc_zj_MPFntI, "#font[132]{FullSim}", "p");
 
   //Title and axis setup
   hzj_MPF->SetStats(0); //Suppress stat box
   hzj_MPF->SetTitle("");
   hzj_MPF->SetAxisRange(0.82,1.02,"Y"); //Vertical axis limits
+  //hzj_MPF->SetAxisRange(0.55,1.1,"Y"); //Vertical axis limits
   hzj_MPF->GetYaxis()->SetTitleFont(133);
-  int titleSize = 18; //Common title size everywhere
+  int titleSize = 24; //Common title size everywhere
   hzj_MPF->GetYaxis()->SetTitleSize(titleSize);
   hzj_MPF->GetXaxis()->SetMoreLogLabels();
   hzj_MPF->GetXaxis()->SetNoExponent();
@@ -2140,16 +2017,12 @@ void graphSetup(TGraphErrors* g, string Xtitle, string Ytitle) {
 //		fA,fB,fC	Param.s for fitting to D0 data
 //              MC, FIT, HR	Flags to find MC/fit/hadron response
 //              ret**		References where to put the resulting response
-
 void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
                       double Bfield, TF1* frH, bool pos, 
                       double fA, double fB, double fC, bool MC, bool FIT, bool HR, 
                       double& retMC, double& retFIT, double& retH)
 {
-
-  //Init
-  retFIT = 0.0; //For now
-  retH = 0.0;
+  retFIT = 0.0; retH = 0.0;
   bool zero = false; //If true, return zero responses
 
   double sfCh  = 0.0; //Charged particle step function
@@ -2218,7 +2091,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
       case -13 : //mu
         retMC = sfCh; 
         break;
-
+      
       //cat1: antineutron, K0S, K0L, pi+, pi-
       case -2112 : //nbar
       case   310 : //K^0_S
@@ -2260,7 +2133,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
         else retMC = cat3*sfN; 
         retH = cat3*sfN;
         break;
-
+      
       /*
       //CHARGED HADRONS
       case 211 :  //pi^+-
@@ -2270,7 +2143,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
       case 3222 : //Sigma^+
       case 3312 : //Xi^-
       case 3334 : //Omega^-
-        if (fabs(pseudorap) > 2.5) retMC = respH*sfN; //Check if out of tracker
+        if (fabs(pseudorap) > 2.5) retMC = cat2*sfN; //Check if out of tracker
         else retMC = sfCh; 
         break;
 
@@ -2281,7 +2154,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
       case 2112 : //n
       case 3212 : //Sigma^0
       case 3322 : //Xi^0
-        retMC = respH*sfN;
+        retMC = cat2*sfN;
         break;
       */
       default : 
@@ -2292,9 +2165,10 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   } 
 
   //Set results. Check for NaN and negative results if positive demanded
-  if (!MC || zero || isnan(retMC)  || (pos && retMC <0)) retMC =0;
-  if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<0)) retFIT=0;
+  if (!MC || zero || isnan(retMC)  || (pos && retMC <=0)) retMC =0;
+  if (!FIT|| zero || isnan(retFIT) || (pos && retFIT<=0)) retFIT=0;
   if (!HR || zero || isnan(retH)   || (pos && retH  <=0)) retH =0;
+
 } //Response
 
 //-----------------------------------------------------------------------------
@@ -2318,19 +2192,15 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 
   //Set #events
   string num;
-  cout << "#Events (0) 1k (1) 10k (2) 100k (3) 500k (4) 3k (5) 30k (6) 300k (7) 600k" << endl;
-  while (Nevt<0 || Nevt>7) cin >> Nevt;
-  if      (Nevt==0) num = "1000";
+  cout << "#Events (0) 3k (1) 10k (2) 30k (3) 600k" << endl;
+  while (Nevt<0 || Nevt>3) cin >> Nevt;
+  if      (Nevt==0) num = "3000";
   else if (Nevt==1) num = "10000";
-  else if (Nevt==2) num = "100000";
-  else if (Nevt==3) num = "500000";
-  else if (Nevt==4) num = "3000";
-  else if (Nevt==5) num = "30000";
-  else if (Nevt==6) num = "300000";
-  else if (Nevt==7) num = "600000";
+  else if (Nevt==2) num = "30000";
+  else if (Nevt==3) num = "600000";
 
   //Construct all-flavor filenames
-  zjstr = respStr + "Zjet_"     + num + root;
+  zjstr = respStr + "Zjet_" + num + root;
 
   //Additions in filename
   nameAdd = num;
@@ -2729,10 +2599,10 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
   //Convert jet pT to particle level to be comparable w/ D0
   //Indices, growing order: [flavour: b,g,lq][sample: gj,dj][Hor.axis:E',pT]
   TGraphErrors* g_F[Nf][Ns][NI];  TGraphErrors* g_Fcorr[Nf][Ns][NI];
-  TGraphErrors* g_Fjet[NI];		//Taken only from gamma+jet sample
-  for (int a=0; a!=NI; ++a) {		//Axis interpretations
-    for (int s=0; s!=Ns; ++s) {		//Sample type
-      for (int f=0; f!=Nf; ++f) {	//Flavour
+  TGraphErrors* g_Fjet[NI];       //Taken only from gamma+jet sample
+  for (int a=0; a!=NI; ++a) {     //Axis interpretations
+    for (int s=0; s!=Ns; ++s) {	  //Sample type
+      for (int f=0; f!=Nf; ++f) { //Flavour
         g_F[f][s][a]=new TGraphErrors();  g_Fcorr[f][s][a]=new TGraphErrors();
       }
     }
@@ -2741,7 +2611,7 @@ void CMSJES::flavCorr(bool plot, int gen, int Nevt)
 
   /* F level: copy points and uncertainties from histos */
 
-  for (int a=0; a!=NI; ++a) {		//Horizontal axis interpretations
+  for (int a=0; a!=NI; ++a) { //Horizontal axis interpretations
 
     //All-flavour avg.
     for (int i=1; i!=1+h_Fjet[a]->GetXaxis()->GetNbins(); ++i) { //F bins

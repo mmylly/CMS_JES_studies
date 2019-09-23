@@ -360,13 +360,9 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
     else {
       //Add here all the files one should be able to study
       vector<string> files;	//To contain studiable filenames
-      files.push_back("P8_Zjet_1000"  );
-      files.push_back("P8_Zjet_10000" );
-      files.push_back("P8_Zjet_100000");
-      files.push_back("P8_Zjet_500000");
       files.push_back("P8_Zjet_3000"  );
+      files.push_back("P8_Zjet_10000" );
       files.push_back("P8_Zjet_30000" );
-      files.push_back("P8_Zjet_300000");
       files.push_back("P8_Zjet_600000");
       //User interface
       printf("No filename given, choose file (y = default file):\n");
