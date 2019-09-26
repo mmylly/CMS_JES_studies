@@ -13,9 +13,9 @@ VPATH= events:jetanalysis:lib:pythia6:pythia8:herwig:ptcut:greedy_pythia8:greedy
 INCLUDE := $(INCLUDE) -I.
 
 # Parameter vals:
-NUM_EVT := 10000
+NUM_EVT := 100000
 MODE := 3
-NUM_PROC := 2
+NUM_PROC := 4
 START_IDX := 0
 
 all: gpythia8 spythia8 pythia8 pythia6 libHerwigTree.so jetanalysis ptcut

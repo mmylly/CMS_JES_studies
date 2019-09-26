@@ -401,16 +401,36 @@ void CMSJES::Loop()
   const char *cuts[7] = {"All", "Muon cut", "Invariant mass", "Tag probe cuts", "b2b", 
                          "Alpha cut", "Low met"};
 
-  TH2D* eHist  = new TH2D("eHist"  , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* ptHist = new TH2D("ptHist" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* cht    = new TH2D("cht"    , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* chtPt  = new TH2D("chtPt"  , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* chc    = new TH2D("chc"    , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* sigma  = new TH2D("sigma"  , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* nh     = new TH2D("nh"     , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* nhHCAL = new TH2D("nhHCAL" , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* ne     = new TH2D("ne"     , "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
-  TH2D* trkFailHist = new TH2D("trkFailHist", "", 72, -TMath::Pi(), TMath::Pi(), 119, -5.2, 5.2);
+  //quarter
+  //int nPhi = 18;
+  //int nEta = 30;  
+
+  //half
+  //int nPhi = 36;
+  //int nEta = 60;
+
+  //normal
+  //int nPhi = 72;
+  //int nEta = 119;
+
+  //twice
+  int nPhi = 2*72;
+  int nEta = 2*119;
+
+  //quad
+  //int nPhi = 4*72;
+  //int nEta = 4*119;
+
+
+
+  TH2D* cht        = new TH2D("cht"    , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chtPt      = new TH2D("chtPt"  , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chc        = new TH2D("chc"    , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* sigma      = new TH2D("sigma"  , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* nh         = new TH2D("nh"     , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* nhHCAL     = new TH2D("nhHCAL" , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* ne         = new TH2D("ne"     , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* trkFailHist= new TH2D("trkFailHist","",nPhi,-TMath::Pi(),TMath::Pi(), nEta, -5.2, 5.2);
 
   const double bins_chhEff[21] = {0.1, 0.149, 0.223, 0.332, 0.496, 0.740, 1.104, 1.648, 2.460,
                                  3.670, 5.477, 8.174, 12.198, 18.202, 27.163, 40.536, 60.492,
@@ -624,8 +644,6 @@ void CMSJES::Loop()
     nh         ->Reset();
     nhHCAL     ->Reset();
     ne         ->Reset();
-    eHist      ->Reset();
-    ptHist     ->Reset();
     trkFailHist->Reset();
 
     // Initialization of the tracking fail histogram
@@ -669,8 +687,8 @@ void CMSJES::Loop()
           //if (eff < 0.0) eff = 0.0;
           //if (p4.Eta() > 2.5) eff = 0.0;
 
-          double phiStep; phiStep = 2*TMath::Pi() / 72;
-          double etaStep; etaStep = 10.4 / 119;
+          double phiStep; phiStep = 2*TMath::Pi() / nPhi;
+          double etaStep; etaStep = 10.4 / nEta;
           int etaIdx; int phiIdx; 
 
           // Tracking fail histogram
@@ -680,7 +698,6 @@ void CMSJES::Loop()
             trkFailHist->SetBinContent(phiIdx, etaIdx, 
             trkFailHist->GetBinContent(phiIdx, etaIdx) * (1-0.0003781*p4.Pt()) ); 
           }
-
 
           if ( ((double)rand() / (double)RAND_MAX) > eff ) trkFail = 1;
 
@@ -727,7 +744,6 @@ void CMSJES::Loop()
               }
             }
           }
-
           break;
 
         //NEUTRAL HADRONS
@@ -781,24 +797,22 @@ void CMSJES::Loop()
         //Without HCAL calibration
         //E_HCAL = nhHCAL->GetBinContent(i,j); 
 
-        eff_c = 1.0; //No tracking fail
+        //eff_c = 1.0; //No tracking fail
         //eff_c = 1.0 - 0.0003781 * chtPt->GetBinContent(i,j);
-        eff_c = trkFailHist->GetBinContent(i,j);
+        eff_c = 0.92 - 0.0003781 * chtPt->GetBinContent(i,j);
+        //eff_c = trkFailHist->GetBinContent(i,j);
         if (eff_c < 0.0) eff_c = 0.0;
         if (eff_c > 1.0) eff_c = 1.0;
 
-        /*
+        
         //Single particle efficiency plot
         int etaIdx; int phiIdx;
-        double phiStep; phiStep = 2*TMath::Pi() / 72;
-        double etaStep; etaStep = 10.4 / 119;
+        double phiStep; phiStep = 2*TMath::Pi() / nPhi;
+        double etaStep; etaStep = 10.4 / nEta;
 
         if (fabs(cellEta) < 2.5) {
           for (int k=0; k!=prtclnij_pt->size(); ++k) {
             if ( (fabs((*prtclnij_eta)[k]) < 2.5) && isChHadron((*prtclnij_pdgid)[k])) {
-
-              //phiIdx = floor(((*prtclnij_phi)[k]+TMath::Pi())/phiStep) + 1;
-              //etaIdx = floor(((*prtclnij_eta)[k]+5.2)/etaStep) + 1;
 
               phiIdx = floor(((*prtclnij_phi)[k]+TMath::Pi())/phiStep) + 1;
               etaIdx = floor(((*prtclnij_eta)[k]+5.2)/etaStep) + 1;
@@ -808,9 +822,8 @@ void CMSJES::Loop()
               }
             }
           }
-        }*/
+        }
         
-
         if ( ((double)rand() / (double)RAND_MAX) > eff_c ) {
           nh->Fill(i,j,cht->GetBinContent(i,j)); //Calorimeters are calibrated?
           cht  ->SetBinContent(i,j,0.0);
@@ -1291,25 +1304,25 @@ void CMSJES::Loop()
   delete c2; delete cutHist;
   */ 
 
-  //ptHist->GetXaxis()->SetTitle("Phi");
-  //ptHist->GetYaxis()->SetTitle("");
-  //ptHist->Draw("LEGO");
-  //string savename = "./ptHist.png";
-  //c2->Print(savename.c_str());
-  //delete c2; delete ptHist;
 
   //Charged hadron efficiency Profile
-
-
   TCanvas *c4   = new TCanvas("c4","c4",500,500);
-  chhEff->SetAxisRange(0.4,1.1,"Y"); //Vertical axis limits
-  chhEff->SetAxisRange(0.1,300,"X"); //Vertical axis limits
+  TGraph *PFeff = new TGraph("data_and_MC_input/hadron_efficiency.txt");
+  PFeff->SetMarkerStyle(kFullCircle );
+  PFeff->SetMarkerColor(kRed);
+  TAxis *PFaxis = PFeff->GetXaxis();
+  PFaxis->SetLimits(0.1,300);             // along X
+  PFeff->GetHistogram()->SetMaximum(1.1);   // along          
+  PFeff->GetHistogram()->SetMinimum(0.4);  //   Y     
+  PFeff->Draw("ap");
+
   gStyle->SetOptStat();
   c4->SetLogx();
-  chhEff->Draw();
+  chhEff->Draw("same");
+  chhEff->SetLineColor(kBlack);
+  chhEff->SetLineWidth(2);
   string savename = "./plots/trackingEff.eps";
   c4->Print(savename.c_str());
-
 
   /*
   TH1D* TH1chhEff = chhEff->ProjectionX();
@@ -1943,6 +1956,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Title and axis setup
   hzj_MPF->SetStats(0); //Suppress stat box
   hzj_MPF->SetTitle("");
+  //hzj_MPF->SetLineWidth(2);
   hzj_MPF->SetAxisRange(0.82,1.02,"Y"); //Vertical axis limits
   //hzj_MPF->SetAxisRange(0.55,1.1,"Y"); //Vertical axis limits
   hzj_MPF->GetYaxis()->SetTitleFont(133);
