@@ -23,6 +23,10 @@ with open('chfFit.txt') as f:
     x  = [float(line.split()[0]) for line in lines]
     chf = [float(line.split()[1]) for line in lines]
 
+with open('chf.txt') as f:
+    lines = f.readlines()
+    x2  = [float(line.split()[0]) for line in lines]
+    chf2 = [float(line.split()[1]) for line in lines]
 
 params = curve_fit(func, x, chf)
 print(params[0][0])
@@ -32,8 +36,9 @@ print(params[0][2])
 fit = params[0][0]*pt**2 + params[0][1]*pt + params[0][2];
 
 
+
 fig, ax = plt.subplots()
-ax.scatter(x, chf)
+ax.scatter(x2, chf2)
 ax.plot(pt,fit)
 
 ax.set(xlabel='pT (GeV)', ylabel='chf')
