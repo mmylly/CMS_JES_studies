@@ -441,10 +441,14 @@ void CMSJES::Loop()
   const double bins_chhEff[21] = {0.1, 0.149, 0.223, 0.332, 0.496, 0.740, 1.104, 1.648, 2.460,
                                  3.670, 5.477, 8.174, 12.198, 18.202, 27.163, 40.536, 60.492,
                                  90.272, 134.713, 201.031, 300.0};
+  const double bins_zsmear[21] = {10, 12.59, 15.85, 19.95, 25.12, 31.62, 39.81, 50.12, 63.10,
+                                  79.43, 100, 125.89, 158.49, 199.53, 251.19, 316.23, 398.12,
+                                  501.19, 630.96, 794.33, 1000};
 
   TProfile* chhEff = new TProfile("chhEff", "", 20, bins_chhEff);
-
-  TProfile* ZSmear = new TProfile("ZSmear", "", 20, 1, 1000);
+  TProfile* ZSmear = new TProfile("ZSmear", "", 20, bins_zsmear);
+  TProfile* ZSmear_n = new TProfile("ZSmear_n", "", 20, bins_zsmear);
+  TProfile* ZSmear_d = new TProfile("ZSmear_d", "", 20, bins_zsmear);
 
   TF1* pchf = new TF1("pchf","[0]*pow(x,2) + [1]*x + [2]", 0, 5000);
   pchf->SetParameters(6.86221185e-09, -0.0001268141794, 0.6283211821);
@@ -453,11 +457,18 @@ void CMSJES::Loop()
   TF1* jerg_A = new TF1("jerg_A", "sqrt([0]*[0]/(x*x)+ [1]*[1]/x + [2]*[2]) * (0.55*1.02900*(1-1.6758*pow(x/0.75,0.553456-1)) + 0.45*1.10286*(1-1.25613*pow(x/0.75,0.397034-1)))", 0, 1000);
   jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);
 
+  //Track resolution in a function of gen pT
+  TF1* trkReso = new TF1("trkReso", "0.01336 + 8.548e-5*x", 0, 5000);
+
   TF1* eff_fit = new TF1("eff_fit","1+[0]*x+[1]*x*x+[2]*exp([3]*x)", 0, 5000);
   eff_fit->SetParameters(-0.0003897, 3.589e-07, -0.02651, -0.2829);
 
+  //Fakerate from PF paper
+  TF1* fakeRate = new TF1("fakeRate", "0.00046178*x + 0.02", 0, 5000);
 
 //***********************************************************************************************
+  TRandom3* gRandom = new TRandom3();
+  gRandom->SetSeed(0);
 
   //Loop Tree entries = events
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
@@ -506,10 +517,6 @@ void CMSJES::Loop()
     int i_tag2 = -731;	// ...muons not found.
     bool muonCut = 0; //Necessary for the cut histogram
 
-
-    gRandom = new TRandom3(); 
-    double muonReso;
-
     for (int a=0; a!= prtn_tag->size(); ++a) {
       // Find muons with tag == 3 and store those in i_tag1 and i_tag2
       if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
@@ -526,13 +533,12 @@ void CMSJES::Loop()
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) muonCut = 1;
 
-    muonReso = (0.01336 + 8.548e-5*(*prtn_pt )[i_tag1]);
 
     Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h,true,1, 0, 1, true, true, false, resp, resp_f, respH);
 
-    tag     = p4;                                //gen lvl
-    p4r_tag = p4*resp*gRandom->Gaus(1,muonReso); //MC lvl
+    tag     = p4;                                              //gen lvl
+    p4r_tag = p4*resp*gRandom->Gaus(1,trkReso->Eval(p4.Pt())); //MC lvl
 
     //***** 2nd muon *****
     p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
@@ -540,23 +546,42 @@ void CMSJES::Loop()
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) muonCut = 1;
 
-    muonReso = (0.01336 + 8.548e-5*(*prtn_pt )[i_tag2]);
-
     Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h,true,1, 0, 1, true, true, false,  resp, resp_f, respH);
 
-    tag      += p4; //gen lvl
-    p4r_tag  += p4*resp*gRandom->Gaus(1,muonReso); //MC lvl
-
-    ZSmear->Fill(p4r_tag.Pt(), (tag.Pt()/p4r_tag.Pt()));
+    tag      += p4;                                              //gen lvl
+    p4r_tag  += p4*resp*gRandom->Gaus(1,trkReso->Eval(p4.Pt())); //MC lvl
 
     cutHist->Fill(tag.Pt(), cuts[0], 1);      
     if (muonCut) continue; mumuCut++;
     cutHist->Fill(tag.Pt(), cuts[1], 1);     
 
     //Invariant mass in range 70-110 GeV since Z boson mass is 91 GeV
-    if ( tag.M()<70.0 || tag.M()>110.0) continue; invM ++;
+    if (tag.M()<70.0 || tag.M()>110.0) continue; invM ++;
     cutHist->Fill(tag.Pt(), cuts[2], 1);
+
+    //ZSmear->Fill(   p4r_tag.Pt(), (tag.Pt()/p4r_tag.Pt()), weight);
+    //ZSmear_n->Fill( p4r_tag.Pt(), tag.Pt(),                weight);
+    //ZSmear_d->Fill( p4r_tag.Pt(), p4r_tag.Pt(),            weight);
+
+    /*    
+    for (int j=0; j!=100; ++j){
+      p4.SetPtEtaPhiE((*prtn_pt )[i_tag1], (*prtn_eta)[i_tag1],
+                      (*prtn_phi)[i_tag1], (*prtn_e  )[i_tag1]);
+      p4 *= gRandom->Gaus(1,trkReso->Eval(p4.Pt()));
+      p4_2 = p4;
+      p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
+                      (*prtn_phi)[i_tag2], (*prtn_e  )[i_tag2]);
+      p4 *= gRandom->Gaus(1,trkReso->Eval(p4.Pt()));
+      p4_2 += p4;
+
+      //ZSmear  ->Fill(p4_2.Pt(), (tag.Pt()/p4_2.Pt()), weight);
+      ZSmear->Fill(tag.Pt(), (p4_2.Pt()/tag.Pt()), weight);
+      //ZSmear_n->Fill(p4_2.Pt(), tag.Pt(),             weight);
+      //ZSmear_d->Fill(p4_2.Pt(), p4_2.Pt(),            weight);
+      //ZSmear_n->Fill(tag.Pt(), p4_2.Pt(),             weight);
+      //ZSmear_d->Fill(tag.Pt(), tag.Pt(),            weight);
+    }*/
 
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
     //Note that only the 2 leading jets are likely to be probe or tag candidates
@@ -642,13 +667,16 @@ void CMSJES::Loop()
     if (jets_r[1].Pt() > 0.3*p4r_tag.Pt()) continue; alpha ++;
     cutHist->Fill(tag.Pt(), cuts[5], 1);
 
+    /*
     //Assert sufficiently low MET w.r.t. tag pT and leading jet (we use probe)
     if      (p4r_tag.Pt() > 50 && met > 0.9*p4r_tag.Pt()) continue;
     else if (p4r_tag.Pt() > 25 && met > 1.1*p4r_tag.Pt()) continue;
     else if (p4r_tag.Pt() > 15 && met > 1.2*p4r_tag.Pt()) continue;
     else if (                     met > 2.0*p4r_tag.Pt()) continue;
     if      (met/p4r_probe.Pt()       > 0.7             ) continue;
+    */
     lowMet ++;
+
 
     cutHist->Fill(tag.Pt(), cuts[6], 1);
 
@@ -701,7 +729,7 @@ void CMSJES::Loop()
 
           trkFail = 0;
           eff = 1.0;
-          //eff = 0.92; //No particle level track failing
+          //eff = 0.94; //No particle level track failing
           //eff = 0.5284 + 0.3986/(1+pow(((*prtclnij_pt )[i]/88.76),1.22));
           //if ((*prtclnij_pt )[i] < 0.9) eff = 0.2514 + 0.7429*(*prtclnij_pt )[i];
           
@@ -717,7 +745,6 @@ void CMSJES::Loop()
 
           //Fix chf to the single particle efficiency
           //eff -= 0.263243+(0.04199621-0.263243)/(1+pow(((*prtclnij_pt)[i]/74.1766),1.737401));
-          
           //eff = min(eff,0.92);
 
           if (eff < 0.0) eff = 0.0;
@@ -729,6 +756,8 @@ void CMSJES::Loop()
             chhEff->Fill((*prtclnij_pt)[i], eff);
           }*/
 
+
+          //Add fakerate in this
           if ( ((double)rand() / (double)RAND_MAX) > eff ) trkFail =  1;
 
           if (!trkFail) {
@@ -739,6 +768,7 @@ void CMSJES::Loop()
           //Track curvature in the calorimeter energy deposit
           newPhi = trackDeltaPhi((*prtclnij_pdgid)[i], (*prtclnij_phi)[i], 
                                  (*prtclnij_pt )[i], Rt, Bfield);
+
 
           p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],newPhi,(*prtclnij_e)[i]);
           p4 *= respH;
@@ -848,10 +878,8 @@ void CMSJES::Loop()
         }*/
 
         //eff_c = 1.0 - 0.0002935 * chtPt->GetBinContent(i,j);
-        //eff_c = 1.0 - 0.0008 * chtPt->GetBinContent(i,j);
         eff_c = 1.0 - 0.0009 * chtPt->GetBinContent(i,j);
-
-        //eff_c = min(0.92, eff_c);         
+        eff_c = min(0.92, eff_c);         
 
         if(eff_c < 0.0) eff_c = 0.0;
         if(eff_c > 1.0) eff_c = 1.0;
@@ -864,7 +892,7 @@ void CMSJES::Loop()
           chtPt->SetBinContent(i,j,0.0);
         }
 
-        /*
+        
         //Single particle efficiency plot
         int etaIdx; int phiIdx;
         double phiStep; phiStep = 2*TMath::Pi() / nPhi;
@@ -873,16 +901,20 @@ void CMSJES::Loop()
         if (fabs(cellEta) < 2.5) {
           for (int k=0; k!=prtclnij_pt->size(); ++k) { //Loop over particles
             if (isChHadron((*prtclnij_pdgid)[k])) {
-
-              phiIdx = floor(((*prtclnij_phi)[k]+TMath::Pi())/phiStep) + 1;
+              double newPhi;
+              newPhi = trackDeltaPhi((*prtclnij_pdgid)[k], (*prtclnij_phi)[k], 
+                                     (*prtclnij_pt )[k], Rt, Bfield);
+              phiIdx = floor((newPhi+TMath::Pi())/phiStep) + 1;
+              //phiIdx = floor(((*prtclnij_phi)[k]+TMath::Pi())/phiStep) + 1;
               etaIdx = floor(((*prtclnij_eta)[k]+5.2)/etaStep) + 1;
               
               if ((phiIdx == i) && (etaIdx == j)) {
+                //chhEff->Fill((*prtclnij_pt)[k], eff_c);
                 chhEff->Fill((*prtclnij_pt)[k], eff_c);
               }
             }
           }
-        }*/
+        }
 
 
         delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL->GetBinContent(i,j);
@@ -890,7 +922,7 @@ void CMSJES::Loop()
         //Changing HCAL cluster sigma threshold with uncalibrated cell energy
         cellSigma = sqrt(sigma->GetBinContent(i,j));
         //cellSigma *= (1 + exp(-nhHCAL->GetBinContent(i,j)/100)); 
-        //cellSigma *= (1 + exp(-chtPt->GetBinContent(i,j)/100));
+        cellSigma *= (1 + exp(-chtPt->GetBinContent(i,j)/100));
 
         if (delta < cellSigma) { //Shadowing
           //Tracker
@@ -925,7 +957,7 @@ void CMSJES::Loop()
                   chtPt->GetBinContent(i,j);
         p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellPt);
 
-        /*
+        
         //Energy fraction of jets |eta|<1.3
         for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
           if (fabs(jets_r[ijet].Eta()) < 1.3) {
@@ -945,7 +977,7 @@ void CMSJES::Loop()
               }
             }
           }
-        }*/
+        }
       }
     }
     #endif
@@ -1369,21 +1401,20 @@ void CMSJES::Loop()
 
   //ZSmear plot
   TCanvas *c5   = new TCanvas("c5","c5",500,500);
-  //PFeff->SetMarkerStyle(kFullCircle ); TRKeff->SetMarkerStyle(kOpenCircle );
-  //PFeff->SetMarkerColor(kRed);         TRKeff->SetMarkerColor(kBlue+1);
-  //TAxis *PFaxis = PFeff->GetXaxis();
-  //PFaxis->SetLimits(0.1,300);             // along X
-  //PFeff->GetHistogram()->SetMaximum(1.1);   // along          
-  //PFeff->GetHistogram()->SetMinimum(0.4);  //   Y     
-  //PFeff->Draw("ap");
-  //TRKeff->Draw("samep");
-  //gStyle->SetOptStat();
+  ZSmear->SetAxisRange(0.99,1.01,"Y");
   c5->SetLogx();
   ZSmear->Draw();
-  //ZSmear->SetLineColor(kBlack);
-  //chhEff->SetLineWidth(2);
   string savename2 = "./plots/ZSmear.eps";
   c5->Print(savename2.c_str());
+
+  TCanvas *c6 = new TCanvas("c6","c6",500,500);
+  ZSmear_n->SetAxisRange(0.99,1.01,"Y");
+  c6->SetLogx();
+  ZSmear_n->SetMarkerStyle(2);
+  ZSmear_n->Divide(ZSmear_d);
+  ZSmear_n->Draw();
+  string savename3 = "./plots/ZSmear2.eps";
+  c6->Print(savename3.c_str());
 
 
   //Charged hadron efficiency Profile
