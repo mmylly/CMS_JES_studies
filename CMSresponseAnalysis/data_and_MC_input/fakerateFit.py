@@ -20,16 +20,28 @@ with open('hadron_fakerate_PF.txt') as f:
     x  = [float(line.split()[0]) for line in lines]
     fr = [float(line.split()[1]) for line in lines]
 
+with open('hadron_efficiency_PF.txt') as f:
+    lines = f.readlines()
+    x_eff  = [float(line.split()[0]) for line in lines]
+    eff    = [float(line.split()[1]) for line in lines]
+
+
 
 params = curve_fit(func, x, fr)
-#params = curve_fit(func2, x, fr)
-#print(params);
 #fit = params[0][0]*pt**2 + params[0][1]*pt + 0.02;
 fit2 = 0.00046178*pt + 0.02;
 
-
 fig, ax = plt.subplots()
+ax.scatter(x_eff, eff)
+
+for i in range(len(eff)):
+  eff[i] += 0.00046178*x_eff[i] + 0.02;
+  print(x_eff[i] , eff[i])
+
+
+
 ax.scatter(x, fr)
+ax.scatter(x_eff, eff)
 ax.plot(pt, fit2)
 
 ax.set(xlabel='pT (GeV)', ylabel='Fakerate')
