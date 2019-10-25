@@ -63,8 +63,6 @@ using std::min;
 using std::ofstream;
 using std::stringstream;
 
-#define NIJ //If uncommented, sample must have prtclsnij_ -branches
-
 class CMSJES {
 public :
   string ReadName;	//ROOT filename to read
@@ -89,13 +87,11 @@ public :
   vector<float>   *prtcl_phi;		// Phi
   vector<float>   *prtcl_e;		// energy
   //Particles not associated with jets
-  #ifdef NIJ
   vector<int>     *prtclnij_pdgid;
   vector<float>   *prtclnij_pt;
   vector<float>   *prtclnij_eta;
   vector<float>   *prtclnij_phi;
   vector<float>   *prtclnij_e;
-  #endif
   //Parton lvl - used for jet tagging and 
   vector<char>    *prtn_jet;		// Jet originated parton?
   vector<int>     *prtn_pdgid;		// Parton ID
@@ -120,13 +116,11 @@ public :
   TBranch        *b_prtcl_phi;
   TBranch        *b_prtcl_e;
   //Particles not in jets
-  #ifdef NIJ
   TBranch        *b_prtclnij_pdgid;
   TBranch        *b_prtclnij_pt;
   TBranch        *b_prtclnij_eta;
   TBranch        *b_prtclnij_phi;
   TBranch        *b_prtclnij_e;
-  #endif
   //Parton lvl
   TBranch        *b_prtn_jet;
   TBranch        *b_prtn_pdgid;
@@ -226,9 +220,7 @@ public :
   double Aer=0,Ber=0,Cer=0;	//Fit parameter uncertainties
   double ABer=0,ACer=0,BCer=0;	//Off-diag. elem.s of covariance matrix
 
-  #ifdef NIJ
   bool recoMissing = true;	//Fully reconstruct also particles not in jets
-  #endif
 
   //Setters
   void SetA(double val) {A = val;}
@@ -252,9 +244,7 @@ public :
   void SetcontHistos(bool flag) {contHistos=flag;}
   void SetMPFmode( bool flag ) {MPFmode = flag;}
 
-  #ifdef NIJ
   void SetrecoMissing(bool flag) {recoMissing = flag;}
-  #endif
   void SetmaxIter(unsigned int val) {maxIter = val;}
 
   //Getters
@@ -276,9 +266,8 @@ public :
   bool GetcontHistos() {return contHistos;}
   bool GetMPFmode()  {return MPFmode;}
 
-  #ifdef NIJ
   bool GetrecoMissing() {return recoMissing;}
-  #endif
+
   unsigned int GetmaxIter() {return maxIter;}
 
   //Constructor and destructor
@@ -553,13 +542,11 @@ void CMSJES::Init(TTree *tree)
   prtcl_phi = 0;
   prtcl_e = 0;
   //Particles not in jets
-  #ifdef NIJ
   prtclnij_pdgid = 0;
   prtclnij_pt = 0;
   prtclnij_eta = 0;
   prtclnij_phi = 0;
   prtclnij_e = 0;
-  #endif
   //Parton lvl
   prtn_jet = 0;
   prtn_pdgid = 0;
@@ -588,13 +575,11 @@ void CMSJES::Init(TTree *tree)
   fChain->SetBranchAddress("prtcl_phi", &prtcl_phi, &b_prtcl_phi);
   fChain->SetBranchAddress("prtcl_e", &prtcl_e, &b_prtcl_e);
   //Particles not in jets lvl
-  #ifdef NIJ
   fChain->SetBranchAddress("prtclnij_pdgid",&prtclnij_pdgid, &b_prtclnij_pdgid);
   fChain->SetBranchAddress("prtclnij_pt", &prtclnij_pt, &b_prtclnij_pt);
   fChain->SetBranchAddress("prtclnij_eta", &prtclnij_eta, &b_prtclnij_eta);
   fChain->SetBranchAddress("prtclnij_phi", &prtclnij_phi, &b_prtclnij_phi);
   fChain->SetBranchAddress("prtclnij_e", &prtclnij_e, &b_prtclnij_e);
-  #endif
   //Parton lvl
   fChain->SetBranchAddress("prtn_jet", &prtn_jet, &b_prtn_jet);
   fChain->SetBranchAddress("prtn_pdgid", &prtn_pdgid, &b_prtn_pdgid);
