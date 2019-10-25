@@ -5,7 +5,12 @@
 
 void CMSJES::Loop()
 {
-  srand(time(0)); //Set random seed
+  //Initialize rng's
+  //srand(time(0));
+  srand(1);
+  TRandom3* gRandom = new TRandom3();
+  //gRandom->SetSeed(0);
+  gRandom->SetSeed(1);
 
   TFile* coldCellsFile = new TFile("./data_and_MC_input/coldCells/coldjetsmc-18runA.root");
   TH2D* coldCells = (TH2D*)coldCellsFile->Get("h2hole");
@@ -247,7 +252,6 @@ void CMSJES::Loop()
   double Bfield = 4.0; //Tesla
   double Rt     = 1.2; //Tracker radius
   //double Rt     = 1.5; //Tracker radius
-  //double Rt     = 0.0; //HCAL radius
   
   //Histograms to contain the particles in probe jet
   //[0]=gen lvl, [1]=reco lvl using r^MC, [2]=reco lvl using R^data 
@@ -450,8 +454,6 @@ void CMSJES::Loop()
   TF1* fakeRate = new TF1("fakeRate", "0.00046178*x + 0.02", 0, 5000);
 
 //***********************************************************************************************
-  TRandom3* gRandom = new TRandom3();
-  gRandom->SetSeed(0);
 
   //Loop Tree entries = events
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
@@ -691,7 +693,7 @@ void CMSJES::Loop()
       }
     } //Loop partons
 
-    if(probeFlav != 5) continue; //b-jet events
+    //if(probeFlav != 5) continue; //b-jet events
 
     // ***************** Loop over all particles ******************
 
@@ -729,12 +731,12 @@ void CMSJES::Loop()
           double eff; bool trkFail; double effConst; double newPhi;
 
           trkFail = 0;
-          eff = 1.0; //No particle level track failing
-          //eff = 0.94;
+          //eff = 1.0; //No particle level track failing
+          eff = 0.94;
           //eff = 0.5284 + 0.3986/(1+pow(((*prtclnij_pt )[i]/88.76),1.22));
           //if ((*prtclnij_pt )[i] < 0.9) eff = 0.2514 + 0.7429*(*prtclnij_pt )[i];
 
-          
+          /*
           //Efficiency from chs
           if (fabs(p4.Eta() < 5.2)) {
             for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
@@ -745,18 +747,18 @@ void CMSJES::Loop()
                 //if ((*prtclnij_pt )[i] < 0.9) eff = 0.2514 + 0.7429*(*prtclnij_pt )[i];
               }
             }
-          }
+          }*/
            
           //Fix chf to the single particle efficiency
-          eff = min(eff,0.94);
+          //eff = min(eff,0.94);
 
           if (eff < 0.0) eff = 0.0;
           if (eff > 1.0) eff = 1.0;
-          
+          /*
           //Don't use if cellFail
           if ( (fabs((*prtclnij_eta)[i]) < 2.5)) {
             chhEff->Fill((*prtclnij_pt)[i], eff);
-          }
+          }*/
 
           //Add fakerate in this
           if ( ((double)rand() / (double)RAND_MAX) > eff ) trkFail =  1;
@@ -862,7 +864,7 @@ void CMSJES::Loop()
                      ne->GetBinContent(i,j))/cosh(cellEta) +  chtPt->GetBinContent(i,j);
         p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellPt);
 
-        //eff_c = 1.0 - 0.0006 * chtPt->GetBinContent(i,j);
+        eff_c = 1.0 - 0.0006 * chtPt->GetBinContent(i,j);
         //eff_c = min(0.94, eff_c);
         
         if(eff_c < 0.0) eff_c = 0.0;
@@ -891,7 +893,8 @@ void CMSJES::Loop()
               etaIdx = floor(((*prtclnij_eta)[k]+5.2)/etaStep) + 1;
               
               if ((phiIdx == i) && (etaIdx == j)) {
-                chhEff->Fill((*prtclnij_pt)[k], eff_c);
+                //chhEff->Fill((*prtclnij_pt)[k], eff_c);
+                chhEff->Fill((*prtclnij_pt)[k], eff_c*0.94);
               }
             }
           }
