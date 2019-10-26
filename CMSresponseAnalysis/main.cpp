@@ -19,15 +19,13 @@ int main() {
   switch (mode) {
     case 0 : d.Loop();       break;
     case 1 : d.MultiLoop();  break;
-    case 2 : d.FitGN();      break;
     case 3 :
-      //d.flavCorr(true, 3, -1);
-      d.plotPT(3, -1, false, false);
+      d.plotPT(3, -1, false);
       d.plotMPF(3,-1);
       break;
     case 4 :
       d.Loop();
-      //d.plotPT(3, -1, false, false);
+      //d.plotPT(3, -1, false);
       d.plotMPF(3,-1);
       break;
     case 5 :

@@ -212,13 +212,10 @@ public :
 
   bool printProg = true;	//Print info on Loop() progress?
   bool useEarlierCuts  = false;	//True if events chosen based on readEvt
-  bool useInitGuessABC = false;	//Use initial guess A,B,C; for starting fits
   bool zjFitting = true;	//Use Z+jet data points for fitting
   double epsilon = 0.01;	//Small step to take along gradient
   double epsilonMin = 1e-6;	//Fit converged when step smaller than this
   double A=1,B=0,C=1;		//Fit reco hadron response fit parameters
-  double Aer=0,Ber=0,Cer=0;	//Fit parameter uncertainties
-  double ABer=0,ACer=0,BCer=0;	//Off-diag. elem.s of covariance matrix
 
   bool recoMissing = true;	//Fully reconstruct also particles not in jets
 
@@ -227,13 +224,6 @@ public :
   void SetB(double val) {B = val;}
   void SetC(double val) {C = val;}
   void SetABC(double Ain,double Bin,double Cin) {A=Ain;  B=Bin;  C=Cin;}
-  void SetAer( double val) {Aer  = val;}
-  void SetBer( double val) {Ber  = val;}
-  void SetCer( double val) {Cer  = val;}
-  void SetABer(double val) {ABer = val;}
-  void SetACer(double val) {ACer = val;}
-  void SetBCer(double val) {BCer = val;}
-  void SetABCer(double Ain,double Bin,double Cin) {Aer=Ain;  Ber=Bin;  Cer=Cin;}
 
   void Setepsilon(   double val) {epsilon = val;}
   void SetepsilonMin(double val) {epsilonMin = val;}
@@ -251,12 +241,6 @@ public :
   double GetA() {return A;}
   double GetB() {return B;}
   double GetC() {return C;}
-  double GetAer() {return Aer;}
-  double GetBer() {return Ber;}
-  double GetCer() {return Cer;}
-  double GetABer() {return ABer;}
-  double GetACer() {return ACer;}
-  double GetBCer() {return BCer;}
   double Getepsilon()    {return epsilon;}
   double GetepsilonMin() {return epsilonMin;}
   bool GetuseEarlierCuts() {return useEarlierCuts;}
@@ -285,16 +269,14 @@ public :
   virtual void     Loop();
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
-  void   FitGN();		//Gauss-Newton fit function
   void   MultiLoop(CMSJES* zj_in=NULL, bool fitPars=true); //Only for Z+jet at the moment
-  void   plotPT(int gen=0,int Nevt=-1, bool MConly=false, bool fitOnly=false);
+  void   plotPT(int gen=0,int Nevt=-1, bool MConly=false);
   void   plotMPF(int gen=0, int Nevt=-1);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
 	          TF1* frH, bool pos,
-                  double fA, double fB, double fC, bool MC, bool FIT, bool EM,
-                  double& retMC, double& retFIT, double& retEM);
+                  double fA, double fB, double fC, bool MC, bool HR,
+                  double& retMC, double& retH);
   void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);
-  void   flavCorr(bool plot=true, int gen=0, int Nevt=-1);
   void   plotQuery(string& respStr, string& zjstr, int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
@@ -450,49 +432,11 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   //Open file and initializations for reading
   int line = 0;	//Stepper
 
-  //Param reading works the same way for all hadrons
-  /*
-  ParamReader("/photon.txt",   32, 6, params_gam);
-  ParamReader("/electron.txt", 32, 5, params_e  );
-  ParamReader("/muon.txt",     32, 4, params_mu );
-  ParamReader("/kaon.txt",     32, 3, params_K  );
-  ParamReader("/klong.txt",    32, 3, params_KL );
-  ParamReader("/kshort.txt",   32, 3, params_KS );
-  ParamReader("/lambda.txt",   32, 3, params_L  );
-  ParamReader("/neutron.txt",  32, 3, params_n  );
-  ParamReader("/pion.txt",     32, 3, params_pi );
-  ParamReader("/proton.txt",   32, 3, params_p  );
-  */
-
   ParamReader("/pion_EHE.txt", 52, 3, params_pi_EHE);
   ParamReader("/pion_HHe.txt", 52, 3, params_pi_HHe);
   ParamReader("/cat1.txt", 52, 3, params_cat1);
   ParamReader("/cat2.txt", 52, 3, params_cat2);
   ParamReader("/cat3.txt", 52, 3, params_cat3);
-
-  /* Plug fit parameter values here for fit reco */
-  if (runCMS) {
-    //Initial guess to start fitting from
-    if (useInitGuessABC) {A   = 1.4;     B   = 0.0;       C   = 1.0;
-                          Aer = 0.0;     Ber = 0.0;       Cer = 0.0;}
-    //Default: use our A,B,C depending on generator
-    else {
-      if (ReadName.find("P8")!=string::npos) {
-        // With 10k sample and 500 loops
-	//A    = -29.8281;	B    = -1.70343;	C    =  0.959501;
-	//Aer  =   0.0529828;	Ber  =  0.0558275;	Cer  =  0.00833123;
-	ABer =  -0.00292137;	ACer =  0.00016457;	BCer = -0.000238565;
-	// With 100k sample and 20 loops
-	//A   = -27.8065;		B    = -0.661071;	C    = 0.868749; 
-        //Aer  = 0.00593366;	Ber  =  0.00636191;	Cer  =  0.00918395;
-        //ABer = 0.0000134886;	ACer = -0.0000365345;	BCer = -0.0000543319;
-        // With 30k sample 269 loops
-	A    = 0.0733748;	B    = 0.36875;		C    =  0.968427;
-	Aer  = 0.375176;	Ber  = 0.0960518;	Cer  =  0.0104257;
-        cout << "\nCMS with Pythia 8 parameters chosen\n" << endl;
-      } else cout << "\nWARNING: unknown fit parameters!\n" << endl;
-    }
-  }
 } //Constructor
 
 //-----------------------------------------------------------------------------
