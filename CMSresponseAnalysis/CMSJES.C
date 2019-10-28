@@ -40,6 +40,7 @@ void CMSJES::Loop()
                                     228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
 
   string pTpTitle="c#tau=1 cm"; string MPFTitle="c#tau=1 cm";
+  
 
   pTpTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]}; p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prpTbal = new TProfile("prpTbal", pTpTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -50,6 +51,20 @@ void CMSJES::Loop()
   TProfile* prMPFb  = new TProfile("prMPFb" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFg  = new TProfile("prMPFg" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFlq = new TProfile("prMPFlq", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+
+  string pfgenTitle   = ";#font[132]{p_{T,gen}^{jet} [GeV]}";
+  pfgenTitle         += ";#font[132]{p_{T,reco}^{jet} / p_{T,gen}^{jet}}";
+  string pfgenbTitle  = ";#font[132]{p_{T,gen}^{b-jet} [GeV]}";
+  pfgenbTitle        += ";#font[132]{p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}}";
+  string pfgengTitle  = ";#font[132]{p_{T,gen}^{g-jet} [GeV]}";
+  pfgengTitle        += ";#font[132]{p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}}";
+  string pfgenlqTitle = ";#font[132]{p_{T,gen}^{lq-jet} [GeV]}";
+  pfgenlqTitle       += ";#font[132]{p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}}";
+  TProfile* prpfgen   = new TProfile("prpfgen"  , pfgenTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prpfgenb  = new TProfile("prpfgenb" , pfgenbTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prpfgeng  = new TProfile("prpfgeng" , pfgengTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prpfgenlq = new TProfile("prpfgenlq", pfgenlqTitle.c_str(), nbinsMPF-1, binsxMPF);
+
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbins-1,binsx);
@@ -517,12 +532,11 @@ void CMSJES::Loop()
           
           eff = max(eff,0.0);
           eff = min(eff,0.94);
-
-          /*
+          
           //Tracking efficiency plot
           if ( (fabs((*prtclnij_eta)[i]) < 2.5)) {
             chhEff->Fill((*prtclnij_pt)[i], eff);
-          }*/
+          }
 
           if ( ((double)rand() / (double)RAND_MAX) > eff ) trkFail =  1;
 
@@ -559,24 +573,6 @@ void CMSJES::Loop()
               p4 *= respHHe;
               nhHCAL->Fill(p4.Phi(), p4.Eta(), p4.E()); //HCAL
             }
-
-            /*
-            if ( ((double)rand() / (double)RAND_MAX) > 0.45 ) { //EHE hadron path
-              fr_h->SetParameters(params_pi_EHE[0][0], params_pi_EHE[0][1],
-                                  params_pi_EHE[0][2]);
-
-              if (fr_h->Eval(p4.E()) > 0.0) { 
-                nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*fr_h->Eval(p4.E())*p4.E()); //HCAL
-                nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*fr_h->Eval(p4.E())*p4.E()); //ECAL
-              }
-            } else { //HHe path 
-              fr_h->SetParameters(params_pi_HHe[0][0], params_pi_HHe[0][1],
-                                  params_pi_HHe[0][2]);
-
-              if (fr_h->Eval(p4.E()) > 0.0) {
-                nhHCAL->Fill(p4.Phi(), p4.Eta(), fr_h->Eval(p4.E())*p4.E());
-              }
-            }*/
           }
           break;
 
@@ -594,31 +590,6 @@ void CMSJES::Loop()
             nhHCAL->Fill(p4.Phi(), p4.Eta(), p4.E()); //HCAL
           }
           break;
-
-        /*
-        //NEUTRAL HADRONS
-        case 130 : case 310 : case 3122 : case 2112 : case 3212 : case 3322 :
-          p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
-                          (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
-
-          if ( ((double)rand() / (double)RAND_MAX) > 0.45 ) { //EHE path
-            fr_h->SetParameters(params_pi_EHE[0][0], params_pi_EHE[0][1],
-                                params_pi_EHE[0][2]);
-
-            if (fr_h->Eval(p4.E()) > 0.0) { 
-              nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*fr_h->Eval(p4.E())*p4.E()); //HCAL
-              nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*fr_h->Eval(p4.E())*p4.E()); //ECAL
-            }
-          } else { //HHe path 
-            fr_h->SetParameters(params_pi_HHe[0][0], params_pi_HHe[0][1],
-                                params_pi_HHe[0][2]);
-
-            if (fr_h->Eval(p4.E()) > 0.0) {
-              nhHCAL->Fill(p4.Phi(), p4.Eta(), fr_h->Eval(p4.E())*p4.E()); //HCAL
-            }
-          }
-          break;
-          */
 
         default : 
           if (fabs(PDG) != 12 && fabs(PDG) != 14 && fabs(PDG) != 16) {
@@ -792,7 +763,6 @@ void CMSJES::Loop()
     pTp = tag_r.Pt();
 
     //pT balance
-
     prpTbal->Fill(pTp, probe_pf.Pt()/tag_r.Pt(), weight);
 
     //MPF response
@@ -802,6 +772,9 @@ void CMSJES::Loop()
 
     //Fill MPF histograms
     prMPF->Fill(pTp, R_MPF_r, weight);
+
+    //reco vs. gen jet fraction
+    prpfgen->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
     //                   SUCH AS MC-DATA CORRECTION FACTORS F
@@ -814,14 +787,17 @@ void CMSJES::Loop()
         if (abs((*prtn_pdgid)[j])==5) {	//b-jets
           FFb->Fill(pTp, weight);
           prMPFb->Fill(pTp, R_MPF_r, weight);
+          prpfgenb->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else if (abs((*prtn_pdgid)[j])<5) { //Light quark (u,d,s,c) jets
           FFlq->Fill(pTp, weight);
           prMPFlq->Fill(pTp, R_MPF_r, weight);
+          prpfgenlq->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else if ((*prtn_pdgid)[j]==21) { //Gluon jets
           FFg->Fill(pTp, weight);
           prMPFg->Fill(pTp, R_MPF_r, weight);
+          prpfgeng->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else continue; //Undetermined flavour
-        FFa->Fill(      pTp,                 weight);
+        FFa->Fill(pTp, weight);
         continue;	//Only one flavour may be associated with a jet
       }
     } //Loop partons
