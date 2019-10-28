@@ -263,7 +263,8 @@ public :
   bool   fidCuts(int id, double pT);
   bool   isNeutrino(int id);  //PDGID is for Neutrino
   bool   isStrangeB(int id);  //Check if PDGID is for Xi, Sigma or Omega^-
-  double trackDeltaPhi(int pdgid, double phi, double pT, double Rt, double B); //New phi where particle hits the calo
+  double trackDeltaPhi(int pdgid, double phi, double pT, double Rt, double B); 
+  //New phi where particle hits the calo
   int    Charge(int pdgid); //Charge of the particle
   bool   isChHadron(int pdgid); //Returns true if particle is charged hadron
 };

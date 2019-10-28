@@ -44,8 +44,12 @@ void CMSJES::Loop()
   pTpTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]}; p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prpTbal = new TProfile("prpTbal", pTpTitle.c_str(), nbins-1, binsx);
 
+  //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
   MPFTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]};R_{MPF}";
-  TProfile* prMPF = new TProfile("prMPF", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPF   = new TProfile("prMPF"  , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPFb  = new TProfile("prMPFb" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPFg  = new TProfile("prMPFg" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPFlq = new TProfile("prMPFlq", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbins-1,binsx);
@@ -122,7 +126,6 @@ void CMSJES::Loop()
   //CMS detector related parameters
   double Bfield = 4.0; //Tesla
   double Rt     = 1.2; //Tracker radius
-  //double Rt     = 1.5; //Tracker radius
 
   //MET calculation related variables
   double cellPhi; double cellEta; double cellE; double cellPt;
@@ -727,6 +730,7 @@ void CMSJES::Loop()
           MET_r -= p4;
         }
 
+        /*
         //Cell four vector
         cellE  = nhECAL->GetBinContent(i,j) + nhHCAL_calib + 
                      ne->GetBinContent(i,j) + cht->GetBinContent(i,j);
@@ -749,7 +753,7 @@ void CMSJES::Loop()
                                                nhECAL->GetBinContent(i,j)+
                                                    ne->GetBinContent(i,j));
           }
-        }
+        }*/
       }
     }
 
@@ -818,9 +822,10 @@ void CMSJES::Loop()
     //MPF response
     R_MPF_r = 1.0 + (MET_r.Px()*p4r_tag.Px() + MET_r.Py()*p4r_tag.Py()) / pow((p4r_tag.Pt()),2);
     //R_MPF_r = 1.0 + MET_r.Pt()*cos(p4r_tag.DeltaPhi(MET_r))/p4r_tag.Pt();
+    if(isnan(R_MPF_r)) R_MPF_r = 0.0;
 
     //Fill MPF histograms
-    prMPF->Fill(pTp,  (!isnan(R_MPF_r)  ? R_MPF_r  : 0), weight);
+    prMPF->Fill(pTp, R_MPF_r, weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
     //                   SUCH AS MC-DATA CORRECTION FACTORS F
@@ -834,18 +839,21 @@ void CMSJES::Loop()
           prqjet->Fill(pTp, p4r_probe.Pt()/p4r_tag.Pt(), weight); //q-jet resp
           pTppRptr = pTppRb; 
           FFb->Fill(pTp, weight);
+          prMPFb->Fill(pTp, R_MPF_r, weight);
         } else if (abs((*prtn_pdgid)[j])<5) { //Light quark (u,d,s,c) jets
           prqjet->Fill(pTp, p4r_probe.Pt()/p4r_tag.Pt(), weight); //q-jet resp
           pTppRptr = pTppRlq; 
           FFlq->Fill(pTp, weight);
-        } else if ((*prtn_pdgid)[j]==21) {	//Gluon jets
+          prMPFlq->Fill(pTp, R_MPF_r, weight);
+        } else if ((*prtn_pdgid)[j]==21) { //Gluon jets
           prgjet->Fill(pTp, p4r_probe.Pt()/p4r_tag.Pt(), weight); //g-jet resp
           pTppRptr = pTppRg;
           FFg->Fill(pTp, weight);
-        } else continue;			//Undetermined flavour
-        FFa->Fill(       pTp,                                 weight);
-        pTppRptr->Fill(  pTp,          p4r_probe.Pt(),     weight);
-        pTppRa->Fill(    pTp,            p4r_probe.Pt(),     weight);
+          prMPFg->Fill(pTp, R_MPF_r, weight);
+        } else continue; //Undetermined flavour
+        FFa->Fill(      pTp,                 weight);
+        pTppRptr->Fill( pTp, p4r_probe.Pt(), weight);
+        pTppRa->Fill(   pTp, p4r_probe.Pt(), weight);
         continue;	//Only one flavour may be associated with a jet
       }
     } //Loop partons
