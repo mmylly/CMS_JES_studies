@@ -142,20 +142,29 @@ public :
   //  1st index: |eta| region. 32 entries for this index
   //  2nd index: the parameters p^(i)_{particle type} in the SPR functions
   //             3rd index has 3 entries unless otherwise stated
-  /*
-  vector<vector<double>> params_e;	//electron //3rd index 5 entries
-  vector<vector<double>> params_K;	//Kaon
-  vector<vector<double>> params_KL;	//Kaon_long
-  vector<vector<double>> params_KS;	//Kaon_short
-  vector<vector<double>> params_L;	//Lambda
-  vector<vector<double>> params_mu;	//muon //3rd index 4 entries
-  vector<vector<double>> params_n;	//neutron
-  vector<vector<double>> params_gam;	//photon //3rd index 6 entries
-  vector<vector<double>> params_pi;	//pion
-  vector<vector<double>> params_p;	//proton
-  */
-  vector<vector<double>> params_pi_EHE;	//pion EHE
-  vector<vector<double>> params_pi_HHe;	//pion HHe
+
+
+  //EHE and HHe responses for certain particles
+  vector<vector<double>> params_pi_EHE; //pion
+  vector<vector<double>> params_pi_HHe;
+  vector<vector<double>> params_an_EHE; //antineutron
+  vector<vector<double>> params_an_HHe;
+  vector<vector<double>> params_ap_EHE; //antiproton
+  vector<vector<double>> params_ap_HHe;
+  vector<vector<double>> params_K0L_EHE; //K0L
+  vector<vector<double>> params_K0L_HHe;
+  vector<vector<double>> params_K0S_EHE; //K0S
+  vector<vector<double>> params_K0S_HHe;
+  vector<vector<double>> params_Km_EHE; //Km
+  vector<vector<double>> params_Km_HHe;
+  vector<vector<double>> params_Kp_EHE; //Kp
+  vector<vector<double>> params_Kp_HHe;
+  vector<vector<double>> params_n_EHE; //neutron
+  vector<vector<double>> params_n_HHe;
+  vector<vector<double>> params_p_EHE; //proton
+  vector<vector<double>> params_p_HHe;
+
+
   //Params for hadron groups and combined H + EH response
   vector<vector<double>> params_cat1;
   vector<vector<double>> params_cat2;
@@ -205,16 +214,12 @@ public :
 
   //Flags etc. for changing calculation properties
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
-  unsigned int maxIter=500;	//Maximum #iterations in fitting
   bool contHistos = true;	//Produce probe particle content histograms
   bool MPFmode = false;		//Fit to MPF data? If false, use pT-bal.
   bool runCMS = true;		//Use CMS parameters
-
   bool printProg = true;	//Print info on Loop() progress?
   bool useEarlierCuts  = false;	//True if events chosen based on readEvt
   bool zjFitting = true;	//Use Z+jet data points for fitting
-  double epsilon = 0.01;	//Small step to take along gradient
-  double epsilonMin = 1e-6;	//Fit converged when step smaller than this
   double A=1,B=0,C=1;		//Fit reco hadron response fit parameters
 
   bool recoMissing = true;	//Fully reconstruct also particles not in jets
@@ -225,34 +230,25 @@ public :
   void SetC(double val) {C = val;}
   void SetABC(double Ain,double Bin,double Cin) {A=Ain;  B=Bin;  C=Cin;}
 
-  void Setepsilon(   double val) {epsilon = val;}
-  void SetepsilonMin(double val) {epsilonMin = val;}
   void SetuseEarlierCuts(bool flag) {useEarlierCuts = flag;}
   void SetzjFitting( bool flag) {zjFitting = flag;}
   void SetrunCMS( bool flag)    {runCMS = flag;}
   void SetprintProg( bool flag) {printProg = flag;}
   void SetcontHistos(bool flag) {contHistos=flag;}
   void SetMPFmode( bool flag ) {MPFmode = flag;}
-
   void SetrecoMissing(bool flag) {recoMissing = flag;}
-  void SetmaxIter(unsigned int val) {maxIter = val;}
 
   //Getters
   double GetA() {return A;}
   double GetB() {return B;}
   double GetC() {return C;}
-  double Getepsilon()    {return epsilon;}
-  double GetepsilonMin() {return epsilonMin;}
   bool GetuseEarlierCuts() {return useEarlierCuts;}
   bool GetzjFitting() {return zjFitting;}
   bool GetrunCMS() {return runCMS;}
   bool GetprintProg() {return printProg;}
   bool GetcontHistos() {return contHistos;}
   bool GetMPFmode()  {return MPFmode;}
-
   bool GetrecoMissing() {return recoMissing;}
-
-  unsigned int GetmaxIter() {return maxIter;}
 
   //Constructor and destructor
   CMSJES(TTree *tree=0, string="");
@@ -269,9 +265,11 @@ public :
   virtual void     Loop();
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
-  void   MultiLoop(CMSJES* zj_in=NULL, bool fitPars=true); //Only for Z+jet at the moment
   void   plotPT(int gen=0,int Nevt=-1, bool MConly=false);
   void   plotMPF(int gen=0, int Nevt=-1);
+  void   Response2(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
+	          TF1* frH, bool pos, double fA, double fB, double fC, bool MC, bool HR,
+                  double& retMC, double& retH, double& retEHE, double& retHHe);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
 	          TF1* frH, bool pos,
                   double fA, double fB, double fC, bool MC, bool HR,
@@ -432,11 +430,29 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   //Open file and initializations for reading
   int line = 0;	//Stepper
 
-  ParamReader("/pion_EHE.txt", 52, 3, params_pi_EHE);
-  ParamReader("/pion_HHe.txt", 52, 3, params_pi_HHe);
-  ParamReader("/cat1.txt", 52, 3, params_cat1);
-  ParamReader("/cat2.txt", 52, 3, params_cat2);
-  ParamReader("/cat3.txt", 52, 3, params_cat3);
+  ParamReader("/pi_EHE.txt",  52, 3, params_pi_EHE);
+  ParamReader("/pi_HHe.txt",  52, 3, params_pi_HHe);
+  ParamReader("/an_EHE.txt",  52, 3, params_an_EHE);
+  ParamReader("/an_HHe.txt",  52, 3, params_an_HHe);
+  ParamReader("/ap_EHE.txt",  52, 3, params_ap_EHE);
+  ParamReader("/ap_HHe.txt",  52, 3, params_ap_HHe);
+  ParamReader("/K0L_EHE.txt", 52, 3, params_K0L_EHE);
+  ParamReader("/K0L_HHe.txt", 52, 3, params_K0L_HHe);
+  ParamReader("/K0S_EHE.txt", 52, 3, params_K0S_EHE);
+  ParamReader("/K0S_HHe.txt", 52, 3, params_K0S_HHe);
+  ParamReader("/Km_EHE.txt",  52, 3, params_Km_EHE);
+  ParamReader("/Km_HHe.txt",  52, 3, params_Km_HHe);
+  ParamReader("/Kp_EHE.txt",  52, 3, params_Kp_EHE);
+  ParamReader("/Kp_HHe.txt",  52, 3, params_Kp_HHe);
+  ParamReader("/n_EHE.txt",   52, 3, params_n_EHE);
+  ParamReader("/n_HHe.txt",   52, 3, params_n_HHe);
+  ParamReader("/p_EHE.txt",   52, 3, params_p_EHE);
+  ParamReader("/p_HHe.txt",   52, 3, params_p_HHe);
+
+  //Particle groups
+  ParamReader("/cat1.txt",   52, 3, params_cat1);
+  ParamReader("/cat2.txt",   52, 3, params_cat2);
+  ParamReader("/cat3.txt",   52, 3, params_cat3);
 } //Constructor
 
 //-----------------------------------------------------------------------------
