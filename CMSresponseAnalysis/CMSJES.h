@@ -220,15 +220,8 @@ public :
   bool printProg = true;	//Print info on Loop() progress?
   bool useEarlierCuts  = false;	//True if events chosen based on readEvt
   bool zjFitting = true;	//Use Z+jet data points for fitting
-  double A=1,B=0,C=1;		//Fit reco hadron response fit parameters
 
   bool recoMissing = true;	//Fully reconstruct also particles not in jets
-
-  //Setters
-  void SetA(double val) {A = val;}
-  void SetB(double val) {B = val;}
-  void SetC(double val) {C = val;}
-  void SetABC(double Ain,double Bin,double Cin) {A=Ain;  B=Bin;  C=Cin;}
 
   void SetuseEarlierCuts(bool flag) {useEarlierCuts = flag;}
   void SetzjFitting( bool flag) {zjFitting = flag;}
@@ -238,10 +231,6 @@ public :
   void SetMPFmode( bool flag ) {MPFmode = flag;}
   void SetrecoMissing(bool flag) {recoMissing = flag;}
 
-  //Getters
-  double GetA() {return A;}
-  double GetB() {return B;}
-  double GetC() {return C;}
   bool GetuseEarlierCuts() {return useEarlierCuts;}
   bool GetzjFitting() {return zjFitting;}
   bool GetrunCMS() {return runCMS;}
@@ -267,13 +256,8 @@ public :
   virtual void     Show(Long64_t entry = -1);
   void   plotPT(int gen=0,int Nevt=-1, bool MConly=false);
   void   plotMPF(int gen=0, int Nevt=-1);
-  void   Response2(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
-	          TF1* frH, bool pos, double fA, double fB, double fC, bool MC, bool HR,
-                  double& retMC, double& retH, double& retEHE, double& retHHe);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
-	          TF1* frH, bool pos,
-                  double fA, double fB, double fC, bool MC, bool HR,
-                  double& retMC, double& retH);
+	          TF1* frH, double& retMC, double& retH, double& retEHE, double& retHHe);
   void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);
   void   plotQuery(string& respStr, string& zjstr, int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);

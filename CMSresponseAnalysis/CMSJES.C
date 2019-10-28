@@ -73,7 +73,8 @@ void CMSJES::Loop()
   //**********************************************************************
 
   //Response function R_h (h for hadron)
-  TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x,[2]+[4]-1))",0,4000);
+  //TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x,[2]+[4]-1))",0,4000);
+  TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
 
   //Used in HCAL calibration, pion response parameters
   TF1 *fr_hcal = new TF1("fr_hcal","x*1.10286*(1-1.25613*pow(x,0.397034-1))",0,4000);
@@ -112,8 +113,8 @@ void CMSJES::Loop()
   double pTmin_tag_z = 15;      //Minimum tag muon pair pT (GeV)   
   double resp   = 1.0;	        //SPR value                (dummy init)
   double respH  = 0.0;	        //Calorimeter response for hadrons
-  double respHEH  = 0.0;	        //Calorimeter response for hadrons
-  double respHH  = 0.0;	        //Calorimeter response for hadrons
+  double respEHE  = 0.0;	        //Calorimeter response for hadrons
+  double respHHe  = 0.0;	        //Calorimeter response for hadrons
   double R_MPF_r = 0;		//MC-reco'd MPF response
   unsigned long njets;		//#jets in the event, for resizing vectors
   TLorentzVector MET_r;		//MC    -||-
@@ -373,7 +374,7 @@ void CMSJES::Loop()
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
     Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
-             fr_h,true,1, 0, 1, true, false, resp, respH);
+             fr_h, resp, respH, respEHE, respHHe);
 
     tag     = p4;                                                  //gen lvl
     p4r_tag = p4*resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
@@ -385,7 +386,7 @@ void CMSJES::Loop()
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
     Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
-             fr_h,true,1, 0, 1, true, false,  resp, respH);
+             fr_h, resp, respH, respEHE, respHHe);
 
     tag      += p4;                                              //gen lvl
     p4r_tag  += p4*resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
@@ -403,8 +404,7 @@ void CMSJES::Loop()
                       (*prtcl_phi)[i], (*prtcl_e  )[i]);
 
       //Calculate responses. Store results to [resp, respH] tuples
-      Response(PDG, p4.Eta(), p4.E(), p4.Pt(),Rt,Bfield, fr_h, true,
-               GetA(), GetB(), GetC(), true, true, resp, respH );
+      Response(PDG, p4.Eta(), p4.E(), p4.Pt(),Rt,Bfield, fr_h, resp, respH, respEHE, respHHe);
 
       //Reconstruct jets
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
@@ -479,8 +479,8 @@ void CMSJES::Loop()
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                       (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
 
-      Response2((*prtclnij_pdgid)[i],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,fr_h,true,
-               GetA(),GetB(),GetC(),true,true,resp,respH,respHEH,respHH);
+      Response((*prtclnij_pdgid)[i], p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, fr_h, 
+               resp, respH, respEHE, respHHe);
  
       if (resp == 0.0) continue;
 
@@ -557,18 +557,18 @@ void CMSJES::Loop()
             p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
 
             if ( ((double)rand()/(double)RAND_MAX) > 0.45 ) { //EHE path
-              p4 *= respHEH;
+              p4 *= respEHE;
               nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //ECAL
               nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //HCAL
             } else { //HHe path 
-              p4 *= respHH;
+              p4 *= respHHe;
               nhHCAL->Fill(p4.Phi(), p4.Eta(), p4.E()); //HCAL
             }
 
             /*
             if ( ((double)rand() / (double)RAND_MAX) > 0.45 ) { //EHE hadron path
               fr_h->SetParameters(params_pi_EHE[0][0], params_pi_EHE[0][1],
-                                  params_pi_EHE[0][2], 1, 0, 1);
+                                  params_pi_EHE[0][2]);
 
               if (fr_h->Eval(p4.E()) > 0.0) { 
                 nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*fr_h->Eval(p4.E())*p4.E()); //HCAL
@@ -576,7 +576,7 @@ void CMSJES::Loop()
               }
             } else { //HHe path 
               fr_h->SetParameters(params_pi_HHe[0][0], params_pi_HHe[0][1],
-                                  params_pi_HHe[0][2], 1, 0, 1);
+                                  params_pi_HHe[0][2]);
 
               if (fr_h->Eval(p4.E()) > 0.0) {
                 nhHCAL->Fill(p4.Phi(), p4.Eta(), fr_h->Eval(p4.E())*p4.E());
@@ -591,11 +591,11 @@ void CMSJES::Loop()
                           (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
 
           if ( ((double)rand()/(double)RAND_MAX) > 0.45 ) { //EHE path
-            p4 *= respHEH;
+            p4 *= respEHE;
             nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //ECAL
             nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //HCAL
           } else { //HHe path 
-            p4 *= respHH;
+            p4 *= respHHe;
             nhHCAL->Fill(p4.Phi(), p4.Eta(), p4.E()); //HCAL
           }
           break;
@@ -608,7 +608,7 @@ void CMSJES::Loop()
 
           if ( ((double)rand() / (double)RAND_MAX) > 0.45 ) { //EHE path
             fr_h->SetParameters(params_pi_EHE[0][0], params_pi_EHE[0][1],
-                                params_pi_EHE[0][2], 1, 0, 1);
+                                params_pi_EHE[0][2]);
 
             if (fr_h->Eval(p4.E()) > 0.0) { 
               nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*fr_h->Eval(p4.E())*p4.E()); //HCAL
@@ -616,7 +616,7 @@ void CMSJES::Loop()
             }
           } else { //HHe path 
             fr_h->SetParameters(params_pi_HHe[0][0], params_pi_HHe[0][1],
-                                params_pi_HHe[0][2], 1, 0, 1);
+                                params_pi_HHe[0][2]);
 
             if (fr_h->Eval(p4.E()) > 0.0) {
               nhHCAL->Fill(p4.Phi(), p4.Eta(), fr_h->Eval(p4.E())*p4.E()); //HCAL
@@ -662,6 +662,7 @@ void CMSJES::Loop()
           cht  ->SetBinContent(i,j,0.0);
           chtPt->SetBinContent(i,j,0.0);
         }
+
         /*
         //Single particle efficiency plot
         int etaIdx; int phiIdx;
@@ -765,8 +766,7 @@ void CMSJES::Loop()
         p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i], //Prtcl gen lvl values
 		        (*prtcl_phi)[i],(*prtcl_e)[i]  );
 
-        Response(PDG,p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,fr_h,true,
-                 GetA(), GetB(), GetC(),true,true,resp,respH);
+        Response(PDG,p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,fr_h, resp,respH, respEHE, respHHe);
 
         // Fill (probe) particle content to the right histogram
         if (GetcontHistos()) {
@@ -1100,10 +1100,17 @@ void CMSJES::Loop()
 } //CMSJES::Loop
 
 
-void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, double Rt, 
-                      double Bfield, TF1* frH, bool pos, 
-                      double fA, double fB, double fC, bool MC, bool HR, 
-                      double& retMC, double& retH, double& retEHE, double& retHHe)
+//-----------------------------------------------------------------------------
+//A function to calculate the MC hadron response R 
+//Params:	id		Particle PDGID
+//		pseudorap	Particle pseudorapidity eta
+//		energy		Particle energy
+//		pT		Particle transverse momentum
+//		frH		Pointer to hadron response
+//              ret**		References where to put the resulting response
+void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
+                      double Bfield, TF1* frH, double& retMC, double& retH, double& retEHE,
+                      double& retHHe)
 {
   retMC = 0.0; retH = 0.0; retEHE = 0.0; retHHe = 0.0;
   bool zero = false; //If true, return zero responses
@@ -1137,23 +1144,21 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
   for (int i_r=0; i_r<(zero?0:1); ++i_r) {
 
     //cat1: antineutron, K0S, K0L, pi+, pi-
-    frH->SetParameters(params_cat1[row][0], params_cat1[row][1], params_cat1[row][2], 1, 0, 1);
+    frH->SetParameters(params_cat1[row][0], params_cat1[row][1], params_cat1[row][2]);
     cat1 = frH->Eval(energy);
 
     //cat2: neutron, antiproton, K+, K-
-    frH->SetParameters(params_cat2[row][0], params_cat2[row][1], params_cat2[row][2], 1, 0, 1);
+    frH->SetParameters(params_cat2[row][0], params_cat2[row][1], params_cat2[row][2]);
     cat2 = frH->Eval(energy);
 
     //cat3: proton
-    frH->SetParameters(params_cat3[row][0], params_cat3[row][1], params_cat3[row][2], 1, 0, 1);
+    frH->SetParameters(params_cat3[row][0], params_cat3[row][1], params_cat3[row][2]);
     cat3 = frH->Eval(energy);
 
-    frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1],
-                       params_pi_EHE[row][2], 1, 0, 1);
+    frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], params_pi_EHE[row][2]);
     respPiEH = frH->Eval(energy);
 
-    frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1],
-                       params_pi_HHe[row][2], 1, 0, 1);
+    frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], params_pi_HHe[row][2]);
     respPiH = frH->Eval(energy);
 
     //step function cut
@@ -1181,33 +1186,27 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
       case -2112 : //an
         retMC = cat1*sfN;
         retH  = cat1*sfN;
-        frH->SetParameters(params_an_EHE[row][0], params_an_EHE[row][1],
-                           params_an_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_an_EHE[row][0], params_an_EHE[row][1], params_an_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_an_HHe[row][0], params_an_HHe[row][1],
-                           params_an_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_an_HHe[row][0], params_an_HHe[row][1], params_an_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
       case   310 : //K^0_S
         retMC = cat1*sfN; 
         retH  = cat1*sfN;
-        frH->SetParameters(params_K0S_EHE[row][0], params_K0S_EHE[row][1],
-                           params_K0S_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_K0S_EHE[row][0],params_K0S_EHE[row][1],params_K0S_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_K0S_HHe[row][0], params_K0S_HHe[row][1],
-                           params_K0S_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_K0S_HHe[row][0],params_K0S_HHe[row][1],params_K0S_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
       case   130 : //K^0_L
         retMC = cat1*sfN; 
         retH  = cat1*sfN;
-        frH->SetParameters(params_K0L_EHE[row][0], params_K0L_EHE[row][1],
-                           params_K0L_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_K0L_EHE[row][0],params_K0L_EHE[row][1],params_K0L_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_K0L_HHe[row][0], params_K0L_HHe[row][1],
-                           params_K0L_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_K0L_HHe[row][0],params_K0L_HHe[row][1],params_K0L_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
@@ -1227,11 +1226,9 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
       case  2112 : //n
         retMC = cat2*sfN; 
         retH  = cat2*sfN;
-        frH->SetParameters(params_n_EHE[row][0], params_n_EHE[row][1],
-                           params_n_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_n_EHE[row][0], params_n_EHE[row][1], params_n_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_n_HHe[row][0], params_n_HHe[row][1],
-                           params_n_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_n_HHe[row][0], params_n_HHe[row][1], params_n_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
@@ -1239,11 +1236,9 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
         if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
         else retMC = cat2*sfN; 
         retH = cat2*sfN;
-        frH->SetParameters(params_ap_EHE[row][0], params_ap_EHE[row][1],
-                           params_ap_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_ap_EHE[row][0], params_ap_EHE[row][1], params_ap_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_ap_HHe[row][0], params_ap_HHe[row][1],
-                           params_ap_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_ap_HHe[row][0], params_ap_HHe[row][1], params_ap_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
@@ -1251,11 +1246,9 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
         if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
         else retMC = cat2*sfN; 
         retH = cat2*sfN;
-        frH->SetParameters(params_Kp_EHE[row][0], params_Kp_EHE[row][1],
-                           params_Kp_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_Kp_EHE[row][0], params_Kp_EHE[row][1], params_Kp_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_Kp_HHe[row][0], params_Kp_HHe[row][1],
-                           params_Kp_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_Kp_HHe[row][0], params_Kp_HHe[row][1], params_Kp_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
@@ -1263,11 +1256,9 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
         if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
         else retMC = cat2*sfN; 
         retH = cat2*sfN;
-        frH->SetParameters(params_Km_EHE[row][0], params_Km_EHE[row][1],
-                           params_Km_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_Km_EHE[row][0], params_Km_EHE[row][1], params_Km_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_Km_HHe[row][0], params_Km_HHe[row][1],
-                           params_Km_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_Km_HHe[row][0], params_Km_HHe[row][1], params_Km_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
@@ -1282,11 +1273,9 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
         if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
         else retMC = cat3*sfN; 
         retH = cat3*sfN;
-        frH->SetParameters(params_p_EHE[row][0], params_p_EHE[row][1],
-                           params_p_EHE[row][2], 1, 0, 1);
+        frH->SetParameters(params_p_EHE[row][0], params_p_EHE[row][1], params_p_EHE[row][2]);
         retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_p_HHe[row][0], params_p_HHe[row][1],
-                           params_p_HHe[row][2], 1, 0, 1);
+        frH->SetParameters(params_p_HHe[row][0], params_p_HHe[row][1], params_p_HHe[row][2]);
         retHHe = frH->Eval(energy)*sfN;
         break;
 
@@ -1315,10 +1304,10 @@ void CMSJES::Response2(int pdgid, double pseudorap, double energy, double pT, do
   } 
 
   //Set results. Check for NaN and negative results if positive demanded
-  if (!MC || zero || isnan(retMC)  || (pos && retMC <=0)) retMC  =0;
-  if (!HR || zero || isnan(retH)   || (pos && retH  <=0)) retH   =0;
-  if (!HR || zero || isnan(retH)   || (pos && retH  <=0)) retEHE =0;
-  if (!HR || zero || isnan(retH)   || (pos && retH  <=0)) retHHe =0;
+  if (zero || isnan(retMC)  || retMC <=0 ) retMC  =0;
+  if (zero || isnan(retH)   || retH  <=0 ) retH   =0;
+  if (zero || isnan(retH)   || retH  <=0 ) retEHE =0;
+  if (zero || isnan(retH)   || retH  <=0 ) retHHe =0;
 
 } //Response
 
@@ -1611,142 +1600,6 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Save plot
   canv_MPF->Print(savename.c_str());
 } //plotMPF
-
-
-//-----------------------------------------------------------------------------
-//A function to calculate the MC hadron response R 
-//Params:	id		Particle PDGID
-//		pseudorap	Particle pseudorapidity eta
-//		energy		Particle energy
-//		pT		Particle transverse momentum
-//		pos		Flag to demand the result must be positive
-//                              - this same function is also handy for finding
-//                                derivatives, which may be negative.
-//		frH		Pointer to hadron response
-//		fA,fB,fC	Param.s for fitting to D0 data
-//              MC, HR	Flags to find MC/fit/hadron response
-//              ret**		References where to put the resulting response
-void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
-                      double Bfield, TF1* frH, bool pos, 
-                      double fA, double fB, double fC, bool MC, bool HR, 
-                      double& retMC, double& retH)
-{
-  retH = 0.0;
-  bool zero = false; //If true, return zero responses
-
-  double sfCh  = 0.0; //Charged particle step function
-  double sfN   = 0.0; //Neutral hadron step function
-  double cat1 = 0.0; double cat2 = 0.0; double cat3 = 0.0; //Responses for different groups
-
-  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles // 0.2
-  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
-
-  //if (energy > 0.3) sfCh = 1.0; // Step function for charged particles 
-  //if (energy > 3.0) sfN  = 1.0; // Step function for neutral particles  
-
-  //Check if particle outside good eta region
-  if (fabs(pseudorap) > 5.2) zero = true;
-
-  unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
-
-  //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
-  if (abs(pdgid)==111 || abs(pdgid)==221) { 
-    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << pdgid
-         << "Returning zero response" << endl; zero = true;
-  }
-
-  //Charged particle not reaching calorimeters
-  if ( fabs(Charge(pdgid)) && (pT < 0.3*Bfield*0.5*Rt) ) zero = true;
-
-  //Neutrino responses are zero
-  if (isNeutrino(abs(pdgid))) zero = true;
-
-  //CALCULATE RESPONSES
-  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
-
-    frH->SetParameters(params_cat1[row][0], params_cat1[row][1], params_cat1[row][2], 1, 0, 1);
-    cat1 = frH->Eval(energy);
-
-    frH->SetParameters(params_cat2[row][0], params_cat2[row][1], params_cat2[row][2], 1, 0, 1);
-    cat2 = frH->Eval(energy);
-
-    frH->SetParameters(params_cat3[row][0], params_cat3[row][1], params_cat3[row][2], 1, 0, 1);
-    cat3 = frH->Eval(energy);
-
-    switch (pdgid) {
-      //PHOTON
-      case 20 :
-      case 22 :
-        retMC = sfCh;
-        break;
-
-      //LEPTONS
-      case  11 : //e
-      case -11 : //e
-        retMC = sfCh; 
-        break;
-      case  13 : //mu
-      case -13 : //mu
-        retMC = sfCh; 
-        break;
-      
-      //cat1: antineutron, K0S, K0L, pi+, pi-
-      case -2112 : //nbar
-      case   310 : //K^0_S
-      case   130 : //K^0_L
-      case   211 : //pi+
-      case  -211 : //pi-
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat1*sfN; 
-        retH = cat1*sfN;
-        break;
-
-      //cat2: neutron, antiproton, K+, K-
-      case  2112 : //n
-      case -2212 : //pbar
-      case   321 : //K+
-      case  -321 : //K-
-      case -3122 : //anti-Lambda
-      case -3212 : //anti-Sigma^0
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat2*sfN; 
-        retH = cat2*sfN;
-        break;
-
-      //cat3: proton
-      case  2212 : //p
-      case  3122 : //Lambda
-      case  3212 : //Sigma^0
-      case  3322 : //Xi^0         cat=4
-      case -3322 : //anti-Xi^0
-      case  3312 : //Xi^-         cat=5
-      case -3312 : //Xi^-         cat=4
-      case  3112 : //Sigma^-      cat=4
-      case -3112 : //anti-Sigma^-
-      case  3222 : //Sigma^+      cat=4
-      case -3222 : //anti-Sigma^+
-      case  3334 : //Omega^-      cat=6
-      case -3334 : //anti-Omega^- cat=5
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat3*sfN; 
-        retH = cat3*sfN;
-        break;
-
-      default : 
-        zero=true;
-        cout << "Unknown particle PDG: " << pdgid << endl;
-        continue;	 
-    }
-  } 
-
-  //Set results. Check for NaN and negative results if positive demanded
-  if (!MC || zero || isnan(retMC)  || (pos && retMC <=0)) retMC =0;
-  if (!HR || zero || isnan(retH)   || (pos && retH  <=0)) retH =0;
-
-
-} //Response
-
-
 
 //-----------------------------------------------------------------------------
 //User interface to choose which files to open in plotting functions
