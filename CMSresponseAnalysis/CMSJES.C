@@ -705,39 +705,42 @@ void CMSJES::Loop()
         //Changing HCAL cluster sigma threshold with uncalibrated cell energy
         cellSigma = sqrt(sigma->GetBinContent(i,j));
         cellSigma *= (1 + exp(-cht->GetBinContent(i,j)/100));
-
-        if (delta < cellSigma) { //Shadowing
-          //Tracker
-          cellE  = cht->GetBinContent(i,j);
-          cellPt = chtPt->GetBinContent(i,j);
-          p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
-          MET_r -= p4;
-
-        } else { //Normal case
-          //Neutral hadrons and photons
-          if (nhHCAL->GetBinContent(i,j) > 0.0) {
-            nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
-          }
-          cellE  = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL_calib;
-          cellPt = cellE/cosh(cellEta);
-          p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
-          MET_r -= p4;
-
-          //Tracker
-          cellE  = cht->GetBinContent(i,j);
-          cellPt = chtPt->GetBinContent(i,j);
-          p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
-          MET_r -= p4;
+        
+        //HCAL calibration
+        if (nhHCAL->GetBinContent(i,j) > 0.0) {
+          nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
         }
 
-        /*
-        //Cell four vector
-        cellE  = nhECAL->GetBinContent(i,j) + nhHCAL_calib + 
-                     ne->GetBinContent(i,j) + cht->GetBinContent(i,j);
-        cellPt =(nhECAL->GetBinContent(i,j) + nhHCAL_calib + 
-                     ne->GetBinContent(i,j))/cosh(cellEta) + chtPt->GetBinContent(i,j);
-        p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellPt);
+        if (delta < cellSigma) { //Shadowing
+          nhHCAL_calib = 0.0;
+          nhECAL->SetBinContent(i,j,0.0); 
+          ne    ->SetBinContent(i,j,0.0);
+        }
 
+
+        //Cell four vector:         
+        //Total reconstructed energy of the cell
+        cellE  =    cht->GetBinContent(i,j) + ne->GetBinContent(i,j) + 
+                 nhECAL->GetBinContent(i,j) + nhHCAL_calib;
+        //Total reconstructed pT of the cell
+        cellPt = (nhECAL->GetBinContent(i,j)+nhHCAL_calib+ne->GetBinContent(i,j))/cosh(cellEta) 
+                + chtPt->GetBinContent(i,j);
+
+        p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
+        MET_r -= p4;
+
+        //Only for the leading jet
+        if (p4.DeltaR(jets_r[0]) < 0.4) {
+          h_ch_c   ->Fill(jets_r[0].Pt(), cht->GetBinContent(i,j));
+          h_nh_c   ->Fill(jets_r[0].Pt(), nhHCAL_calib);
+          h_gamma_c->Fill(jets_r[0].Pt(), nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
+          h_all_c  ->Fill(jets_r[0].Pt(), cht->GetBinContent(i,j) + nhHCAL_calib+
+                                          nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
+        }
+         
+
+
+        /*
         //Only for the leading jet
         if (p4.DeltaR(jets_r[0]) < 0.4) {
           if (delta < cellSigma) {
