@@ -165,6 +165,7 @@ public :
   vector<vector<double>> params_p_HHe;
 
 
+
   //Params for hadron groups and combined H + EH response
   vector<vector<double>> params_cat1;
   vector<vector<double>> params_cat2;
@@ -211,6 +212,11 @@ public :
   double zj_MC_MPFntI_2018[nMC_MPFntI];
   double zj_MC_MPFntI_ER_2018[nMC_MPFntI];
 
+  //CMS 2018 pTbal MC points and errors for Z+jet
+  static int const nMC_pTbal2018 = 14;
+  double zj_MC_pTp_pTbal_2018[nMC_pTbal2018];
+  double zj_MC_pTbal_2018[nMC_pTbal2018];
+  double zj_MC_pTbal_ER_2018[nMC_pTbal2018];
 
   //Flags etc. for changing calculation properties
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
@@ -352,15 +358,16 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   }
   Init(tree);	//Setup branch adresses etc.
 
-  /* Read D0 data and MC points */
-  ifstream inzj_data_pTbal;   ifstream inzj_MC_pTbal; //CMS jecdata pT Z+jet
-  ifstream inzj_data_MPF;     ifstream inzj_MC_MPF;   //CMS jecdata MPF Z+jet
-  ifstream inzj_data_MPFntI;  ifstream inzj_MC_MPFntI;//CMS jecdata MPF-notypeI Z+jet
-                              ifstream inzj_MC_MPFntI_2018;
+  /* Read CMS data and MC points */
+  ifstream inzj_data_pTbal;     ifstream inzj_MC_pTbal; //CMS jecdata pT Z+jet
+  ifstream inzj_data_MPF;       ifstream inzj_MC_MPF;   //CMS jecdata MPF Z+jet
+  ifstream inzj_data_MPFntI;    ifstream inzj_MC_MPFntI;//CMS jecdata MPF-notypeI Z+jet
+  ifstream inzj_MC_MPFntI_2018; ifstream inzj_MC_pTbal_2018;
 
   //CMS jecdataGH pT-balance
   inzj_data_pTbal.open("./data_and_MC_input/pTbal/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/zmmjet_data");
   inzj_MC_pTbal.open("./data_and_MC_input/pTbal/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/zmmjet_mc");
+  inzj_MC_pTbal_2018.open("./data_and_MC_input/pTbal/FullCombination_Zmm_17Sep2018_Autumn18_JECv17/2018pTbal_zmmjet_mc");
 
   //CMS jecdataGH MPF 
   inzj_data_MPF.open("./data_and_MC_input/MPF/jecdataGH/MPF_zmmjet_data");
@@ -371,10 +378,10 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inzj_MC_MPFntI.open("./data_and_MC_input/MPF/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/MPF-notypeI_zmmjet_mc");
   inzj_MC_MPFntI_2018.open("./data_and_MC_input/MPF/FullCombination_Zmm_17Sep2018_Autumn18_JECv17/2018MPF-notypeI_zmmjet_mc");
 
-  if (!inzj_data_pTbal.is_open()  || !inzj_MC_pTbal.is_open() ||
-      !inzj_data_MPF.is_open()    || !inzj_MC_MPF.is_open()   ||
-      !inzj_data_MPFntI.is_open() || !inzj_MC_MPFntI.is_open()||
-                                     !inzj_MC_MPFntI_2018.is_open())
+  if (!inzj_data_pTbal.is_open()     || !inzj_MC_pTbal.is_open() ||
+      !inzj_data_MPF.is_open()       || !inzj_MC_MPF.is_open()   ||
+      !inzj_data_MPFntI.is_open()    || !inzj_MC_MPFntI.is_open()||
+      !inzj_MC_MPFntI_2018.is_open() || !inzj_MC_pTbal_2018.is_open())
   {
     cout << "Error opening CMS data/MC point files!" << endl; return;
   }
@@ -400,6 +407,9 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   for (int step=0; step != nMC_MPFntI; ++step) { //CMS 2018 MPF-notypeI MC points
     inzj_MC_MPFntI_2018   >> zj_MC_pTp_MPFntI_2018[step] >> zj_MC_MPFntI_2018[step] >> zj_MC_MPFntI_ER_2018[step];
   }
+  for (int step=0; step != nMC_pTbal2018; ++step) { //CMS 2018 pTbal MC points
+    inzj_MC_pTbal_2018   >> zj_MC_pTp_pTbal_2018[step] >> zj_MC_pTbal_2018[step] >> zj_MC_pTbal_ER_2018[step];
+  }
 
   //Close the CMS MC / data point files
   inzj_data_pTbal.close(); 
@@ -409,6 +419,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inzj_data_MPFntI.close();
   inzj_MC_MPFntI.close();
   inzj_MC_MPFntI_2018.close();
+  inzj_MC_pTbal_2018.close();
 
   /* Read params from files to matrices */
 

@@ -67,21 +67,25 @@ void readValues() {
         }
 }
 */
+
+/*
+//2018 MPF notype1
 void readValues() {
         cout << "FullCombination_Zmm_2018ABCD" << endl;
 	TFile* f1 = new TFile("FullCombination_Zmm_17Sep2018_Autumn18_JECv17.root");
         TDirectory* dir = f1->GetDirectory("Run2018ABCD");
         TGraphErrors* MPF = (TGraphErrors*)dir->Get("MC_MPF-notypeI_CHS_a30_eta_00_13_L1L2Res");
 	MPF->Print();
-
-        cout << "FullCombination_Zmm_2018ABCD" << endl;
-	TFile* f2 = new TFile("FullCombination_Zmm_17Sep2018_Autumn18_JECv17.root");
-        TDirectory* dir2 = f2->GetDirectory("Run2018ABCD");
-        TGraphErrors* MPF2 = (TGraphErrors*)dir2->Get("MC_MPF-notypeI_CHS_a30_eta_00_13_L1L2L3");
-	MPF2->Print();
 }
-
-
+*/
+//2018 pTbal 
+void readValues() {
+        cout << "FullCombination_Zmm_2018ABCD" << endl;
+	TFile* f1 = new TFile("FullCombination_Zmm_17Sep2018_Autumn18_JECv17.root");
+        TDirectory* dir = f1->GetDirectory("Run2018ABCD");
+        TGraphErrors* MPF = (TGraphErrors*)dir->Get("MC_PtBal_CHS_a30_eta_00_13_L1L2Res");
+	MPF->Print();
+}
 
 
 
