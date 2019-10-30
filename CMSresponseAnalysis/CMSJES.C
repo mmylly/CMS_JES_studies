@@ -52,19 +52,18 @@ void CMSJES::Loop()
   TProfile* prMPFg  = new TProfile("prMPFg" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFlq = new TProfile("prMPFlq", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
-  string pfgenTitle   = ";#font[132]{p_{T,gen}^{jet} [GeV]}";
-  pfgenTitle         += ";#font[132]{p_{T,reco}^{jet} / p_{T,gen}^{jet}}";
-  string pfgenbTitle  = ";#font[132]{p_{T,gen}^{b-jet} [GeV]}";
-  pfgenbTitle        += ";#font[132]{p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}}";
-  string pfgengTitle  = ";#font[132]{p_{T,gen}^{g-jet} [GeV]}";
-  pfgengTitle        += ";#font[132]{p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}}";
-  string pfgenlqTitle = ";#font[132]{p_{T,gen}^{lq-jet} [GeV]}";
-  pfgenlqTitle       += ";#font[132]{p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}}";
-  TProfile* prpfgen   = new TProfile("prpfgen"  , pfgenTitle.c_str(), nbinsMPF-1, binsxMPF);
-  TProfile* prpfgenb  = new TProfile("prpfgenb" , pfgenbTitle.c_str(), nbinsMPF-1, binsxMPF);
-  TProfile* prpfgeng  = new TProfile("prpfgeng" , pfgengTitle.c_str(), nbinsMPF-1, binsxMPF);
-  TProfile* prpfgenlq = new TProfile("prpfgenlq", pfgenlqTitle.c_str(), nbinsMPF-1, binsxMPF);
-
+  string FTitle    = ";#font[132]{p_{T,gen}^{jet} [GeV]}";
+         FTitle   += ";#font[132]{p_{T,reco}^{jet} / p_{T,gen}^{jet}}";
+  string FbTitle   = ";#font[132]{p_{T,gen}^{b-jet} [GeV]}";
+         FbTitle  += ";#font[132]{p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}}";
+  string FgTitle   = ";#font[132]{p_{T,gen}^{g-jet} [GeV]}";
+         FgTitle  += ";#font[132]{p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}}";
+  string FlqTitle  = ";#font[132]{p_{T,gen}^{lq-jet} [GeV]}";
+         FlqTitle += ";#font[132]{p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}}";
+  TProfile* prF   = new TProfile("prF"  , FTitle.c_str(),   nbinsMPF-1, binsxMPF);
+  TProfile* prFb  = new TProfile("prFb" , FbTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prFg  = new TProfile("prFg" , FgTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prFlq = new TProfile("prFlq", FlqTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbins-1,binsx);
@@ -78,7 +77,6 @@ void CMSJES::Loop()
   THStack* FFstack = new THStack("", FFstackTitle.c_str());
 
   //Response function R_h (h for hadron)
-  //TF1 *fr_h = new TF1("frh","[5]*[0]*(1-[3]*[1]*pow(x,[2]+[4]-1))",0,4000);
   TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
 
   //Used in HCAL calibration, pion response parameters
@@ -91,7 +89,7 @@ void CMSJES::Loop()
 
   /* INITIALIZATIONS */
   Long64_t nbytes = 0, nb = 0;
-  TLorentzVector p4;            //Particle 4-momentum temp. 
+  TLorentzVector p4;            //4-vector temp. 
 
   TLorentzVector tag;           //Parton level tag object 4-vector
   TLorentzVector tag_r;	        //With muon smearing
@@ -773,8 +771,8 @@ void CMSJES::Loop()
     //Fill MPF histograms
     prMPF->Fill(pTp, R_MPF_r, weight);
 
-    //reco vs. gen jet fraction
-    prpfgen->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+    //F factors
+    prF->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
     //Loop partons to find where jets originated from
@@ -785,15 +783,15 @@ void CMSJES::Loop()
         if (abs((*prtn_pdgid)[j])==5) {	//b-jets
           FFb->Fill(pTp, weight);
           prMPFb->Fill(pTp, R_MPF_r, weight);
-          prpfgenb->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prFb->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else if (abs((*prtn_pdgid)[j])<5) { //Light quark (u,d,s,c) jets
           FFlq->Fill(pTp, weight);
           prMPFlq->Fill(pTp, R_MPF_r, weight);
-          prpfgenlq->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prFlq->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else if ((*prtn_pdgid)[j]==21) { //Gluon jets
           FFg->Fill(pTp, weight);
           prMPFg->Fill(pTp, R_MPF_r, weight);
-          prpfgeng->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prFg->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else continue; //Undetermined flavour
         FFa->Fill(pTp, weight);
         continue;	//Only one flavour may be associated with a jet
@@ -1337,10 +1335,7 @@ void CMSJES::InputNameConstructor() {
 }
 
 //-----------------------------------------------------------------------------
-//A function to combine several response function plots stored as TProfiles
-//in "CMSJES_X.root" files.
-//MConly is a Master flag, overriding all others if true
-void CMSJES::plotPT(int gen, int Nevt, bool MConly)
+void CMSJES::plotPT(int gen, int Nevt)
 {
 
   //Choose filenames to open
@@ -1422,7 +1417,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly)
 
   //Save plot
   string saveTo = "./plots/pT-bal/";
-  saveTo = saveTo + (MConly?"MC_":"") + savename;
+  saveTo = saveTo + "MC_" + savename;
 
   canv->Print(saveTo.c_str());
 
@@ -1430,7 +1425,7 @@ void CMSJES::plotPT(int gen, int Nevt, bool MConly)
   delete setup;  delete lz;   delete pad1;   delete canv;
 } //plotPT
 
-//PlotMPF
+//-------------------------------------------------------------------------------------------
 void CMSJES::plotMPF(int gen, int Nevt)
 {
   //Choose filenames to open
@@ -1507,7 +1502,83 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //Save plot
   canv_MPF->Print(savename.c_str());
-} //plotMPF
+}
+
+//-------------------------------------------------------------------------------------------
+void CMSJES::plotF(int gen, int Nevt)
+{
+  //Choose filenames to open
+  string nameAdd, zjetFile;
+  plotQuery(nameAdd, zjetFile, gen, Nevt);
+
+  //Initialize histograms and open ROOT files and fetch the stored objects
+  TFile* fzj = TFile::Open(zjetFile.c_str());
+  TProfile *przj_F=0; TProfile *przj_Fb=0; TProfile *przj_Fg=0; TProfile *przj_Flq=0;
+
+  //Create Histograms
+  fzj->GetObject("prF"   ,przj_F  );
+  fzj->GetObject("prFb"  ,przj_Fb );
+  fzj->GetObject("prFg"  ,przj_Fg );
+  fzj->GetObject("prFlq" ,przj_Flq);
+  TH1D* hzj_F   = przj_F->ProjectionX();
+  TH1D* hzj_Fb  = przj_Fb->ProjectionX();
+  TH1D* hzj_Fg  = przj_Fg->ProjectionX();
+  TH1D* hzj_Flq = przj_Flq->ProjectionX();
+
+  //Canvas
+  TCanvas* canvF = new TCanvas("canvF","",600,600);
+  canvF->SetLeftMargin(0.13);
+  canvF->SetBottomMargin(0.13);
+
+  hzj_F  ->SetMarkerStyle(kFullCircle);       hzj_F  ->SetMarkerColor(kBlack);
+  hzj_Fb ->SetMarkerStyle(kFullSquare);       hzj_Fb ->SetMarkerColor(kRed  );
+  hzj_Fg ->SetMarkerStyle(kFullTriangleUp);   hzj_Fg ->SetMarkerColor(kBlue+1);
+  hzj_Flq->SetMarkerStyle(kFullTriangleDown); hzj_Flq->SetMarkerColor(kGreen+2);
+  hzj_Fb->SetLineColor(kRed+1);
+  hzj_Fg->SetLineColor(kBlue+1);
+  hzj_Flq->SetLineColor(kGreen+2);
+
+  //Legend
+  TLegend* lz_F = new TLegend(0.62,0.70,0.89,0.89);
+  lz_F->SetBorderSize(0);
+  lz_F  ->AddEntry(hzj_F,   "#font[132]{All jets}",   "p");
+  lz_F ->AddEntry(hzj_Fb,  "#font[132]{b-jets}",     "p");
+  lz_F ->AddEntry(hzj_Fg,  "#font[132]{gluon jets}", "p");
+  lz_F->AddEntry(hzj_Flq, "#font[132]{lq-jets}",    "p");
+
+  //Title and axis setup
+  hzj_F->SetStats(0); //Suppress stat box
+  hzj_F->SetTitle("");
+  hzj_F->SetAxisRange(0.88,1.0,"Y"); //Vertical axis limits
+
+  hzj_F->GetYaxis()->SetTitleFont(133);
+  int titleSize = 24; //Common title size everywhere
+  hzj_F->GetYaxis()->SetTitleSize(titleSize);
+  hzj_F->GetXaxis()->SetMoreLogLabels();
+  hzj_F->GetXaxis()->SetNoExponent();
+  hzj_F->GetXaxis()->SetTitleFont(133);
+  hzj_F->GetXaxis()->SetTitleSize(titleSize);
+  canvF->SetLogx();
+  //hzj_F->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{Z+jet}");
+  hzj_F->GetYaxis()->SetTitleOffset(1.5);
+  hzj_F->GetXaxis()->SetTitleOffset(1);
+
+  //Savefile name setup
+  string savename = "./plots/F/Fcorr";
+  savename+=".eps";
+
+  //Plot
+  hzj_F->Draw("P");
+  hzj_Fb->Draw("SAMEP");
+  hzj_Fg->Draw("SAMEP");
+  hzj_Flq->Draw("SAMEP");
+  lz_F->Draw("SAMEP");
+
+  //Save plot
+  canvF->Print(savename.c_str());
+}
+
+
 
 //-----------------------------------------------------------------------------
 //User interface to choose which files to open in plotting functions
