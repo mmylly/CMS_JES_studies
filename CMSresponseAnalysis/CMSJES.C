@@ -41,25 +41,24 @@ void CMSJES::Loop()
 
   string pTpTitle="c#tau=1 cm"; string MPFTitle="c#tau=1 cm";
   
-
   pTpTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]}; p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prpTbal = new TProfile("prpTbal", pTpTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
-  MPFTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]};R_{MPF}";
+  MPFTitle += ";p_{T,tag}^{MC} [GeV];R_{MPF}";
   TProfile* prMPF   = new TProfile("prMPF"  , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFb  = new TProfile("prMPFb" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFg  = new TProfile("prMPFg" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFlq = new TProfile("prMPFlq", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
-  string FTitle    = ";#font[132]{p_{T,gen}^{jet} [GeV]}";
-         FTitle   += ";#font[132]{p_{T,reco}^{jet} / p_{T,gen}^{jet}}";
-  string FbTitle   = ";#font[132]{p_{T,gen}^{b-jet} [GeV]}";
-         FbTitle  += ";#font[132]{p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}}";
-  string FgTitle   = ";#font[132]{p_{T,gen}^{g-jet} [GeV]}";
-         FgTitle  += ";#font[132]{p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}}";
-  string FlqTitle  = ";#font[132]{p_{T,gen}^{lq-jet} [GeV]}";
-         FlqTitle += ";#font[132]{p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}}";
+  string FTitle    = ";p_{T,gen}^{jet} [GeV]";
+         FTitle   += ";p_{T,reco}^{jet} / p_{T,gen}^{jet}";
+  string FbTitle   = ";p_{T,gen}^{b-jet} [GeV]";
+         FbTitle  += ";p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}";
+  string FgTitle   = ";p_{T,gen}^{g-jet} [GeV]";
+         FgTitle  += ";p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}";
+  string FlqTitle  = ";p_{T,gen}^{lq-jet} [GeV]";
+         FlqTitle += ";p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}";
   TProfile* prF   = new TProfile("prF"  , FTitle.c_str(),   nbinsMPF-1, binsxMPF);
   TProfile* prFb  = new TProfile("prFb" , FbTitle.c_str(),  nbinsMPF-1, binsxMPF);
   TProfile* prFg  = new TProfile("prFg" , FgTitle.c_str(),  nbinsMPF-1, binsxMPF);
@@ -1435,37 +1434,48 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
   TFile* fzj = TFile::Open(zjetFile.c_str());
-  TProfile *przj_MPF=0;
+  TProfile *przj_MPF=0; TProfile *przj_MPFb=0; TProfile *przj_MPFg=0; TProfile *przj_MPFlq=0;
 
   /* 1: Z+jet */
   fzj->GetObject("prMPF" ,przj_MPF);
-
-  TH1D* hzj_MPF = przj_MPF->ProjectionX();
+  fzj->GetObject("prMPFb" ,przj_MPFb);
+  fzj->GetObject("prMPFg" ,przj_MPFg);
+  fzj->GetObject("prMPFlq" ,przj_MPFlq);
+  TH1D* hzj_MPF   = przj_MPF  ->ProjectionX();
+  TH1D* hzj_MPFb  = przj_MPFb ->ProjectionX();
+  TH1D* hzj_MPFg  = przj_MPFg ->ProjectionX();
+  TH1D* hzj_MPFlq = przj_MPFlq->ProjectionX();
 
   //CMS MC points
-  TGraphErrors* mc_zj_MPFntI = new TGraphErrors(nMC_MPFntI,zj_MC_pTp_MPFntI,
-                                                    zj_MC_MPFntI,0,zj_MC_MPFntI_ER);
   TGraphErrors* mc_zj_MPFntI_2018 = new TGraphErrors(nMC_MPFntI,zj_MC_pTp_MPFntI_2018,
                                                     zj_MC_MPFntI_2018,0,zj_MC_MPFntI_ER_2018);
-
-
 
   //Canvas
   TCanvas* canv_MPF = new TCanvas("MPF","",600,600);
   canv_MPF->SetLeftMargin(0.13);	//To fit vertical axis labels
   canv_MPF->SetBottomMargin(0.13);
-  //Style setup
+
   hzj_MPF ->SetLineColor( kBlack);
-  mc_zj_MPFntI->SetMarkerStyle( kOpenCircle); mc_zj_MPFntI->SetMarkerColor( kBlack  );
+
+  hzj_MPF  ->SetMarkerStyle(kFullCircle);       hzj_MPF  ->SetMarkerColor(kBlack);
+  hzj_MPFb ->SetMarkerStyle(kFullSquare);       hzj_MPFb ->SetMarkerColor(kRed  );
+  hzj_MPFg ->SetMarkerStyle(kFullTriangleUp);   hzj_MPFg ->SetMarkerColor(kBlue+1);
+  hzj_MPFlq->SetMarkerStyle(kFullTriangleDown); hzj_MPFlq->SetMarkerColor(kGreen+2);
+  hzj_MPFb->SetLineColor(kRed+1);
+  hzj_MPFg->SetLineColor(kBlue+1);
+  hzj_MPFlq->SetLineColor(kGreen+2);
+
+
   mc_zj_MPFntI_2018->SetMarkerStyle( kOpenSquare); mc_zj_MPFntI_2018->SetMarkerColor( kBlack  );
 
 
   //Legend
   TLegend* lz_MPF = new TLegend(0.62,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
-  //lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our Z+jet MPF MC}", "l");
-  lz_MPF->AddEntry(hzj_MPF, "#font[132]{Our toy MC      }", "l");
-  lz_MPF->AddEntry(mc_zj_MPFntI,      "#font[132]{FullSim 2016GH}", "p");
+  lz_MPF->AddEntry(hzj_MPF, "All jets"  , "p");
+  lz_MPF->AddEntry(hzj_MPFb, "b-jets"    , "p");
+  lz_MPF->AddEntry(hzj_MPFg, "gluon jets", "p");
+  lz_MPF->AddEntry(hzj_MPFlq, "lq-jets"   , "p");
   lz_MPF->AddEntry(mc_zj_MPFntI_2018, "#font[132]{FullSim 2018ABCD}", "p");
 
   //Title and axis setup
@@ -1473,9 +1483,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF->SetTitle("");
   //hzj_MPF->SetLineWidth(2);
   hzj_MPF->SetAxisRange(0.82,1.02,"Y"); //Vertical axis limits
-  //hzj_MPF->SetAxisRange(0.7,1.05,"Y"); //Vertical axis limits
 
-  //hzj_MPF->SetAxisRange(0.55,1.1,"Y"); //Vertical axis limits
   hzj_MPF->GetYaxis()->SetTitleFont(133);
   int titleSize = 24; //Common title size everywhere
   hzj_MPF->GetYaxis()->SetTitleSize(titleSize);
@@ -1484,20 +1492,21 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF->GetXaxis()->SetTitleFont(133);
   hzj_MPF->GetXaxis()->SetTitleSize(titleSize);
   canv_MPF->SetLogx();
-  hzj_MPF->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{Z+jet}");
   hzj_MPF->GetYaxis()->SetTitleOffset(1.5);
   hzj_MPF->GetXaxis()->SetTitleOffset(1);
+  gPad->SetTickx();   gPad->SetTicky();
 
   //Savefile name setup
   string savename = "./plots/mpf/MPF_zmmjet";
   string MPFtitle = hzj_MPF->GetTitle();
-  cout << MPFtitle << endl;
   savename+=".eps";
 
   //Plot
-  hzj_MPF->Draw();
-  //mc_zj_MPFntI->Draw("P SAME");
+  hzj_MPF->Draw("p");
   mc_zj_MPFntI_2018->Draw("P SAME");
+  hzj_MPFb->Draw("SAMEP");
+  hzj_MPFg->Draw("SAMEP");
+  hzj_MPFlq->Draw("SAMEP");
   lz_MPF->Draw();
 
   //Save plot
@@ -1527,7 +1536,7 @@ void CMSJES::plotF(int gen, int Nevt)
 
   //Canvas
   TCanvas* canvF = new TCanvas("canvF","",600,600);
-  canvF->SetLeftMargin(0.13);
+  canvF->SetLeftMargin(0.15);
   canvF->SetBottomMargin(0.13);
 
   hzj_F  ->SetMarkerStyle(kFullCircle);       hzj_F  ->SetMarkerColor(kBlack);
@@ -1539,29 +1548,28 @@ void CMSJES::plotF(int gen, int Nevt)
   hzj_Flq->SetLineColor(kGreen+2);
 
   //Legend
-  TLegend* lz_F = new TLegend(0.62,0.70,0.89,0.89);
+  TLegend* lz_F = new TLegend(0.58,0.2,0.89,0.40);
   lz_F->SetBorderSize(0);
-  lz_F  ->AddEntry(hzj_F,   "#font[132]{All jets}",   "p");
-  lz_F ->AddEntry(hzj_Fb,  "#font[132]{b-jets}",     "p");
-  lz_F ->AddEntry(hzj_Fg,  "#font[132]{gluon jets}", "p");
+  lz_F  ->AddEntry(hzj_F, "#font[132]{All jets}",   "p");
+  lz_F ->AddEntry(hzj_Fb, "#font[132]{b-jets}",     "p");
+  lz_F ->AddEntry(hzj_Fg, "#font[132]{gluon jets}", "p");
   lz_F->AddEntry(hzj_Flq, "#font[132]{lq-jets}",    "p");
 
   //Title and axis setup
   hzj_F->SetStats(0); //Suppress stat box
   hzj_F->SetTitle("");
-  hzj_F->SetAxisRange(0.88,1.0,"Y"); //Vertical axis limits
+  hzj_F->SetAxisRange(0.8,1.0,"Y"); //Vertical axis limits
 
-  hzj_F->GetYaxis()->SetTitleFont(133);
-  int titleSize = 24; //Common title size everywhere
-  hzj_F->GetYaxis()->SetTitleSize(titleSize);
+  //hzj_F->GetYaxis()->SetTitleFont(133);
+  //int titleSize = 20; //Common title size everywhere
+  //hzj_F->GetYaxis()->SetTitleSize(titleSize);
   hzj_F->GetXaxis()->SetMoreLogLabels();
   hzj_F->GetXaxis()->SetNoExponent();
-  hzj_F->GetXaxis()->SetTitleFont(133);
-  hzj_F->GetXaxis()->SetTitleSize(titleSize);
   canvF->SetLogx();
-  //hzj_F->GetYaxis()->SetTitle("#font[12]{R}_{MPF}^{Z+jet}");
-  hzj_F->GetYaxis()->SetTitleOffset(1.5);
-  hzj_F->GetXaxis()->SetTitleOffset(1);
+  hzj_F->GetYaxis()->SetTitleOffset(1.8);
+  hzj_F->GetXaxis()->SetTitleOffset(1.2);
+
+  gPad->SetTickx();   gPad->SetTicky();
 
   //Savefile name setup
   string savename = "./plots/F/Fcorr";
