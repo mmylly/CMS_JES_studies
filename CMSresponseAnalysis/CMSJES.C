@@ -777,8 +777,6 @@ void CMSJES::Loop()
     prpfgen->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
-    //                   SUCH AS MC-DATA CORRECTION FACTORS F
-    //  N.B. Results are meaningful only if A,B,C params already optimized.
     //Loop partons to find where jets originated from
     for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
       //prtn_tag=0 for outgoing hard process partons
@@ -787,15 +785,15 @@ void CMSJES::Loop()
         if (abs((*prtn_pdgid)[j])==5) {	//b-jets
           FFb->Fill(pTp, weight);
           prMPFb->Fill(pTp, R_MPF_r, weight);
-          prpfgenb->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prpfgenb->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else if (abs((*prtn_pdgid)[j])<5) { //Light quark (u,d,s,c) jets
           FFlq->Fill(pTp, weight);
           prMPFlq->Fill(pTp, R_MPF_r, weight);
-          prpfgenlq->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prpfgenlq->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else if ((*prtn_pdgid)[j]==21) { //Gluon jets
           FFg->Fill(pTp, weight);
           prMPFg->Fill(pTp, R_MPF_r, weight);
-          prpfgeng->Fill(probe_pf.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prpfgeng->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
         } else continue; //Undetermined flavour
         FFa->Fill(pTp, weight);
         continue;	//Only one flavour may be associated with a jet

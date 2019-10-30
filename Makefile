@@ -13,7 +13,7 @@ VPATH= events:jetanalysis:lib:pythia6:pythia8:herwig:ptcut:greedy_pythia8:greedy
 INCLUDE := $(INCLUDE) -I.
 
 # Parameter vals:
-NUM_EVT := 100000
+NUM_EVT := 100
 MODE := 3
 NUM_PROC := 4
 START_IDX := 0
