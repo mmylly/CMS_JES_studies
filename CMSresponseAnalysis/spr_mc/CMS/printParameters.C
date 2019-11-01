@@ -16,8 +16,8 @@ void printParameters() {
   //double C = 1.095; double a = -1.544; double m = -0.635; // Km HHe |eta|<0.5
   //double C = 1.036; double a = -1.976; double m = -0.463; // Kp EHE |eta|<0.5
   //double C = 1.092; double a = -1.405; double m = -0.621; // Kp HHe |eta|<0.5
-  double C = 1.036; double a = -1.976; double m = -0.463; // pion EHE |eta|<1.3
-  double C = 1.092; double a = -1.405; double m = -0.621; // pion HHe |eta|<1.3
+  //double C = 1.076; double a = -1.403; double m = -0.354; // pion EHE |eta|<1.3
+  double C = 1.123; double a = -1.345; double m = -0.579; // pion HHe |eta|<1.3
 
   for (int i=0; i!=53; ++i) {
     cout << i << " " << C << " " << -1*a << " " << m+1 << endl;

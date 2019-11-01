@@ -1049,7 +1049,157 @@ void CMSJES::Loop()
   delete fr_h; delete fr_hcal;
 } //CMSJES::Loop
 
+void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
+                      double Bfield, TF1* frH, double& retMC, double& retH, double& retEHE,
+                      double& retHHe)
+{
+  retMC = 0.0; retH = 0.0; retEHE = 0.0; retHHe = 0.0;
+  bool zero = false; //If true, return zero responses
 
+  double sfCh  = 0.0; //Charged particle step function
+  double sfN   = 0.0; //Neutral hadron step function
+
+  //Responses for different groups
+  double cat1 = 0.0;     double cat2 = 0.0;     double cat3 = 0.0;
+  double cat1_EHE = 0.0; double cat2_EHE = 0.0; double cat3_EHE = 0.0;
+  double cat1_HHe = 0.0; double cat2_HHe = 0.0; double cat3_HHe = 0.0;
+
+  double respPi_EHE = 0.0; double respPi_HHe = 0.0; //Pion responses for ECAL and HCAL
+
+  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles // 0.2
+  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
+
+  //Check if particle outside good eta region
+  if (fabs(pseudorap) > 5.2) zero = true;
+
+  unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
+
+  //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
+  if (abs(pdgid)==111 || abs(pdgid)==221) { 
+    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << pdgid
+         << "Returning zero response" << endl; zero = true;
+  }
+
+  //Neutrino responses are zero
+  if (isNeutrino(abs(pdgid))) zero = true;
+
+  //CALCULATE RESPONSES
+  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
+    
+    //Pion EHE and HHe responses from |eta|<1.3
+    frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                       params_pi_EHE[row][2], 1, 0, 1); 
+    respPi_EHE = frH->Eval(energy);
+
+    frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                       params_pi_HHe[row][2], 1, 0, 1); 
+    respPi_HHe = frH->Eval(energy);
+    //....
+
+    //cat1 cat2 cat3 responsens
+    frH->SetParameters(params_cat1[row][0], params_cat1[row][1],
+                       params_cat1[row][2], 1, 0, 1);
+    cat1 = frH->Eval(energy);
+
+    frH->SetParameters(params_cat2[row][0], params_cat2[row][1],
+                       params_cat2[row][2], 1, 0, 1);
+    cat2 = frH->Eval(energy);
+
+    frH->SetParameters(params_cat3[row][0], params_cat3[row][1],
+                       params_cat3[row][2], 1, 0, 1);
+    cat3 = frH->Eval(energy);
+
+    //EHE responses
+    cat1_EHE = cat1*(respPi_EHE/(0.45*respPi_HHe + 0.55*respPi_EHE));
+    cat2_EHE = cat2*(respPi_EHE/(0.45*respPi_HHe + 0.55*respPi_EHE));
+    cat3_EHE = cat3*(respPi_EHE/(0.45*respPi_HHe + 0.55*respPi_EHE));
+
+    //HHe responses
+    cat1_HHe = cat1*(respPi_HHe/(0.45*respPi_HHe + 0.55*respPi_EHE));
+    cat2_HHe = cat2*(respPi_HHe/(0.45*respPi_HHe + 0.55*respPi_EHE));
+    cat3_HHe = cat3*(respPi_HHe/(0.45*respPi_HHe + 0.55*respPi_EHE));
+
+    switch (pdgid) {
+      //PHOTON
+      case 20 :
+      case 22 :
+        retMC = sfCh;
+        break;
+
+      //LEPTONS
+      case  11 : //e
+      case -11 : //e
+        retMC = sfCh; 
+        break;
+      case  13 : //mu
+      case -13 : //mu
+        retMC = sfCh; 
+        break;
+      
+      //cat1: antineutron, K0S, K0L, pi+, pi-
+      case -2112 : //nbar
+      case   310 : //K^0_S
+      case   130 : //K^0_L
+      case   211 : //pi+
+      case  -211 : //pi-
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = cat1*sfN; 
+        retH = cat1*sfN;
+        retEHE = cat1_EHE*sfN;
+        retHHe = cat1_HHe*sfN;
+        break;
+
+      //cat2: neutron, antiproton, K+, K-
+      case  2112 : //n
+      case -2212 : //pbar
+      case   321 : //K+
+      case  -321 : //K-
+      case -3122 : //anti-Lambda
+      case -3212 : //anti-Sigma^0
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = cat2*sfN; 
+        retH = cat2*sfN;
+        retEHE = cat2_EHE*sfN;
+        retHHe = cat2_HHe*sfN;
+        break;
+
+      //cat3: proton
+      case  2212 : //p
+      case  3122 : //Lambda
+      case  3212 : //Sigma^0
+      case  3322 : //Xi^0         cat=4
+      case -3322 : //anti-Xi^0
+      case  3312 : //Xi^-         cat=5
+      case -3312 : //Xi^-         cat=4
+      case  3112 : //Sigma^-      cat=4
+      case -3112 : //anti-Sigma^-
+      case  3222 : //Sigma^+      cat=4
+      case -3222 : //anti-Sigma^+
+      case  3334 : //Omega^-      cat=6
+      case -3334 : //anti-Omega^- cat=5
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = cat3*sfN; 
+        retH = cat3*sfN;
+        retEHE = cat3_EHE*sfN;
+        retHHe = cat3_HHe*sfN;
+        break;
+
+      default : 
+        zero=true;
+        cout << "Unknown particle PDG: " << pdgid << endl;
+        continue;	 
+    }
+  } 
+
+  //Set results. Check for NaN and negative results if positive demanded
+  if (zero || isnan(retMC) || retMC  <=0) retMC  =0;
+  if (zero || isnan(retH)  || retH   <=0) retH   =0;
+  if (zero || isnan(retH)  || retEHE <=0) retEHE =0;
+  if (zero || isnan(retH)  || retHHe <=0) retHHe =0;
+
+} //Response
+
+/*
 //-----------------------------------------------------------------------------
 //A function to calculate the MC hadron response R 
 //Params:	id		Particle PDGID
@@ -1265,143 +1415,11 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   if (zero || isnan(retH)   || retH  <=0 ) retHHe =0;
 
 } //Response
-
-
-/*
-void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
-                      double Bfield, TF1* frH, double& retMC, double& retH, double& retEHE,
-                      double& retHHe)
-{
-  retMC = 0.0; retH = 0.0; retEHE = 0.0; retHHe = 0.0;
-  bool zero = false; //If true, return zero responses
-
-  double sfCh  = 0.0; //Charged particle step function
-  double sfN   = 0.0; //Neutral hadron step function
-
-  //Responses for different groups
-  double cat1 = 0.0;     double cat2 = 0.0;     double cat3 = 0.0;
-  double cat1_EHE = 0.0; double cat2_EHE = 0.0; double cat3_EHE = 0.0;
-  double cat1_HHe = 0.0; double cat2_HHe = 0.0; double cat3_HHE = 0.0;
-
-  double respPi_EHE = 0.0; double respPi_HHe = 0.0; //Pion responses for ECAL and HCAL
-
-  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles // 0.2
-  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
-
-  //Check if particle outside good eta region
-  if (fabs(pseudorap) > 5.2) zero = true;
-
-  unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
-
-  //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
-  if (abs(pdgid)==111 || abs(pdgid)==221) { 
-    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << pdgid
-         << "Returning zero response" << endl; zero = true;
-  }
-
-  //Neutrino responses are zero
-  if (isNeutrino(abs(pdgid))) zero = true;
-
-  //CALCULATE RESPONSES
-  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
-    
-    //Pion EHE and HHe responses
-    frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
-                       params_pi_EHE[row][2], 1, 0, 1); 
-    respPi_EHE = frH->Eval(energy);
-
-    frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
-                       params_pi_HHe[row][2], 1, 0, 1); 
-    respPi_HHe = frH->Eval(energy);
-    //....
-
-
-    frH->SetParameters(params_cat1[row][0], params_cat1[row][1],
-                       params_cat1[row][2], 1, 0, 1);
-    cat1 = frH->Eval(energy);
-
-    frH->SetParameters(params_cat2[row][0], params_cat2[row][1],
-                       params_cat2[row][2], 1, 0, 1);
-    cat2 = frH->Eval(energy);
-
-    frH->SetParameters(params_cat3[row][0], params_cat3[row][1],
-                       params_cat3[row][2], 1, 0, 1);
-    cat3 = frH->Eval(energy);
-
-    switch (pdgid) {
-      //PHOTON
-      case 20 :
-      case 22 :
-        retMC = sfCh;
-        break;
-
-      //LEPTONS
-      case  11 : //e
-      case -11 : //e
-        retMC = sfCh; 
-        break;
-      case  13 : //mu
-      case -13 : //mu
-        retMC = sfCh; 
-        break;
-      
-      //cat1: antineutron, K0S, K0L, pi+, pi-
-      case -2112 : //nbar
-      case   310 : //K^0_S
-      case   130 : //K^0_L
-      case   211 : //pi+
-      case  -211 : //pi-
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat1*sfN; 
-        retH = cat1*sfN;
-        break;
-
-      //cat2: neutron, antiproton, K+, K-
-      case  2112 : //n
-      case -2212 : //pbar
-      case   321 : //K+
-      case  -321 : //K-
-      case -3122 : //anti-Lambda
-      case -3212 : //anti-Sigma^0
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat2*sfN; 
-        retH = cat2*sfN;
-        break;
-
-      //cat3: proton
-      case  2212 : //p
-      case  3122 : //Lambda
-      case  3212 : //Sigma^0
-      case  3322 : //Xi^0         cat=4
-      case -3322 : //anti-Xi^0
-      case  3312 : //Xi^-         cat=5
-      case -3312 : //Xi^-         cat=4
-      case  3112 : //Sigma^-      cat=4
-      case -3112 : //anti-Sigma^-
-      case  3222 : //Sigma^+      cat=4
-      case -3222 : //anti-Sigma^+
-      case  3334 : //Omega^-      cat=6
-      case -3334 : //anti-Omega^- cat=5
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat3*sfN; 
-        retH = cat3*sfN;
-        break;
-
-      default : 
-        zero=true;
-        cout << "Unknown particle PDG: " << pdgid << endl;
-        continue;	 
-    }
-  } 
-
-  //Set results. Check for NaN and negative results if positive demanded
-  if (zero || isnan(retMC)  || retMC <=0 ) retMC  =0;
-  if (zero || isnan(retH)   || retH  <=0 ) retH   =0;
-  if (zero || isnan(retH)   || retH  <=0 ) retEHE =0;
-  if (zero || isnan(retH)   || retH  <=0 ) retHHe =0;
-
-} //Response
 */
+
+
+
+
 
 //-----------------------------------------------------------------------------
 //Check if this particle is a neutrino
@@ -1610,9 +1628,9 @@ void CMSJES::plotMPF(int gen, int Nevt)
   TLegend* lz_MPF = new TLegend(0.62,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
   lz_MPF->AddEntry(hzj_MPF, "All jets"  , "p");
-  lz_MPF->AddEntry(hzj_MPFb, "b-jets"    , "p");
-  lz_MPF->AddEntry(hzj_MPFg, "gluon jets", "p");
-  lz_MPF->AddEntry(hzj_MPFlq, "lq-jets"   , "p");
+  //lz_MPF->AddEntry(hzj_MPFb, "b-jets"    , "p");
+  //lz_MPF->AddEntry(hzj_MPFg, "gluon jets", "p");
+  //lz_MPF->AddEntry(hzj_MPFlq, "lq-jets"   , "p");
   lz_MPF->AddEntry(mc_zj_MPFntI_2018, "#font[132]{FullSim 2018ABCD}", "p");
 
   //Title and axis setup
@@ -1641,9 +1659,9 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Plot
   hzj_MPF->Draw("p");
   mc_zj_MPFntI_2018->Draw("P SAME");
-  hzj_MPFb->Draw("SAMEP");
-  hzj_MPFg->Draw("SAMEP");
-  hzj_MPFlq->Draw("SAMEP");
+  //hzj_MPFb->Draw("SAMEP");
+  //hzj_MPFg->Draw("SAMEP");
+  //hzj_MPFlq->Draw("SAMEP");
   lz_MPF->Draw();
 
   //Save plot
