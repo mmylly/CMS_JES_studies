@@ -50,7 +50,11 @@ void CMSJES::Loop()
   TProfile* prMPFb  = new TProfile("prMPFb" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFg  = new TProfile("prMPFg" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFlq = new TProfile("prMPFlq", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPFud = new TProfile("prMPFud", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPFs  = new TProfile("prMPFs" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prMPFc  = new TProfile("prMPFc" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
+  //Jet response
   string RjetTitle    = ";p_{T,gen}^{jet} [GeV]";
          RjetTitle   += ";p_{T,reco}^{jet} / p_{T,gen}^{jet}";
   string RjetbTitle   = ";p_{T,gen}^{b-jet} [GeV]";
@@ -59,10 +63,19 @@ void CMSJES::Loop()
          RjetgTitle  += ";p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}";
   string RjetlqTitle  = ";p_{T,gen}^{lq-jet} [GeV]";
          RjetlqTitle += ";p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}";
+  string RjetudTitle  = ";p_{T,gen}^{ud-jet} [GeV]";
+         RjetudTitle += ";p_{T,reco}^{ud-jet} / p_{T,gen}^{ud-jet}";
+  string RjetsTitle   = ";p_{T,gen}^{s-jet} [GeV]";
+         RjetsTitle  += ";p_{T,reco}^{s-jet} / p_{T,gen}^{s-jet}";
+  string RjetcTitle   = ";p_{T,gen}^{c-jet} [GeV]";
+         RjetcTitle  += ";p_{T,reco}^{c-jet} / p_{T,gen}^{c-jet}";
   TProfile* prRjet   = new TProfile("prRjet"  , RjetTitle.c_str(),   nbinsMPF-1, binsxMPF);
   TProfile* prRjetb  = new TProfile("prRjetb" , RjetbTitle.c_str(),  nbinsMPF-1, binsxMPF);
   TProfile* prRjetg  = new TProfile("prRjetg" , RjetgTitle.c_str(),  nbinsMPF-1, binsxMPF);
   TProfile* prRjetlq = new TProfile("prRjetlq", RjetlqTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prRjetud = new TProfile("prRjetud", RjetudTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prRjets = new TProfile("prRjets", RjetsTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prRjetc = new TProfile("prRjetc", RjetcTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbins-1,binsx);
@@ -654,7 +667,7 @@ void CMSJES::Loop()
         
         //Changing HCAL cluster sigma threshold with uncalibrated cell energy
         cellSigma = sqrt(sigma->GetBinContent(i,j));
-        cellSigma *= (1 + exp(-cht->GetBinContent(i,j)/100));
+        //cellSigma *= (1 + exp(-cht->GetBinContent(i,j)/100));
         
         //HCAL calibration
         if (nhHCAL->GetBinContent(i,j) > 0.0) {
@@ -768,7 +781,7 @@ void CMSJES::Loop()
     double Rjet;
     Rjet = probe_pf.Pt()/probe_g.Pt();
 
-    //Rjet 
+    //All jets
     prRjet->Fill(probe_g.Pt(), Rjet, weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
@@ -786,6 +799,17 @@ void CMSJES::Loop()
           FFlq->Fill(pTp, weight);
           prMPFlq->Fill(pTp, R_MPF_r, weight);
           prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
+
+          if (abs((*prtn_pdgid)[j])==4) { //c-jets
+            prMPFc->Fill(pTp, R_MPF_r, weight);
+            prRjetc->Fill(probe_g.Pt(), Rjet, weight);            
+          } else if (abs((*prtn_pdgid)[j])==3) { //s-jets
+            prMPFs->Fill(pTp, R_MPF_r, weight);
+            prRjets->Fill(probe_g.Pt(), Rjet, weight);         
+          } else if (abs((*prtn_pdgid)[j])<3) { //(u,d)
+            prMPFud->Fill(pTp, R_MPF_r, weight);
+            prRjetud->Fill(probe_g.Pt(), Rjet, weight);  
+          }
 
         } else if ((*prtn_pdgid)[j]==21) { //Gluon jets
           FFg->Fill(pTp, weight);
@@ -997,7 +1021,7 @@ void CMSJES::Loop()
   cout << "Z invariant mass:       " << invM     << endl;
   cout << "Tag eta pT:             " << tagCut   << endl;
   cout << "Alpha:                  " << alpha    << endl;
-  cout << "Probe eta pT:           " << alpha    << endl;
+  cout << "Probe eta pT:           " << probeCut << endl;
   cout << "Btb tag-probe:          " << b2b      << endl << endl;
 
   /*
@@ -1678,16 +1702,55 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str());
   TProfile *przj_Rjet=0; TProfile *przj_Rjetb=0; TProfile *przj_Rjetg=0; TProfile *przj_Rjetlq=0;
+  TProfile *przj_Rjetud=0;
 
   //Create Histograms
   fzj->GetObject("prRjet"   ,przj_Rjet  );
   fzj->GetObject("prRjetb"  ,przj_Rjetb );
   fzj->GetObject("prRjetg"  ,przj_Rjetg );
   fzj->GetObject("prRjetlq" ,przj_Rjetlq);
+  fzj->GetObject("prRjetud"  ,przj_Rjetud);
   TH1D* hzj_Rjet   = przj_Rjet  ->ProjectionX();
   TH1D* hzj_Rjetb  = przj_Rjetb ->ProjectionX();
   TH1D* hzj_Rjetg  = przj_Rjetg ->ProjectionX();
   TH1D* hzj_Rjetlq = przj_Rjetlq->ProjectionX();
+  TH1D* hzj_Rjetud = przj_Rjetud->ProjectionX();
+
+  //For computing the difference between b and g responses:
+  TH1D* h_diffbg = (TH1D*)hzj_Rjetb->Clone("h_diffbg");
+  TH1D* h_diffudg = (TH1D*)hzj_Rjetud->Clone("h_diffudg");
+  h_diffbg->Add(hzj_Rjetg,-1); //b-response - g-response
+  h_diffudg->Add(hzj_Rjetg,-1); //b-response - g-response
+
+  h_diffbg  ->SetMarkerStyle(kFullSquare); h_diffbg ->SetMarkerColor(kBlue+1);
+  h_diffudg ->SetMarkerStyle(kFullSquare); h_diffudg->SetMarkerColor(kRed+1 );
+  h_diffbg ->SetLineColor(kBlue+1); h_diffudg->SetLineColor(kRed+1 );
+
+  TCanvas* canv_diffg = new TCanvas("canv_diffg","",600,600);
+  canv_diffg->SetLeftMargin(0.15);
+  canv_diffg->SetBottomMargin(0.13);
+
+  //Legend
+  TLegend* lz_diffg = new TLegend(0.62,0.70,0.89,0.89);
+  lz_diffg->SetBorderSize(0);
+  lz_diffg->AddEntry(h_diffbg, "b-jets");
+  lz_diffg->AddEntry(h_diffudg, "ud-jets");
+
+  h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
+  h_diffbg->GetXaxis()->SetTitle("p_{T}^{gen} [GeV]");
+  h_diffbg->GetYaxis()->SetTitleOffset(1.8);
+  h_diffbg->GetXaxis()->SetTitleOffset(1.2);
+
+  h_diffbg->SetStats(0); //Suppress stat box
+  h_diffbg->SetTitle("");
+  h_diffbg->SetAxisRange(0.0,0.2,"Y"); //Vertical axis limits
+  h_diffbg->Draw("P");
+  h_diffudg->Draw("SAMEP");
+  lz_diffg->Draw("SAMEP");
+  canv_diffg->SetLogx();
+  canv_diffg->Print("./plots/Rjet/gluonDiff.eps");
+  
+  
 
   //Canvas
   TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",600,600);

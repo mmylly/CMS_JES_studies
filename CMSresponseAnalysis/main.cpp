@@ -10,10 +10,9 @@ int main() {
   CMSJES d;	//Init. This asks for a file, just choose once
   //Available modes
   // 0: Loop single sample
-  // 1: MultiLoop (multithreading: similar gamma+jet and b-enriched samples)
-  // 2: Fit
-  // 3: run many samples and produce their plots at once
-  // 4: Loop() + flavCorr for debug
+  // 1: MPF plot
+  // 2: Loop one sample and produce all the plots
+  // 3: Loop + MPF
   int mode = 2;
 
   switch (mode) {
@@ -23,15 +22,16 @@ int main() {
       d.plotMPF(3,-1);
       break;
     case 2 :
-      d.Loop();
+      //d.Loop();
       d.plotMPF(3,-1);
       d.plotRjet(3,-1);
       d.plotF(3,-1);
       break;
     case 3 :
-      //d.Loop();
-      d.plotRjet(3,-1);
-      d.plotF(3,-1);
+      d.Loop();
+      d.plotMPF(3,-1);
+      //d.plotRjet(3,-1);
+      //d.plotF(3,-1);
       break;
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }
