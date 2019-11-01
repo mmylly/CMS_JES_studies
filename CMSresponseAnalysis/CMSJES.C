@@ -51,18 +51,18 @@ void CMSJES::Loop()
   TProfile* prMPFg  = new TProfile("prMPFg" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFlq = new TProfile("prMPFlq", MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
-  string FTitle    = ";p_{T,gen}^{jet} [GeV]";
-         FTitle   += ";p_{T,reco}^{jet} / p_{T,gen}^{jet}";
-  string FbTitle   = ";p_{T,gen}^{b-jet} [GeV]";
-         FbTitle  += ";p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}";
-  string FgTitle   = ";p_{T,gen}^{g-jet} [GeV]";
-         FgTitle  += ";p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}";
-  string FlqTitle  = ";p_{T,gen}^{lq-jet} [GeV]";
-         FlqTitle += ";p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}";
-  TProfile* prF   = new TProfile("prF"  , FTitle.c_str(),   nbinsMPF-1, binsxMPF);
-  TProfile* prFb  = new TProfile("prFb" , FbTitle.c_str(),  nbinsMPF-1, binsxMPF);
-  TProfile* prFg  = new TProfile("prFg" , FgTitle.c_str(),  nbinsMPF-1, binsxMPF);
-  TProfile* prFlq = new TProfile("prFlq", FlqTitle.c_str(), nbinsMPF-1, binsxMPF);
+  string RjetTitle    = ";p_{T,gen}^{jet} [GeV]";
+         RjetTitle   += ";p_{T,reco}^{jet} / p_{T,gen}^{jet}";
+  string RjetbTitle   = ";p_{T,gen}^{b-jet} [GeV]";
+         RjetbTitle  += ";p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}";
+  string RjetgTitle   = ";p_{T,gen}^{g-jet} [GeV]";
+         RjetgTitle  += ";p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}";
+  string RjetlqTitle  = ";p_{T,gen}^{lq-jet} [GeV]";
+         RjetlqTitle += ";p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}";
+  TProfile* prRjet   = new TProfile("prRjet"  , RjetTitle.c_str(),   nbinsMPF-1, binsxMPF);
+  TProfile* prRjetb  = new TProfile("prRjetb" , RjetbTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prRjetg  = new TProfile("prRjetg" , RjetgTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prRjetlq = new TProfile("prRjetlq", RjetlqTitle.c_str(), nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbins-1,binsx);
@@ -276,14 +276,13 @@ void CMSJES::Loop()
   //Keep track of how many events pass each cut
   int mumuCut = 0;
   int invM = 0;
-  int tagProbeCut = 0;
-  int b2b = 0;
+  int tagCut = 0;
   int alpha = 0;
-  int lowMet = 0;
+  int probeCut = 0;
+  int b2b = 0;
+
 
 //***********************************************************************************************
-
-
   //Granularity of cells
   int nPhi = 72; int nEta = 119;
 
@@ -331,8 +330,6 @@ void CMSJES::Loop()
       cout << "Looping event " << jentry; cout << " in Z+jet" << endl;
     }
 
-
-
     //Skip events that didn't pass cuts earlier. Useful in e.g. repeating Loop
     if (GetuseEarlierCuts() && passedCuts.size()>jentry && !passedCuts[jentry]) continue;
  
@@ -374,26 +371,31 @@ void CMSJES::Loop()
     p4.SetPtEtaPhiE((*prtn_pt )[i_tag1], (*prtn_eta)[i_tag1],
                     (*prtn_phi)[i_tag1], (*prtn_e  )[i_tag1]);
 
-    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+    tag = p4;//gen lvl
 
     Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h, resp, respH, respEHE, respHHe);
 
+    p4 *= resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
 
-    tag   = p4;                                                  //gen lvl
-    tag_r = p4*resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
+    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+
+    tag_r = p4;
 
     //***** 2nd muon *****
     p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
                     (*prtn_phi)[i_tag2], (*prtn_e  )[i_tag2]);
 
-    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+    tag += p4;//gen lvl
 
     Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h, resp, respH, respEHE, respHHe);
 
-    tag      += p4;                                              //gen lvl
-    tag_r  += p4*resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
+    p4 *= resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
+
+    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+
+    tag_r += p4;
 
     mumuCut++;    
 
@@ -401,24 +403,32 @@ void CMSJES::Loop()
     if (tag.M()<70.0 || tag.M()>110.0) continue; invM ++;
     //ZSmear->Fill(   tag_r.Pt(), (tag.Pt()/tag_r.Pt()), weight);
 
+    //Tag eta and pT cuts:
+    if (fabs(tag_r.Eta()) > eta_tag_z || tag_r.Pt() < pTmin_tag_z) continue; tagCut++;
+     
+
     /***************** RECONSTRUCT JETS AND PARTICLES IN JETS *****************/
     for (int i=0; i != prtcl_pt->size(); ++i) {
-      JI = (*prtcl_jet)[i]; PDG = abs((*prtcl_pdgid)[i]);
-      p4.SetPtEtaPhiE((*prtcl_pt )[i], (*prtcl_eta)[i],	//Current prtcl 4-vec
-                      (*prtcl_phi)[i], (*prtcl_e  )[i]);
+      JI = (*prtcl_jet)[i]; 
+      PDG = abs((*prtcl_pdgid)[i]);
+      p4.SetPtEtaPhiE((*prtcl_pt )[i], (*prtcl_eta)[i],	(*prtcl_phi)[i], (*prtcl_e  )[i]);
 
       //Calculate responses. Store results to [resp, respH] tuples
-      Response(PDG, p4.Eta(), p4.E(), p4.Pt(),Rt,Bfield, fr_h, resp, respH, respEHE, respHHe);
+      Response(PDG, p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, fr_h, resp, respH, respEHE, respHHe);
 
       //Reconstruct jets
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
       jets_r[JI] += p4*resp;                    //MC reco
+      
+      //Leptons to PF_probe
+      if ((*prtcl_jet)[i]==i_probe && (PDG==11 || PDG==13)) {
+        probe_pf += p4*resp; //No tracking fail
+      }
     } //Loop particles in jets
 
     /************************* Z+JET: FIND PROBE *************************/
 
     i_probe = 0; //Always the leading pT jet
-
     //Gen lvl as output by FastJet
     probe.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
                        (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
@@ -429,27 +439,11 @@ void CMSJES::Loop()
     probe_spr.SetPtEtaPhiE(jets_r[i_probe].Pt(),  jets_r[i_probe].Eta(),
                            jets_r[i_probe].Phi(), jets_r[i_probe].E() );
 
-    //tag and probe in the right |eta| region with enough pT
-    if (fabs(tag_r.Eta())     > eta_tag_z || tag_r.Pt()     < pTmin_tag_z ||
-        fabs(probe_spr.Eta()) > eta_probe || probe_spr.Pt() < pTmin_probe  ) continue; 
-    tagProbeCut ++;
 
     /****************************** COMMON CUTS FOR Z+JET ******************************/
-    //Tag object and probe jet back-to-back. Note ROOT DeltaPhi is in [-pi,pi]
-    if (fabs(tag_r.DeltaPhi(probe)) < phiMin) continue; b2b ++;
 
     //Alpha cut
     if (jets_r[1].Pt() > 0.3*tag_r.Pt()) continue; alpha ++;
-
-    /*
-    //Assert sufficiently low MET w.r.t. tag pT and leading jet (we use probe)
-    if      (tag_r.Pt() > 50 && met > 0.9*tag_r.Pt()) continue;
-    else if (tag_r.Pt() > 25 && met > 1.1*tag_r.Pt()) continue;
-    else if (tag_r.Pt() > 15 && met > 1.2*tag_r.Pt()) continue;
-    else if (                     met > 2.0*tag_r.Pt()) continue;
-    if      (met/probe_spr.Pt()       > 0.7             ) continue;
-    */
-    lowMet ++;
 
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     //Reset histograms
@@ -470,11 +464,7 @@ void CMSJES::Loop()
         continue;
       }
     } //Loop partons
-
     //if(probeFlav != 5) continue; //b-jet events
-
-
-
 
     //****************** MET calculation *******************//
     //Add tag object to the MET
@@ -516,7 +506,7 @@ void CMSJES::Loop()
           //eff = 0.5284 + 0.3986/(1+pow(((*prtclnij_pt )[i]/88.76),1.22));
           //if ((*prtclnij_pt )[i] < 0.9) eff = 0.2514 + 0.7429*(*prtclnij_pt )[i];
 
-          
+          /*
           //Efficiency from chs
           if (fabs(p4.Eta() < 5.2)) {
             for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
@@ -525,7 +515,7 @@ void CMSJES::Loop()
                 eff -= 0.263243+(0.04199621-0.263243)/(1+pow(((*prtclnij_pt)[i]/74.1766),1.737401));
               }
             }
-          }
+          }*/
           
           eff = max(eff,0.0);
           eff = min(eff,0.94);
@@ -612,11 +602,11 @@ void CMSJES::Loop()
                      ne->GetBinContent(i,j))/cosh(cellEta) +  chtPt->GetBinContent(i,j);
         p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellPt);
 
-        //eff_c = 1.0 - 0.0006 * chtPt->GetBinContent(i,j);
+        eff_c = 1.0 - 0.0006 * chtPt->GetBinContent(i,j);
         //eff_c = min(0.94, eff_c);
-        
-        if(eff_c < 0.0) eff_c = 0.0;
-        if(eff_c > 1.0) eff_c = 1.0;
+
+        eff_c = max(eff_c,0.0);
+        eff_c = min(eff_c,1.0);
         
         //Cell fail
         if ( ((double)rand() / (double)RAND_MAX) > eff_c ) {
@@ -691,7 +681,6 @@ void CMSJES::Loop()
         //Probe reconstruction
         if (p4.DeltaR(jets_r[0]) < 0.4) {
           probe_pf += p4;
-
           h_ch_c   ->Fill(jets_r[0].Pt(), cht->GetBinContent(i,j));
           h_nh_c   ->Fill(jets_r[0].Pt(), nhHCAL_calib);
           h_gamma_c->Fill(jets_r[0].Pt(), nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
@@ -759,6 +748,12 @@ void CMSJES::Loop()
 
     pTp = tag_r.Pt();
 
+    //PF probe-tag cuts
+    if (fabs(probe_pf.Eta()) > eta_probe || probe_pf.Pt() < pTmin_probe) continue; probeCut ++;
+
+    //Back-to-back leikkaus
+    if (fabs(tag_r.DeltaPhi(probe_pf)) < phiMin) continue; b2b ++;
+
     //pT balance
     prpTbal->Fill(pTp, probe_pf.Pt()/tag_r.Pt(), weight);
 
@@ -770,8 +765,11 @@ void CMSJES::Loop()
     //Fill MPF histograms
     prMPF->Fill(pTp, R_MPF_r, weight);
 
-    //F factors
-    prF->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+    double Rjet;
+    Rjet = probe_pf.Pt()/probe_g.Pt();
+
+    //Rjet 
+    prRjet->Fill(probe_g.Pt(), Rjet, weight);
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
     //Loop partons to find where jets originated from
@@ -782,15 +780,18 @@ void CMSJES::Loop()
         if (abs((*prtn_pdgid)[j])==5) {	//b-jets
           FFb->Fill(pTp, weight);
           prMPFb->Fill(pTp, R_MPF_r, weight);
-          prFb->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prRjetb->Fill(probe_g.Pt(), Rjet, weight);
+
         } else if (abs((*prtn_pdgid)[j])<5) { //Light quark (u,d,s,c) jets
           FFlq->Fill(pTp, weight);
           prMPFlq->Fill(pTp, R_MPF_r, weight);
-          prFlq->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
+
         } else if ((*prtn_pdgid)[j]==21) { //Gluon jets
           FFg->Fill(pTp, weight);
           prMPFg->Fill(pTp, R_MPF_r, weight);
-          prFg->Fill(probe_g.Pt(), probe_pf.Pt()/probe_g.Pt(), weight);
+          prRjetg->Fill(probe_g.Pt(), Rjet, weight);
+
         } else continue; //Undetermined flavour
         FFa->Fill(pTp, weight);
         continue;	//Only one flavour may be associated with a jet
@@ -990,14 +991,16 @@ void CMSJES::Loop()
     delete hstack_c;
   } //Particle composition histograms
 
-  cout << "all events:        " << nentries    << endl;
-  cout << "tag muon cuts:     " << mumuCut     << endl;
-  cout << "Invariant mass:    " << invM        << endl;
-  cout << "Tag probe cuts:    " << tagProbeCut << endl;
-  cout << "btb tag and probe: " << b2b         << endl;
-  cout << "alpha cut:         " << alpha       << endl;
-  cout << "Low met:           " << lowMet      << endl;
+  cout << endl << "Event cuts:" << endl;
+  cout << "Total number of events: " << nentries << endl;
+  cout << "Tag muon cuts:          " << mumuCut  << endl;
+  cout << "Z invariant mass:       " << invM     << endl;
+  cout << "Tag eta pT:             " << tagCut   << endl;
+  cout << "Alpha:                  " << alpha    << endl;
+  cout << "Probe eta pT:           " << alpha    << endl;
+  cout << "Btb tag-probe:          " << b2b      << endl << endl;
 
+  /*
   //ZSmear plot
   TCanvas *c5   = new TCanvas("c5","c5",500,500);
   ZSmear->SetAxisRange(0.99,1.01,"Y");
@@ -1005,6 +1008,7 @@ void CMSJES::Loop()
   ZSmear->Draw();
   string savename2 = "./plots/ZSmear.eps";
   c5->Print(savename2.c_str());
+  */
 
   //Charged hadron efficiency Profile
   TCanvas *c4     = new TCanvas("c4","c4",500,500);
@@ -1034,9 +1038,8 @@ void CMSJES::Loop()
   chhEff->Draw("same");
   chhEff->SetLineColor(kBlack);
   chhEff->SetLineWidth(2);
-  string savename = "./plots/trackingEff.eps";
+  string savename = "./plots/Efficiency/trkEff.eps";
   c4->Print(savename.c_str());
-
 
   //Save CMSJES TTree
   fout->Write();
@@ -1264,6 +1267,142 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
 } //Response
 
 
+/*
+void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
+                      double Bfield, TF1* frH, double& retMC, double& retH, double& retEHE,
+                      double& retHHe)
+{
+  retMC = 0.0; retH = 0.0; retEHE = 0.0; retHHe = 0.0;
+  bool zero = false; //If true, return zero responses
+
+  double sfCh  = 0.0; //Charged particle step function
+  double sfN   = 0.0; //Neutral hadron step function
+
+  //Responses for different groups
+  double cat1 = 0.0;     double cat2 = 0.0;     double cat3 = 0.0;
+  double cat1_EHE = 0.0; double cat2_EHE = 0.0; double cat3_EHE = 0.0;
+  double cat1_HHe = 0.0; double cat2_HHe = 0.0; double cat3_HHE = 0.0;
+
+  double respPi_EHE = 0.0; double respPi_HHe = 0.0; //Pion responses for ECAL and HCAL
+
+  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles // 0.2
+  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
+
+  //Check if particle outside good eta region
+  if (fabs(pseudorap) > 5.2) zero = true;
+
+  unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
+
+  //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
+  if (abs(pdgid)==111 || abs(pdgid)==221) { 
+    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << pdgid
+         << "Returning zero response" << endl; zero = true;
+  }
+
+  //Neutrino responses are zero
+  if (isNeutrino(abs(pdgid))) zero = true;
+
+  //CALCULATE RESPONSES
+  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
+    
+    //Pion EHE and HHe responses
+    frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
+                       params_pi_EHE[row][2], 1, 0, 1); 
+    respPi_EHE = frH->Eval(energy);
+
+    frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
+                       params_pi_HHe[row][2], 1, 0, 1); 
+    respPi_HHe = frH->Eval(energy);
+    //....
+
+
+    frH->SetParameters(params_cat1[row][0], params_cat1[row][1],
+                       params_cat1[row][2], 1, 0, 1);
+    cat1 = frH->Eval(energy);
+
+    frH->SetParameters(params_cat2[row][0], params_cat2[row][1],
+                       params_cat2[row][2], 1, 0, 1);
+    cat2 = frH->Eval(energy);
+
+    frH->SetParameters(params_cat3[row][0], params_cat3[row][1],
+                       params_cat3[row][2], 1, 0, 1);
+    cat3 = frH->Eval(energy);
+
+    switch (pdgid) {
+      //PHOTON
+      case 20 :
+      case 22 :
+        retMC = sfCh;
+        break;
+
+      //LEPTONS
+      case  11 : //e
+      case -11 : //e
+        retMC = sfCh; 
+        break;
+      case  13 : //mu
+      case -13 : //mu
+        retMC = sfCh; 
+        break;
+      
+      //cat1: antineutron, K0S, K0L, pi+, pi-
+      case -2112 : //nbar
+      case   310 : //K^0_S
+      case   130 : //K^0_L
+      case   211 : //pi+
+      case  -211 : //pi-
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = cat1*sfN; 
+        retH = cat1*sfN;
+        break;
+
+      //cat2: neutron, antiproton, K+, K-
+      case  2112 : //n
+      case -2212 : //pbar
+      case   321 : //K+
+      case  -321 : //K-
+      case -3122 : //anti-Lambda
+      case -3212 : //anti-Sigma^0
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = cat2*sfN; 
+        retH = cat2*sfN;
+        break;
+
+      //cat3: proton
+      case  2212 : //p
+      case  3122 : //Lambda
+      case  3212 : //Sigma^0
+      case  3322 : //Xi^0         cat=4
+      case -3322 : //anti-Xi^0
+      case  3312 : //Xi^-         cat=5
+      case -3312 : //Xi^-         cat=4
+      case  3112 : //Sigma^-      cat=4
+      case -3112 : //anti-Sigma^-
+      case  3222 : //Sigma^+      cat=4
+      case -3222 : //anti-Sigma^+
+      case  3334 : //Omega^-      cat=6
+      case -3334 : //anti-Omega^- cat=5
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = cat3*sfN; 
+        retH = cat3*sfN;
+        break;
+
+      default : 
+        zero=true;
+        cout << "Unknown particle PDG: " << pdgid << endl;
+        continue;	 
+    }
+  } 
+
+  //Set results. Check for NaN and negative results if positive demanded
+  if (zero || isnan(retMC)  || retMC <=0 ) retMC  =0;
+  if (zero || isnan(retH)   || retH  <=0 ) retH   =0;
+  if (zero || isnan(retH)   || retH  <=0 ) retEHE =0;
+  if (zero || isnan(retH)   || retH  <=0 ) retHHe =0;
+
+} //Response
+*/
+
 //-----------------------------------------------------------------------------
 //Check if this particle is a neutrino
 //Param:	id	The particle's PDGDID
@@ -1452,17 +1591,15 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   //Canvas
   TCanvas* canv_MPF = new TCanvas("MPF","",600,600);
-  canv_MPF->SetLeftMargin(0.13);	//To fit vertical axis labels
+  canv_MPF->SetLeftMargin(0.13);
   canv_MPF->SetBottomMargin(0.13);
 
   hzj_MPF ->SetLineColor( kBlack);
-
   hzj_MPF  ->SetMarkerStyle(kFullCircle);       hzj_MPF  ->SetMarkerColor(kBlack);
   hzj_MPFb ->SetMarkerStyle(kFullSquare);       hzj_MPFb ->SetMarkerColor(kRed  );
   hzj_MPFg ->SetMarkerStyle(kFullTriangleUp);   hzj_MPFg ->SetMarkerColor(kBlue+1);
   hzj_MPFlq->SetMarkerStyle(kFullTriangleDown); hzj_MPFlq->SetMarkerColor(kGreen+2);
-  hzj_MPFb->SetLineColor(kRed+1);
-  hzj_MPFg->SetLineColor(kBlue+1);
+  hzj_MPFb->SetLineColor(kRed+1);               hzj_MPFg->SetLineColor(kBlue+1);
   hzj_MPFlq->SetLineColor(kGreen+2);
 
 
@@ -1514,6 +1651,77 @@ void CMSJES::plotMPF(int gen, int Nevt)
 }
 
 //-------------------------------------------------------------------------------------------
+void CMSJES::plotRjet(int gen, int Nevt)
+{
+  //Choose filenames to open
+  string nameAdd, zjetFile;
+  plotQuery(nameAdd, zjetFile, gen, Nevt);
+
+  //Initialize histograms and open ROOT files and fetch the stored objects
+  TFile* fzj = TFile::Open(zjetFile.c_str());
+  TProfile *przj_Rjet=0; TProfile *przj_Rjetb=0; TProfile *przj_Rjetg=0; TProfile *przj_Rjetlq=0;
+
+  //Create Histograms
+  fzj->GetObject("prRjet"   ,przj_Rjet  );
+  fzj->GetObject("prRjetb"  ,przj_Rjetb );
+  fzj->GetObject("prRjetg"  ,przj_Rjetg );
+  fzj->GetObject("prRjetlq" ,przj_Rjetlq);
+  TH1D* hzj_Rjet   = przj_Rjet  ->ProjectionX();
+  TH1D* hzj_Rjetb  = przj_Rjetb ->ProjectionX();
+  TH1D* hzj_Rjetg  = przj_Rjetg ->ProjectionX();
+  TH1D* hzj_Rjetlq = przj_Rjetlq->ProjectionX();
+
+  //Canvas
+  TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",600,600);
+  canv_Rjet->SetLeftMargin(0.15);
+  canv_Rjet->SetBottomMargin(0.13);
+
+  hzj_Rjet  ->SetMarkerStyle(kFullCircle);       hzj_Rjet  ->SetMarkerColor(kBlack);
+  hzj_Rjetb ->SetMarkerStyle(kFullSquare);       hzj_Rjetb ->SetMarkerColor(kRed  );
+  hzj_Rjetg ->SetMarkerStyle(kFullTriangleUp);   hzj_Rjetg ->SetMarkerColor(kBlue+1);
+  hzj_Rjetlq->SetMarkerStyle(kFullTriangleDown); hzj_Rjetlq->SetMarkerColor(kGreen+2);
+  hzj_Rjet  ->SetLineColor(kBlack);              hzj_Rjetb ->SetLineColor(kRed+1);
+  hzj_Rjetg ->SetLineColor(kBlue+1);             hzj_Rjetlq->SetLineColor(kGreen+2);
+
+  //Legend
+  TLegend* lz_Rjet = new TLegend(0.58,0.2,0.89,0.40);
+  lz_Rjet->SetBorderSize(0);
+  lz_Rjet->AddEntry(hzj_Rjet, "#font[132]{All jets}",   "p");
+  lz_Rjet->AddEntry(hzj_Rjetb, "#font[132]{b-jets}",     "p");
+  lz_Rjet->AddEntry(hzj_Rjetg, "#font[132]{gluon jets}", "p");
+  lz_Rjet->AddEntry(hzj_Rjetlq, "#font[132]{lq-jets}",    "p");
+
+  //Title and axis setup
+  hzj_Rjet->SetStats(0); //Suppress stat box
+  hzj_Rjet->SetTitle("");
+  hzj_Rjet->SetAxisRange(0.8,1.0,"Y"); //Vertical axis limits
+
+  //hzj_Rjet->GetYaxis()->SetTitleFont(133);
+  //int titleSize = 20; //Common title size everywhere
+  //hzj_Rjet->GetYaxis()->SetTitleSize(titleSize);
+  hzj_Rjet->GetXaxis()->SetMoreLogLabels();
+  hzj_Rjet->GetXaxis()->SetNoExponent();
+  canv_Rjet->SetLogx();
+  hzj_Rjet->GetYaxis()->SetTitleOffset(1.8);
+  hzj_Rjet->GetXaxis()->SetTitleOffset(1.2);
+
+  gPad->SetTickx(); gPad->SetTicky();
+
+  //Savefile name setup
+  string savename = "./plots/Rjet/Rjet";
+  savename+=".eps";
+
+  //Plot
+  hzj_Rjet->Draw("P");
+  hzj_Rjetb->Draw("SAMEP");
+  hzj_Rjetg->Draw("SAMEP");
+  hzj_Rjetlq->Draw("SAMEP");
+  lz_Rjet->Draw("SAMEP");
+
+  //Save plot
+  canv_Rjet->Print(savename.c_str());
+}
+
 void CMSJES::plotF(int gen, int Nevt)
 {
   //Choose filenames to open
@@ -1524,66 +1732,68 @@ void CMSJES::plotF(int gen, int Nevt)
   TFile* fzj = TFile::Open(zjetFile.c_str());
   TProfile *przj_F=0; TProfile *przj_Fb=0; TProfile *przj_Fg=0; TProfile *przj_Flq=0;
 
-  //Create Histograms
-  fzj->GetObject("prF"   ,przj_F  );
-  fzj->GetObject("prFb"  ,przj_Fb );
-  fzj->GetObject("prFg"  ,przj_Fg );
-  fzj->GetObject("prFlq" ,przj_Flq);
+  //Create F Histograms
+  fzj->GetObject("prRjet"   ,przj_F  );
+  fzj->GetObject("prRjetb"  ,przj_Fb );
+  fzj->GetObject("prRjetg"  ,przj_Fg );
+  fzj->GetObject("prRjetlq" ,przj_Flq);
   TH1D* hzj_F   = przj_F->ProjectionX();
   TH1D* hzj_Fb  = przj_Fb->ProjectionX();
   TH1D* hzj_Fg  = przj_Fg->ProjectionX();
   TH1D* hzj_Flq = przj_Flq->ProjectionX();
 
-  //Canvas
-  TCanvas* canvF = new TCanvas("canvF","",600,600);
-  canvF->SetLeftMargin(0.15);
-  canvF->SetBottomMargin(0.13);
+  hzj_Fb->Divide(hzj_F);
+  hzj_Fg->Divide(hzj_F);
+  hzj_Flq->Divide(hzj_F);
 
-  hzj_F  ->SetMarkerStyle(kFullCircle);       hzj_F  ->SetMarkerColor(kBlack);
+  //Canvas
+  TCanvas* canv_F = new TCanvas("canv_F","",600,600);
+  canv_F->SetLeftMargin(0.15);
+  canv_F->SetBottomMargin(0.13);
+
   hzj_Fb ->SetMarkerStyle(kFullSquare);       hzj_Fb ->SetMarkerColor(kRed  );
   hzj_Fg ->SetMarkerStyle(kFullTriangleUp);   hzj_Fg ->SetMarkerColor(kBlue+1);
   hzj_Flq->SetMarkerStyle(kFullTriangleDown); hzj_Flq->SetMarkerColor(kGreen+2);
-  hzj_Fb->SetLineColor(kRed+1);
-  hzj_Fg->SetLineColor(kBlue+1);
+  hzj_Fb ->SetLineColor(kRed+1);              hzj_Fg ->SetLineColor(kBlue+1);
   hzj_Flq->SetLineColor(kGreen+2);
 
   //Legend
   TLegend* lz_F = new TLegend(0.58,0.2,0.89,0.40);
   lz_F->SetBorderSize(0);
-  lz_F  ->AddEntry(hzj_F, "#font[132]{All jets}",   "p");
-  lz_F ->AddEntry(hzj_Fb, "#font[132]{b-jets}",     "p");
-  lz_F ->AddEntry(hzj_Fg, "#font[132]{gluon jets}", "p");
+  lz_F->AddEntry(hzj_Fb,  "#font[132]{b-jets}",     "p");
+  lz_F->AddEntry(hzj_Fg,  "#font[132]{gluon jets}", "p");
   lz_F->AddEntry(hzj_Flq, "#font[132]{lq-jets}",    "p");
 
   //Title and axis setup
-  hzj_F->SetStats(0); //Suppress stat box
-  hzj_F->SetTitle("");
-  hzj_F->SetAxisRange(0.8,1.0,"Y"); //Vertical axis limits
+  hzj_Fb->SetStats(0); //Suppress stat box
+  hzj_Fb->SetTitle("");
+  hzj_Fb->SetAxisRange(0.9,1.1,"Y"); //Vertical axis limits
 
   //hzj_F->GetYaxis()->SetTitleFont(133);
   //int titleSize = 20; //Common title size everywhere
   //hzj_F->GetYaxis()->SetTitleSize(titleSize);
-  hzj_F->GetXaxis()->SetMoreLogLabels();
-  hzj_F->GetXaxis()->SetNoExponent();
-  canvF->SetLogx();
-  hzj_F->GetYaxis()->SetTitleOffset(1.8);
-  hzj_F->GetXaxis()->SetTitleOffset(1.2);
+  hzj_Fb->GetXaxis()->SetTitle("p_{T,gen}^{jet}");
+  hzj_Fb->GetYaxis()->SetTitle("F");
+  hzj_Fb->GetXaxis()->SetMoreLogLabels();
+  hzj_Fb->GetXaxis()->SetNoExponent();
+  canv_F->SetLogx();
+  hzj_Fb->GetYaxis()->SetTitleOffset(1.8);
+  hzj_Fb->GetXaxis()->SetTitleOffset(1.2);
 
-  gPad->SetTickx();   gPad->SetTicky();
+  gPad->SetTickx(); gPad->SetTicky();
 
   //Savefile name setup
-  string savename = "./plots/F/Fcorr";
+  string savename = "./plots/F/F";
   savename+=".eps";
 
   //Plot
-  hzj_F->Draw("P");
-  hzj_Fb->Draw("SAMEP");
+  hzj_Fb->Draw("P");
   hzj_Fg->Draw("SAMEP");
   hzj_Flq->Draw("SAMEP");
   lz_F->Draw("SAMEP");
 
   //Save plot
-  canvF->Print(savename.c_str());
+  canv_F->Print(savename.c_str());
 }
 
 

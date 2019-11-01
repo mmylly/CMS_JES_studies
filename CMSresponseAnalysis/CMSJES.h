@@ -262,6 +262,7 @@ public :
   virtual void     Show(Long64_t entry = -1);
   void   plotPT(int gen=0,int Nevt=-1);
   void   plotMPF(int gen=0, int Nevt=-1);
+  void   plotRjet(int gen=0, int Nevt=-1);
   void   plotF(int gen=0, int Nevt=-1);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
 	          TF1* frH, double& retMC, double& retH, double& retEHE, double& retHHe);
