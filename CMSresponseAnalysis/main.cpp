@@ -22,7 +22,7 @@ int main() {
       d.plotMPF(3,-1);
       break;
     case 2 :
-      d.Loop();
+      //d.Loop();
       d.plotMPF(3,-1);
       d.plotRjet(3,-1);
       d.plotF(3,-1);

@@ -74,9 +74,9 @@ void CMSJES::Loop()
          RjetsTitle  += ";p_{T,reco}^{s-jet} / p_{T,gen}^{s-jet}";
   string RjetcTitle   = ";p_{T,gen}^{c-jet} [GeV]";
          RjetcTitle  += ";p_{T,reco}^{c-jet} / p_{T,gen}^{c-jet}";
-  TProfile* prRjet   = new TProfile("prRjet"  , RjetTitle.c_str(),   nbinsMPF-1, binsxMPF);
-  TProfile* prRjetb  = new TProfile("prRjetb" , RjetbTitle.c_str(),  nbinsMPF-1, binsxMPF);
-  TProfile* prRjetg  = new TProfile("prRjetg" , RjetgTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prRjet   = new TProfile("prRjet",   RjetTitle.c_str(),   nbinsMPF-1, binsxMPF);
+  TProfile* prRjetb  = new TProfile("prRjetb",  RjetbTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prRjetg  = new TProfile("prRjetg",  RjetgTitle.c_str(),  nbinsMPF-1, binsxMPF);
   TProfile* prRjetlq = new TProfile("prRjetlq", RjetlqTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prRjetud = new TProfile("prRjetud", RjetudTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prRjets  = new TProfile("prRjets",  RjetsTitle.c_str(),  nbinsMPF-1, binsxMPF);
@@ -94,8 +94,8 @@ void CMSJES::Loop()
   THStack* FFstack = new THStack("", FFstackTitle.c_str());
 
   //Response function R_h (h for hadron)
-  TF1 *fr_h = new TF1("frh","1.03*[0]*(1-[1]*pow(x,[2]-1))",0,4000);
-  //TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
+  //TF1 *fr_h = new TF1("frh","0.97*[0]*(1-[1]*pow(x,[2]-1))",0,4000); //var C parameter
+  TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
 
   //Used in HCAL calibration, pion response parameters
   TF1 *fr_hcal = new TF1("fr_hcal","x*1.10286*(1-1.25613*pow(x,0.397034-1))",0,4000);
@@ -689,6 +689,8 @@ void CMSJES::Loop()
 
         if (varHCAL) nhHCAL_calib *= 1.03; // HCAL + 3%
 
+        
+
         //Cell four vector:         
         //Total reconstructed energy of the cell
         cellE  =    cht->GetBinContent(i,j) + ne->GetBinContent(i,j) + 
@@ -835,8 +837,8 @@ void CMSJES::Loop()
     if (!GetuseEarlierCuts()) passedCuts[jentry]=true;
   } //Loop Tree entries
 
-  TGraph *chf   = new TGraph("data_and_MC_input/chf.txt");
-  TGraph *chnhf = new TGraph("data_and_MC_input/chnhf.txt");
+  TGraph *chf   = new TGraph("data_and_MC_input/Chf/chf.txt");
+  TGraph *chnhf = new TGraph("data_and_MC_input/Chf/chnhf.txt");
   chf->SetMarkerStyle(kFullDiamond); chnhf->SetMarkerStyle(kFullSquare);
   chf->SetMarkerColor(kBlack);       chnhf->SetMarkerColor(kBlack);
   chf->SetMarkerSize(2);             chnhf->SetMarkerSize(1);
@@ -1045,9 +1047,9 @@ void CMSJES::Loop()
 
   //Charged hadron efficiency Profile
   TCanvas *c4     = new TCanvas("c4","c4",500,500);
-  TGraph *PFeff   = new TGraph("data_and_MC_input/hadron_efficiency_PF.txt");
-  TGraph *PFeffFr = new TGraph("data_and_MC_input/hadron_efficiencyPlusFakerate_PF.txt");
-  TGraph *TRKeff  = new TGraph("data_and_MC_input/hadron_efficiency_TRK.txt");
+  TGraph *PFeff   = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_PF.txt");
+  TGraph *PFeffFr = new TGraph("data_and_MC_input/Efficiency/hadron_efficiencyPlusFakerate_PF.txt");
+  TGraph *TRKeff  = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_TRK.txt");
   PFeff->SetMarkerStyle(kFullCircle ); TRKeff->SetMarkerStyle(kOpenCircle );
   PFeff->SetMarkerColor(kRed);         TRKeff->SetMarkerColor(kBlue+1);
   PFeffFr->SetMarkerStyle(kFullDiamond );
@@ -1127,7 +1129,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
     frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
                        params_pi_HHe[row][2], 1, 0, 1); 
     respPi_HHe = frH->Eval(energy);
-    //....
+    //....................................................................
 
     //cat1 cat2 cat3 responsens
     frH->SetParameters(params_cat1[row][0], params_cat1[row][1],
@@ -1711,54 +1713,90 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str());
   TProfile *przj_Rjet=0; TProfile *przj_Rjetb=0; TProfile *przj_Rjetg=0; TProfile *przj_Rjetlq=0;
-  TProfile *przj_Rjetud=0;
+  TProfile *przj_Rjetud=0; TProfile *przj_Rjets=0; TProfile *przj_Rjetc=0;
 
   //Create Histograms
   fzj->GetObject("prRjet"   ,przj_Rjet  );
   fzj->GetObject("prRjetb"  ,przj_Rjetb );
   fzj->GetObject("prRjetg"  ,przj_Rjetg );
   fzj->GetObject("prRjetlq" ,przj_Rjetlq);
-  fzj->GetObject("prRjetud"  ,przj_Rjetud);
+  fzj->GetObject("prRjetud" ,przj_Rjetud);
+  fzj->GetObject("prRjets"  ,przj_Rjets);
+  fzj->GetObject("prRjetc"  ,przj_Rjetc);
   TH1D* hzj_Rjet   = przj_Rjet  ->ProjectionX();
   TH1D* hzj_Rjetb  = przj_Rjetb ->ProjectionX();
   TH1D* hzj_Rjetg  = przj_Rjetg ->ProjectionX();
   TH1D* hzj_Rjetlq = przj_Rjetlq->ProjectionX();
   TH1D* hzj_Rjetud = przj_Rjetud->ProjectionX();
+  TH1D* hzj_Rjets  = przj_Rjets ->ProjectionX();
+  TH1D* hzj_Rjetc  = przj_Rjetc ->ProjectionX();
 
   //For computing the difference between b and g responses:
-  TH1D* h_diffbg = (TH1D*)hzj_Rjetb->Clone("h_diffbg");
+  //-------------------------------------------------------------------------------
+  TH1D* h_diffbg  = (TH1D*)hzj_Rjetb->Clone("h_diffbg");
   TH1D* h_diffudg = (TH1D*)hzj_Rjetud->Clone("h_diffudg");
-  h_diffbg->Add(hzj_Rjetg,-1); //b-response - g-response
-  h_diffudg->Add(hzj_Rjetg,-1); //b-response - g-response
+  TH1D* h_diffsg  = (TH1D*)hzj_Rjets->Clone("h_diffsg");
+  TH1D* h_diffcg  = (TH1D*)hzj_Rjetc->Clone("h_diffcg");
 
-  h_diffbg  ->SetMarkerStyle(kFullSquare); h_diffbg ->SetMarkerColor(kBlue+1);
-  h_diffudg ->SetMarkerStyle(kFullSquare); h_diffudg->SetMarkerColor(kRed+1 );
-  h_diffbg ->SetLineColor(kBlue+1); h_diffudg->SetLineColor(kRed+1 );
+  h_diffbg->Add(hzj_Rjetg,-1);  //b-response - g-response
+  h_diffudg->Add(hzj_Rjetg,-1); //ud-response - g-response
+  h_diffsg->Add(hzj_Rjetg,-1);  //s-response - g-response
+  h_diffcg->Add(hzj_Rjetg,-1);  //c-response - g-response
+
+  TGraph *diff_b  = new TGraph("data_and_MC_input/Response/diffToGluon_b.txt" );
+  TGraph *diff_s  = new TGraph("data_and_MC_input/Response/diffToGluon_s.txt" );
+  TGraph *diff_c  = new TGraph("data_and_MC_input/Response/diffToGluon_c.txt" );
+  TGraph *diff_ud = new TGraph("data_and_MC_input/Response/diffToGluon_ud.txt");
+  diff_b ->SetMarkerStyle(kFullCircle);  diff_b ->SetMarkerColor(kBlue+1);
+  diff_s ->SetMarkerStyle(kFullCircle); diff_s ->SetMarkerColor(kOrange+1);
+  diff_c ->SetMarkerStyle(kFullCircle); diff_c ->SetMarkerColor(kGreen+1);
+  diff_ud->SetMarkerStyle(kFullCircle); diff_ud->SetMarkerColor(kRed+1);
+
+  h_diffbg ->SetMarkerStyle(kOpenSquare); h_diffbg ->SetMarkerColor(kBlue+1);
+  h_diffudg->SetMarkerStyle(kOpenSquare); h_diffudg->SetMarkerColor(kRed+1 );
+  h_diffsg->SetMarkerStyle(kOpenSquare);  h_diffsg->SetMarkerColor(kOrange+1);
+  h_diffcg->SetMarkerStyle(kOpenSquare);  h_diffcg->SetMarkerColor(kGreen+1 );
+  h_diffbg ->SetLineColor(kBlue+1);       h_diffudg->SetLineColor(kRed+1 );
+  h_diffsg ->SetLineColor(kOrange+1);       h_diffcg->SetLineColor(kGreen+1 );
 
   TCanvas* canv_diffg = new TCanvas("canv_diffg","",600,600);
   canv_diffg->SetLeftMargin(0.15);
   canv_diffg->SetBottomMargin(0.13);
 
   //Legend
-  TLegend* lz_diffg = new TLegend(0.62,0.70,0.89,0.89);
+  TLegend* lz_diffg = new TLegend(0.62,0.60,0.89,0.89);
   lz_diffg->SetBorderSize(0);
-  lz_diffg->AddEntry(h_diffbg, "b-jets");
-  lz_diffg->AddEntry(h_diffudg, "ud-jets");
+  lz_diffg->AddEntry(h_diffbg,  "b");
+  lz_diffg->AddEntry(h_diffudg, "ud");
+  lz_diffg->AddEntry(h_diffsg,  "s");
+  lz_diffg->AddEntry(h_diffcg,  "c");
+  lz_diffg->AddEntry(diff_b,  "b (PF)", "p");
+  lz_diffg->AddEntry(diff_ud, "ud (PF)", "p");
+  lz_diffg->AddEntry(diff_s,  "s (PF)", "p");
+  lz_diffg->AddEntry(diff_c,  "c (PF)", "p");
 
   h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
   h_diffbg->GetXaxis()->SetTitle("p_{T}^{gen} [GeV]");
-  h_diffbg->GetYaxis()->SetTitleOffset(1.8);
+  h_diffbg->GetYaxis()->SetTitleOffset(1.9);
   h_diffbg->GetXaxis()->SetTitleOffset(1.2);
 
   h_diffbg->SetStats(0); //Suppress stat box
   h_diffbg->SetTitle("");
-  h_diffbg->SetAxisRange(0.0,0.2,"Y"); //Vertical axis limits
+  h_diffbg->SetAxisRange(0.0,0.042,"Y"); //Vertical axis limits
+
   h_diffbg->Draw("P");
+  diff_ud->Draw("SAMEP");
+  diff_b->Draw("SAMEP");
+  diff_s->Draw("SAMEP");
+  diff_c->Draw("SAMEP");
   h_diffudg->Draw("SAMEP");
+  h_diffsg->Draw("SAMEP");
+  h_diffcg->Draw("SAMEP");
   lz_diffg->Draw("SAMEP");
   canv_diffg->SetLogx();
   canv_diffg->Print("./plots/Rjet/gluonDiff.eps");
 
+  //-------------------------------------------------------------------------------
 
   //Canvas
   TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",600,600);
