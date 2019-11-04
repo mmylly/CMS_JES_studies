@@ -5,6 +5,11 @@
 
 void CMSJES::Loop()
 {
+  //Variants
+  bool varHCAL; bool varC;
+  varHCAL = 0;
+  varC = 0;
+
   //Initialize rng's
   //srand(time(0));
   srand(1);
@@ -74,8 +79,8 @@ void CMSJES::Loop()
   TProfile* prRjetg  = new TProfile("prRjetg" , RjetgTitle.c_str(),  nbinsMPF-1, binsxMPF);
   TProfile* prRjetlq = new TProfile("prRjetlq", RjetlqTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prRjetud = new TProfile("prRjetud", RjetudTitle.c_str(), nbinsMPF-1, binsxMPF);
-  TProfile* prRjets = new TProfile("prRjets", RjetsTitle.c_str(), nbinsMPF-1, binsxMPF);
-  TProfile* prRjetc = new TProfile("prRjetc", RjetcTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prRjets  = new TProfile("prRjets",  RjetsTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prRjetc  = new TProfile("prRjetc",  RjetcTitle.c_str(),  nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbins-1,binsx);
@@ -89,7 +94,8 @@ void CMSJES::Loop()
   THStack* FFstack = new THStack("", FFstackTitle.c_str());
 
   //Response function R_h (h for hadron)
-  TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
+  TF1 *fr_h = new TF1("frh","1.03*[0]*(1-[1]*pow(x,[2]-1))",0,4000);
+  //TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
 
   //Used in HCAL calibration, pion response parameters
   TF1 *fr_hcal = new TF1("fr_hcal","x*1.10286*(1-1.25613*pow(x,0.397034-1))",0,4000);
@@ -679,6 +685,9 @@ void CMSJES::Loop()
           nhECAL->SetBinContent(i,j,0.0); 
           ne    ->SetBinContent(i,j,0.0);
         }
+
+
+        if (varHCAL) nhHCAL_calib *= 1.03; // HCAL + 3%
 
         //Cell four vector:         
         //Total reconstructed energy of the cell
@@ -1749,8 +1758,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   lz_diffg->Draw("SAMEP");
   canv_diffg->SetLogx();
   canv_diffg->Print("./plots/Rjet/gluonDiff.eps");
-  
-  
+
 
   //Canvas
   TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",600,600);
