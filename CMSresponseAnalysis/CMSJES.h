@@ -264,6 +264,7 @@ public :
   void   plotMPF(int gen=0, int Nevt=-1);
   void   plotRjet(int gen=0, int Nevt=-1);
   void   plotF(int gen=0, int Nevt=-1);
+  void   plotVariants(int gen=0, int Nevt=-1);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
 	          TF1* frH, double& retMC, double& retH, double& retEHE, double& retHHe);
   void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);

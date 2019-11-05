@@ -5,10 +5,10 @@
 
 void CMSJES::Loop()
 {
-  //Variants
-  bool varHCAL; bool varC;
-  varHCAL = 0;
-  varC = 0;
+  //Variant flags
+  bool varCp3, varCm3;
+  varCp3 = 0;
+  varCm3 = 1;
 
   //Initialize rng's
   //srand(time(0));
@@ -32,7 +32,11 @@ void CMSJES::Loop()
 
   if (fChain == 0) return;
   Long64_t nentries = fChain->GetEntriesFast();
-  string outname = "./output_ROOT_files/CMSJES_" + ReadName + ".root"; //Output file
+  string outname = "./output_ROOT_files/CMSJES_" + ReadName; //Output file
+  if (varCp3) outname += "_varCp3";
+  if (varCm3) outname += "_varCm3";
+  outname += ".root";
+
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
   int const nbins = 11;
@@ -93,9 +97,20 @@ void CMSJES::Loop()
   FFstackTitle += ";#font[132]{Jet flavour fraction}";
   THStack* FFstack = new THStack("", FFstackTitle.c_str());
 
+
+
+
   //Response function R_h (h for hadron)
   //TF1 *fr_h = new TF1("frh","0.97*[0]*(1-[1]*pow(x,[2]-1))",0,4000); //var C parameter
   TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
+
+  // C-parameter + 3%
+  if (varCp3 && varCm3) {cout << "Both C-variants enabled!" << endl; return;}
+  if (varCp3) { fr_h = new TF1("frh","1.03*[0]*(1-[1]*pow(x,[2]-1))",0,4000);}
+  if (varCm3) { fr_h = new TF1("frh","0.97*[0]*(1-[1]*pow(x,[2]-1))",0,4000);}
+
+  fr_h->Print();
+
 
   //Used in HCAL calibration, pion response parameters
   TF1 *fr_hcal = new TF1("fr_hcal","x*1.10286*(1-1.25613*pow(x,0.397034-1))",0,4000);
@@ -105,7 +120,7 @@ void CMSJES::Loop()
   int reso = 10000; 
   fr_h->SetNpx(reso); fr_hcal->SetNpx(reso); fr_ecal->SetNpx(reso);
 
-  /* INITIALIZATIONS */
+  // INITIALIZATIONS
   Long64_t nbytes = 0, nb = 0;
   TLorentzVector p4;            //4-vector temp. 
 
@@ -369,8 +384,6 @@ void CMSJES::Loop()
       jets_g[i].SetPtEtaPhiE(0,0,0,0);  jets_r[i].SetPtEtaPhiE(0,0,0,0);
     }
 
-
-
     //**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************//
     int muPDG=13; int muTAG=3; //mu PDGID and parton tag
     int i_tag1 = -137;	       // These values won't change if...
@@ -622,7 +635,6 @@ void CMSJES::Loop()
         p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellPt);
 
         eff_c = 1.0 - 0.0006 * chtPt->GetBinContent(i,j);
-        //eff_c = min(0.94, eff_c);
 
         eff_c = max(eff_c,0.0);
         eff_c = min(eff_c,1.0);
@@ -686,10 +698,6 @@ void CMSJES::Loop()
           ne    ->SetBinContent(i,j,0.0);
         }
 
-
-        if (varHCAL) nhHCAL_calib *= 1.03; // HCAL + 3%
-
-        
 
         //Cell four vector:         
         //Total reconstructed energy of the cell
@@ -1813,9 +1821,9 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Legend
   TLegend* lz_Rjet = new TLegend(0.58,0.2,0.89,0.40);
   lz_Rjet->SetBorderSize(0);
-  lz_Rjet->AddEntry(hzj_Rjet, "#font[132]{All jets}",   "p");
-  lz_Rjet->AddEntry(hzj_Rjetb, "#font[132]{b-jets}",     "p");
-  lz_Rjet->AddEntry(hzj_Rjetg, "#font[132]{gluon jets}", "p");
+  lz_Rjet->AddEntry(hzj_Rjet,   "#font[132]{All jets}",   "p");
+  lz_Rjet->AddEntry(hzj_Rjetb,  "#font[132]{b-jets}",     "p");
+  lz_Rjet->AddEntry(hzj_Rjetg,  "#font[132]{gluon jets}", "p");
   lz_Rjet->AddEntry(hzj_Rjetlq, "#font[132]{lq-jets}",    "p");
 
   //Title and axis setup
@@ -1923,7 +1931,88 @@ void CMSJES::plotF(int gen, int Nevt)
   canv_F->Print(savename.c_str());
 }
 
+void CMSJES::plotVariants(int gen, int Nevt)
+{
 
+  //Choose filenames to open
+  //string nameAdd, zjetFile, str, str_varCp3, str_varCm3;
+  //plotQuery(nameAdd, zjetFile, gen, Nevt);
+
+  //Initialize histograms and open ROOT files and fetch the stored objects
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
+  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCm3.root");
+
+  cout << "test" << endl;
+
+  // SPR +-3% JEC paper
+  TGraph *JEC_SPRp3  = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRplus3.txt" );
+  TGraph *JEC_SPRm3  = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRminus3.txt" );
+
+  JEC_SPRp3->SetMarkerStyle(kFullCircle); JEC_SPRp3->SetMarkerColor(kRed);
+  JEC_SPRm3->SetMarkerStyle(kFullCircle); JEC_SPRm3->SetMarkerColor(kBlue+1);
+
+  TProfile *pr_Rjet=0;
+  TProfile *pr_Rjet_Cp3=0;
+  TProfile *pr_Rjet_Cm3=0;
+
+  //Create Histograms
+  fzj    ->GetObject("prRjet",pr_Rjet);
+  fzj_Cp3->GetObject("prRjet",pr_Rjet_Cp3);
+  fzj_Cm3->GetObject("prRjet", pr_Rjet_Cm3);
+
+  TH1D* h_Rjet     = pr_Rjet->ProjectionX();
+  TH1D* h_Rjet_Cp3 = pr_Rjet_Cp3->ProjectionX();
+  TH1D* h_Rjet_Cm3 = pr_Rjet_Cm3->ProjectionX();
+
+  h_Rjet_Cp3->Divide(h_Rjet);
+  h_Rjet_Cm3->Divide(h_Rjet);
+
+  //Canvas
+  TCanvas* canv_var = new TCanvas("canv_var","",600,600);
+  canv_var->SetLeftMargin(0.15);
+  canv_var->SetBottomMargin(0.13);
+
+  h_Rjet_Cp3->SetMarkerStyle(kOpenCircle); h_Rjet_Cp3->SetMarkerColor(kRed);
+  h_Rjet_Cm3->SetMarkerStyle(kOpenCircle); h_Rjet_Cm3->SetMarkerColor(kBlue+1);
+  h_Rjet_Cp3->SetLineColor(kRed);          h_Rjet_Cm3->SetLineColor(kBlue+1); 
+
+  //Legend
+  TLegend* lz_Rjet = new TLegend(0.2,0.65,0.5,0.85);
+  lz_Rjet->SetBorderSize(0);
+  lz_Rjet->AddEntry(h_Rjet_Cp3, "C + 3%",   "p");
+  lz_Rjet->AddEntry(h_Rjet_Cm3, "C - 3%",   "p");
+  lz_Rjet->AddEntry(JEC_SPRp3, "C + 3% (JEC 8TeV)", "p");
+  lz_Rjet->AddEntry(JEC_SPRm3, "C - 3% (JEC 8TeV)", "p");  
+
+  //Title and axis setup
+  h_Rjet_Cp3->SetStats(0); //Suppress stat box
+  h_Rjet_Cp3->SetTitle("");
+  h_Rjet_Cp3->SetAxisRange(0.955,1.05,"Y"); //Vertical axis limits
+  h_Rjet_Cp3->GetXaxis()->SetMoreLogLabels();
+  h_Rjet_Cp3->GetXaxis()->SetNoExponent();
+  canv_var->SetLogx();
+  h_Rjet_Cp3->GetYaxis()->SetTitleOffset(1.8);
+  h_Rjet_Cp3->GetXaxis()->SetTitleOffset(1.2);
+  h_Rjet_Cp3->GetYaxis()->SetTitle("Response ratio");
+  h_Rjet_Cp3->GetXaxis()->SetTitle("p_{T}^{gen} [GeV]");
+
+  gPad->SetTickx(); gPad->SetTicky();
+
+  //Savefile name setup
+  string savename = "./plots/varPlots/varSPR";
+  savename+=".eps";
+
+  //Plot
+  h_Rjet_Cp3->Draw("P");
+  h_Rjet_Cm3->Draw("SameP");
+  JEC_SPRp3->Draw("SameP");
+  JEC_SPRm3->Draw("SameP");
+  lz_Rjet->Draw("SAMEP");
+
+  //Save plot
+  canv_var->Print(savename.c_str());
+}
 
 //-----------------------------------------------------------------------------
 //User interface to choose which files to open in plotting functions
