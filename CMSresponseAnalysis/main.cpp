@@ -18,14 +18,13 @@ int main() {
   switch (mode) {
     case 0 : d.Loop();       break;
     case 1 :
-      //d.plotPT(3, -1);
       d.plotMPF(3,-1);
       break;
     case 2 :
       d.Loop();
       d.plotMPF(3,-1);
-      d.plotRjet(3,-1);
-      d.plotF(3,-1);
+      //d.plotRjet(3,-1);
+      //d.plotF(3,-1);
       break;
     case 3 :
       //d.Loop();
