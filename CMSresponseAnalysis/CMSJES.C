@@ -104,8 +104,8 @@ void CMSJES::Loop()
   TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
 
   // C-parameter variation +- 3%
-  if (varCp3) { fr_h = new TF1("frh","1.03*[0]*(1-[1]*pow(x,[2]-1))",0,4000);}
-  if (varCm3) { fr_h = new TF1("frh","0.97*[0]*(1-[1]*pow(x,[2]-1))",0,4000);}
+  //if (varCp3) { fr_h = new TF1("frh","1.03*[0]*(1-[1]*pow(x,[2]-1))",0,4000);}
+  //if (varCm3) { fr_h = new TF1("frh","0.97*[0]*(1-[1]*pow(x,[2]-1))",0,4000);}
 
   fr_h->Print();
 
@@ -579,7 +579,6 @@ void CMSJES::Loop()
           
           eff = max(eff,0.0);
           eff = min(eff,0.94);
-          //eff = min(eff,1.0);
           
           //Tracking efficiency plot
           if ( (fabs((*prtclnij_eta)[i]) < 2.5)) {
@@ -600,7 +599,8 @@ void CMSJES::Loop()
           p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
           p4 *= respH; //Calorimeter response
 
-          //*** Shadowing resolution ***//
+
+          //Resolutions
           if (respH > 0.0) {
             calReso = max(0.0,      jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
             trkReso = max(0.0, pionTrkReso->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
@@ -610,10 +610,8 @@ void CMSJES::Loop()
             sigmaTrk ->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
             sigmaCalo->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
           }
-
           
           p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
-
 
           //ECAL and HCAL deposits
           if ( ((double)rand()/(double)RAND_MAX) > 0.45 ) { //EHE path
@@ -661,7 +659,7 @@ void CMSJES::Loop()
     // ***************** Loop over cells ******************
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
-        double eff_c;
+        double eff_c; double w;
         double nhHCAL_calib = 0.0; double chc_calib = 0.0;
         p4_chc.SetPtEtaPhiE(0,0,0,0); p4_cht.SetPtEtaPhiE(0,0,0,0);
         p4.SetPtEtaPhiE(0,0,0,0);     p4_2.SetPtEtaPhiE(0,0,0,0);
@@ -726,7 +724,7 @@ void CMSJES::Loop()
           }
         }
 
-        /*
+        
         if (varCp3) {
           nhECAL->SetBinContent(i,j, 1.03*nhECAL->GetBinContent(i,j));
           nhHCAL->SetBinContent(i,j, 1.03*nhHCAL->GetBinContent(i,j));
@@ -737,7 +735,7 @@ void CMSJES::Loop()
           nhHCAL->SetBinContent(i,j, 0.97*nhHCAL->GetBinContent(i,j));
           chECAL->SetBinContent(i,j, 0.97*chECAL->GetBinContent(i,j));
           chHCAL->SetBinContent(i,j, 0.97*chHCAL->GetBinContent(i,j));
-        }*/
+        }
 
         delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL->GetBinContent(i,j);
         
@@ -776,13 +774,10 @@ void CMSJES::Loop()
         }
 
 
-        //Weighting of track momentum trkP and calorimeter energy caloE
-        double w;
+        //*** Weighting of track momentum trkP and calorimeter energy caloE ***
         w = sigmaCalo->GetBinContent(i,j) / 
-           (sigmaTrk->GetBinContent(i,j) + sigmaCalo->GetBinContent(i,j));
+            (sigmaTrk->GetBinContent(i,j) + sigmaCalo->GetBinContent(i,j));
 
-        
-        //Charged hadron deposit
         if (sqrt(sigmaTrk->GetBinContent(i,j)) > 0.1) {
           p4_chc.SetPtEtaPhiE(chc_calib/cosh(cellEta), cellEta, cellPhi, chc_calib);
           p4_cht.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
@@ -790,11 +785,14 @@ void CMSJES::Loop()
 
           p4_2 = w*p4_cht + (1-w)*p4_chc;
 
-        } else {
+        } else { //Normal case
           p4_2.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
-                            cht->GetBinContent(i,j)); // Normal hadron deposit
+                            cht->GetBinContent(i,j));
         }
-        
+        //*********************************************************************
+
+
+
         cellE = ne->GetBinContent(i,j) + nhECAL->GetBinContent(i,j) + nhHCAL_calib;
         cellPt = cellE/cosh(cellEta);
         p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellE);
