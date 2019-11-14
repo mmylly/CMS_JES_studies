@@ -6,7 +6,7 @@ void CMSJES::Loop()
 {
   //Variant flags
   bool varCp3, varCm3;
-  varCp3 = 0;
+  varCp3 = 1;
   varCm3 = 0;
 
   if (varCp3 && varCm3) {cout << "Both C-variants enabled!" << endl; return;}
@@ -355,10 +355,12 @@ void CMSJES::Loop()
   jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);
   //jerg_A->SetParameters(0, 1.02, 0.065); //PF-code
 
-  //Track resolution in a function of gen pT
-  //TF1* pionTrkReso = new TF1("pionTrkReso", "0.01336 + 8.548e-5*x", 0, 5000);
+  //Pion track resolution from our sample:
+  TF1* pionTrkReso = new TF1("pionTrkReso", "0.01336 + 8.548e-5*x", 0, 5000);
 
-  TF1* pionTrkReso = new TF1("pionTrkReso", "2*(0.01336 + 8.548e-5*x)", 0, 5000);
+  //Relative resolutions from Trackin paper:
+  TF1* muTrkReso = new TF1("muTrkReso", "4.66042e-07*x**2 + 0.00010326*x + 0.0080762", 0, 5000); 
+  TF1* allTrkReso = new TF1("allTrkReso", "2.77564e-06*x**2 + 0.000124*x + 0.010373", 0, 5000); 
 
 
   TF1* eff_fit = new TF1("eff_fit","1+[0]*x+[1]*x*x+[2]*exp([3]*x)", 0, 5000);
@@ -422,7 +424,7 @@ void CMSJES::Loop()
     Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h, resp, respH, respEHE, respHHe);
 
-    p4 *= resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
+    p4 *= resp*gRandom->Gaus(1,muTrkReso->Eval(p4.Pt())); //MC lvl
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
@@ -437,7 +439,7 @@ void CMSJES::Loop()
     Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h, resp, respH, respEHE, respHHe);
 
-    p4 *= resp*gRandom->Gaus(1,pionTrkReso->Eval(p4.Pt())); //MC lvl
+    p4 *= resp*gRandom->Gaus(1,muTrkReso->Eval(p4.Pt())); //MC lvl
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
@@ -602,8 +604,8 @@ void CMSJES::Loop()
 
           //Resolutions
           if (respH > 0.0) {
-            calReso = max(0.0,      jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
-            trkReso = max(0.0, pionTrkReso->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
+            calReso = max(0.0,     jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
+            trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
 
             sigma    ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
             sigma    ->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
@@ -616,19 +618,21 @@ void CMSJES::Loop()
           //ECAL and HCAL deposits
           if ( ((double)rand()/(double)RAND_MAX) > 0.45 ) { //EHE path
             p4 *= respEHE;
-            chECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //ECAL
-            chHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //HCAL
 
             if (trkFail) {
-              nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //ECAL
-              nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //HCAL
+              nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
+              nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
+            } else{
+              chECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
+              chHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
             }
           } else { //HHe path 
             p4 *= respHHe;
-            chHCAL->Fill(p4.Phi(), p4.Eta(), p4.E()); //HCAL
 
             if (trkFail) {
-              nhHCAL->Fill(p4.Phi(), p4.Eta(), p4.E()); //HCAL
+              nhHCAL->Fill(p4.Phi(), p4.Eta(), p4.E());
+            } else {
+              chHCAL->Fill(p4.Phi(), p4.Eta(), p4.E());
             }
           }
           break;
@@ -659,71 +663,27 @@ void CMSJES::Loop()
     // ***************** Loop over cells ******************
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
-        double eff_c; double w;
-        double nhHCAL_calib = 0.0; double chc_calib = 0.0;
+        double w; int iEtaCold;
+        double nhHCAL_calib = 0.0; double chc_calib = 0.0; double Caloresolution = 0.0;
         p4_chc.SetPtEtaPhiE(0,0,0,0); p4_cht.SetPtEtaPhiE(0,0,0,0);
         p4.SetPtEtaPhiE(0,0,0,0);     p4_2.SetPtEtaPhiE(0,0,0,0);
-
-        
-        eff_c = 1.0; //No tracking fail
+        double TotalError = 0.0;
 
         cellPhi = cht->GetXaxis()->GetBinCenter(i);
         cellEta = cht->GetYaxis()->GetBinCenter(j);
 
-        //Cell four vector
-        cellE  = nhECAL->GetBinContent(i,j)                + nhHCAL->GetBinContent(i,j) + 
-                     ne->GetBinContent(i,j)                +    cht->GetBinContent(i,j);
-        cellPt =(nhECAL->GetBinContent(i,j)                + nhHCAL->GetBinContent(i,j) + 
-                     ne->GetBinContent(i,j))/cosh(cellEta) +  chtPt->GetBinContent(i,j);
-        p4.SetPtEtaPhiE(cellPt, cellEta, cellPhi, cellPt);
 
-        //eff_c = 1.0 - 0.0006 * chtPt->GetBinContent(i,j);
-
-        eff_c = max(eff_c,0.0);
-        eff_c = min(eff_c,1.0);
-        
-        //Cell fail
-        if ( ((double)rand() / (double)RAND_MAX) > eff_c ) {
-          nhECAL->Fill(cellPhi, cellEta, chECAL->GetBinContent(i,j));//ECAL
-          nhHCAL->Fill(cellPhi, cellEta, chHCAL->GetBinContent(i,j));//HCAL
-          cht  ->SetBinContent(i,j,0.0);
-          chtPt->SetBinContent(i,j,0.0);
-        }
-
-        /*
-        //Single particle efficiency plot
-        int etaIdx; int phiIdx;
-        double phiStep; phiStep = 2*TMath::Pi() / nPhi;
-        double etaStep; etaStep = 10.4 / nEta;
-
-        if (fabs(cellEta) < 2.5) {
-          for (int k=0; k!=prtclnij_pt->size(); ++k) { //Loop over particles
-            if (isChHadron((*prtclnij_pdgid)[k])) {
-              double newPhi;
-              newPhi = trackDeltaPhi((*prtclnij_pdgid)[k], (*prtclnij_phi)[k], 
-                                     (*prtclnij_pt )[k], Rt, Bfield);
-              phiIdx = floor(((*prtclnij_phi)[k]+TMath::Pi())/phiStep) + 1;
-              etaIdx = floor(((*prtclnij_eta)[k]+5.2)/etaStep) + 1;
-              
-              if ((phiIdx == i) && (etaIdx == j)) {
-                chhEff->Fill((*prtclnij_pt)[k], eff_c);
-              }
-            }
-          }
-        }*/
-
-        int iEtaCold;  
-        iEtaCold = floor((cellEta+fabs(coldCells->GetXaxis()->GetBinLowEdge(1)))/coldCells->GetXaxis()->GetBinWidth(1) + 1);
-        
-        if (   coldCells->GetBinContent(iEtaCold,i*2  ) > 1.0
-            || coldCells->GetBinContent(iEtaCold,i*2-1) > 1.0) {
-
+        //**** Cold cells
+        iEtaCold = floor((cellEta+fabs(coldCells->GetXaxis()->GetBinLowEdge(1)))/
+                          coldCells->GetXaxis()->GetBinWidth(1) + 1);
+        if (coldCells->GetBinContent(iEtaCold,i*2  ) > 1.0 || 
+            coldCells->GetBinContent(iEtaCold,i*2-1) > 1.0) {
           if (nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) > 150.0) {
             nhECAL->SetBinContent(i,j,75);
             ne->SetBinContent(i,j,75);
           }
         }
-
+        //****
         
         if (varCp3) {
           nhECAL->SetBinContent(i,j, 1.03*nhECAL->GetBinContent(i,j));
@@ -739,25 +699,19 @@ void CMSJES::Loop()
 
         delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL->GetBinContent(i,j);
         
-        //Changing HCAL cluster sigma threshold with uncalibrated cell energy
-        cellSigma = sqrt(sigma->GetBinContent(i,j));
-        cellSigma *= (1 + exp(-cht->GetBinContent(i,j)/100));
+        //***** PF-code calorimeter resolution:
+        //Charged hadron tracking 4-vector:
+        p4.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, cht->GetBinContent(i,j));
 
-        
-
-        //HCAL calibration
-        if (nhHCAL->GetBinContent(i,j) > 0.0) {
-          nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
+        if (p4.P() > 0.0) {
+          Caloresolution  = sqrt(1.02*1.02/p4.P() + 0.065*0.065);
+          Caloresolution *= p4.P();
         }
+        //if (clusterEnergyHCAL < 1.) clusterEnergyHCAL = 1.;
 
+        cellSigma  = sqrt(pow(Caloresolution,2) + sigmaTrk->GetBinContent(i,j)); //TotalError
+        cellSigma *= (1 + exp(-p4.P()/100.));
 
-        double chc = 0.0;
-        chc = chHCAL->GetBinContent(i,j) + chECAL->GetBinContent(i,j);
-
-        //Calibrate ch calorimeter energy deposit chc
-        if (chc > 0.0) {
-          chc_calib = fr_hcal->GetX(chc, 0.1, 7000.0);
-        }
 
         //Calo cell four vector
         cellE_calo = ne->GetBinContent(i,j)     + eCalo->GetBinContent(i,j)
@@ -765,7 +719,32 @@ void CMSJES::Loop()
                    + chECAL->GetBinContent(i,j) + chHCAL->GetBinContent(i,j);
 
         p4_calo.SetPtEtaPhiE(cellE_calo/cosh(cellEta), cellEta, cellPhi, cellE_calo);
+        
+        //*****
+        //Changing HCAL cluster sigma threshold with uncalibrated cell energy
+        //cellSigma = sqrt(sigma->GetBinContent(i,j));
+        //cellSigma *= (1 + exp(-cht->GetBinContent(i,j)/100));
 
+        //HCAL calibration
+        if (nhHCAL->GetBinContent(i,j) > 0.0) {
+          nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
+        }
+
+        /*
+        double chc = 0.0;
+        chc = chHCAL->GetBinContent(i,j) + chECAL->GetBinContent(i,j);
+
+        //Calibrate ch calorimeter energy deposit chc
+        if (chc > 0.0) {
+          chc_calib = fr_hcal->GetX(chc, 0.1, 7000.0);
+        }*/
+
+        //Calibrate ch calorimeter energy deposit chc
+        if (chHCAL->GetBinContent(i,j) > 0.0) {
+          chc_calib = fr_hcal->GetX(chHCAL->GetBinContent(i,j), 0.1, 7000.0);
+        }
+
+        chc_calib += chECAL->GetBinContent(i,j);
 
         if (delta < cellSigma) { //Shadowing
           nhHCAL_calib = 0.0;
@@ -773,12 +752,16 @@ void CMSJES::Loop()
           ne    ->SetBinContent(i,j,0.0);
         }
 
+        //**** Weighting of track momentum trkP and calorimeter energy caloE ****//
+        //w = sigmaCalo->GetBinContent(i,j) / 
+        //    (sigmaTrk->GetBinContent(i,j) + sigmaCalo->GetBinContent(i,j));
 
-        //*** Weighting of track momentum trkP and calorimeter energy caloE ***
-        w = sigmaCalo->GetBinContent(i,j) / 
-            (sigmaTrk->GetBinContent(i,j) + sigmaCalo->GetBinContent(i,j));
-
-        if (sqrt(sigmaTrk->GetBinContent(i,j)) > 0.1) {
+        
+        // PF paper caloresolution
+        
+        w = pow(Caloresolution,2) / (sigmaTrk->GetBinContent(i,j) + pow(Caloresolution,2));
+ 
+        if (sqrt(sigmaTrk->GetBinContent(i,j))/chtPt->GetBinContent(i,j) > 0.1) {
           p4_chc.SetPtEtaPhiE(chc_calib/cosh(cellEta), cellEta, cellPhi, chc_calib);
           p4_cht.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
                               cht->GetBinContent(i,j));
@@ -787,11 +770,13 @@ void CMSJES::Loop()
 
         } else { //Normal case
           p4_2.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
-                            cht->GetBinContent(i,j));
+                              cht->GetBinContent(i,j));
         }
-        //*********************************************************************
 
+        // Charged hadron 4-vector
+        //p4_2.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, cht->GetBinContent(i,j));
 
+        //***********************************************************************//
 
         cellE = ne->GetBinContent(i,j) + nhECAL->GetBinContent(i,j) + nhHCAL_calib;
         cellPt = cellE/cosh(cellEta);
@@ -1340,228 +1325,6 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
 
 } //Response
 
-/*
-//-----------------------------------------------------------------------------
-//A function to calculate the MC hadron response R 
-//Params:	id		Particle PDGID
-//		pseudorap	Particle pseudorapidity eta
-//		energy		Particle energy
-//		pT		Particle transverse momentum
-//		frH		Pointer to hadron response
-//              ret**		References where to put the resulting response
-void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
-                      double Bfield, TF1* frH, double& retMC, double& retH, double& retEHE,
-                      double& retHHe)
-{
-  retMC = 0.0; retH = 0.0; retEHE = 0.0; retHHe = 0.0;
-  bool zero = false; //If true, return zero responses
-
-  double sfCh  = 0.0; //Charged particle step function
-  double sfN   = 0.0; //Neutral hadron step function
-  double cat1 = 0.0; double cat2 = 0.0; double cat3 = 0.0; //Responses for different groups
-  double respPiEH = 0.0; double respPiH = 0.0; //Pion responses for ECAL and HCAL
-
-  if (pT > 0.2) sfCh = 1.0; // Step function for charged particles
-  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles 
-
-  //Check if particle outside good eta region
-  if (fabs(pseudorap) > 5.2) zero = true;
-
-  unsigned int row = int(fabs(pseudorap)*10); //Param matrix row from |eta|
-
-  //Assert there's no pi^0 (PDGID 111) or eta (221) after parton shower
-  if (abs(pdgid)==111 || abs(pdgid)==221) { 
-    cout << "WARNING: pi^0 (111) or eta (221) found! PDGID: " << pdgid
-         << "Returning zero response" << endl; zero = true;
-  }
-
-  //Charged particle not reaching calorimeters
-  //if ( fabs(Charge(pdgid)) && (pT < 0.3*Bfield*0.5*Rt) ) zero = true;
-
-  //Neutrino responses are zero
-  if (isNeutrino(abs(pdgid))) zero = true;
-
-
-
-  //CALCULATE RESPONSES
-  for (int i_r=0; i_r<(zero?0:1); ++i_r) {
-
-
-
-    //cat1: antineutron, K0S, K0L, pi+, pi-
-    frH->SetParameters(params_cat1[row][0], params_cat1[row][1], params_cat1[row][2]);
-    cat1 = frH->Eval(energy);
-
-
-    //cat2: neutron, antiproton, K+, K-
-    frH->SetParameters(params_cat2[row][0], params_cat2[row][1], params_cat2[row][2]);
-    cat2 = frH->Eval(energy);
-
-    //cat3: proton
-    frH->SetParameters(params_cat3[row][0], params_cat3[row][1], params_cat3[row][2]);
-    cat3 = frH->Eval(energy);
-
-    frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], params_pi_EHE[row][2]);
-    respPiEH = frH->Eval(energy);
-
-    frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], params_pi_HHe[row][2]);
-    respPiH = frH->Eval(energy);
-
-    //step function cut
-    retEHE = respPiEH*sfN;
-    retHHe  = respPiH*sfN; 
-
-    switch (pdgid) {
-      //PHOTON
-      case 20 :
-      case 22 :
-        retMC = sfCh;
-        break;
-
-      //LEPTONS
-      case  11 : //e
-      case -11 : //e
-        retMC = sfCh; 
-        break;
-      case  13 : //mu
-      case -13 : //mu
-        retMC = sfCh; 
-        break;
-
-      //cat1: antineutron, K0S, K0L, pi+, pi-
-      case -2112 : //an
-        retMC = cat1*sfN;
-        retH  = cat1*sfN;
-        frH->SetParameters(params_an_EHE[row][0], params_an_EHE[row][1], params_an_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_an_HHe[row][0], params_an_HHe[row][1], params_an_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case   310 : //K^0_S
-        retMC = cat1*sfN; 
-        retH  = cat1*sfN;
-        frH->SetParameters(params_K0S_EHE[row][0],params_K0S_EHE[row][1],params_K0S_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_K0S_HHe[row][0],params_K0S_HHe[row][1],params_K0S_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case   130 : //K^0_L
-        retMC = cat1*sfN; 
-        retH  = cat1*sfN;
-        frH->SetParameters(params_K0L_EHE[row][0],params_K0L_EHE[row][1],params_K0L_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_K0L_HHe[row][0],params_K0L_HHe[row][1],params_K0L_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case   211 : //pi+
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat1*sfN; 
-        retH = cat1*sfN;
-        break;
-
-      case  -211 : //pi-
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat1*sfN; 
-        retH = cat1*sfN;
-        break;
-
-      //cat2: neutron, antiproton, K+, K-
-      case  2112 : //n
-        retMC = cat2*sfN; 
-        retH  = cat2*sfN;
-        frH->SetParameters(params_n_EHE[row][0], params_n_EHE[row][1], params_n_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_n_HHe[row][0], params_n_HHe[row][1], params_n_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case -2212 : //ap
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat2*sfN; 
-        retH = cat2*sfN;
-        frH->SetParameters(params_ap_EHE[row][0], params_ap_EHE[row][1], params_ap_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_ap_HHe[row][0], params_ap_HHe[row][1], params_ap_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case   321 : //K+
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat2*sfN; 
-        retH = cat2*sfN;
-        frH->SetParameters(params_Kp_EHE[row][0], params_Kp_EHE[row][1], params_Kp_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_Kp_HHe[row][0], params_Kp_HHe[row][1], params_Kp_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case  -321 : //K-
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat2*sfN; 
-        retH = cat2*sfN;
-        frH->SetParameters(params_Km_EHE[row][0], params_Km_EHE[row][1], params_Km_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_Km_HHe[row][0], params_Km_HHe[row][1], params_Km_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case -3122 : //anti-Lambda
-      case -3212 : //anti-Sigma^0
-        retMC = cat2*sfN; 
-        retH  = cat2*sfN;
-        break;
-
-      //cat3: proton
-      case  2212 : //p
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat3*sfN; 
-        retH = cat3*sfN;
-        frH->SetParameters(params_p_EHE[row][0], params_p_EHE[row][1], params_p_EHE[row][2]);
-        retEHE = frH->Eval(energy)*sfN;
-        frH->SetParameters(params_p_HHe[row][0], params_p_HHe[row][1], params_p_HHe[row][2]);
-        retHHe = frH->Eval(energy)*sfN;
-        break;
-
-      case  3122 : //Lambda
-      case  3212 : //Sigma^0
-      case  3322 : //Xi^0         cat=4
-      case -3322 : //anti-Xi^0
-      case  3312 : //Xi^-         cat=5
-      case -3312 : //Xi^-         cat=4
-      case  3112 : //Sigma^-      cat=4
-      case -3112 : //anti-Sigma^-
-      case  3222 : //Sigma^+      cat=4
-      case -3222 : //anti-Sigma^+
-      case  3334 : //Omega^-      cat=6
-      case -3334 : //anti-Omega^- cat=5
-        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat3*sfN; 
-        retH = cat3*sfN;
-        break;
-
-      default : 
-        zero=true;
-        cout << "Unknown particle PDG: " << pdgid << endl;
-        continue;	 
-    }
-  } 
-
-  //Set results. Check for NaN and negative results if positive demanded
-  if (zero || isnan(retMC)  || retMC <=0 ) retMC  =0;
-  if (zero || isnan(retH)   || retH  <=0 ) retH   =0;
-  if (zero || isnan(retH)   || retH  <=0 ) retEHE =0;
-  if (zero || isnan(retH)   || retH  <=0 ) retHHe =0;
-
-} //Response
-*/
-
-
-
-
-
 //-----------------------------------------------------------------------------
 //Check if this particle is a neutrino
 //Param:	id	The particle's PDGDID
@@ -1927,7 +1690,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
-  hzj_Rjet->SetAxisRange(0.8,1.0,"Y"); //Vertical axis limits
+  hzj_Rjet->SetAxisRange(0.87,0.96,"Y"); //Vertical axis limits
 
   //hzj_Rjet->GetYaxis()->SetTitleFont(133);
   //int titleSize = 20; //Common title size everywhere
@@ -2037,12 +1800,12 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //plotQuery(nameAdd, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
+  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
+  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
   //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCm3.root");
 
-  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
-  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCp3.root");
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCp3.root");
   //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCm3.root");
 
   //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000.root");
