@@ -321,16 +321,25 @@ void CMSJES::Loop()
   int b2b = 0;
 
 
+  int wcount = 0;
+  int wtot   = 0;
+
+
 //***********************************************************************************************
   //Granularity of cells
   int nPhi = 72; int nEta = 119;
 
-  TH2D* cht       = new TH2D("cht"      , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chtPt     = new TH2D("chtPt"    , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chECAL    = new TH2D("chECAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chHCAL    = new TH2D("chHCAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* cht       = new TH2D("cht"     , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chtPt     = new TH2D("chtPt"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* cht_curv  = new TH2D("cht_curv", "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chtPt_curv = new TH2D("chtPt_curv", "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chECAL_curv = new TH2D("chECAL_curv"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chHCAL_curv = new TH2D("chHCAL_curv"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chECAL = new TH2D("chECAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* chHCAL = new TH2D("chHCAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
   TH2D* sigma     = new TH2D("sigma"    , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
   TH2D* sigmaTrk  = new TH2D("sigmaTrk" , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* sigmaTrk_curv  = new TH2D("sigmaTrk_curv" , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
   TH2D* sigmaCalo = new TH2D("sigmaCalo", "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
   TH2D* nhECAL    = new TH2D("nhECAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
   TH2D* nhHCAL    = new TH2D("nhHCAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
@@ -356,12 +365,11 @@ void CMSJES::Loop()
   //jerg_A->SetParameters(0, 1.02, 0.065); //PF-code
 
   //Pion track resolution from our sample:
-  TF1* pionTrkReso = new TF1("pionTrkReso", "0.01336 + 8.548e-5*x", 0, 5000);
+  TF1* piTrkReso = new TF1("piTrkReso", "0.01336 + 8.548e-5*x", 0, 5000);
 
   //Relative resolutions from Trackin paper:
   TF1* muTrkReso = new TF1("muTrkReso", "4.66042e-07*x**2 + 0.00010326*x + 0.0080762", 0, 5000); 
   TF1* allTrkReso = new TF1("allTrkReso", "2.77564e-06*x**2 + 0.000124*x + 0.010373", 0, 5000); 
-
 
   TF1* eff_fit = new TF1("eff_fit","1+[0]*x+[1]*x*x+[2]*exp([3]*x)", 0, 5000);
   eff_fit->SetParameters(-0.0003897, 3.589e-07, -0.02651, -0.2829);
@@ -424,7 +432,7 @@ void CMSJES::Loop()
     Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h, resp, respH, respEHE, respHHe);
 
-    p4 *= resp*gRandom->Gaus(1,muTrkReso->Eval(p4.Pt())); //MC lvl
+    p4 *= resp*gRandom->Gaus(1,piTrkReso->Eval(p4.Pt())); //MC lvl
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
@@ -439,7 +447,7 @@ void CMSJES::Loop()
     Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
              fr_h, resp, respH, respEHE, respHHe);
 
-    p4 *= resp*gRandom->Gaus(1,muTrkReso->Eval(p4.Pt())); //MC lvl
+    p4 *= resp*gRandom->Gaus(1,piTrkReso->Eval(p4.Pt())); //MC lvl
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
@@ -495,17 +503,22 @@ void CMSJES::Loop()
 
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     //Reset histograms
-    cht      ->Reset();
-    chtPt    ->Reset();
-    chECAL   ->Reset();
-    chHCAL   ->Reset();
-    sigma    ->Reset();
-    sigmaTrk ->Reset();
-    sigmaCalo->Reset();
-    nhECAL   ->Reset();
-    nhHCAL   ->Reset();
-    ne       ->Reset();
-    eCalo    ->Reset();
+    cht          ->Reset();
+    chtPt        ->Reset();
+    cht_curv     ->Reset();
+    chtPt_curv   ->Reset();
+    chECAL       ->Reset();
+    chHCAL       ->Reset();
+    chECAL_curv  ->Reset();
+    chHCAL_curv  ->Reset();
+    sigma        ->Reset();
+    sigmaTrk     ->Reset();
+    sigmaTrk_curv->Reset();
+    sigmaCalo    ->Reset();
+    nhECAL       ->Reset();
+    nhHCAL       ->Reset();
+    ne           ->Reset();
+    eCalo        ->Reset();
 
     //Probe flavor check
     for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
@@ -599,18 +612,24 @@ void CMSJES::Loop()
                                  (*prtclnij_pt )[i], Rt, Bfield);
 
           p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
-          p4 *= respH; //Calorimeter response
 
+          if (!trkFail) {
+              cht_curv  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
+              chtPt_curv->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+          }
+
+          p4 *= respH; //Calorimeter response
 
           //Resolutions
           if (respH > 0.0) {
             calReso = max(0.0,     jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
             trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
 
-            sigma    ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
-            sigma    ->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
-            sigmaTrk ->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
-            sigmaCalo->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
+            //sigma        ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
+            //sigma        ->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
+            sigmaTrk     ->Fill((*prtclnij_phi)[i], p4.Eta(), pow(trkReso,2));
+            sigmaTrk_curv->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
+            //sigmaCalo    ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
           }
           
           p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
@@ -623,8 +642,10 @@ void CMSJES::Loop()
               nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
               nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
             } else{
-              chECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
-              chHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
+              chECAL->Fill((*prtclnij_phi)[i], p4.Eta(), 0.5*p4.E());//Original directions
+              chHCAL->Fill((*prtclnij_phi)[i], p4.Eta(), 0.5*p4.E());
+              chECAL_curv->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());     //Curved tracks
+              chHCAL_curv->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
             }
           } else { //HHe path 
             p4 *= respHHe;
@@ -632,7 +653,8 @@ void CMSJES::Loop()
             if (trkFail) {
               nhHCAL->Fill(p4.Phi(), p4.Eta(), p4.E());
             } else {
-              chHCAL->Fill(p4.Phi(), p4.Eta(), p4.E());
+              chHCAL->Fill((*prtclnij_phi)[i], p4.Eta(), p4.E());
+              chHCAL_curv->Fill(p4.Phi(), p4.Eta(), p4.E());
             }
           }
           break;
@@ -667,7 +689,7 @@ void CMSJES::Loop()
         double nhHCAL_calib = 0.0; double chc_calib = 0.0; double Caloresolution = 0.0;
         p4_chc.SetPtEtaPhiE(0,0,0,0); p4_cht.SetPtEtaPhiE(0,0,0,0);
         p4.SetPtEtaPhiE(0,0,0,0);     p4_2.SetPtEtaPhiE(0,0,0,0);
-        double TotalError = 0.0;
+        double TotalError = 0.0; double chc = 0.0;
 
         cellPhi = cht->GetXaxis()->GetBinCenter(i);
         cellEta = cht->GetYaxis()->GetBinCenter(j);
@@ -686,65 +708,47 @@ void CMSJES::Loop()
         //****
         
         if (varCp3) {
-          nhECAL->SetBinContent(i,j, 1.03*nhECAL->GetBinContent(i,j));
-          nhHCAL->SetBinContent(i,j, 1.03*nhHCAL->GetBinContent(i,j));
-          chECAL->SetBinContent(i,j, 1.03*chECAL->GetBinContent(i,j));
-          chHCAL->SetBinContent(i,j, 1.03*chHCAL->GetBinContent(i,j));
+          nhECAL->SetBinContent(i,j,      1.03*nhECAL->GetBinContent(i,j));
+          nhHCAL->SetBinContent(i,j,      1.03*nhHCAL->GetBinContent(i,j));
+          chECAL->SetBinContent(i,j,      1.03*chECAL->GetBinContent(i,j));
+          chHCAL->SetBinContent(i,j,      1.03*chHCAL->GetBinContent(i,j));
+          chECAL_curv->SetBinContent(i,j, 1.03*chECAL_curv->GetBinContent(i,j));
+          chHCAL_curv->SetBinContent(i,j, 1.03*chHCAL_curv->GetBinContent(i,j));
         } else if (varCm3) {
-          nhECAL->SetBinContent(i,j, 0.97*nhECAL->GetBinContent(i,j));
-          nhHCAL->SetBinContent(i,j, 0.97*nhHCAL->GetBinContent(i,j));
-          chECAL->SetBinContent(i,j, 0.97*chECAL->GetBinContent(i,j));
-          chHCAL->SetBinContent(i,j, 0.97*chHCAL->GetBinContent(i,j));
+          nhECAL->SetBinContent(i,j,      0.97*nhECAL->GetBinContent(i,j));
+          nhHCAL->SetBinContent(i,j,      0.97*nhHCAL->GetBinContent(i,j));
+          chECAL->SetBinContent(i,j,      0.97*chECAL->GetBinContent(i,j));
+          chHCAL->SetBinContent(i,j,      0.97*chHCAL->GetBinContent(i,j));
+          chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
+          chHCAL_curv->SetBinContent(i,j, 0.97*chHCAL_curv->GetBinContent(i,j));
         }
-
-        delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL->GetBinContent(i,j);
-        
-        //***** PF-code calorimeter resolution:
-        //Charged hadron tracking 4-vector:
-        p4.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, cht->GetBinContent(i,j));
-
-        if (p4.P() > 0.0) {
-          Caloresolution  = sqrt(1.02*1.02/p4.P() + 0.065*0.065);
-          Caloresolution *= p4.P();
-        }
-        //if (clusterEnergyHCAL < 1.) clusterEnergyHCAL = 1.;
-
-        cellSigma  = sqrt(pow(Caloresolution,2) + sigmaTrk->GetBinContent(i,j)); //TotalError
-        cellSigma *= (1 + exp(-p4.P()/100.));
-
 
         //Calo cell four vector
-        cellE_calo = ne->GetBinContent(i,j)     + eCalo->GetBinContent(i,j)
-                   + nhECAL->GetBinContent(i,j) + nhHCAL->GetBinContent(i,j) 
-                   + chECAL->GetBinContent(i,j) + chHCAL->GetBinContent(i,j);
-
+        cellE_calo = ne->GetBinContent(i,j)          + eCalo->GetBinContent(i,j)
+                   + nhECAL->GetBinContent(i,j)      + nhHCAL->GetBinContent(i,j) 
+                   + chECAL_curv->GetBinContent(i,j) + chHCAL_curv->GetBinContent(i,j);
         p4_calo.SetPtEtaPhiE(cellE_calo/cosh(cellEta), cellEta, cellPhi, cellE_calo);
-        
-        //*****
-        //Changing HCAL cluster sigma threshold with uncalibrated cell energy
-        //cellSigma = sqrt(sigma->GetBinContent(i,j));
-        //cellSigma *= (1 + exp(-cht->GetBinContent(i,j)/100));
+
+        delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL->GetBinContent(i,j);
 
         //HCAL calibration
         if (nhHCAL->GetBinContent(i,j) > 0.0) {
           nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
         }
 
-        /*
-        double chc = 0.0;
-        chc = chHCAL->GetBinContent(i,j) + chECAL->GetBinContent(i,j);
+        //***** PF-code calorimeter resolution:
+        //Total track momentum in cell
+        p4.SetPtEtaPhiE(chtPt_curv->GetBinContent(i,j), cellEta, cellPhi, 
+                        cht_curv->GetBinContent(i,j));
 
-        //Calibrate ch calorimeter energy deposit chc
-        if (chc > 0.0) {
-          chc_calib = fr_hcal->GetX(chc, 0.1, 7000.0);
-        }*/
-
-        //Calibrate ch calorimeter energy deposit chc
-        if (chHCAL->GetBinContent(i,j) > 0.0) {
-          chc_calib = fr_hcal->GetX(chHCAL->GetBinContent(i,j), 0.1, 7000.0);
+        if (p4.P() > 0.0) {
+          Caloresolution  = sqrt(1.02*1.02/p4.P() + 0.065*0.065);
+          Caloresolution *= p4.P();
         }
 
-        chc_calib += chECAL->GetBinContent(i,j);
+        //TotalError
+        cellSigma  = sqrt(pow(Caloresolution,2) + sigmaTrk_curv->GetBinContent(i,j)); 
+        cellSigma *= (1 + exp(-p4.P()/100.));
 
         if (delta < cellSigma) { //Shadowing
           nhHCAL_calib = 0.0;
@@ -752,30 +756,39 @@ void CMSJES::Loop()
           ne    ->SetBinContent(i,j,0.0);
         }
 
-        //**** Weighting of track momentum trkP and calorimeter energy caloE ****//
-        //w = sigmaCalo->GetBinContent(i,j) / 
-        //    (sigmaTrk->GetBinContent(i,j) + sigmaCalo->GetBinContent(i,j));
+        chc = chHCAL->GetBinContent(i,j) + chECAL->GetBinContent(i,j);
 
-        
-        // PF paper caloresolution
-        
-        w = pow(Caloresolution,2) / (sigmaTrk->GetBinContent(i,j) + pow(Caloresolution,2));
- 
-        if (sqrt(sigmaTrk->GetBinContent(i,j))/chtPt->GetBinContent(i,j) > 0.1) {
-          p4_chc.SetPtEtaPhiE(chc_calib/cosh(cellEta), cellEta, cellPhi, chc_calib);
-          p4_cht.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
-                              cht->GetBinContent(i,j));
-
-          p4_2 = w*p4_cht + (1-w)*p4_chc;
-
-        } else { //Normal case
-          p4_2.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
-                              cht->GetBinContent(i,j));
+        //Calibrate ch calorimeter energy deposit chc
+        if (chc > 0.0) {
+          chc_calib = fr_hcal->GetX(chc, 0.1, 7000.0);
         }
 
-        // Charged hadron 4-vector
-        //p4_2.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, cht->GetBinContent(i,j));
+        //Calculate caloresolution for not curved track
+        p4.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, cht->GetBinContent(i,j));
 
+        if (p4.P() > 0.0) {
+          Caloresolution  = sqrt(1.02*1.02/p4.P() + 0.065*0.065);
+          Caloresolution *= p4.P();
+        }
+
+        //TotalError
+        cellSigma  = sqrt(pow(Caloresolution,2) + sigmaTrk->GetBinContent(i,j)); 
+        cellSigma *= (1 + exp(-p4.P()/100.));
+
+        //****************************** WEIGHTING ********************************
+        if (sigmaTrk_curv->GetBinContent(i,j) > 0.0 &&  Caloresolution > 0.0)
+        w = pow(Caloresolution,2) / (sigmaTrk_curv->GetBinContent(i,j) + pow(Caloresolution,2));
+ 
+        if (sqrt(sigmaTrk->GetBinContent(i,j))/p4.P() > 0.1) {
+          p4_chc.SetPtEtaPhiE(chc_calib/cosh(cellEta), cellEta, cellPhi, chc_calib);
+          p4_cht = p4;
+          
+          p4_2 = w*p4_cht + (1-w)*p4_chc;
+
+
+        } else { //Normal case
+          p4_2 = p4;
+        }
         //***********************************************************************//
 
         cellE = ne->GetBinContent(i,j) + nhECAL->GetBinContent(i,j) + nhHCAL_calib;
