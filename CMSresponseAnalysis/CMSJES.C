@@ -6,7 +6,7 @@ void CMSJES::Loop()
 {
   //Variant flags
   bool varCp3, varCm3;
-  varCp3 = 1;
+  varCp3 = 0;
   varCm3 = 0;
 
   if (varCp3 && varCm3) {cout << "Both C-variants enabled!" << endl; return;}
@@ -110,6 +110,9 @@ void CMSJES::Loop()
   fr_h->Print();
 
   //Used in HCAL calibration, pion response parameters now in |eta|<1.3
+  //C=1.044, a=-1.293, m-1=-0.457
+  TF1 *fr_all  = new TF1("fr_all","x*1.044*(1-1.293*pow(x,0.543-1))",0,4000);
+  //C=1.123, a=-1.345, m-1=-0.579
   TF1 *fr_hcal = new TF1("fr_hcal","x*1.123*(1-1.345*pow(x,0.421-1))",0,4000);
   TF1 *fr_ecal = new TF1("fr_ecal","x*1.076*(1-1.403*pow(x,0.646-1))",0,4000);
 
@@ -320,31 +323,30 @@ void CMSJES::Loop()
   int probeCut = 0;
   int b2b = 0;
 
-
-  int wcount = 0;
-  int wtot   = 0;
+  int wcht = 0;
+  int wchc = 0;
 
 
 //***********************************************************************************************
   //Granularity of cells
   int nPhi = 72; int nEta = 119;
 
-  TH2D* cht       = new TH2D("cht"     , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chtPt     = new TH2D("chtPt"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* cht_curv  = new TH2D("cht_curv", "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chtPt_curv = new TH2D("chtPt_curv", "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chECAL_curv = new TH2D("chECAL_curv"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chHCAL_curv = new TH2D("chHCAL_curv"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chECAL = new TH2D("chECAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* chHCAL = new TH2D("chHCAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* sigma     = new TH2D("sigma"    , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* sigmaTrk  = new TH2D("sigmaTrk" , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* sigmaTrk_curv  = new TH2D("sigmaTrk_curv" , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* sigmaCalo = new TH2D("sigmaCalo", "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* nhECAL    = new TH2D("nhECAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* nhHCAL    = new TH2D("nhHCAL"   , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* ne        = new TH2D("ne"       , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
-  TH2D* eCalo     = new TH2D("eCalo"    , "", nPhi, -TMath::Pi(), TMath::Pi(), nEta, -5.2, 5.2);
+  TH2D* cht          = new TH2D("cht"          ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chtPt        = new TH2D("chtPt"        ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* cht_curv     = new TH2D("cht_curv"     ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chtPt_curv   = new TH2D("chtPt_curv"   ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chECAL_curv  = new TH2D("chECAL_curv"  ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chHCAL_curv  = new TH2D("chHCAL_curv"  ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chECAL       = new TH2D("chECAL"       ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chHCAL       = new TH2D("chHCAL"       ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* sigma        = new TH2D("sigma"        ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* sigmaTrk     = new TH2D("sigmaTrk"     ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* sigmaTrk_curv= new TH2D("sigmaTrk_curv","",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* sigmaCalo    = new TH2D("sigmaCalo"    ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* nhECAL       = new TH2D("nhECAL"       ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* nhHCAL       = new TH2D("nhHCAL"       ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* ne           = new TH2D("ne"           ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* eCalo        = new TH2D("eCalo"        ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
 
   const double bins_chhEff[21] = {0.1, 0.149, 0.223, 0.332, 0.496, 0.740, 1.104, 1.648, 2.460,
                                   3.670, 5.477, 8.174, 12.198, 18.202, 27.163, 40.536, 60.492,
@@ -624,12 +626,15 @@ void CMSJES::Loop()
           if (respH > 0.0) {
             calReso = max(0.0,     jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
             trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
+            //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_e)[i]) * (*prtclnij_e)[i]);
+            //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * pow((*prtclnij_pt)[i],2));
 
             //sigma        ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
             //sigma        ->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
             sigmaTrk     ->Fill((*prtclnij_phi)[i], p4.Eta(), pow(trkReso,2));
             sigmaTrk_curv->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
             //sigmaCalo    ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
+            sigmaCalo    ->Fill((*prtclnij_phi)[i], p4.Eta(), pow(calReso,2));
           }
           
           p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
@@ -642,9 +647,9 @@ void CMSJES::Loop()
               nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
               nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
             } else{
-              chECAL->Fill((*prtclnij_phi)[i], p4.Eta(), 0.5*p4.E());//Original directions
+              chECAL->Fill((*prtclnij_phi)[i], p4.Eta(), 0.5*p4.E());
               chHCAL->Fill((*prtclnij_phi)[i], p4.Eta(), 0.5*p4.E());
-              chECAL_curv->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());     //Curved tracks
+              chECAL_curv->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
               chHCAL_curv->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E());
             }
           } else { //HHe path 
@@ -685,7 +690,7 @@ void CMSJES::Loop()
     // ***************** Loop over cells ******************
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
-        double w; int iEtaCold;
+        double w = 1.0; int iEtaCold;
         double nhHCAL_calib = 0.0; double chc_calib = 0.0; double Caloresolution = 0.0;
         p4_chc.SetPtEtaPhiE(0,0,0,0); p4_cht.SetPtEtaPhiE(0,0,0,0);
         p4.SetPtEtaPhiE(0,0,0,0);     p4_2.SetPtEtaPhiE(0,0,0,0);
@@ -737,7 +742,7 @@ void CMSJES::Loop()
         }
 
         //***** PF-code calorimeter resolution:
-        //Total track momentum in cell
+        //Total track momentum in a cell
         p4.SetPtEtaPhiE(chtPt_curv->GetBinContent(i,j), cellEta, cellPhi, 
                         cht_curv->GetBinContent(i,j));
 
@@ -747,9 +752,13 @@ void CMSJES::Loop()
         }
 
         //TotalError
-        cellSigma  = sqrt(pow(Caloresolution,2) + sigmaTrk_curv->GetBinContent(i,j)); 
+        cellSigma  = sqrt(pow(Caloresolution,2) + sigmaTrk_curv->GetBinContent(i,j));
         cellSigma *= (1 + exp(-p4.P()/100.));
 
+        //caloEnergy = calibEcal + calibHcal;
+        delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL_calib;
+
+        
         if (delta < cellSigma) { //Shadowing
           nhHCAL_calib = 0.0;
           nhECAL->SetBinContent(i,j,0.0); 
@@ -760,34 +769,31 @@ void CMSJES::Loop()
 
         //Calibrate ch calorimeter energy deposit chc
         if (chc > 0.0) {
-          chc_calib = fr_hcal->GetX(chc, 0.1, 7000.0);
+          chc_calib = fr_all->GetX(chc, 0.1, 7000.0);
         }
 
         //Calculate caloresolution for not curved track
         p4.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, cht->GetBinContent(i,j));
-
         if (p4.P() > 0.0) {
           Caloresolution  = sqrt(1.02*1.02/p4.P() + 0.065*0.065);
           Caloresolution *= p4.P();
         }
 
-        //TotalError
-        cellSigma  = sqrt(pow(Caloresolution,2) + sigmaTrk->GetBinContent(i,j)); 
-        cellSigma *= (1 + exp(-p4.P()/100.));
-
         //****************************** WEIGHTING ********************************
-        if (sigmaTrk_curv->GetBinContent(i,j) > 0.0 &&  Caloresolution > 0.0)
-        w = pow(Caloresolution,2) / (sigmaTrk_curv->GetBinContent(i,j) + pow(Caloresolution,2));
- 
+        if (p4.P() > 0.0)
+        w = pow(Caloresolution,2) / (sigmaTrk->GetBinContent(i,j) + pow(Caloresolution,2));
+
         if (sqrt(sigmaTrk->GetBinContent(i,j))/p4.P() > 0.1) {
           p4_chc.SetPtEtaPhiE(chc_calib/cosh(cellEta), cellEta, cellPhi, chc_calib);
-          p4_cht = p4;
+          p4_cht.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
+                              cht->GetBinContent(i,j));
           
           p4_2 = w*p4_cht + (1-w)*p4_chc;
 
-
+          if (w > 0.5) wcht++; else wchc++;
         } else { //Normal case
-          p4_2 = p4;
+          p4_2.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
+                              cht->GetBinContent(i,j));
         }
         //***********************************************************************//
 
@@ -1138,6 +1144,10 @@ void CMSJES::Loop()
   cout << "Alpha:                  " << alpha    << endl;
   cout << "Probe eta pT:           " << probeCut << endl;
   cout << "Btb tag-probe:          " << b2b      << endl << endl;
+
+  cout << "Weighting:" << endl;
+  cout << "cht (w>0.5) " << double(wcht)/(double(wcht) + double(wchc)) << endl;
+  cout << "chc (w<0.5) " << double(wchc)/(double(wcht) + double(wchc)) << endl << endl; 
 
   /*
   //ZSmear plot
@@ -1629,15 +1639,15 @@ void CMSJES::plotRjet(int gen, int Nevt)
   TGraph *diff_s  = new TGraph("data_and_MC_input/Response/diffToGluon_s.txt" );
   TGraph *diff_c  = new TGraph("data_and_MC_input/Response/diffToGluon_c.txt" );
   TGraph *diff_ud = new TGraph("data_and_MC_input/Response/diffToGluon_ud.txt");
-  diff_b ->SetMarkerStyle(kFullCircle);  diff_b ->SetMarkerColor(kBlue+1);
-  diff_s ->SetMarkerStyle(kFullCircle); diff_s ->SetMarkerColor(kOrange+1);
-  diff_c ->SetMarkerStyle(kFullCircle); diff_c ->SetMarkerColor(kGreen+1);
-  diff_ud->SetMarkerStyle(kFullCircle); diff_ud->SetMarkerColor(kRed+1);
+  diff_b ->SetMarkerStyle(kOpenCircle);  diff_b ->SetMarkerColor(kBlue+1);
+  diff_s ->SetMarkerStyle(kOpenCircle); diff_s ->SetMarkerColor(kOrange+1);
+  diff_c ->SetMarkerStyle(kOpenCircle); diff_c ->SetMarkerColor(kGreen+1);
+  diff_ud->SetMarkerStyle(kOpenCircle); diff_ud->SetMarkerColor(kRed+1);
 
-  h_diffbg ->SetMarkerStyle(kOpenSquare); h_diffbg ->SetMarkerColor(kBlue+1);
-  h_diffudg->SetMarkerStyle(kOpenSquare); h_diffudg->SetMarkerColor(kRed+1 );
-  h_diffsg->SetMarkerStyle(kOpenSquare);  h_diffsg->SetMarkerColor(kOrange+1);
-  h_diffcg->SetMarkerStyle(kOpenSquare);  h_diffcg->SetMarkerColor(kGreen+1 );
+  h_diffbg ->SetMarkerStyle(kFullSquare); h_diffbg ->SetMarkerColor(kBlue+1);
+  h_diffudg->SetMarkerStyle(kFullSquare); h_diffudg->SetMarkerColor(kRed+1 );
+  h_diffsg->SetMarkerStyle(kFullSquare);  h_diffsg->SetMarkerColor(kOrange+1);
+  h_diffcg->SetMarkerStyle(kFullSquare);  h_diffcg->SetMarkerColor(kGreen+1 );
   h_diffbg ->SetLineColor(kBlue+1);       h_diffudg->SetLineColor(kRed+1 );
   h_diffsg ->SetLineColor(kOrange+1);       h_diffcg->SetLineColor(kGreen+1 );
 
@@ -1813,9 +1823,9 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //plotQuery(nameAdd, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
-  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
-  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
-  //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCm3.root");
+  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000.root");
+  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCp3.root");
+  //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
 
   TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
   TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCp3.root");
@@ -1834,17 +1844,17 @@ void CMSJES::plotVariants(int gen, int Nevt)
 
 
   JEC_SPRp3->SetMarkerStyle(kOpenCircle);      JEC_SPRp3->SetMarkerColor(kRed);
-  JEC_SPRm3->SetMarkerStyle(kOpenCircle);      JEC_SPRm3->SetMarkerColor(kBlue+1);
+  //JEC_SPRm3->SetMarkerStyle(kOpenCircle);      JEC_SPRm3->SetMarkerColor(kBlue+1);
   JEC_calo_SPRp3->SetMarkerStyle(kOpenCircle); JEC_calo_SPRp3->SetMarkerColor(kOrange+1);
-  JEC_calo_SPRm3->SetMarkerStyle(kOpenCircle); JEC_calo_SPRm3->SetMarkerColor(kGreen+2);
+  //JEC_calo_SPRm3->SetMarkerStyle(kOpenCircle); JEC_calo_SPRm3->SetMarkerColor(kGreen+2);
 
 
   TProfile *pr_Rjet=0;
   TProfile *pr_Rjet_Cp3=0;
-  TProfile *pr_Rjet_Cm3=0;
+  //TProfile *pr_Rjet_Cm3=0;
   TProfile *pr_Rjet_calo=0;
   TProfile *pr_Rjet_calo_Cp3=0;
-  TProfile *pr_Rjet_calo_Cm3=0;
+  //TProfile *pr_Rjet_calo_Cm3=0;
 
   //Create Histograms
   fzj    ->GetObject("prRjet",pr_Rjet);
@@ -1890,8 +1900,8 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //lz_Rjet->AddEntry(h_Rjet_calo_Cm3, "Calo C - 3%",   "p");
   lz_Rjet->AddEntry(JEC_SPRp3,       "PF C + 3% (JEC 8TeV)", "p");
   lz_Rjet->AddEntry(JEC_calo_SPRp3,  "Calo C + 3% (JEC 8TeV)", "p");
-  lz_Rjet->AddEntry(JEC_SPRm3,       "PF C - 3% (JEC 8TeV)", "p");  
-  lz_Rjet->AddEntry(JEC_calo_SPRm3,  "Calo C - 3% (JEC 8TeV)", "p"); 
+  //lz_Rjet->AddEntry(JEC_SPRm3,       "PF C - 3% (JEC 8TeV)", "p");  
+  //lz_Rjet->AddEntry(JEC_calo_SPRm3,  "Calo C - 3% (JEC 8TeV)", "p"); 
 
 
   TH1D* setup = new TH1D("setup","", h_Rjet_Cp3->GetXaxis()->GetNbins(),
@@ -1919,8 +1929,8 @@ void CMSJES::plotVariants(int gen, int Nevt)
   setup->Draw();
   JEC_calo_SPRp3->Draw("SAMEP");
   JEC_SPRp3->Draw("SAMEP");
-  JEC_SPRm3->Draw("SAMEP");
-  JEC_calo_SPRm3->Draw("SAMEP");
+  //JEC_SPRm3->Draw("SAMEP");
+  //JEC_calo_SPRm3->Draw("SAMEP");
   h_Rjet_calo_Cp3->Draw("SAMEP");
   //h_Rjet_calo_Cm3->Draw("SAMEP");
   //h_Rjet_Cm3->Draw("SAMEP");
