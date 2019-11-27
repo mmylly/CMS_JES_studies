@@ -50,7 +50,6 @@ void CMSJES::Loop()
                                     228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
 
   string pTpTitle="c#tau=1 cm"; string MPFTitle="c#tau=1 cm";
-  
   pTpTitle += ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]}; p_{T}^{probe}/p_{T}^{tag}";
   TProfile* prpTbal = new TProfile("prpTbal", pTpTitle.c_str(), nbinsMPF-1, binsxMPF);
 
@@ -370,8 +369,13 @@ void CMSJES::Loop()
   TF1* piTrkReso = new TF1("piTrkReso", "0.01336 + 8.548e-5*x", 0, 5000);
 
   //Relative resolutions from Trackin paper:
-  TF1* muTrkReso = new TF1("muTrkReso", "4.66042e-07*x**2 + 0.00010326*x + 0.0080762", 0, 5000); 
-  TF1* allTrkReso = new TF1("allTrkReso", "2.77564e-06*x**2 + 0.000124*x + 0.010373", 0, 5000); 
+  TF1* muTrkReso = new TF1("muTrkReso","4.66042e-07*pow(x,2)+0.00010326*x+0.0080762", 0, 5000); 
+
+  // 68% parameters
+  //TF1* allTrkReso = new TF1("allTrkReso","2.77564e-06*pow(x,2)+0.000124*x+0.010373" , 0, 5000);
+
+  // 90% parametes
+  TF1* allTrkReso = new TF1("allTrkReso","2.006093e-05*pow(x,2)+0.00103068*x+0.0190268",0,5000);
 
   TF1* eff_fit = new TF1("eff_fit","1+[0]*x+[1]*x*x+[2]*exp([3]*x)", 0, 5000);
   eff_fit->SetParameters(-0.0003897, 3.589e-07, -0.02651, -0.2829);
@@ -539,6 +543,7 @@ void CMSJES::Loop()
 
     //Loop over all particles
     for (int i=0; i!=prtclnij_pt->size(); ++i) {
+
       PDG = fabs((*prtclnij_pdgid)[i]);
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                       (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
@@ -585,7 +590,7 @@ void CMSJES::Loop()
 
           
           //Efficiency from chs
-          if (fabs(p4.Eta() < 5.2)) {
+          if (fabs(p4.Eta() < 2.5)) {
             for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
               if (p4.DeltaR(jets_r[ijet]) < 0.4) {
                 eff = pchf->Eval(jets_r[ijet].Pt()) / 0.607;
@@ -595,37 +600,55 @@ void CMSJES::Loop()
           }
           
           eff = max(eff,0.0);
-          eff = min(eff,0.94);
-          
+          eff = min(eff,0.94);  
+
+
           //Tracking efficiency plot
           if ( (fabs((*prtclnij_eta)[i]) < 2.5)) {
             chhEff->Fill((*prtclnij_pt)[i], eff);
           }
 
+          if (resp != 1) eff = 0.0; //If not in tracker
+
           if ( ((double)rand() / (double)RAND_MAX) > eff ) trkFail =  1;
 
-          if (!trkFail) {
-              cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
-              chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
-          }
+          //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P() * p4.P());
+          trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P());
+
 
           //Phi where particle exits tracker
           newPhi = trackDeltaPhi((*prtclnij_pdgid)[i], (*prtclnij_phi)[i], 
                                  (*prtclnij_pt )[i], Rt, Bfield);
 
-          p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
 
-          if (!trkFail) {
-              cht_curv  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
-              chtPt_curv->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+          if (!trkFail && resp == 1) {
+            cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
+            chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+            if ((*prtclnij_pt )[i] > 0.7) {
+              sigmaTrk->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
+            }
           }
 
-          p4 *= respH; //Calorimeter response
 
+
+          p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
+
+          if (!trkFail && resp == 1) {
+            cht_curv  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
+            chtPt_curv->Fill(p4.Phi(), p4.Eta(), p4.Pt());
+            if ((*prtclnij_pt )[i] > 0.7) {
+              sigmaTrk_curv->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
+            }
+          }
+
+          /*
           //Resolutions
-          if (respH > 0.0) {
+          if (respH > 0.0 && !trkFail) {
+          //if (respH > 0.0) {
+          //if (!trkFail) {
             calReso = max(0.0,     jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
             trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
+
             //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_e)[i]) * (*prtclnij_e)[i]);
             //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * pow((*prtclnij_pt)[i],2));
 
@@ -635,7 +658,7 @@ void CMSJES::Loop()
             sigmaTrk_curv->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
             //sigmaCalo    ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
             sigmaCalo    ->Fill((*prtclnij_phi)[i], p4.Eta(), pow(calReso,2));
-          }
+          }*/
           
           p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
 
@@ -699,7 +722,7 @@ void CMSJES::Loop()
         cellPhi = cht->GetXaxis()->GetBinCenter(i);
         cellEta = cht->GetYaxis()->GetBinCenter(j);
 
-
+        
         //**** Cold cells
         iEtaCold = floor((cellEta+fabs(coldCells->GetXaxis()->GetBinLowEdge(1)))/
                           coldCells->GetXaxis()->GetBinWidth(1) + 1);
@@ -734,7 +757,6 @@ void CMSJES::Loop()
                    + chECAL_curv->GetBinContent(i,j) + chHCAL_curv->GetBinContent(i,j);
         p4_calo.SetPtEtaPhiE(cellE_calo/cosh(cellEta), cellEta, cellPhi, cellE_calo);
 
-        delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL->GetBinContent(i,j);
 
         //HCAL calibration
         if (nhHCAL->GetBinContent(i,j) > 0.0) {
@@ -758,22 +780,27 @@ void CMSJES::Loop()
         //caloEnergy = calibEcal + calibHcal;
         delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL_calib;
 
-        
-        if (delta < cellSigma) { //Shadowing
-          nhHCAL_calib = 0.0;
-          nhECAL->SetBinContent(i,j,0.0); 
-          ne    ->SetBinContent(i,j,0.0);
-        }
-
         chc = chHCAL->GetBinContent(i,j) + chECAL->GetBinContent(i,j);
 
+        
         //Calibrate ch calorimeter energy deposit chc
         if (chc > 0.0) {
           chc_calib = fr_all->GetX(chc, 0.1, 7000.0);
         }
 
+        
+        //if (delta < cellSigma && sqrt(sigmaTrk->GetBinContent(i,j))/p4.P() < 0.1) { //Shadowing
+        if (delta < cellSigma) { //Shadowing
+          nhHCAL_calib = 0.0;
+          nhECAL->SetBinContent(i,j,0.0); 
+          ne    ->SetBinContent(i,j,0.0);
+          chc_calib += delta; // Move shadowed energy to ch energy deposit
+        }
+
         //Calculate caloresolution for not curved track
         p4.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, cht->GetBinContent(i,j));
+
+        
         if (p4.P() > 0.0) {
           Caloresolution  = sqrt(1.02*1.02/p4.P() + 0.065*0.065);
           Caloresolution *= p4.P();
@@ -781,16 +808,17 @@ void CMSJES::Loop()
 
         //****************************** WEIGHTING ********************************
         if (p4.P() > 0.0)
-        w = pow(Caloresolution,2) / (sigmaTrk->GetBinContent(i,j) + pow(Caloresolution,2));
+        w = pow(Caloresolution,2) / ( sigmaTrk->GetBinContent(i,j) + pow(Caloresolution,2));
 
         if (sqrt(sigmaTrk->GetBinContent(i,j))/p4.P() > 0.1) {
           p4_chc.SetPtEtaPhiE(chc_calib/cosh(cellEta), cellEta, cellPhi, chc_calib);
           p4_cht.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
                               cht->GetBinContent(i,j));
-          
+
           p4_2 = w*p4_cht + (1-w)*p4_chc;
 
           if (w > 0.5) wcht++; else wchc++;
+
         } else { //Normal case
           p4_2.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
                               cht->GetBinContent(i,j));
@@ -812,10 +840,10 @@ void CMSJES::Loop()
         //Probe reconstruction
         if (p4.DeltaR(jets_r[0]) < 0.4) {
           probe_pf   += p4;
-          h_ch_c   ->Fill(jets_r[0].Pt(), cht->GetBinContent(i,j));
+          h_ch_c   ->Fill(jets_r[0].Pt(), p4_2.E() );
           h_nh_c   ->Fill(jets_r[0].Pt(), nhHCAL_calib);
           h_gamma_c->Fill(jets_r[0].Pt(), nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
-          h_all_c  ->Fill(jets_r[0].Pt(), cht->GetBinContent(i,j) + nhHCAL_calib +
+          h_all_c  ->Fill(jets_r[0].Pt(), p4_2.E() + nhHCAL_calib +
                                           nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
         }
       }
@@ -1341,11 +1369,10 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   } 
 
   //Set results. Check for NaN and negative results if positive demanded
-  if (zero || isnan(retMC) || retMC  <=0) retMC  =0;
-  if (zero || isnan(retH)  || retH   <=0) retH   =0;
-  if (zero || isnan(retH)  || retEHE <=0) retEHE =0;
-  if (zero || isnan(retH)  || retHHe <=0) retHHe =0;
-
+  if (zero || isnan(retMC)  || retMC  <=0) retMC  =0;
+  if (zero || isnan(retH)   || retH   <=0) retH   =0;
+  if (zero || isnan(retEHE) || retEHE <=0) retEHE =0;
+  if (zero || isnan(retHHe) || retHHe <=0) retHHe =0;
 } //Response
 
 //-----------------------------------------------------------------------------
@@ -1713,7 +1740,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
-  hzj_Rjet->SetAxisRange(0.87,0.96,"Y"); //Vertical axis limits
+  hzj_Rjet->SetAxisRange(0.0,1.3,"Y"); //Vertical axis limits
 
   //hzj_Rjet->GetYaxis()->SetTitleFont(133);
   //int titleSize = 20; //Common title size everywhere
@@ -1823,12 +1850,12 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //plotQuery(nameAdd, zjetFile, gen, Nevt);
 
   //Initialize histograms and open ROOT files and fetch the stored objects
-  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000.root");
-  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCp3.root");
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
   //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
 
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCp3.root");
+  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
+  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCp3.root");
   //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCm3.root");
 
   //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000.root");
@@ -1981,6 +2008,7 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 //Phi value where particle hits the calorimeter
 double CMSJES::trackDeltaPhi(int pdgid, double phi, double pT, double Rt, double Bfield) {
 
+  
   double Rp = pT/(0.3*Bfield);
   double dPhi;
   double newPhi;
