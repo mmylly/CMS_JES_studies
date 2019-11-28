@@ -5,9 +5,10 @@
 void CMSJES::Loop()
 {
   //Variant flags
-  bool varCp3, varCm3;
-  varCp3 = 0;
-  varCm3 = 0;
+  bool varCp3, varCm3, varTrkEff;
+  varCp3    = 0;
+  varCm3    = 0;
+  varTrkEff = 0;
 
   if (varCp3 && varCm3) {cout << "Both C-variants enabled!" << endl; return;}
 
@@ -34,8 +35,9 @@ void CMSJES::Loop()
   if (fChain == 0) return;
   Long64_t nentries = fChain->GetEntriesFast();
   string outname = "./output_ROOT_files/CMSJES_" + ReadName; //Output file
-  if (varCp3) outname += "_varCp3";
-  if (varCm3) outname += "_varCm3";
+  if (varCp3)    outname += "_varCp3";
+  if (varCm3)    outname += "_varCm3";
+  if (varTrkEff) outname += "_varTrkEff";
   outname += ".root";
 
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -138,6 +140,12 @@ void CMSJES::Loop()
   TLorentzVector probe_pf;      //PF reconstructed probe 4-vector
   TLorentzVector probe_calo;    //Calo reconstructed probe 4-vector
 
+  //Cell energies of the probe object
+  double probe_ch;
+  double probe_nh;
+  double probe_gamma;
+  double probe_e;
+
 
   //Partial derivative values for a hadron
   unsigned int i_tag = 0;       //Stepper to find tag object index
@@ -184,7 +192,7 @@ void CMSJES::Loop()
   vector<int> otherIDs;	//To contain PDGIDs of unclassified particles
 
   //Histograms for particle content from cells
-  TH1F* h_all_c; TH1F* h_ch_c; TH1F* h_nh_c; TH1F* h_gamma_c;
+  TH1F* h_all_c; TH1F* h_ch_c; TH1F* h_nh_c; TH1F* h_gamma_c; TH1F* h_e_c;
 
   //Machinery for histogram stacking
   vector<string> hTitles;
@@ -210,9 +218,11 @@ void CMSJES::Loop()
     h_ch_c    = new TH1F("", "", nbins_chf, bins_chf);
     h_nh_c    = new TH1F("", "", nbins_chf, bins_chf);
     h_gamma_c = new TH1F("", "", nbins_chf, bins_chf);
+    h_e_c     = new TH1F("", "", nbins_chf, bins_chf);
 
     h_ch_c   ->SetFillColor(kRed-7);   h_ch_c->SetLineWidth(1);    h_ch_c->SetLineColor(kBlack);
     h_nh_c   ->SetFillColor(kGreen-6); h_nh_c->SetLineWidth(1);    h_nh_c->SetLineColor(kBlack);
+    h_e_c    ->SetFillColor(kCyan+1);  h_e_c->SetLineWidth(1);     h_e_c->SetLineColor(kBlack);
     h_gamma_c->SetFillColor(kBlue-7);  h_gamma_c->SetLineWidth(1); 
     h_gamma_c->SetLineColor(kBlack);
     hstack_c = new THStack("", "#font[132]{Z#mu#mu jet particle content in |#eta| < 1.3}");
@@ -407,6 +417,12 @@ void CMSJES::Loop()
     probe.SetPtEtaPhiE(0,0,0,0);     probe_g.SetPtEtaPhiE(0,0,0,0);
     probe_spr.SetPtEtaPhiE(0,0,0,0); probe_pf.SetPtEtaPhiE(0,0,0,0);
     probe_calo.SetPtEtaPhiE(0,0,0,0);
+    probe_ch    = 0.0;
+    probe_nh    = 0.0;
+    probe_gamma = 0.0;
+    probe_e = 0.0;
+
+
     jets_g.clear(); jets_r.clear(); 
     njets = (unsigned long)jet_pt->size();
     jets_g.resize(njets); jets_r.resize(njets);
@@ -602,6 +618,7 @@ void CMSJES::Loop()
           eff = max(eff,0.0);
           eff = min(eff,0.94);  
 
+          if (varTrkEff) eff *= 0.99; // -1% variation to track efficiency
 
           //Tracking efficiency plot
           if ( (fabs((*prtclnij_eta)[i]) < 2.5)) {
@@ -713,6 +730,16 @@ void CMSJES::Loop()
     // ***************** Loop over cells ******************
     for (int i=1; i!=cht->GetNbinsX()+1; ++i) {
       for (int j=1; j!=cht->GetNbinsY()+1; ++j) {
+
+        //Skip if no energy deposit in the cell
+        if (cht->GetBinContent(i,j)         == 0.0 && chtPt->GetBinContent(i,j)       == 0.0 &&
+            cht_curv->GetBinContent(i,j)    == 0.0 && chtPt_curv->GetBinContent(i,j)  == 0.0 &&
+            chECAL->GetBinContent(i,j)      == 0.0 && chHCAL->GetBinContent(i,j)      == 0.0 &&
+            chECAL_curv->GetBinContent(i,j) == 0.0 && chHCAL_curv->GetBinContent(i,j) == 0.0 &&
+            nhECAL->GetBinContent(i,j)      == 0.0 && nhHCAL->GetBinContent(i,j)      == 0.0 &&
+            ne->GetBinContent(i,j)          == 0.0 && eCalo->GetBinContent(i,j)       == 0.0)
+            continue;
+
         double w = 1.0; int iEtaCold;
         double nhHCAL_calib = 0.0; double chc_calib = 0.0; double Caloresolution = 0.0;
         p4_chc.SetPtEtaPhiE(0,0,0,0); p4_cht.SetPtEtaPhiE(0,0,0,0);
@@ -839,69 +866,24 @@ void CMSJES::Loop()
 
         //Probe reconstruction
         if (p4.DeltaR(jets_r[0]) < 0.4) {
-          probe_pf   += p4;
-          h_ch_c   ->Fill(jets_r[0].Pt(), p4_2.E() );
-          h_nh_c   ->Fill(jets_r[0].Pt(), nhHCAL_calib);
-          h_gamma_c->Fill(jets_r[0].Pt(), nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
-          h_all_c  ->Fill(jets_r[0].Pt(), p4_2.E() + nhHCAL_calib +
-                                          nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
+          probe_pf    += p4;
+          probe_ch    += p4_2.E();
+          probe_nh    += nhHCAL_calib;
+          probe_e     += eCalo->GetBinContent(i,j);
+          probe_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
         }
+        /*
+        //Probe reconstruction
+        if (p4.DeltaR(jets_g[0]) < 0.4) {
+          probe_pf   += p4;
+          h_ch_c   ->Fill(tag_r.Pt(), p4_2.E() );
+          h_nh_c   ->Fill(tag_r.Pt(), nhHCAL_calib);
+          h_gamma_c->Fill(tag_r.Pt(), nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
+          h_all_c  ->Fill(tag_r.Pt(), p4_2.E() + nhHCAL_calib +
+                                      nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
+        }*/
       }
     }
-
-    /************************** PARTICLE COMPOSITION **************************/
-    /*
-    //Loop all particles associated with jets
-    for (unsigned int i=0; i!=(GetcontHistos() ? prtcl_pdgid->size():0); ++i) {
-      JI = (*prtcl_jet)[i];
-
-      //See if ptcl belongs to the studied jet(s)
-      if (JI==i_probe) {
-
-        PDG = abs((*prtcl_pdgid)[i]); 
-        p4.SetPtEtaPhiE((*prtcl_pt)[i], (*prtcl_eta)[i], //Prtcl gen lvl values
-		        (*prtcl_phi)[i],(*prtcl_e)[i]  );
-
-        Response(PDG,p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,fr_h, resp,respH, respEHE, respHHe);
-
-        // Fill (probe) particle content to the right histogram
-        if (GetcontHistos()) {
-          switch (PDG) {
-            case 11   : for (int l=0; l!=3; ++l) h_ptr[l]=h_e[l];     break;
-            case 22   : for (int l=0; l!=3; ++l) h_ptr[l]=h_gamma[l]; break;
-            case 20   : for (int l=0; l!=3; ++l) h_ptr[l]=h_gpi0[l];  break;
-            case 321  : for (int l=0; l!=3; ++l) h_ptr[l]=h_K[l];     break;
-            case 310  : for (int l=0; l!=3; ++l) h_ptr[l]=h_K0S[l];   break;
-            case 130  : for (int l=0; l!=3; ++l) h_ptr[l]=h_K0L[l];   break;
-            case 3122 : for (int l=0; l!=3; ++l) h_ptr[l]=h_L[l];     break;
-            case 13   : for (int l=0; l!=3; ++l) h_ptr[l]=h_mu[l];    break;
-            case 2112 : for (int l=0; l!=3; ++l) h_ptr[l]=h_n[l];     break;
-            case 211  : for (int l=0; l!=3; ++l) h_ptr[l]=h_pi[l];    break;
-            case 2212 : for (int l=0; l!=3; ++l) h_ptr[l]=h_p[l];     break;
-            default :
-              if (isNeutrino(PDG)) {for (int l=0; l!=3; ++l) h_ptr[l]=h_nu[l];}
-              else if (isStrangeB(PDG)) {
-                switch (PDG) {
-                  case 3112 : for (int l=0; l!=3; ++l) h_ptr[l]=h_Sigm[l];break;
-                  case 3212 : for (int l=0; l!=3; ++l) h_ptr[l]=h_Sig0[l];break;
-                  case 3222 : for (int l=0; l!=3; ++l) h_ptr[l]=h_Sigp[l];break;
-                  case 3312 : for (int l=0; l!=3; ++l) h_ptr[l]=h_Xim[l]; break;
-                  case 3322 : for (int l=0; l!=3; ++l) h_ptr[l]=h_Xi0[l]; break;
-                  case 3334 : for (int l=0; l!=3; ++l) h_ptr[l]=h_Om[l];  break;
-                  default : cout<<"Error: isStrangeB passed ID "<<PDG<<endl;
-                }
-                //Fill the general "other particles" histogram already here
-                h_other[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (*prtcl_e)[i]  );
-                h_other[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (resp*p4).E()  );
-              } //Xi, Sigma, Omega^-
-          } //Switch PDG (general)
-          h_ptr[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (*prtcl_e)[i]  );
-          h_ptr[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (resp*p4).E()  );
-          h_all[0]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (*prtcl_e)[i]  );
-          h_all[1]->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (resp*p4).E()  );
-        } //Particle content histograms
-      } //If ptcl in the studied probe or tag
-    } //Loop over particles*/
 
     /**************************** FILL HISTOGRAMS ****************************/
 
@@ -912,6 +894,14 @@ void CMSJES::Loop()
 
     //Back-to-back leikkaus
     if (fabs(tag_r.DeltaPhi(probe_pf)) < phiMin) continue; b2b ++;
+
+    //Probe energy fraction
+    h_ch_c   ->Fill(probe_pf.Pt(), probe_ch);
+    h_nh_c   ->Fill(probe_pf.Pt(), probe_nh);
+    h_gamma_c->Fill(probe_pf.Pt(), probe_gamma);
+    h_e_c    ->Fill(probe_pf.Pt(), probe_e);
+    h_all_c  ->Fill(probe_pf.Pt(), probe_ch + probe_nh + probe_gamma + probe_e);
+
 
     //pT balance
     prpTbal->Fill(pTp, probe_pf.Pt()/tag_r.Pt(), weight);
@@ -991,11 +981,13 @@ void CMSJES::Loop()
   canv_c->SetLogx();
 
   //Normalize histograms by the sum of all ptcls and add to stack
-  h_ch_c   ->Divide(h_all_c);  hstack_c->Add(h_ch_c);
-  h_nh_c   ->Divide(h_all_c);  hstack_c->Add(h_nh_c);
-  h_gamma_c ->Divide(h_all_c); hstack_c->Add(h_gamma_c);
+  h_ch_c    ->Divide(h_all_c);  hstack_c->Add(h_ch_c);
+  h_nh_c    ->Divide(h_all_c);  hstack_c->Add(h_nh_c);
+  h_gamma_c ->Divide(h_all_c);  hstack_c->Add(h_gamma_c);
+  h_e_c     ->Divide(h_all_c);  hstack_c->Add(h_e_c);
 
   //Legend setup
+  lg_c->AddEntry(h_e_c,     "e",              "f");
   lg_c->AddEntry(h_gamma_c, "#gamma",         "f");
   lg_c->AddEntry(h_nh_c,    "#font[132]{NH}", "f");
   lg_c->AddEntry(h_ch_c,    "#font[132]{CH}", "f");
@@ -1243,7 +1235,8 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
 
   double respPi_EHE = 0.0; double respPi_HHe = 0.0; //Pion responses for ECAL and HCAL
 
-  if (pT > 0.3) sfCh = 1.0; // Step function for charged particles // 0.2 ?
+  //if (pT > 0.3) sfCh = 1.0; // Step function for charged particles // 0.2 ?
+  if (pT > 0.2) sfCh = 1.0; // Step function for charged particles // 0.2 ?
   if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
 
   //Check if particle outside good eta region
@@ -1741,6 +1734,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
   hzj_Rjet->SetAxisRange(0.0,1.3,"Y"); //Vertical axis limits
+  hzj_Rjet->SetAxisRange(10,5000,"X"); //Vertical axis limits
 
   //hzj_Rjet->GetYaxis()->SetTitleFont(133);
   //int titleSize = 20; //Common title size everywhere
@@ -1849,9 +1843,9 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //string nameAdd, zjetFile, str, str_varCp3, str_varCm3;
   //plotQuery(nameAdd, zjetFile, gen, Nevt);
 
-  //Initialize histograms and open ROOT files and fetch the stored objects
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
+  //C-parameter variation
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000_varCp3.root");
   //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
 
   //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
@@ -1966,6 +1960,65 @@ void CMSJES::plotVariants(int gen, int Nevt)
 
   //Save plot
   canv_var->Print(savename.c_str());
+
+  delete canv_var;
+
+  //////////////////// Tracking efficiency /////////////////////////
+  // Tracking efficieny
+  TFile* fzj_Trk = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000_varTrkEff.root");
+
+  TProfile *pr_Rjet_Trk=0;
+
+  //Create Histograms
+  fzj_Trk->GetObject("prRjet",pr_Rjet_Trk);
+
+  TH1D* h_Rjet_Trk = pr_Rjet_Trk->ProjectionX();
+
+  h_Rjet_Trk->Divide(h_Rjet);
+
+  //Canvas
+  TCanvas* canv_trk = new TCanvas("canv_trk","",600,600);
+  canv_trk->SetLeftMargin(0.15); canv_trk->SetBottomMargin(0.13);
+
+  h_Rjet_Trk->SetMarkerStyle(kFullSquare); h_Rjet_Trk->SetMarkerColor(kRed);
+  h_Rjet_Trk->SetLineColor(kRed);  
+
+  //Legend
+  TLegend* lz_Rjet_trk = new TLegend(0.2,0.7,0.7,0.89);
+  lz_Rjet_trk->SetNColumns(2);
+  lz_Rjet_trk->SetBorderSize(0);
+  lz_Rjet_trk->AddEntry(h_Rjet_Trk, "Tracking efficiency - 1%", "p"); 
+
+  TH1D* setup_trk = new TH1D("setup_trk","", h_Rjet_Trk->GetXaxis()->GetNbins(),
+		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
+                                             h_Rjet_Trk->GetXaxis()->GetXmax());
+
+  //Title and axis setup
+  setup_trk->SetStats(0); //Suppress stat box
+  setup_trk->SetTitle("");
+  setup_trk->SetAxisRange(0.99,1.01,"Y"); //Vertical axis limits
+  setup_trk->GetXaxis()->SetMoreLogLabels();
+  setup_trk->GetXaxis()->SetNoExponent();
+  canv_trk->SetLogx();
+  setup_trk->GetYaxis()->SetTitleOffset(1.8);
+  setup_trk->GetXaxis()->SetTitleOffset(1.2);
+  setup_trk->GetYaxis()->SetTitle("Response ratio");
+  setup_trk->GetXaxis()->SetTitle("p_{T}^{gen} [GeV]");
+
+  gPad->SetTickx(); gPad->SetTicky();
+
+  //Savefile name setup
+  string savename_trk = "./plots/varPlots/varTrk";
+  savename_trk+=".eps";
+
+  //Plot
+  setup_trk->Draw();
+  h_Rjet_Trk->Draw("SAMEP");
+  lz_Rjet_trk->Draw("SAMEP");
+
+  //Save plot
+  canv_trk->Print(savename_trk.c_str());
+
 }
 
 //-----------------------------------------------------------------------------
