@@ -146,7 +146,6 @@ void CMSJES::Loop()
   double probe_gamma;
   double probe_e;
 
-
   //Partial derivative values for a hadron
   unsigned int i_tag = 0;       //Stepper to find tag object index
   unsigned int i_probe = 0;     //       -||-     probe jet index
@@ -170,8 +169,11 @@ void CMSJES::Loop()
   unsigned long njets;          //#jets in the event, for resizing vectors
   TLorentzVector MET_r;         //Reconstructed MET four vector
 
+  //N_HHe / (N_HHe + EHE)
+  double HHeFrac = 0.45;
+
   //CMS detector related parameters
-  double Bfield = 4.0; //Tesla
+  double Bfield = 3.8; //Tesla
   double Rt     = 1.2; //Tracker radius
 
   //MET calculation related variables
@@ -412,15 +414,15 @@ void CMSJES::Loop()
     //Reinit
     i_tag = 0; i_probe = 0; 
     p4.SetPtEtaPhiE(0,0,0,0);        MET_r.SetPtEtaPhiE(0,0,0,0);
-    p4_calo.SetPtEtaPhiE(0,0,0,0);
+    p4_calo.SetPtEtaPhiE(0,0,0,0);   probe_calo.SetPtEtaPhiE(0,0,0,0);
     tag.SetPtEtaPhiE(0,0,0,0);       tag_r.SetPtEtaPhiE(0,0,0,0);
     probe.SetPtEtaPhiE(0,0,0,0);     probe_g.SetPtEtaPhiE(0,0,0,0);
     probe_spr.SetPtEtaPhiE(0,0,0,0); probe_pf.SetPtEtaPhiE(0,0,0,0);
-    probe_calo.SetPtEtaPhiE(0,0,0,0);
+
     probe_ch    = 0.0;
     probe_nh    = 0.0;
     probe_gamma = 0.0;
-    probe_e = 0.0;
+    probe_e     = 0.0;
 
 
     jets_g.clear(); jets_r.clear(); 
@@ -451,10 +453,10 @@ void CMSJES::Loop()
 
     tag = p4;//gen lvl
 
-    Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
+    Response((*prtn_pdgid)[i_tag1],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,HHeFrac,
              fr_h, resp, respH, respEHE, respHHe);
 
-    p4 *= resp*gRandom->Gaus(1,piTrkReso->Eval(p4.Pt())); //MC lvl
+    p4 *= resp*gRandom->Gaus(1,piTrkReso->Eval(p4.Pt())); //Reco lvl
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
@@ -466,10 +468,10 @@ void CMSJES::Loop()
 
     tag += p4;//gen lvl
 
-    Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,
+    Response((*prtn_pdgid)[i_tag2],p4.Eta(),p4.E(),p4.Pt(),Rt,Bfield,HHeFrac,
              fr_h, resp, respH, respEHE, respHHe);
 
-    p4 *= resp*gRandom->Gaus(1,piTrkReso->Eval(p4.Pt())); //MC lvl
+    p4 *= resp*gRandom->Gaus(1,piTrkReso->Eval(p4.Pt())); //Reco lvl
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
@@ -492,7 +494,8 @@ void CMSJES::Loop()
       p4.SetPtEtaPhiE((*prtcl_pt )[i], (*prtcl_eta)[i],	(*prtcl_phi)[i], (*prtcl_e  )[i]);
 
       //Calculate responses. Store results to [resp, respH] tuples
-      Response(PDG, p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, fr_h, resp, respH, respEHE, respHHe);
+      Response(PDG, p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, HHeFrac, 
+               fr_h, resp, respH, respEHE, respHHe);
 
       //Reconstruct jets
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
@@ -564,12 +567,13 @@ void CMSJES::Loop()
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                       (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
 
-      Response((*prtclnij_pdgid)[i], p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, fr_h, 
-               resp, respH, respEHE, respHHe);
+      Response((*prtclnij_pdgid)[i], p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, HHeFrac, 
+               fr_h, resp, respH, respEHE, respHHe);
  
       if (resp == 0.0) continue;
 
       p4 *= resp;
+
 
       switch (PDG) {
         //PHOTON
@@ -610,13 +614,18 @@ void CMSJES::Loop()
             for (int ijet=0; ijet!=jets_r.size(); ++ijet) {
               if (p4.DeltaR(jets_r[ijet]) < 0.4) {
                 eff = pchf->Eval(jets_r[ijet].Pt()) / 0.607;
-                eff -= 0.263243+(0.04199621-0.263243)/(1+pow(((*prtclnij_pt)[i]/74.1766),1.737401));
+                //eff -= 0.263243 - 0.22124679/(1+pow(((*prtclnij_pt)[i]/74.1766),1.737401));
+                eff -= 0.1245869 - 0.07823616/(1 + pow(((*prtclnij_pt)[i]/54.57317),3.524974));
               }
             }
           }
-          
+
+          if ((*prtclnij_pt)[i] < 1.0) {
+            eff = 2021.944 - 2022.2565603/(1 + pow(((*prtclnij_pt)[i]/36533650),0.4126626));
+          }
+
           eff = max(eff,0.0);
-          eff = min(eff,0.94);  
+          eff = min(eff,0.96);
 
           if (varTrkEff) eff *= 0.99; // -1% variation to track efficiency
 
@@ -629,58 +638,41 @@ void CMSJES::Loop()
 
           if ( ((double)rand() / (double)RAND_MAX) > eff ) trkFail =  1;
 
-          //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P() * p4.P());
-          trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P());
 
+          trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P());
 
           //Phi where particle exits tracker
           newPhi = trackDeltaPhi((*prtclnij_pdgid)[i], (*prtclnij_phi)[i], 
                                  (*prtclnij_pt )[i], Rt, Bfield);
 
-
+          //Track resolutions
           if (!trkFail && resp == 1) {
             cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
             chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
-            if ((*prtclnij_pt )[i] > 0.7) {
+
+            if (doesReachEcal((*prtclnij_pdgid)[i], (*prtclnij_pt )[i], Bfield, Rt)) {
               sigmaTrk->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
             }
-          }
 
-
-
-          p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
-
-          if (!trkFail && resp == 1) {
+            p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
             cht_curv  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
             chtPt_curv->Fill(p4.Phi(), p4.Eta(), p4.Pt());
-            if ((*prtclnij_pt )[i] > 0.7) {
+            if (doesReachEcal((*prtclnij_pdgid)[i], (*prtclnij_pt )[i], Bfield, Rt)) {
               sigmaTrk_curv->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
             }
           }
 
           /*
-          //Resolutions
+          //Calo resolutions
           if (respH > 0.0 && !trkFail) {
-          //if (respH > 0.0) {
-          //if (!trkFail) {
             calReso = max(0.0,     jerg_A->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
-            trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * (*prtclnij_pt)[i]);
-
-            //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_e)[i]) * (*prtclnij_e)[i]);
-            //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * pow((*prtclnij_pt)[i],2));
-
-            //sigma        ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
-            //sigma        ->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
-            sigmaTrk     ->Fill((*prtclnij_phi)[i], p4.Eta(), pow(trkReso,2));
-            sigmaTrk_curv->Fill(p4.Phi(), p4.Eta(), pow(trkReso,2));
-            //sigmaCalo    ->Fill(p4.Phi(), p4.Eta(), pow(calReso,2));
             sigmaCalo    ->Fill((*prtclnij_phi)[i], p4.Eta(), pow(calReso,2));
           }*/
           
           p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
 
           //ECAL and HCAL deposits
-          if ( ((double)rand()/(double)RAND_MAX) > 0.45 ) { //EHE path
+          if ( ((double)rand()/(double)RAND_MAX) > HHeFrac ) { //EHE path
             p4 *= respEHE;
 
             if (trkFail) {
@@ -709,7 +701,7 @@ void CMSJES::Loop()
           p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                           (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
 
-          if ( ((double)rand()/(double)RAND_MAX) > 0.45 ) { //EHE path
+          if ( ((double)rand()/(double)RAND_MAX) > HHeFrac ) { //EHE path
             p4 *= respEHE;
             nhECAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //ECAL
             nhHCAL->Fill(p4.Phi(), p4.Eta(), 0.5*p4.E()); //HCAL
@@ -796,6 +788,8 @@ void CMSJES::Loop()
                         cht_curv->GetBinContent(i,j));
 
         if (p4.P() > 0.0) {
+          //jerg_A->SetParameters(9.59431e-05, 1.49712, 8.92104e-02);
+          //Caloresolution  = sqrt(1.497*1.497/p4.P() + 0.08921*0.08921);
           Caloresolution  = sqrt(1.02*1.02/p4.P() + 0.065*0.065);
           Caloresolution *= p4.P();
         }
@@ -872,16 +866,6 @@ void CMSJES::Loop()
           probe_e     += eCalo->GetBinContent(i,j);
           probe_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
         }
-        /*
-        //Probe reconstruction
-        if (p4.DeltaR(jets_g[0]) < 0.4) {
-          probe_pf   += p4;
-          h_ch_c   ->Fill(tag_r.Pt(), p4_2.E() );
-          h_nh_c   ->Fill(tag_r.Pt(), nhHCAL_calib);
-          h_gamma_c->Fill(tag_r.Pt(), nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
-          h_all_c  ->Fill(tag_r.Pt(), p4_2.E() + nhHCAL_calib +
-                                      nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j));
-        }*/
       }
     }
 
@@ -1198,7 +1182,7 @@ void CMSJES::Loop()
   TAxis *PFaxis = PFeff->GetXaxis();
   PFaxis->SetLimits(0.1,300);
   PFeff->GetHistogram()->SetMaximum(1.1);
-  PFeff->GetHistogram()->SetMinimum(0.4);
+  PFeff->GetHistogram()->SetMinimum(0.0);
   PFeff->Draw("ap"); lgEff->Draw("same");
   PFeffFr->Draw("samep"); TRKeff->Draw("samep");
 
@@ -1219,8 +1203,8 @@ void CMSJES::Loop()
 } //CMSJES::Loop
 
 void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, double Rt, 
-                      double Bfield, TF1* frH, double& retMC, double& retH, double& retEHE,
-                      double& retHHe)
+                      double Bfield, double HHeFrac, TF1* frH, double& retMC, double& retH, 
+                      double& retEHE, double& retHHe)
 {
   retMC = 0.0; retH = 0.0; retEHE = 0.0; retHHe = 0.0;
   bool zero = false; //If true, return zero responses
@@ -1235,10 +1219,13 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
 
   double respPi_EHE = 0.0; double respPi_HHe = 0.0; //Pion responses for ECAL and HCAL
 
-  //if (pT > 0.3) sfCh = 1.0; // Step function for charged particles // 0.2 ?
-  if (pT > 0.2) sfCh = 1.0; // Step function for charged particles // 0.2 ?
-  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles  
+  if (pT > 0.2) sfCh = 1.0; // Step function for charged particles // 0.3
+  if (pT > 3.0) sfN  = 1.0; // Step function for neutral particles
+  //if (pT > 0.0) sfN  = 1.0; // Step function for neutral particles  
 
+  if (!doesReachEcal(pdgid, pT, Bfield, Rt)) {
+    sfN = 0.0;
+  }
   //Check if particle outside good eta region
   if (fabs(pseudorap) > 5.2) zero = true;
 
@@ -1280,14 +1267,14 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
     cat3 = frH->Eval(energy);
 
     //EHE responses
-    cat1_EHE = cat1*(respPi_EHE/(0.45*respPi_HHe + 0.55*respPi_EHE));
-    cat2_EHE = cat2*(respPi_EHE/(0.45*respPi_HHe + 0.55*respPi_EHE));
-    cat3_EHE = cat3*(respPi_EHE/(0.45*respPi_HHe + 0.55*respPi_EHE));
+    cat1_EHE = cat1*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    cat2_EHE = cat2*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    cat3_EHE = cat3*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
 
     //HHe responses
-    cat1_HHe = cat1*(respPi_HHe/(0.45*respPi_HHe + 0.55*respPi_EHE));
-    cat2_HHe = cat2*(respPi_HHe/(0.45*respPi_HHe + 0.55*respPi_EHE));
-    cat3_HHe = cat3*(respPi_HHe/(0.45*respPi_HHe + 0.55*respPi_EHE));
+    cat1_HHe = cat1*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    cat2_HHe = cat2*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    cat3_HHe = cat3*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
 
     switch (pdgid) {
       //PHOTON
@@ -1359,13 +1346,21 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
         cout << "Unknown particle PDG: " << pdgid << endl;
         continue;	 
     }
-  } 
+  }
+
+  
+  if (!doesReachEcal(pdgid, pT, Bfield, Rt)) {
+    retH = 0.0;
+    retEHE = 0.0;
+    retHHe = 0.0;
+  }
+
 
   //Set results. Check for NaN and negative results if positive demanded
-  if (zero || isnan(retMC)  || retMC  <=0) retMC  =0;
-  if (zero || isnan(retH)   || retH   <=0) retH   =0;
-  if (zero || isnan(retEHE) || retEHE <=0) retEHE =0;
-  if (zero || isnan(retHHe) || retHHe <=0) retHHe =0;
+  if (zero || isnan(retMC)  || retMC  <=0) retMC  = 0.0;
+  if (zero || isnan(retH)   || retH   <=0) retH   = 0.0;
+  if (zero || isnan(retEHE) || retEHE <=0) retEHE = 0.0;
+  if (zero || isnan(retHHe) || retHHe <=0) retHHe = 0.0;
 } //Response
 
 //-----------------------------------------------------------------------------
@@ -1458,7 +1453,6 @@ void CMSJES::plotPT(int gen, int Nevt)
   //CMS MC points
   TGraphErrors* mc_zj_pTbal_2018 = new TGraphErrors(nMC_pTbal2018,zj_MC_pTp_pTbal_2018,
                                                     zj_MC_pTbal_2018,0,zj_MC_pTbal_ER_2018);
-
 
   mc_zj_pTbal_2018->SetMarkerStyle(kOpenCircle);  mc_zj_pTbal_2018->SetMarkerColor(kGreen+2);
 
@@ -1659,17 +1653,17 @@ void CMSJES::plotRjet(int gen, int Nevt)
   TGraph *diff_s  = new TGraph("data_and_MC_input/Response/diffToGluon_s.txt" );
   TGraph *diff_c  = new TGraph("data_and_MC_input/Response/diffToGluon_c.txt" );
   TGraph *diff_ud = new TGraph("data_and_MC_input/Response/diffToGluon_ud.txt");
-  diff_b ->SetMarkerStyle(kOpenCircle);  diff_b ->SetMarkerColor(kBlue+1);
+  diff_b ->SetMarkerStyle(kOpenCircle); diff_b ->SetMarkerColor(kBlue+1);
   diff_s ->SetMarkerStyle(kOpenCircle); diff_s ->SetMarkerColor(kOrange+1);
   diff_c ->SetMarkerStyle(kOpenCircle); diff_c ->SetMarkerColor(kGreen+1);
   diff_ud->SetMarkerStyle(kOpenCircle); diff_ud->SetMarkerColor(kRed+1);
 
   h_diffbg ->SetMarkerStyle(kFullSquare); h_diffbg ->SetMarkerColor(kBlue+1);
   h_diffudg->SetMarkerStyle(kFullSquare); h_diffudg->SetMarkerColor(kRed+1 );
-  h_diffsg->SetMarkerStyle(kFullSquare);  h_diffsg->SetMarkerColor(kOrange+1);
-  h_diffcg->SetMarkerStyle(kFullSquare);  h_diffcg->SetMarkerColor(kGreen+1 );
+  h_diffsg ->SetMarkerStyle(kFullSquare); h_diffsg ->SetMarkerColor(kOrange+1);
+  h_diffcg ->SetMarkerStyle(kFullSquare); h_diffcg ->SetMarkerColor(kGreen+1 );
   h_diffbg ->SetLineColor(kBlue+1);       h_diffudg->SetLineColor(kRed+1 );
-  h_diffsg ->SetLineColor(kOrange+1);       h_diffcg->SetLineColor(kGreen+1 );
+  h_diffsg ->SetLineColor(kOrange+1);     h_diffcg ->SetLineColor(kGreen+1 );
 
   TCanvas* canv_diffg = new TCanvas("canv_diffg","",600,600);
   canv_diffg->SetLeftMargin(0.15);
@@ -1678,22 +1672,21 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Legend
   TLegend* lz_diffg = new TLegend(0.62,0.60,0.89,0.89);
   lz_diffg->SetBorderSize(0);
-  lz_diffg->AddEntry(h_diffbg,  "b");
-  lz_diffg->AddEntry(h_diffudg, "ud");
-  lz_diffg->AddEntry(h_diffsg,  "s");
-  lz_diffg->AddEntry(h_diffcg,  "c");
-  lz_diffg->AddEntry(diff_b,  "b (PF)", "p");
+  lz_diffg->AddEntry(h_diffbg,           "b");
+  lz_diffg->AddEntry(h_diffudg,         "ud");
+  lz_diffg->AddEntry(h_diffsg,           "s");
+  lz_diffg->AddEntry(h_diffcg,           "c");
+  lz_diffg->AddEntry(diff_b,  "b (PF)",  "p");
   lz_diffg->AddEntry(diff_ud, "ud (PF)", "p");
-  lz_diffg->AddEntry(diff_s,  "s (PF)", "p");
-  lz_diffg->AddEntry(diff_c,  "c (PF)", "p");
+  lz_diffg->AddEntry(diff_s,  "s (PF)",  "p");
+  lz_diffg->AddEntry(diff_c,  "c (PF)",  "p");
 
   h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
   h_diffbg->GetXaxis()->SetTitle("p_{T}^{gen} [GeV]");
   h_diffbg->GetYaxis()->SetTitleOffset(1.9);
   h_diffbg->GetXaxis()->SetTitleOffset(1.2);
 
-  h_diffbg->SetStats(0); //Suppress stat box
-  h_diffbg->SetTitle("");
+  h_diffbg->SetStats(0); h_diffbg->SetTitle("");
   h_diffbg->SetAxisRange(0.0,0.042,"Y"); //Vertical axis limits
 
   h_diffbg->Draw("P");
@@ -1733,7 +1726,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
-  hzj_Rjet->SetAxisRange(0.0,1.3,"Y"); //Vertical axis limits
+  hzj_Rjet->SetAxisRange(0.8,1.0,"Y"); //Vertical axis limits
   hzj_Rjet->SetAxisRange(10,5000,"X"); //Vertical axis limits
 
   //hzj_Rjet->GetYaxis()->SetTitleFont(133);
@@ -1844,8 +1837,8 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //plotQuery(nameAdd, zjetFile, gen, Nevt);
 
   //C-parameter variation
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000_varCp3.root");
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varCp3.root");
   //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
 
   //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000.root");
@@ -1965,7 +1958,7 @@ void CMSJES::plotVariants(int gen, int Nevt)
 
   //////////////////// Tracking efficiency /////////////////////////
   // Tracking efficieny
-  TFile* fzj_Trk = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_100000_varTrkEff.root");
+  TFile* fzj_Trk = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_10000_varTrkEff.root");
 
   TProfile *pr_Rjet_Trk=0;
 
@@ -1987,7 +1980,7 @@ void CMSJES::plotVariants(int gen, int Nevt)
   TLegend* lz_Rjet_trk = new TLegend(0.2,0.7,0.7,0.89);
   lz_Rjet_trk->SetNColumns(2);
   lz_Rjet_trk->SetBorderSize(0);
-  lz_Rjet_trk->AddEntry(h_Rjet_Trk, "Tracking efficiency - 1%", "p"); 
+  lz_Rjet_trk->AddEntry(h_Rjet_Trk, "Tracking efficiency -1%", "p"); 
 
   TH1D* setup_trk = new TH1D("setup_trk","", h_Rjet_Trk->GetXaxis()->GetNbins(),
 		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
@@ -2060,14 +2053,13 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 
 //Phi value where particle hits the calorimeter
 double CMSJES::trackDeltaPhi(int pdgid, double phi, double pT, double Rt, double Bfield) {
-
   
   double Rp = pT/(0.3*Bfield);
   double dPhi;
   double newPhi;
 
   //What is the correct sign here?
-  dPhi = Charge(pdgid) * (TMath::Pi()/2 - TMath::ACos(Rt/(2*Rp)));
+  dPhi = Charge(pdgid)*(TMath::Pi()/2 - TMath::ACos(Rt/(2*Rp)));
 
   newPhi = phi + dPhi;
 
@@ -2154,4 +2146,20 @@ bool CMSJES::isChHadron(int pdgid) {
   }
   return isChH;
 }
+
+bool CMSJES::doesReachEcal(int pdgid, double pT, double B, double Rt) {
+  double Rp = pT/(0.3*B);
+
+  if (!fabs(Charge(pdgid))) return true;
+
+  if (Rp > 0.5*Rt) return true;
+  else return false;
+}
+
+
+
+
+
+
+
 

@@ -24,9 +24,13 @@ all: gpythia8 spythia8 pythia8 pythia6 libHerwigTree.so jetanalysis ptcut
 
 ## Particle
 
+#libPrtclEvent.so: PrtclEvent.o PrtclEventDict.o
+#	cd events && $(CXX) -fPIC -shared $(CXXFLAGS) PrtclEvent.o \
+#	PrtclEventDict.o -o ../lib/$@
 libPrtclEvent.so: PrtclEvent.o PrtclEventDict.o
 	cd events && $(CXX) -fPIC -shared $(CXXFLAGS) PrtclEvent.o \
-	PrtclEventDict.o -o ../lib/$@
+	PrtclEventDict.o -o ../events/$@
+
 
 PrtclEvent.o: PrtclEvent.cpp PrtclEvent.h
 	cd events && $(CXX) PrtclEvent.cpp -fPIC -pthread $(INCLUDE) \

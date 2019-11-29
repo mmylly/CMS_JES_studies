@@ -28,7 +28,6 @@ int main() {
       d.plotMPF(3,-1);
       d.plotRjet(3,-1);
       d.plotVariants(3,-1);
-      //d.plotRjet(3,-1);
       //d.plotF(3,-1);
       break;
     case 3 :

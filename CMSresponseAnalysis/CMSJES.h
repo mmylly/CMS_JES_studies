@@ -266,7 +266,8 @@ public :
   void   plotF(int gen=0, int Nevt=-1);
   void   plotVariants(int gen=0, int Nevt=-1);
   void   Response(int id, double pseudorap, double energy, double pT,double Rt, double Bfield,
-	          TF1* frH, double& retMC, double& retH, double& retEHE, double& retHHe);
+	          double HHeFrac, TF1* frH, double& retMC, double& retH, double& retEHE, 
+                  double& retHHe);
   void   ParamReader(string file, int n1, int n2, vector<vector<double>> &params);
   void   plotQuery(string& respStr, string& zjstr, int& gen, int& Nevt);
   bool   fidCuts(int id, double pT);
@@ -276,6 +277,7 @@ public :
   //New phi where particle hits the calo
   int    Charge(int pdgid); //Charge of the particle
   bool   isChHadron(int pdgid); //Returns true if particle is charged hadron
+  bool   doesReachEcal(int pdgid, double pT, double B, double Rt);
 };
 
 #endif
