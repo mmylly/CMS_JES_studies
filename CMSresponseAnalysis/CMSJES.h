@@ -50,6 +50,7 @@
 #include "TVector3.h"
 #include "TVectorD.h"
 #include "Riostream.h"
+#include "TLine.h"
 
 using std::string;
 using std::vector;
