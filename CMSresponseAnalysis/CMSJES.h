@@ -262,6 +262,7 @@ public :
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
   void   plotPT(int gen=0,int Nevt=-1);
+  void   plotJEF(int gen=0,int Nevt=-1);
   void   plotMPF(int gen=0, int Nevt=-1);
   void   plotRjet(int gen=0, int Nevt=-1);
   void   plotF(int gen=0, int Nevt=-1);
@@ -336,6 +337,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       files.push_back("P8_Zjet_30000" );
       files.push_back("P8_Zjet_100000");
       files.push_back("P8_Zjet_600000");
+      files.push_back("P8_Zjet_10000000");
       //User interface
       printf("No filename given, choose file (y = default file):\n");
       for (int i=0; i!=files.size(); ++i) {
@@ -352,8 +354,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       }
       ReadName = files[input];			//Pick the filename to study
     }
-    //OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
-    OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
+    OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
+    //OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
     printf("Opening file: %s\n", OpenName.c_str());
     TFile *f = (TFile*)gROOT->GetListOfFiles()
 			    ->FindObject(OpenName.c_str());

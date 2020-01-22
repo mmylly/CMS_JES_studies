@@ -100,7 +100,7 @@ ax.scatter(x_mu, reso_mu)
 ax.plot(pt,      fit,      label="TRK paper charged particle reso")
 ax.plot(pt,      fit_90,   label="TRK paper charged particle reso 90%")
 ax.plot(pt,      fit2,     label="TRK paper charged particle  abs reso")
-#ax.plot(pt,      fit_mu,   label="TRK paper muon reso"    )
+ax.plot(pt,      fit_mu,   label="TRK paper muon reso"    )
 ax.plot(pt,      reso_our, label="Our pion sample track reso")
 
 #ax.scatter(p_pion, reso_pion, label="Single pion gun dP/|P| in function of P")
