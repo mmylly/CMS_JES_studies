@@ -126,10 +126,11 @@ void CMSJES::Loop()
   TLorentzVector tag;        //Parton level tag object 4-vector
   TLorentzVector tag_r;	     //With muon smearing
 
-  TLorentzVector probe;      //Generator level probe 4-vector
   TLorentzVector probe_g;    //Generator level without neutrinos  
-  TLorentzVector probe_r;   //PF reconstructed probe 4-vector
+  TLorentzVector probe_r;    //PF reconstructed probe 4-vector
   TLorentzVector probe_calo; //Calo reconstructed probe 4-vector
+
+  TLorentzVector jet2_r;     //Second leading pT jet
 
   //Cell energies of the probe object
   double probe_ch;
@@ -372,8 +373,11 @@ void CMSJES::Loop()
 
     tag.SetPtEtaPhiE(0,0,0,0);     tag_r.SetPtEtaPhiE(0,0,0,0);
     
-    probe.SetPtEtaPhiE(0,0,0,0);   probe_g.SetPtEtaPhiE(0,0,0,0);
-    probe_r.SetPtEtaPhiE(0,0,0,0); probe_calo.SetPtEtaPhiE(0,0,0,0);
+    probe_g.SetPtEtaPhiE(0,0,0,0);
+    probe_r.SetPtEtaPhiE(0,0,0,0); 
+    probe_calo.SetPtEtaPhiE(0,0,0,0);
+
+    jet2_r.SetPtEtaPhiE(0,0,0,0);
 
     probe_ch    = 0.0; probe_nh    = 0.0;
     probe_gamma = 0.0; probe_e     = 0.0;
@@ -422,11 +426,9 @@ void CMSJES::Loop()
     //p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.Pt()));
     p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.P()));
 
-    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue; mumuCut++;
 
-    tag_r += p4;
-
-    mumuCut++;    
+    tag_r += p4;      
 
     //Invariant mass in range 70-110 GeV since Z boson mass is 91 GeV
     if (tag.M()<70.0 || tag.M()>110.0) continue; invM ++;
@@ -440,6 +442,7 @@ void CMSJES::Loop()
 
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
     for (int i=0; i != prtcl_pt->size(); ++i) {
+
       JI = (*prtcl_jet)[i]; 
       PDG = abs((*prtcl_pdgid)[i]);
       p4.SetPtEtaPhiE((*prtcl_pt )[i], (*prtcl_eta)[i],	(*prtcl_phi)[i], (*prtcl_e  )[i]);
@@ -447,39 +450,35 @@ void CMSJES::Loop()
       Response(PDG, p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, HHeFrac, 
                fr_h, resp, respA, respEHE, respHHe);
 
-      //Reconstruct jets
+      //Reconstruct gen-level jets, at the moment has no neutrinos
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
 
-      //Add muons and electrons to the reconstructed probe jet 
-      if ((*prtcl_jet)[i]==i_probe && (PDG==11 || PDG==13)) {
-        probe_r += resp*p4;
-        if (PDG == 11) {
-          probe_e += resp*p4.E(); //Probe electron energy for the fraction calculation
+      //Add muons and electrons to the reconstructed probe jet and second jet
+      if (PDG==11 || PDG==13) {
+        if ((*prtcl_jet)[i]==i_probe) {
+          probe_r += resp*p4;
+          if (PDG == 11) {
+            probe_e += resp*p4.E(); //Probe electron energy for the fraction calculation
+          }
+        } else if ((*prtcl_jet)[i]==1) {
+          jet2_r  += resp*p4;
         }
-      }
+      } 
     } //Loop particles in jets
 
     /********************* RECONSTRUCT GEN LEVEL PROBES *********************/
 
     //Gen lvl as output by FastJet
-    probe.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
+    probe_g.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
                        (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
-    //Gen lvl minus neutrinos
-    probe_g.SetPtEtaPhiE(jets_g[i_probe].Pt(),  jets_g[i_probe].Eta(),
-                         jets_g[i_probe].Phi(), jets_g[i_probe].E() );
-
-
 
     /****************************** COMMON CUTS FOR Z+JET ******************************/
 
-    //Alpha cut
-    if (jets_g[1].Pt() > 0.3*tag_r.Pt()) continue; alpha ++;
-
     //PF probe-tag cuts
-    if (fabs(probe.Eta()) > eta_probe || probe.Pt() < pTmin_probe) continue; genprobeCut ++;
+    if (fabs(probe_g.Eta()) > eta_probe || probe_g.Pt() < pTmin_probe) continue; genprobeCut ++;
 
     //Back-to-back leikkaus
-    if (fabs(tag.DeltaPhi(probe)) < phiMin) continue; b2b ++;
+    if (fabs(tag.DeltaPhi(probe_g)) < phiMin) continue; b2b ++;
 
 
     /********************** PROBE GEN PARTICLE CONTENT **********************/
@@ -760,7 +759,7 @@ void CMSJES::Loop()
                    + chECAL_curv->GetBinContent(i,j) + chHCAL_curv->GetBinContent(i,j);
         p4_calo.SetPtEtaPhiE(cellE_calo/cosh(cellEta), cellEta, cellPhi, cellE_calo);
 
-        if (p4_calo.DeltaR(jets_g[0]) < 0.4) {
+        if (p4_calo.DeltaR(probe_g) < 0.4) {
           probe_calo += p4_calo;
         }
 
@@ -835,11 +834,15 @@ void CMSJES::Loop()
         MET_r -= p4;
 
         //Probe reconstruction
-        if (p4.DeltaR(jets_g[0]) < 0.4) {
+        if (p4.DeltaR(probe_g) < 0.4) {
           probe_r     += p4;
           probe_ch    += p4_rescale.E();
           probe_nh    += nhHCAL_calib;
           probe_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
+        }
+        //Second leading jet reconstruction for Alpha cut
+        if (p4.DeltaR(jets_g[1]) < 0.4) {
+          jet2_r += p4;
         }
       }
     }
@@ -847,19 +850,18 @@ void CMSJES::Loop()
     /**************************** FILL HISTOGRAMS ****************************/
 
     //reco Alpha cut?
+    if (jet2_r.Pt() > 0.3*tag_r.Pt()) continue; alpha ++;
 
     //reco probe cuts
     if (fabs(probe_r.Eta()) > eta_probe || probe_r.Pt() < pTmin_probe) continue; probeCut ++;
 
     double totalE;
     totalE = probe_ch + probe_nh + probe_gamma + probe_e;
- 
 
-    prchf   ->Fill(probe_r.Pt(), probe_ch/totalE, weight);
-    prnhf   ->Fill(probe_r.Pt(), probe_nh/totalE, weight);
-    prgammaf->Fill(probe_r.Pt(), probe_gamma/totalE, weight);
-    pref    ->Fill(probe_r.Pt(), probe_e/totalE, weight);
-    
+    prchf   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+    prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+    prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+    pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);  
 
     //pT balance
     prpTbal->Fill(tag_r.Pt(), probe_r.Pt()/tag_r.Pt(), weight);
@@ -1064,9 +1066,9 @@ void CMSJES::Loop()
   cout << "Tag muon cuts:          " << mumuCut     << endl;
   cout << "Z invariant mass:       " << invM        << endl;
   cout << "Tag eta pT:             " << tagCut      << endl;
-  cout << "Alpha:                  " << alpha       << endl;
   cout << "Gen level Probe:        " << genprobeCut << endl;
   cout << "Btb tag-probe:          " << b2b         << endl;
+  cout << "Alpha:                  " << alpha       << endl;
   cout << "Reco level Probe:       " << probeCut    << endl << endl;
   
   //Charged hadron efficiency Profile
@@ -1364,6 +1366,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   fzj->GetObject("prnhf"    ,prnhf   );
   fzj->GetObject("prgammaf" ,prgammaf);
   fzj->GetObject("pref"     ,pref    );
+
   TH1D* hchf    = prchf   ->ProjectionX();
   TH1D* hnhf    = prnhf   ->ProjectionX();
   TH1D* hgammaf = prgammaf->ProjectionX();
@@ -1396,7 +1399,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
   hstack_JEF->Draw("HISTO");
   hstack_JEF->GetYaxis()->SetRange(0.0,1.0);
-  hstack_JEF->GetXaxis()->SetTitle("#font[12]{p}_{T}^{jet} [GeV]");
+  hstack_JEF->GetXaxis()->SetTitle("#font[12]{p}_{T,tag}^{reco} [GeV]");
   hstack_JEF->GetYaxis()->SetTitle("Jet energy fraction");
   hstack_JEF->GetYaxis()->SetTitleFont(133);
   hstack_JEF->GetYaxis()->SetTitleSize(35);
@@ -1410,7 +1413,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   chnhf->Draw("samep");
 
   //Save particle content histogram plot
-  string plotName = "./plots/particleComposition/PC_jets_2.eps";
+  string plotName = "./plots/particleComposition/PC_jets.eps";
   canv_c->Print(plotName.c_str());
 }
 
