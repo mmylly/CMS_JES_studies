@@ -612,7 +612,7 @@ void CMSJES::Loop()
           eff = min(eff,0.96);
 
           if ((*prtclnij_pt)[i] < 0.6) {
-            eff = 2021.944 - 2022.2565603/(1 + pow(((*prtclnij_pt)[i]/36533650),0.4126626));
+            eff = 2021.944 - 2022.2565603/(1 + pow(((*prtclnij_pt)[i]/36533650), 0.4126626));
           } else if ((*prtclnij_pt)[i] > 0.6 && (*prtclnij_pt)[i] < 10.0) {
             eff -= 0.03836*pow((*prtclnij_pt)[i],-0.70570) - 0.003;
           }

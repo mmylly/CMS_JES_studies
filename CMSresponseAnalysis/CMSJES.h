@@ -148,24 +148,6 @@ public :
   //EHE and HHe responses for certain particles
   vector<vector<double>> params_pi_EHE; //pion
   vector<vector<double>> params_pi_HHe;
-  vector<vector<double>> params_an_EHE; //antineutron
-  vector<vector<double>> params_an_HHe;
-  vector<vector<double>> params_ap_EHE; //antiproton
-  vector<vector<double>> params_ap_HHe;
-  vector<vector<double>> params_K0L_EHE; //K0L
-  vector<vector<double>> params_K0L_HHe;
-  vector<vector<double>> params_K0S_EHE; //K0S
-  vector<vector<double>> params_K0S_HHe;
-  vector<vector<double>> params_Km_EHE; //Km
-  vector<vector<double>> params_Km_HHe;
-  vector<vector<double>> params_Kp_EHE; //Kp
-  vector<vector<double>> params_Kp_HHe;
-  vector<vector<double>> params_n_EHE; //neutron
-  vector<vector<double>> params_n_HHe;
-  vector<vector<double>> params_p_EHE; //proton
-  vector<vector<double>> params_p_HHe;
-
-
 
   //Params for hadron groups and combined H + EH response
   vector<vector<double>> params_cat1;
@@ -437,22 +419,6 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
 
   ParamReader("/pi_EHE.txt",  52, 3, params_pi_EHE);
   ParamReader("/pi_HHe.txt",  52, 3, params_pi_HHe);
-  ParamReader("/an_EHE.txt",  52, 3, params_an_EHE);
-  ParamReader("/an_HHe.txt",  52, 3, params_an_HHe);
-  ParamReader("/ap_EHE.txt",  52, 3, params_ap_EHE);
-  ParamReader("/ap_HHe.txt",  52, 3, params_ap_HHe);
-  ParamReader("/K0L_EHE.txt", 52, 3, params_K0L_EHE);
-  ParamReader("/K0L_HHe.txt", 52, 3, params_K0L_HHe);
-  ParamReader("/K0S_EHE.txt", 52, 3, params_K0S_EHE);
-  ParamReader("/K0S_HHe.txt", 52, 3, params_K0S_HHe);
-  ParamReader("/Km_EHE.txt",  52, 3, params_Km_EHE);
-  ParamReader("/Km_HHe.txt",  52, 3, params_Km_HHe);
-  ParamReader("/Kp_EHE.txt",  52, 3, params_Kp_EHE);
-  ParamReader("/Kp_HHe.txt",  52, 3, params_Kp_HHe);
-  ParamReader("/n_EHE.txt",   52, 3, params_n_EHE);
-  ParamReader("/n_HHe.txt",   52, 3, params_n_HHe);
-  ParamReader("/p_EHE.txt",   52, 3, params_p_EHE);
-  ParamReader("/p_HHe.txt",   52, 3, params_p_HHe);
 
   //Particle groups
   ParamReader("/cat1.txt",   52, 3, params_cat1);
