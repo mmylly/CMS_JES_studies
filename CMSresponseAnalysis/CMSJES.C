@@ -604,17 +604,20 @@ void CMSJES::Loop()
             for (int ijet=0; ijet!=jets_g.size(); ++ijet) {
               if (p4.DeltaR(jets_g[ijet]) < 0.4) {
                 eff = pchf->Eval(jets_g[ijet].Pt()) / 0.607;
-                eff -= 0.1245869 - 0.07823616/(1 + pow(((*prtclnij_pt)[i]/54.57317),3.524974));
+                eff -= 0.1381969 - 0.1606539/pow(2,((*prtclnij_pt)[i]/45.31742));
               }
             }
           }
 
-          if ((*prtclnij_pt)[i] < 1.0) {
+          eff = min(eff,0.96);
+
+          if ((*prtclnij_pt)[i] < 0.6) {
             eff = 2021.944 - 2022.2565603/(1 + pow(((*prtclnij_pt)[i]/36533650),0.4126626));
+          } else if ((*prtclnij_pt)[i] > 0.6 && (*prtclnij_pt)[i] < 10.0) {
+            eff -= 0.03836*pow((*prtclnij_pt)[i],-0.70570) - 0.003;
           }
 
           eff = max(eff,0.0);
-          eff = min(eff,0.96);
 
           if (varTrkEff) eff *= 0.99; //-1% variation to track efficiency
 
@@ -861,7 +864,7 @@ void CMSJES::Loop()
     prchf   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
     prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
     prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-    pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);  
+    pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight); 
 
     //pT balance
     prpTbal->Fill(tag_r.Pt(), probe_r.Pt()/tag_r.Pt(), weight);
