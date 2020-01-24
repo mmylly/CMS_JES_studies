@@ -1136,6 +1136,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   double cat1_EHE = 0.0; double cat2_EHE = 0.0; double cat3_EHE = 0.0;
   double cat1_HHe = 0.0; double cat2_HHe = 0.0; double cat3_HHe = 0.0;
 
+  double resp_pi     = 0.0;
   double resp_p      = 0.0; double resp_ap      = 0.0; double resp_n      = 0.0;
   double resp_an     = 0.0; double resp_Kpm     = 0.0; double resp_K0     = 0.0;
   double resp_p_EHE  = 0.0; double resp_ap_EHE  = 0.0; double resp_n_EHE  = 0.0;
@@ -1143,7 +1144,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   double resp_p_HHe  = 0.0; double resp_ap_HHe  = 0.0; double resp_n_HHe  = 0.0;
   double resp_an_HHe = 0.0; double resp_Kpm_HHe = 0.0; double resp_K0_HHe = 0.0;
 
-  double respPi_EHE = 0.0; double respPi_HHe = 0.0; //Pion responses for ECAL and HCAL
+  double resp_pi_EHE = 0.0; double resp_pi_HHe = 0.0; //Pion responses for ECAL and HCAL
 
   if (pT > 0.2)     sfCh = 1.0; // Step function for charged particles
   if (energy > 3.0) sfN  = 1.0; // Step function for neutral particles
@@ -1173,11 +1174,11 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
     //Pion EHE and HHe responses from |eta|<1.3
     frH->SetParameters(params_pi_EHE[row][0], params_pi_EHE[row][1], //EHE
                        params_pi_EHE[row][2], 1, 0, 1); 
-    respPi_EHE = frH->Eval(energy);
+    resp_pi_EHE = frH->Eval(energy);
 
     frH->SetParameters(params_pi_HHe[row][0], params_pi_HHe[row][1], //HHe
                        params_pi_HHe[row][2], 1, 0, 1); 
-    respPi_HHe = frH->Eval(energy);
+    resp_pi_HHe = frH->Eval(energy);
     //....................................................................
 
     //cat1 cat2 cat3 responsens
@@ -1194,6 +1195,10 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
     cat3 = frH->Eval(energy);
 
     //p,ap,n,an,Kpm,K0
+    frH->SetParameters(params_pi[row][0], params_pi[row][1],
+                       params_pi[row][2], 1, 0, 1);
+    resp_pi = frH->Eval(energy);
+
     frH->SetParameters(params_p[row][0], params_p[row][1],
                        params_p[row][2], 1, 0, 1);
     resp_p = frH->Eval(energy);
@@ -1219,28 +1224,28 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
     resp_K0 = frH->Eval(energy);
 
     //EHE responses
-    cat1_EHE = cat1*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    cat2_EHE = cat2*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    cat3_EHE = cat3*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    cat1_EHE = cat1*(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    cat2_EHE = cat2*(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    cat3_EHE = cat3*(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
 
-    resp_p_EHE   = resp_p  *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_ap_EHE  = resp_ap *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_n_EHE   = resp_n  *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_an_EHE  = resp_an *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_Kpm_EHE = resp_Kpm*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_K0_EHE  = resp_K0 *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_p_EHE   = resp_p  *(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_ap_EHE  = resp_ap *(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_n_EHE   = resp_n  *(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_an_EHE  = resp_an *(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_Kpm_EHE = resp_Kpm*(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_K0_EHE  = resp_K0 *(resp_pi_EHE/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
 
     //HHe responses
-    cat1_HHe = cat1*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    cat2_HHe = cat2*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    cat3_HHe = cat3*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    cat1_HHe = cat1*(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    cat2_HHe = cat2*(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    cat3_HHe = cat3*(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
 
-    resp_p_HHe   = resp_p  *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_ap_HHe  = resp_ap *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_n_HHe   = resp_n  *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_an_HHe  = resp_an *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_Kpm_HHe = resp_Kpm*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
-    resp_K0_HHe  = resp_K0 *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_p_HHe   = resp_p  *(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_ap_HHe  = resp_ap *(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_n_HHe   = resp_n  *(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_an_HHe  = resp_an *(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_Kpm_HHe = resp_Kpm*(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
+    resp_K0_HHe  = resp_K0 *(resp_pi_HHe/(HHeFrac*resp_pi_HHe + (1-HHeFrac)*resp_pi_EHE));
 
     switch (pdgid) {
       //PHOTON
@@ -1263,10 +1268,11 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
       case   211 : //pi+
       case  -211 : //pi-
         if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
-        else retMC = cat1*sfN; 
-        retA   = cat1*sfN;
-        retEHE = cat1_EHE*sfN;
-        retHHe = cat1_HHe*sfN;
+        else retMC = resp_pi*sfN; 
+        retA   = resp_pi*sfN;
+        retEHE = resp_pi_EHE*sfN;
+        retHHe = resp_pi_HHe*sfN;
+
         break;
 
       //cat2: neutron, antiproton, K+, K-

@@ -155,6 +155,7 @@ public :
   vector<vector<double>> params_cat3;
 
   //Individual fits for A responses
+  vector<vector<double>> params_pi;  //pion
   vector<vector<double>> params_p;   //proton
   vector<vector<double>> params_ap;  //anti-proton
   vector<vector<double>> params_n;   //neutron
@@ -434,6 +435,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   ParamReader("/cat3.txt",   52, 3, params_cat3);
 
   //Individual particle fits
+  ParamReader("/pi.txt",  52, 3, params_pi );
   ParamReader("/p.txt",   52, 3, params_p  );
   ParamReader("/ap.txt",  52, 3, params_ap );
   ParamReader("/n.txt",   52, 3, params_n  );
