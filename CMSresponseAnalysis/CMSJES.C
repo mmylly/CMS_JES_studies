@@ -1136,6 +1136,13 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   double cat1_EHE = 0.0; double cat2_EHE = 0.0; double cat3_EHE = 0.0;
   double cat1_HHe = 0.0; double cat2_HHe = 0.0; double cat3_HHe = 0.0;
 
+  double resp_p      = 0.0; double resp_ap      = 0.0; double resp_n      = 0.0;
+  double resp_an     = 0.0; double resp_Kpm     = 0.0; double resp_K0     = 0.0;
+  double resp_p_EHE  = 0.0; double resp_ap_EHE  = 0.0; double resp_n_EHE  = 0.0;
+  double resp_an_EHE = 0.0; double resp_Kpm_EHE = 0.0; double resp_K0_EHE = 0.0;
+  double resp_p_HHe  = 0.0; double resp_ap_HHe  = 0.0; double resp_n_HHe  = 0.0;
+  double resp_an_HHe = 0.0; double resp_Kpm_HHe = 0.0; double resp_K0_HHe = 0.0;
+
   double respPi_EHE = 0.0; double respPi_HHe = 0.0; //Pion responses for ECAL and HCAL
 
   if (pT > 0.2)     sfCh = 1.0; // Step function for charged particles
@@ -1186,15 +1193,54 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
                        params_cat3[row][2], 1, 0, 1);
     cat3 = frH->Eval(energy);
 
+    //p,ap,n,an,Kpm,K0
+    frH->SetParameters(params_p[row][0], params_p[row][1],
+                       params_p[row][2], 1, 0, 1);
+    resp_p = frH->Eval(energy);
+
+    frH->SetParameters(params_ap[row][0], params_ap[row][1],
+                       params_ap[row][2], 1, 0, 1);
+    resp_ap = frH->Eval(energy);
+
+    frH->SetParameters(params_n[row][0], params_n[row][1],
+                       params_n[row][2], 1, 0, 1);
+    resp_n = frH->Eval(energy);
+
+    frH->SetParameters(params_an[row][0], params_an[row][1],
+                       params_an[row][2], 1, 0, 1);
+    resp_an = frH->Eval(energy);
+
+    frH->SetParameters(params_Kpm[row][0], params_Kpm[row][1],
+                       params_Kpm[row][2], 1, 0, 1);
+    resp_Kpm = frH->Eval(energy);
+
+    frH->SetParameters(params_K0[row][0], params_K0[row][1],
+                       params_K0[row][2], 1, 0, 1);
+    resp_K0 = frH->Eval(energy);
+
     //EHE responses
     cat1_EHE = cat1*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
     cat2_EHE = cat2*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
     cat3_EHE = cat3*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
 
+    resp_p_EHE   = resp_p  *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_ap_EHE  = resp_ap *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_n_EHE   = resp_n  *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_an_EHE  = resp_an *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_Kpm_EHE = resp_Kpm*(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_K0_EHE  = resp_K0 *(respPi_EHE/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+
     //HHe responses
     cat1_HHe = cat1*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
     cat2_HHe = cat2*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
     cat3_HHe = cat3*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+
+    resp_p_HHe   = resp_p  *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_ap_HHe  = resp_ap *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_n_HHe   = resp_n  *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_an_HHe  = resp_an *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_Kpm_HHe = resp_Kpm*(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
+    resp_K0_HHe  = resp_K0 *(respPi_HHe/(HHeFrac*respPi_HHe + (1-HHeFrac)*respPi_EHE));
 
     switch (pdgid) {
       //PHOTON
@@ -1214,9 +1260,6 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
         break;
       
       //cat1: antineutron, K0S, K0L, pi+, pi-
-      case -2112 : //nbar
-      case   310 : //K^0_S
-      case   130 : //K^0_L
       case   211 : //pi+
       case  -211 : //pi-
         if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
@@ -1227,10 +1270,6 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
         break;
 
       //cat2: neutron, antiproton, K+, K-
-      case  2112 : //n
-      case -2212 : //pbar
-      case   321 : //K+
-      case  -321 : //K-
       case -3122 : //anti-Lambda
       case -3212 : //anti-Sigma^0
         if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
@@ -1241,7 +1280,6 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
         break;
 
       //cat3: proton
-      case  2212 : //p
       case  3122 : //Lambda
       case  3212 : //Sigma^0
       case  3322 : //Xi^0         cat=4
@@ -1259,6 +1297,56 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
         retA   = cat3*sfN;
         retEHE = cat3_EHE*sfN;
         retHHe = cat3_HHe*sfN;
+        break;
+
+      case  2212 : //p
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = resp_p*sfN; 
+        retA   = resp_p*sfN;
+        retEHE = resp_p_EHE*sfN;
+        retHHe = resp_p_HHe*sfN;
+        break;
+
+      case -2212 : //ap
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = resp_ap*sfN; 
+        retA   = resp_ap*sfN;
+        retEHE = resp_ap_EHE*sfN;
+        retHHe = resp_ap_HHe*sfN;
+        break;
+
+      case  2112 : //n
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = resp_n*sfN; 
+        retA   = resp_n*sfN;
+        retEHE = resp_n_EHE*sfN;
+        retHHe = resp_n_HHe*sfN;
+        break;
+
+      case -2112 : //an
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = resp_an*sfN; 
+        retA   = resp_an*sfN;
+        retEHE = resp_an_EHE*sfN;
+        retHHe = resp_an_HHe*sfN;
+        break;
+
+      case   321 : //K+
+      case  -321 : //K-
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = resp_Kpm*sfN; 
+        retA   = resp_Kpm*sfN;
+        retEHE = resp_Kpm_EHE*sfN;
+        retHHe = resp_Kpm_HHe*sfN;
+        break;
+
+      case   310 : //K^0_S
+      case   130 : //K^0_L
+        if ((fabs(pseudorap) < 2.5) && fabs(Charge(pdgid))) retMC = sfCh;
+        else retMC = resp_K0*sfN; 
+        retA   = resp_K0*sfN;
+        retEHE = resp_K0_EHE*sfN;
+        retHHe = resp_K0_HHe*sfN;
         break;
 
       default : 

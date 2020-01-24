@@ -154,6 +154,14 @@ public :
   vector<vector<double>> params_cat2;
   vector<vector<double>> params_cat3;
 
+  //Individual fits for A responses
+  vector<vector<double>> params_p;   //proton
+  vector<vector<double>> params_ap;  //anti-proton
+  vector<vector<double>> params_n;   //neutron
+  vector<vector<double>> params_an;  //anti-neutron
+  vector<vector<double>> params_Kpm; //Kaon +-
+  vector<vector<double>> params_K0;  //KaonL & KaonS
+
   //CMS jecsys pT-balance data points and errors zj for Z+jet
   static int const ndata_pTbal = 10; //#Data points available from CMS
   double zj_pTp[ndata_pTbal];
@@ -424,6 +432,15 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   ParamReader("/cat1.txt",   52, 3, params_cat1);
   ParamReader("/cat2.txt",   52, 3, params_cat2);
   ParamReader("/cat3.txt",   52, 3, params_cat3);
+
+  //Individual particle fits
+  ParamReader("/p.txt",   52, 3, params_p  );
+  ParamReader("/ap.txt",  52, 3, params_ap );
+  ParamReader("/n.txt",   52, 3, params_n  );
+  ParamReader("/an.txt",  52, 3, params_an );
+  ParamReader("/Kpm.txt", 52, 3, params_Kpm);
+  ParamReader("/K0.txt",  52, 3, params_K0 );
+
 } //Constructor
 
 //-----------------------------------------------------------------------------

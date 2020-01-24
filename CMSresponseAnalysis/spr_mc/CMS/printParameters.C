@@ -24,7 +24,16 @@ void printParameters() {
   //}
   //double C=1.041; double a=1.342; double m=0.532; //Cat 1
   //double C=1.041; double a=1.586; double m=0.532; //Cat 2
-  double C=1.041; double a=1.830; double m=0.532; //Cat 3
+  //double C=1.041; double a=1.830; double m=0.532; //Cat 3
+
+
+  //double C=1.089; double a=1.526; double m=0.600; // proton
+  //double C=1.135; double a=1.061; double m=0.691; // anti-proton
+  //double C=1.037; double a=1.765; double m=0.477; // neutron
+  //double C=1.066; double a=1.086; double m=0.592; // anti-neutron
+  //double C=1.055; double a=1.455; double m=0.566; // Kaon +-
+  //double C=1.033; double a=1.351; double m=0.509; // Kaon0
+  double C=1.044; double a=1.293; double m=0.543; //pion
 
   for (int i=0; i!=53; ++i) {
     cout << i << " " << C << " " << a << " " << m << endl;
