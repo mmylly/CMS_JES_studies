@@ -308,6 +308,8 @@ void CMSJES::Loop()
   int genprobeCut = 0;
   int b2b = 0;
   int probeCut = 0;
+  int METtag = 0;
+  int METprobe = 0;
 
 //***********************************************************************************************
   //Granularity of cells following the granularity of the HCAL 
@@ -343,6 +345,10 @@ void CMSJES::Loop()
 
   //Relative resolutions from Trackin paper:
   TF1* muTrkReso = new TF1("muTrkReso","4.66042e-07*pow(x,2)+0.00010326*x+0.0080762", 0, 5000); 
+
+  //Full muon system resolution q/p in function of pT -> dp = qoverperror()*P*P
+  // DPovP = dp/P
+  TF1* muFSReso = new TF1("muFSReso","0.002579707*pow(x,0.4552789)", 0, 5000);
 
   // 68% parameters
   //TF1* allTrkReso = new TF1("allTrkReso","2.77564e-06*pow(x,2)+0.000124*x+0.010373" , 0, 5000);
@@ -410,8 +416,9 @@ void CMSJES::Loop()
 
     tag = p4;//gen lvl
 
-    //p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.Pt()));
-    p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.P()));
+
+    //p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.P()));
+    p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
@@ -423,8 +430,9 @@ void CMSJES::Loop()
 
     tag += p4;//gen lvl
 
-    //p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.Pt()));
-    p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.P()));
+
+    //p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.P()));
+    p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue; mumuCut++;
 
@@ -440,7 +448,9 @@ void CMSJES::Loop()
     //At the moment always the leading pT jet
     i_probe = 0;
 
+
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
+    
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
       JI = (*prtcl_jet)[i]; 
@@ -465,7 +475,7 @@ void CMSJES::Loop()
         }
       } 
     } //Loop particles in jets
-
+    
     /********************* RECONSTRUCT GEN LEVEL PROBES *********************/
 
     //Gen lvl as output by FastJet
@@ -482,6 +492,7 @@ void CMSJES::Loop()
 
 
     /********************** PROBE GEN PARTICLE CONTENT **********************/
+    
     if (GetcontHistos()) {
       for (unsigned int i=0; i!=prtcl_pdgid->size(); ++i) {
 
@@ -527,7 +538,7 @@ void CMSJES::Loop()
         }
       }
     }
-
+    
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     //Reset histograms
     cht          ->Reset();	//Original directions of
@@ -543,13 +554,14 @@ void CMSJES::Loop()
     sigmaTrk     ->Reset();	//For weighting
     sigmaTrk_curv->Reset();	//For shadowing effect
 
+
     //Probe flavor check, prtn_tag=0 for outgoing hard process partons
-    for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
-      if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
-        probeFlav = abs((*prtn_pdgid)[j]);
-        continue;
-      }
-    }
+    //for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
+    //  if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
+    //    probeFlav = abs((*prtn_pdgid)[j]);
+    //    continue;
+    //  }
+    //}
     //if(probeFlav != 5) continue; //Uncomment to study only specific jets
 
     //****************** MET calculation *******************//
@@ -565,7 +577,7 @@ void CMSJES::Loop()
 
       Response((*prtclnij_pdgid)[i], p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, HHeFrac, 
                fr_h, resp, respA, respEHE, respHHe);
- 
+
       if (resp == 0.0) continue;
 
       p4 *= resp;
@@ -636,7 +648,6 @@ void CMSJES::Loop()
           //Phi where particle exits the tracker / enters ECAL
           newPhi = trackDeltaPhi((*prtclnij_pdgid)[i], (*prtclnij_phi)[i], 
                                  (*prtclnij_pt )[i], Rt, Bfield);
-
 
           if (!trkFail) { //resp == 1.0
             cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
@@ -713,6 +724,7 @@ void CMSJES::Loop()
             nhECAL->GetBinContent(i,j)      == 0.0 && nhHCAL->GetBinContent(i,j)      == 0.0 &&
             ne->GetBinContent(i,j)          == 0.0 && eCalo->GetBinContent(i,j)       == 0.0)
             continue;
+        
 
         double w = 1.0; int iEtaCold; double totalChargedMomentum; 
         double nhHCAL_calib = 0.0; double chc_calib = 0.0; double caloResolution = 0.0;
@@ -858,6 +870,11 @@ void CMSJES::Loop()
     //reco probe cuts
     if (fabs(probe_r.Eta()) > eta_probe || probe_r.Pt() < pTmin_probe) continue; probeCut ++;
 
+    
+    //MET cuts
+    if (MET_r.Pt() > 0.9*tag_r.Pt())   continue; METtag ++;
+    //if (MET_r.Pt() > 0.7*probe_r.Pt()) continue; METprobe ++;
+
     double totalE;
     totalE = probe_ch + probe_nh + probe_gamma + probe_e;
 
@@ -942,6 +959,7 @@ void CMSJES::Loop()
     cutflag_stream.close();	//Close the output stream
   }
 
+  
   if (GetcontHistos()) { //Particle composition and flavour fraction histograms
     //Flavour fraction
     string FFcanvName = ReadName + "_FF";
@@ -1072,7 +1090,9 @@ void CMSJES::Loop()
   cout << "Gen level Probe:        " << genprobeCut << endl;
   cout << "Btb tag-probe:          " << b2b         << endl;
   cout << "Alpha:                  " << alpha       << endl;
-  cout << "Reco level Probe:       " << probeCut    << endl << endl;
+  cout << "Reco level Probe:       " << probeCut    << endl;
+  cout << "MET-tag cut:            " << METtag      << endl;
+  cout << "MET-probe cut:          " << METprobe    << endl << endl;
   
   //Charged hadron efficiency Profile
   TCanvas *c4     = new TCanvas("c4","c4",500,500);
@@ -1128,15 +1148,14 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   retMC = 0.0; retA = 0.0; retEHE = 0.0; retHHe = 0.0;
   bool zero = false; //If true, return zero responses
 
-  double sfCh  = 0.0; //Charged particle step function
-  double sfN   = 0.0; //Neutral hadron step function
+  double sfCh = 0.0; //Charged particle step function
+  double sfN  = 0.0; //Neutral hadron step function
 
   //Responses for different groups
-  double cat1 = 0.0;     double cat2 = 0.0;     double cat3 = 0.0;
-  double cat1_EHE = 0.0; double cat2_EHE = 0.0; double cat3_EHE = 0.0;
-  double cat1_HHe = 0.0; double cat2_HHe = 0.0; double cat3_HHe = 0.0;
+  double cat1     = 0.0;    double cat2     = 0.0;     double cat3     = 0.0;
+  double cat1_EHE = 0.0;    double cat2_EHE = 0.0;     double cat3_EHE = 0.0;
+  double cat1_HHe = 0.0;    double cat2_HHe = 0.0;     double cat3_HHe = 0.0;
 
-  double resp_pi     = 0.0;
   double resp_p      = 0.0; double resp_ap      = 0.0; double resp_n      = 0.0;
   double resp_an     = 0.0; double resp_Kpm     = 0.0; double resp_K0     = 0.0;
   double resp_p_EHE  = 0.0; double resp_ap_EHE  = 0.0; double resp_n_EHE  = 0.0;
@@ -1144,16 +1163,19 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   double resp_p_HHe  = 0.0; double resp_ap_HHe  = 0.0; double resp_n_HHe  = 0.0;
   double resp_an_HHe = 0.0; double resp_Kpm_HHe = 0.0; double resp_K0_HHe = 0.0;
 
-  double resp_pi_EHE = 0.0; double resp_pi_HHe = 0.0; //Pion responses for ECAL and HCAL
+  //Pion responses for ECAL and HCAL
+  double resp_pi     = 0.0; double resp_pi_EHE = 0.0; double resp_pi_HHe = 0.0; 
 
-  if (pT > 0.2)     sfCh = 1.0; // Step function for charged particles
-  if (energy > 3.0) sfN  = 1.0; // Step function for neutral particles
+  if (    pT > 0.3) sfCh = 1.0; // Step function for charged particles
+  if (energy > 2.0) sfN  = 1.0; // Step function for calo deposits 
 
-  if (fabs(pseudorap) > 2.5 && pT < 3.0) sfN = 0.0;  
 
-  if (!doesReachEcal(pdgid, pT, Bfield, Rt)) {
-    sfN = 0.0;
+  if (isChHadron(pdgid)) {
+    if (fabs(pseudorap) > 1.3 && pT < 1.0) sfN = 0.0;
   }
+
+  if (!doesReachEcal(pdgid, pT, Bfield, Rt)) sfN = 0.0;
+
   //Check if particle outside good eta region
   if (fabs(pseudorap) > 5.2) zero = true;
 
@@ -2073,9 +2095,11 @@ void CMSJES::plotVariants(int gen, int Nevt)
   TProfile *pr_Rjet_Trk=0;
 
   //Create Histograms
+
   fzj_Trk->GetObject("prRjet",pr_Rjet_Trk);
 
   TH1D* h_Rjet_Trk = pr_Rjet_Trk->ProjectionX();
+
 
   h_Rjet_Trk->Divide(h_Rjet);
 

@@ -20,8 +20,10 @@ int main() {
       d.Loop();
       break;
     case 1 :
-      d.Loop();
+      //d.Loop();
       d.plotMPF(3,-1);
+      d.plotJEF(3,-1);
+      d.plotRjet(3,-1);
       break;
     case 2 :
       d.Loop();
@@ -30,11 +32,11 @@ int main() {
       d.plotRjet(3,-1);
       break;
     case 3 :
-      d.Loop();
+      d.plotJEF(3,-1);
       d.plotMPF(3,-1);
-      //d.plotRjet(3,-1);
-      d.plotVariants(3,-1);
-      //d.plotF(3,-1);
+      d.plotRjet(3,-1);
+      //d.plotVariants(3,-1);
+      d.plotF(3,-1);
       break;
     default: cout << "Unknown mode chosen in main.cpp" << endl;
   }
