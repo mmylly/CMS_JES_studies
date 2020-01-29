@@ -89,13 +89,11 @@ void CMSJES::Loop()
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbinsMPF-1,binsxMPF);
   TH1D* FFg = new TH1D("FFg",  "",nbinsMPF-1,binsxMPF);
+  TH1D* FFud= new TH1D("FFud", "",nbinsMPF-1,binsxMPF);
+  TH1D* FFs = new TH1D("FFs",  "",nbinsMPF-1,binsxMPF);
+  TH1D* FFc = new TH1D("FFc",  "",nbinsMPF-1,binsxMPF);
   TH1D* FFlq= new TH1D("FFlq", "",nbinsMPF-1,binsxMPF);
   TH1D* FFa = new TH1D("FFa",  "",nbinsMPF-1,binsxMPF); //All
-  string FFstackTitle;
-  FFstackTitle  = "#font[132]{Run CMS}";
-  FFstackTitle += ";#font[12]{p}_{T,tag}^{MC}#font[132]{[GeV]}";
-  FFstackTitle += ";#font[132]{Jet flavour fraction}";
-  THStack* FFstack = new THStack("", FFstackTitle.c_str());
 
   //Response function R_h (h for hadron)
   TF1 *fr_h = new TF1("frh","[0]*(1-[1]*pow(x,[2]-1))",0,4000);
@@ -190,7 +188,8 @@ void CMSJES::Loop()
   vector<string> hTitles;
   THStack* hstack;
   THStack* hstackOther;
-  hTitles.push_back("#font[132]{Z+jet probe particle content (gen)}");
+  //hTitles.push_back("#font[132]{Z+jet probe particle content (gen)}");
+  hTitles.push_back("");
 
   //Instantiate and setup composition histos if needed
   int const nbins_h = 30; int const nbins_chf = 23;
@@ -922,12 +921,15 @@ void CMSJES::Loop()
           prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
 
           if (probeFlav == 4) {                         //c-jets
+            FFc->Fill(tag_r.Pt(), weight);
             prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
             prRjetc->Fill(probe_g.Pt(), Rjet, weight);            
           } else if (probeFlav == 3) {                  //s-jets
+            FFs->Fill(tag_r.Pt(), weight);
             prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight);
             prRjets->Fill(probe_g.Pt(), Rjet, weight);         
           } else if (probeFlav < 3) {                   //(u,d)
+            FFud->Fill(tag_r.Pt(), weight);
             prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
             prRjetud->Fill(probe_g.Pt(), Rjet, weight);  
           }
@@ -945,10 +947,6 @@ void CMSJES::Loop()
     if (!GetuseEarlierCuts()) passedCuts[jentry]=true;
   } //Loop Tree entries
 
-  //Normalize flavour fraction histograms, add to stack and plot
-  FFb->Divide(FFa);   FFg->Divide(FFa);    FFlq->Divide(FFa);
-  FFstack->Add(FFg);  FFstack->Add(FFlq);  FFstack->Add(FFb);
-
   if (!GetuseEarlierCuts()) {
     //Write the accepted event information into a binary file
     cutflag_stream.open(cutflag_file, std::ios::out); //Write mode
@@ -961,22 +959,6 @@ void CMSJES::Loop()
 
   
   if (GetcontHistos()) { //Particle composition and flavour fraction histograms
-    //Flavour fraction
-    string FFcanvName = ReadName + "_FF";
-    TCanvas* FFcanv = new TCanvas(FFcanvName.c_str(),"",400,400);
-    TLegend* FFlg = new TLegend(0.91, 0.67, 1.00, 0.90);
-    FFcanv->SetLogx();
-    FFlg->SetBorderSize(0);  FFlg->SetFillStyle(0);
-    FFlg->AddEntry(FFb,  " #font[12]{b}",  "f");
-    FFlg->AddEntry(FFlq, " #font[12]{lq}", "f");
-    FFlg->AddEntry(FFg,  " #font[12]{g}",  "f");
-    FFb->SetFillColor(46);  FFg->SetFillColor(kGray+1);  FFlq->SetFillColor(33);
-    FFstack->Draw("HISTO");
-    FFlg->Draw();
-    FFcanvName = "./plots/FlavourFraction/" + FFcanvName + ".eps";
-    FFcanv->Print(FFcanvName.c_str());
-    delete FFcanv;
-    delete FFlg;
 
     //Canvas and related setup
     string canvName = ReadName + "_prtclCont";
@@ -1447,6 +1429,7 @@ void CMSJES::InputNameConstructor() {
 
   //#events
   if      (ReadName.find("10000000") !=string::npos) num = "10000000";
+  else if (ReadName.find("5000000")  !=string::npos) num = "5000000";
   else if (ReadName.find("600000")   !=string::npos) num = "600000";
   else if (ReadName.find("300000")   !=string::npos) num = "300000";
   else if (ReadName.find("100000")   !=string::npos) num = "100000";
@@ -1473,7 +1456,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   TGraph *chnhf = new TGraph("data_and_MC_input/Chf/chnhf.txt");
   chf->SetMarkerStyle(kFullDiamond); chnhf->SetMarkerStyle(kFullSquare);
   chf->SetMarkerColor(kBlack);       chnhf->SetMarkerColor(kBlack);
-  chf->SetMarkerSize(2);             chnhf->SetMarkerSize(1);
+  chf->SetMarkerSize(1);             chnhf->SetMarkerSize(0.7);
 
   TProfile *prchf=0; TProfile *prnhf=0; TProfile *prgammaf=0; TProfile *pref=0;
 
@@ -1498,12 +1481,13 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
 
   //Canvas and related setup
-  TCanvas* canv_c = new TCanvas("canv_JEF","",1200,1200);
+  TCanvas* canv_c = new TCanvas("canv_JEF","",500,400);
   TLegend* lg     = new TLegend(0.9, 0.1, 1.0, 0.9);
   lg->SetBorderSize(0); //No frame
   lg->SetTextSize(0.028);
   lg->SetFillStyle(0);  //No background fill
   canv_c->SetLogx();
+  canv_c->SetBottomMargin(0.13);
 
   hstack_JEF->Add(hchf);
   hstack_JEF->Add(hnhf);
@@ -1518,14 +1502,22 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
   hstack_JEF->Draw("HISTO");
   hstack_JEF->GetYaxis()->SetRange(0.0,1.0);
+  hstack_JEF->SetTitle("");
+  hstack_JEF->GetXaxis()->SetMoreLogLabels();
+  hstack_JEF->GetXaxis()->SetNoExponent();
+
+  //hstack_JEF->GetXaxis()->ChangeLabel(1,-1, 0);
+  //hstack_JEF->GetXaxis()->ChangeLabel(-2,-1,-1,-1,kBlue,-1,"Changed");
+  //hstack_JEF->GetXaxis()->ChangeLabel(2,-1,-1,-1,kGreen,-1,"Changed");
+
   hstack_JEF->GetXaxis()->SetTitle("#font[12]{p}_{T,tag}^{reco} [GeV]");
   hstack_JEF->GetYaxis()->SetTitle("Jet energy fraction");
   hstack_JEF->GetYaxis()->SetTitleFont(133);
-  hstack_JEF->GetYaxis()->SetTitleSize(35);
+  hstack_JEF->GetYaxis()->SetTitleSize(18);
   hstack_JEF->GetXaxis()->SetTitleFont(133);
-  hstack_JEF->GetXaxis()->SetTitleSize(35);
-  hstack_JEF->GetXaxis()->SetTitleOffset(1.5);
-  hstack_JEF->GetYaxis()->SetTitleOffset(1.5);
+  hstack_JEF->GetXaxis()->SetTitleSize(18);
+  //hstack_JEF->GetXaxis()->SetTitleOffset(1.5);
+  //hstack_JEF->GetYaxis()->SetTitleOffset(1.5);
   hstack_JEF->GetYaxis()->SetNdivisions(20);
   lg->Draw();
   chf->Draw("samep");
@@ -1536,6 +1528,88 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   canv_c->Print(plotName.c_str());
 }
 
+//Flavour fraction
+void CMSJES::plotFF(int gen, int Nevt) {
+  string nameAdd, zjetFile;
+  plotQuery(nameAdd, zjetFile, gen, Nevt);
+
+  TFile* fzj = TFile::Open(zjetFile.c_str());
+
+
+
+  TH1D* FFa  = 0;
+  TH1D* FFb  = 0;
+  TH1D* FFg  = 0;
+  TH1D* FFud = 0;
+  TH1D* FFs  = 0;
+  TH1D* FFc  = 0;
+  TH1D* FFlq = 0;
+
+  fzj->GetObject("FFa" ,FFa );
+  fzj->GetObject("FFb" ,FFb );
+  fzj->GetObject("FFg" ,FFg );
+  fzj->GetObject("FFud",FFud);
+  fzj->GetObject("FFs" ,FFs);
+  fzj->GetObject("FFc" ,FFc);
+  fzj->GetObject("FFlq",FFlq);
+
+
+  string FFstackTitle;
+  FFstackTitle  = "";
+  FFstackTitle += ";#font[12]{p}_{T,tag}^{MC}#font[132]{[GeV]}";
+  FFstackTitle += ";#font[132]{Jet flavour fraction}";
+
+
+
+  THStack* FFstack = new THStack("", FFstackTitle.c_str());
+
+
+
+  //Normalize flavour fraction histograms, add to stack and plot
+  FFb->Divide(FFa);   FFg->Divide(FFa);    FFlq->Divide(FFa);
+  FFud->Divide(FFa);  FFs->Divide(FFa);    FFc->Divide(FFa);
+  FFstack->Add(FFg);  FFstack->Add(FFud);  FFstack->Add(FFs); 
+  FFstack->Add(FFc);   FFstack->Add(FFb);
+
+
+  string FFcanvName = ReadName + "_FF";
+  TCanvas* FFcanv = new TCanvas(FFcanvName.c_str(),"",500,400);
+  TLegend* FFlg = new TLegend(0.91, 0.67, 1.00, 0.90);
+  FFcanv->SetLogx();
+  FFlg->SetBorderSize(0);  FFlg->SetFillStyle(0);
+  FFcanv->SetBottomMargin(0.13);
+  FFlg->AddEntry(FFb,  " #font[12]{b}",  "f");
+  FFlg->AddEntry(FFc,  " #font[12]{c}",  "f");
+  FFlg->AddEntry(FFs,  " #font[12]{s}",  "f");
+  FFlg->AddEntry(FFud, " #font[12]{ud}", "f");
+  FFlg->AddEntry(FFg,  " #font[12]{g}",  "f");
+  FFb->SetFillColor(46);  
+  FFc->SetFillColor(kOrange);
+  FFs->SetFillColor(kSpring+8);
+  FFud->SetFillColor(33);
+  FFg->SetFillColor(kGray+1);
+
+  FFstack->Draw("HISTO");
+
+  FFstack->GetXaxis()->SetMoreLogLabels();
+  FFstack->GetXaxis()->SetNoExponent();
+  //FFstack->GetYaxis()->SetTitleFont(133);
+  //FFstack->GetYaxis()->SetTitleSize(35);
+  //FFstack->GetXaxis()->SetTitleFont(133);
+  //FFstack->GetXaxis()->SetTitleSize(35);
+  FFstack->GetXaxis()->SetTitleOffset(1.5);
+
+  //FFstack->GetYaxis()->SetTitleOffset(1.5);
+  gPad->Modified();
+
+
+
+  FFlg->Draw();
+  FFcanvName = "./plots/FlavourFraction/" + FFcanvName + ".eps";
+  FFcanv->Print(FFcanvName.c_str());
+
+
+}
 
 //-----------------------------------------------------------------------------
 void CMSJES::plotPT(int gen, int Nevt)
@@ -1656,7 +1730,7 @@ void CMSJES::plotMPF(int gen, int Nevt)
                                                     zj_MC_MPFntI_2018,0,zj_MC_MPFntI_ER_2018);
 
   //Canvas
-  TCanvas* canv_MPF = new TCanvas("MPF","",600,600);
+  TCanvas* canv_MPF = new TCanvas("MPF","",500,400);
   canv_MPF->SetLeftMargin(0.13);
   canv_MPF->SetBottomMargin(0.13);
 
@@ -1688,14 +1762,14 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF->SetAxisRange(0.82,1.02,"Y"); //Vertical axis limits
 
   hzj_MPF->GetYaxis()->SetTitleFont(133);
-  int titleSize = 24; //Common title size everywhere
+  int titleSize = 20; //Common title size everywhere
   hzj_MPF->GetYaxis()->SetTitleSize(titleSize);
   hzj_MPF->GetXaxis()->SetMoreLogLabels();
   hzj_MPF->GetXaxis()->SetNoExponent();
   hzj_MPF->GetXaxis()->SetTitleFont(133);
   hzj_MPF->GetXaxis()->SetTitleSize(titleSize);
   canv_MPF->SetLogx();
-  hzj_MPF->GetYaxis()->SetTitleOffset(1.5);
+  hzj_MPF->GetYaxis()->SetTitleOffset(1);
   hzj_MPF->GetXaxis()->SetTitleOffset(1);
   gPad->SetTickx();   gPad->SetTicky();
 
@@ -1775,7 +1849,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffcg ->SetLineColor(kGreen+1 );
 
 
-  TCanvas* canv_diffg = new TCanvas("canv_diffg","",600,600);
+  TCanvas* canv_diffg = new TCanvas("canv_diffg","",500,400);
   canv_diffg->SetLeftMargin(0.15);
   canv_diffg->SetBottomMargin(0.13);
 
@@ -1783,13 +1857,15 @@ void CMSJES::plotRjet(int gen, int Nevt)
   TLegend* lz_diffg = new TLegend(0.62,0.60,0.89,0.89);
   lz_diffg->SetBorderSize(0);
   lz_diffg->AddEntry(h_diffbg,           "b");
-  lz_diffg->AddEntry(h_diffudg,         "ud");
-  lz_diffg->AddEntry(h_diffsg,           "s");
   lz_diffg->AddEntry(h_diffcg,           "c");
+  lz_diffg->AddEntry(h_diffsg,           "s");
+  lz_diffg->AddEntry(h_diffudg,         "ud");
   lz_diffg->AddEntry(diff_b,  "b (PF)",  "p");
-  lz_diffg->AddEntry(diff_ud, "ud (PF)", "p");
-  lz_diffg->AddEntry(diff_s,  "s (PF)",  "p");
   lz_diffg->AddEntry(diff_c,  "c (PF)",  "p");
+  lz_diffg->AddEntry(diff_s,  "s (PF)",  "p");
+  lz_diffg->AddEntry(diff_ud, "ud (PF)", "p");
+
+
 
   h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
   h_diffbg->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
@@ -1797,6 +1873,9 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffbg->GetXaxis()->SetTitleOffset(1.2);
   h_diffbg->GetXaxis()->SetMoreLogLabels();
   h_diffbg->GetXaxis()->SetNoExponent();
+
+
+
 
   h_diffbg->SetStats(0); h_diffbg->SetTitle("");
   h_diffbg->SetAxisRange(0.0,0.042,"Y"); //Vertical axis limits
@@ -1815,7 +1894,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
 
 
   //Canvas
-  TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",600,600);
+  TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",500,400);
   canv_Rjet->SetLeftMargin(0.15);
   canv_Rjet->SetBottomMargin(0.13);
 
@@ -1834,28 +1913,30 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjetc ->SetLineColor(kGreen+2);
 
   //Legend
-  TLegend* lz_Rjet = new TLegend(0.58,0.2,0.89,0.40);
+  TLegend* lz_Rjet = new TLegend(0.5,0.17,0.8,0.42);
   lz_Rjet->SetBorderSize(0);
   lz_Rjet->AddEntry(hzj_Rjet,   "#font[132]{All jets}",   "p");
   lz_Rjet->AddEntry(hzj_Rjetb,  "#font[132]{b-jets}",     "p");
-  lz_Rjet->AddEntry(hzj_Rjetg,  "#font[132]{gluon jets}", "p");
-  lz_Rjet->AddEntry(hzj_Rjetud, "#font[132]{ud-jets}",    "p");
-  lz_Rjet->AddEntry(hzj_Rjets,  "#font[132]{s-jets}",     "p");
   lz_Rjet->AddEntry(hzj_Rjetc,  "#font[132]{c-jets}",     "p");
-
-
+  lz_Rjet->AddEntry(hzj_Rjets,  "#font[132]{s-jets}",     "p");
+  lz_Rjet->AddEntry(hzj_Rjetud, "#font[132]{ud-jets}",    "p");
+  lz_Rjet->AddEntry(hzj_Rjetg,  "#font[132]{gluon jets}", "p");
 
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
-  hzj_Rjet->SetAxisRange(0.9,0.95,"Y");
+  hzj_Rjet->SetAxisRange(0.90,0.95,"Y");
   hzj_Rjet->SetAxisRange(31.75,1258,"X"); 
 
   hzj_Rjet->GetXaxis()->SetMoreLogLabels();
   hzj_Rjet->GetXaxis()->SetNoExponent();
   canv_Rjet->SetLogx();
-  hzj_Rjet->GetYaxis()->SetTitleOffset(2.0);
+  hzj_Rjet->GetYaxis()->SetTitleOffset(1.8);
   hzj_Rjet->GetXaxis()->SetTitleOffset(1.2);
+
+  //hzj_Rjet->GetYaxis()->SetTitleSize(20);
+  //hzj_Rjet->GetXaxis()->SetTitleSize(20);
+
 
   gPad->SetTickx(); gPad->SetTicky();
 
@@ -2234,14 +2315,15 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 
   //Set #events
   string num;
-  cout << "#Events (0) 3k (1) 10k (2) 30k (3) 100k (4) 600k (5) 10M" << endl;
+  cout << "#Events (0) 3k (1) 10k (2) 30k (3) 100k (4) 600k (5) 5M (6) 10M" << endl;
   while (Nevt<0 || Nevt>5) cin >> Nevt;
   if      (Nevt==0) num = "3000";
   else if (Nevt==1) num = "10000";
   else if (Nevt==2) num = "30000";
   else if (Nevt==3) num = "100000";
   else if (Nevt==4) num = "600000";
-  else if (Nevt==5) num = "10000000";
+  else if (Nevt==5) num = "5000000";
+  else if (Nevt==6) num = "10000000";
 
   //Construct all-flavor filenames
   zjstr = respStr + "Zjet_" + num + root;

@@ -254,6 +254,7 @@ public :
   virtual void     Show(Long64_t entry = -1);
   void   plotPT(int gen=0,int Nevt=-1);
   void   plotJEF(int gen=0,int Nevt=-1);
+  void   plotFF(int gen=0,int Nevt=-1);
   void   plotMPF(int gen=0, int Nevt=-1);
   void   plotRjet(int gen=0, int Nevt=-1);
   void   plotF(int gen=0, int Nevt=-1);
@@ -328,6 +329,7 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       files.push_back("P8_Zjet_30000" );
       files.push_back("P8_Zjet_100000");
       files.push_back("P8_Zjet_600000");
+      files.push_back("P8_Zjet_5000000");
       files.push_back("P8_Zjet_10000000");
       //User interface
       printf("No filename given, choose file (y = default file):\n");

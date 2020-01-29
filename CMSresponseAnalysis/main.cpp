@@ -21,15 +21,17 @@ int main() {
       break;
     case 1 :
       //d.Loop();
-      d.plotMPF(3,-1);
+      //d.plotMPF(3,-1);
+      d.plotFF(3,-1);
       d.plotJEF(3,-1);
-      d.plotRjet(3,-1);
+      //d.plotRjet(3,-1);
       break;
     case 2 :
-      d.Loop();
-      d.plotJEF(3,-1);
-      d.plotMPF(3,-1);
+      //d.Loop();
       d.plotRjet(3,-1);
+      //d.plotJEF(3,-1);
+      //d.plotFF(3,-1);
+      //d.plotRjet(3,-1);
       break;
     case 3 :
       d.plotJEF(3,-1);
