@@ -156,6 +156,7 @@ void CMSJES::Loop()
   double Rjet = 0.0;        //Jet pT-response
   double Rjet_calo = 0.0;   //Calo jet pT-response
 
+  double RCone = 0.4; //Jet radius
 
   unsigned long njets;          //#jets in the event, for resizing vectors
   TLorentzVector MET_r;         //Reconstructed MET four vector
@@ -450,6 +451,8 @@ void CMSJES::Loop()
 
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
     
+    
+
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
       JI = (*prtcl_jet)[i]; 
@@ -458,7 +461,7 @@ void CMSJES::Loop()
 
       Response(PDG, p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, HHeFrac, 
                fr_h, resp, respA, respEHE, respHHe);
-
+ 
       //Reconstruct gen-level jets, at the moment has no neutrinos
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
 
@@ -495,7 +498,7 @@ void CMSJES::Loop()
     if (GetcontHistos()) {
       for (unsigned int i=0; i!=prtcl_pdgid->size(); ++i) {
 
-        JI = (*prtcl_jet)[i];
+        JI  = (*prtcl_jet)[i];
         PDG = abs((*prtcl_pdgid)[i]); 
 
         //See if ptcl belongs to the probe jet
@@ -521,9 +524,9 @@ void CMSJES::Loop()
                   case 3112 : h_Sigm->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
                   case 3212 : h_Sig0->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
                   case 3222 : h_Sigp->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
-                  case 3312 : h_Xim->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
-                  case 3322 : h_Xi0->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
-                  case 3334 : h_Om->Fill((*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
+                  case 3312 : h_Xim->Fill( (*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
+                  case 3322 : h_Xi0->Fill( (*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
+                  case 3334 : h_Om->Fill(  (*jet_e)[(*prtcl_jet)[i_probe]],(*prtcl_e)[i]); break;
                   default : cout<<"Error: isStrangeB passed ID "<<PDG<<endl;
                 }
                 //Fill the general "other particles" histogram already here
@@ -533,7 +536,7 @@ void CMSJES::Loop()
               if (find(otherIDs.begin(),otherIDs.end(),PDG)==otherIDs.end()&& 
                   !isNeutrino(PDG)  ) otherIDs.push_back(PDG);
           } //Switch PDG (general)
-          h_all->Fill((*jet_e)[(*prtcl_jet)[i_probe]],   (*prtcl_e)[i] );
+          h_all->Fill((*jet_e)[(*prtcl_jet)[i_probe]], (*prtcl_e)[i]);
         }
       }
     }
@@ -613,7 +616,7 @@ void CMSJES::Loop()
           //Efficiency from chs
           if (fabs(p4.Eta() < 2.5)) {
             for (int ijet=0; ijet!=jets_g.size(); ++ijet) {
-              if (p4.DeltaR(jets_g[ijet]) < 0.4) {
+              if (p4.DeltaR(jets_g[ijet]) < RCone) {
                 eff = pchf->Eval(jets_g[ijet].Pt()) / 0.607;
                 eff -= 0.1381969 - 0.1606539/pow(2,((*prtclnij_pt)[i]/45.31742));
               }
@@ -773,7 +776,7 @@ void CMSJES::Loop()
                    + chECAL_curv->GetBinContent(i,j) + chHCAL_curv->GetBinContent(i,j);
         p4_calo.SetPtEtaPhiE(cellE_calo/cosh(cellEta), cellEta, cellPhi, cellE_calo);
 
-        if (p4_calo.DeltaR(probe_g) < 0.4) {
+        if (p4_calo.DeltaR(probe_g) < RCone) {
           probe_calo += p4_calo;
         }
 
@@ -848,14 +851,14 @@ void CMSJES::Loop()
         MET_r -= p4;
 
         //Probe reconstruction
-        if (p4.DeltaR(probe_g) < 0.4) {
+        if (p4.DeltaR(probe_g) < RCone) {
           probe_r     += p4;
           probe_ch    += p4_rescale.E();
           probe_nh    += nhHCAL_calib;
           probe_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
         }
         //Second leading jet reconstruction for Alpha cut
-        if (p4.DeltaR(jets_g[1]) < 0.4) {
+        if (p4.DeltaR(jets_g[1]) < RCone) {
           jet2_r += p4;
         }
       }
@@ -1017,7 +1020,7 @@ void CMSJES::Loop()
       //General particle composition histograms
     canv->cd(1);
     hstack->Draw("HISTO");
-    hstack->GetYaxis()->SetRange(0.0,1.0);
+    hstack->GetYaxis()->SetRange(0.0,0.5);
     hstack->GetXaxis()->SetTitle("#font[12]{E}_{jet}^{gen} [GeV]");
     hstack->GetYaxis()->SetTitle("Fraction of jet #font[12]{E}");
     hstack->GetYaxis()->SetTitleFont(133);
@@ -1027,8 +1030,10 @@ void CMSJES::Loop()
     hstack->GetXaxis()->SetTitleOffset(1.8);
     hstack->GetYaxis()->SetTitleOffset(2.0);
     lg->Draw();
+
     //More specific "other particles" histograms
     canv->cd(2);
+
     hstackOther->Draw("HISTO");
     hstackOther->GetYaxis()->SetRange(0.0,1.0);
     hstackOther->GetXaxis()->SetTitle("#font[12]{E}_{jet}^{gen} [GeV]");
@@ -1077,7 +1082,7 @@ void CMSJES::Loop()
   cout << "MET-probe cut:          " << METprobe    << endl << endl;
   
   //Charged hadron efficiency Profile
-  TCanvas *c4     = new TCanvas("c4","c4",500,500);
+  TCanvas *c4     = new TCanvas("","c4",500,500);
   TGraph *PFeff   = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_PF.txt");
   TGraph *PFeffFr = new TGraph("data_and_MC_input/Efficiency/hadron_efficiencyPlusFakerate_PF.txt");
   TGraph *TRKeff  = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_TRK.txt");
@@ -1445,6 +1450,68 @@ void CMSJES::InputNameConstructor() {
 }
 
 
+void CMSJES::plotEff(int gen, int Nevt) {
+  //Choose filenames to open
+  string nameAdd, zjetFile;
+  plotQuery(nameAdd, zjetFile, gen, Nevt);
+  TFile* fzj = TFile::Open(zjetFile.c_str());
+
+  TProfile *chhEff=0;
+  fzj->GetObject("chhEff",chhEff);
+
+  //Charged hadron efficiency Profile
+  TCanvas *c4     = new TCanvas("","c4",500,500);
+  c4->SetLeftMargin(0.12);
+  TGraph *PFeff   = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_PF.txt");
+  TGraph *PFeffFr = new TGraph("data_and_MC_input/Efficiency/hadron_efficiencyPlusFakerate_PF.txt");
+  PFeff->SetMarkerStyle(kFullDiamond );
+  PFeff->SetMarkerColor(kBlue);
+  PFeffFr->SetMarkerStyle(kFullCircle );
+  PFeffFr->SetMarkerColor(kRed);
+
+  TLegend* lgEff = new TLegend(0.3,0.2,0.75,0.40 );
+  lgEff->AddEntry(chhEff, "Our efficiency", "l");
+  lgEff->AddEntry(PFeffFr,"PF efficiency + fakerate", "p");
+  lgEff->AddEntry(PFeff,  "PF efficiency", "p");
+  lgEff->SetBorderSize(0); lgEff->SetFillStyle(0);
+
+  PFeff->GetXaxis()->SetTitleOffset(1.0);
+  PFeff->GetYaxis()->SetTitleOffset(1.3);
+  PFeff->GetXaxis()->SetTitle("p_{T} (GeV)");
+  PFeff->GetXaxis()->SetTitleSize(0.045);
+  PFeff->GetYaxis()->SetTitle("Tracking efficiency");
+  PFeff->GetYaxis()->SetTitleSize(0.045);
+
+  TLatex *tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextSize(0.04);
+  tex->SetTextColor(kBlack);
+
+  TAxis *PFaxis = PFeff->GetXaxis();
+  PFaxis->SetLimits(0.2,300);
+  PFeff->SetTitle("");
+  PFeff->GetHistogram()->SetMaximum(1.0);
+  PFeff->GetHistogram()->SetMinimum(0.5);
+  PFeff->GetXaxis()->SetMoreLogLabels();
+  PFeff->GetXaxis()->SetNoExponent();
+  PFeff->Draw("ap"); 
+  lgEff->Draw("same");
+  PFeffFr->Draw("samep");
+
+  PFeff->SetMarkerSize(1.5);
+  PFeffFr->SetMarkerSize(1.2);
+
+  gStyle->SetOptStat();
+  c4->SetLogx();
+  chhEff->Draw("same");
+  chhEff->SetLineColor(kBlack);
+  chhEff->SetLineWidth(5);
+
+  tex->DrawLatex(0.75,0.82,"|#eta|<2.5");
+
+  c4->Print("./plots/Efficiency/trkEff.eps");
+}
+
 void CMSJES::plotJEF(int gen, int Nevt) {
   //Choose filenames to open
   string nameAdd, zjetFile;
@@ -1454,14 +1521,14 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
   TGraph *chf   = new TGraph("data_and_MC_input/Chf/chf.txt");
   TGraph *chnhf = new TGraph("data_and_MC_input/Chf/chnhf.txt");
-  chf->SetMarkerStyle(kFullDiamond); chnhf->SetMarkerStyle(kFullSquare);
+  chf->SetMarkerStyle(kFullDiamond); chnhf->SetMarkerStyle(kOpenSquare);
   chf->SetMarkerColor(kBlack);       chnhf->SetMarkerColor(kBlack);
   chf->SetMarkerSize(1);             chnhf->SetMarkerSize(0.7);
 
   TProfile *prchf=0; TProfile *prnhf=0; TProfile *prgammaf=0; TProfile *pref=0;
 
   THStack* hstack_JEF;
-  hstack_JEF = new THStack("hstackJEF","#font[132]{Z+jet probe particle content in |#eta| < 1.3}");
+  hstack_JEF = new THStack("hstackJEF","");
 
 
   fzj->GetObject("prchf"    ,prchf   );
@@ -1485,7 +1552,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   TLegend* lg     = new TLegend(0.9, 0.1, 1.0, 0.9);
   lg->SetBorderSize(0); //No frame
   lg->SetTextSize(0.028);
-  lg->SetFillStyle(0);  //No background fill
+  lg->SetFillStyle(0);
   canv_c->SetLogx();
   canv_c->SetBottomMargin(0.13);
 
@@ -1495,10 +1562,16 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   hstack_JEF->Add(hef);
 
   //Legend setup
-  lg->AddEntry(hef,     "e",              "f");
-  lg->AddEntry(hgammaf, "#gamma",         "f");
-  lg->AddEntry(hnhf,    "#font[132]{NH}", "f");
-  lg->AddEntry(hchf,    "#font[132]{CH}", "f");
+  lg->AddEntry(hef,     "e",     "f");
+  lg->AddEntry(hgammaf, "#gamma","f");
+  lg->AddEntry(hnhf,    "NH",    "f");
+  lg->AddEntry(hchf,    "CH",    "f");
+
+  TLegend* lgEff = new TLegend(0.15,0.3,0.4,0.4);
+  lgEff->AddEntry(chnhf,"#bf{NH Run2016GH}", "p");
+  lgEff->AddEntry(chf,  "#bf{CH Run2016GH}", "p");
+  lgEff->SetBorderSize(0); lgEff->SetFillStyle(0);
+  lgEff->SetTextSize(0.035);
 
   hstack_JEF->Draw("HISTO");
   hstack_JEF->GetYaxis()->SetRange(0.0,1.0);
@@ -1506,22 +1579,26 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   hstack_JEF->GetXaxis()->SetMoreLogLabels();
   hstack_JEF->GetXaxis()->SetNoExponent();
 
-  //hstack_JEF->GetXaxis()->ChangeLabel(1,-1, 0);
-  //hstack_JEF->GetXaxis()->ChangeLabel(-2,-1,-1,-1,kBlue,-1,"Changed");
-  //hstack_JEF->GetXaxis()->ChangeLabel(2,-1,-1,-1,kGreen,-1,"Changed");
+  hstack_JEF->GetXaxis()->SetTitleOffset(1.1);
+  hstack_JEF->GetYaxis()->SetTitleOffset(0.9);
 
-  hstack_JEF->GetXaxis()->SetTitle("#font[12]{p}_{T,tag}^{reco} [GeV]");
   hstack_JEF->GetYaxis()->SetTitle("Jet energy fraction");
-  hstack_JEF->GetYaxis()->SetTitleFont(133);
-  hstack_JEF->GetYaxis()->SetTitleSize(18);
-  hstack_JEF->GetXaxis()->SetTitleFont(133);
-  hstack_JEF->GetXaxis()->SetTitleSize(18);
-  //hstack_JEF->GetXaxis()->SetTitleOffset(1.5);
-  //hstack_JEF->GetYaxis()->SetTitleOffset(1.5);
-  hstack_JEF->GetYaxis()->SetNdivisions(20);
+  hstack_JEF->GetYaxis()->SetTitleSize(0.045);
+  hstack_JEF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
+  hstack_JEF->GetXaxis()->SetTitleSize(0.05);
+
+
+
   lg->Draw();
+  lgEff->Draw();
   chf->Draw("samep");
   chnhf->Draw("samep");
+
+  TLatex *tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextSize(0.04);
+  tex->SetTextColor(kBlack);
+  tex->DrawLatex(0.21,0.42,"|#eta^{probe}|<1.3");
 
   //Save particle content histogram plot
   string plotName = "./plots/particleComposition/PC_jets.eps";
@@ -1534,7 +1611,6 @@ void CMSJES::plotFF(int gen, int Nevt) {
   plotQuery(nameAdd, zjetFile, gen, Nevt);
 
   TFile* fzj = TFile::Open(zjetFile.c_str());
-
 
 
   TH1D* FFa  = 0;
@@ -1556,16 +1632,11 @@ void CMSJES::plotFF(int gen, int Nevt) {
 
   string FFstackTitle;
   FFstackTitle  = "";
-  FFstackTitle += ";#font[12]{p}_{T,tag}^{MC}#font[132]{[GeV]}";
-  FFstackTitle += ";#font[132]{Jet flavour fraction}";
-
-
+  FFstackTitle += ";p_{T,tag}^{reco} (GeV)";
+  FFstackTitle += ";Jet flavour fraction";
 
   THStack* FFstack = new THStack("", FFstackTitle.c_str());
 
-
-
-  //Normalize flavour fraction histograms, add to stack and plot
   FFb->Divide(FFa);   FFg->Divide(FFa);    FFlq->Divide(FFa);
   FFud->Divide(FFa);  FFs->Divide(FFa);    FFc->Divide(FFa);
   FFstack->Add(FFg);  FFstack->Add(FFud);  FFstack->Add(FFs); 
@@ -1578,11 +1649,11 @@ void CMSJES::plotFF(int gen, int Nevt) {
   FFcanv->SetLogx();
   FFlg->SetBorderSize(0);  FFlg->SetFillStyle(0);
   FFcanv->SetBottomMargin(0.13);
-  FFlg->AddEntry(FFb,  " #font[12]{b}",  "f");
-  FFlg->AddEntry(FFc,  " #font[12]{c}",  "f");
-  FFlg->AddEntry(FFs,  " #font[12]{s}",  "f");
-  FFlg->AddEntry(FFud, " #font[12]{ud}", "f");
-  FFlg->AddEntry(FFg,  " #font[12]{g}",  "f");
+  FFlg->AddEntry(FFb,  "b",  "f");
+  FFlg->AddEntry(FFc,  "c",  "f");
+  FFlg->AddEntry(FFs,  "s",  "f");
+  FFlg->AddEntry(FFud, "ud", "f");
+  FFlg->AddEntry(FFg,  "g",  "f");
   FFb->SetFillColor(46);  
   FFc->SetFillColor(kOrange);
   FFs->SetFillColor(kSpring+8);
@@ -1593,22 +1664,25 @@ void CMSJES::plotFF(int gen, int Nevt) {
 
   FFstack->GetXaxis()->SetMoreLogLabels();
   FFstack->GetXaxis()->SetNoExponent();
-  //FFstack->GetYaxis()->SetTitleFont(133);
-  //FFstack->GetYaxis()->SetTitleSize(35);
-  //FFstack->GetXaxis()->SetTitleFont(133);
-  //FFstack->GetXaxis()->SetTitleSize(35);
-  FFstack->GetXaxis()->SetTitleOffset(1.5);
+
+  FFstack->GetXaxis()->SetTitleOffset(1.1);
+  FFstack->GetYaxis()->SetTitleOffset(0.9);
+
+  FFstack->GetYaxis()->SetTitle("Jet flavour fraction");
+  FFstack->GetYaxis()->SetTitleSize(0.045);
+  FFstack->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
+  FFstack->GetXaxis()->SetTitleSize(0.05);
+
 
   //FFstack->GetYaxis()->SetTitleOffset(1.5);
   gPad->Modified();
 
 
-
   FFlg->Draw();
   FFcanvName = "./plots/FlavourFraction/" + FFcanvName + ".eps";
+
+
   FFcanv->Print(FFcanvName.c_str());
-
-
 }
 
 //-----------------------------------------------------------------------------
@@ -1753,25 +1827,26 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //lz_MPF->AddEntry(hzj_MPFb, "b-jets"    , "p");
   //lz_MPF->AddEntry(hzj_MPFg, "gluon jets", "p");
   //lz_MPF->AddEntry(hzj_MPFlq, "lq-jets"   , "p");
-  lz_MPF->AddEntry(mc_zj_MPFntI_2018, "#font[132]{FullSim 2018ABCD}", "p");
+  lz_MPF->AddEntry(mc_zj_MPFntI_2018, "FullSim 2018ABCD", "p");
 
   //Title and axis setup
   hzj_MPF->SetStats(0); //Suppress stat box
   hzj_MPF->SetTitle("");
-  //hzj_MPF->SetLineWidth(2);
-  hzj_MPF->SetAxisRange(0.82,1.02,"Y"); //Vertical axis limits
+  hzj_MPF->SetAxisRange(0.86,1.0,"Y"); //Vertical axis limits
 
-  hzj_MPF->GetYaxis()->SetTitleFont(133);
-  int titleSize = 20; //Common title size everywhere
-  hzj_MPF->GetYaxis()->SetTitleSize(titleSize);
   hzj_MPF->GetXaxis()->SetMoreLogLabels();
+  //hzj_MPF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   hzj_MPF->GetXaxis()->SetNoExponent();
-  hzj_MPF->GetXaxis()->SetTitleFont(133);
-  hzj_MPF->GetXaxis()->SetTitleSize(titleSize);
   canv_MPF->SetLogx();
-  hzj_MPF->GetYaxis()->SetTitleOffset(1);
-  hzj_MPF->GetXaxis()->SetTitleOffset(1);
+  hzj_MPF->GetYaxis()->SetTitleOffset(1.1);
+  hzj_MPF->GetXaxis()->SetTitleOffset(1.1);
   gPad->SetTickx();   gPad->SetTicky();
+
+
+  hzj_MPF->GetYaxis()->SetTitle("R_{MPF}");
+  hzj_MPF->GetYaxis()->SetTitleSize(0.05);
+  hzj_MPF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
+  hzj_MPF->GetXaxis()->SetTitleSize(0.05);
 
   //Savefile name setup
   string savename = "./plots/mpf/MPF_zmmjet";
@@ -1868,9 +1943,12 @@ void CMSJES::plotRjet(int gen, int Nevt)
 
 
   h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
-  h_diffbg->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
-  h_diffbg->GetYaxis()->SetTitleOffset(1.9);
-  h_diffbg->GetXaxis()->SetTitleOffset(1.2);
+  h_diffbg->GetYaxis()->SetTitleSize(0.042);
+  h_diffbg->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  h_diffbg->GetXaxis()->SetTitleSize(0.05);
+
+  h_diffbg->GetYaxis()->SetTitleOffset(1.5);
+  h_diffbg->GetXaxis()->SetTitleOffset(1.1);
   h_diffbg->GetXaxis()->SetMoreLogLabels();
   h_diffbg->GetXaxis()->SetNoExponent();
 
@@ -1913,14 +1991,14 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjetc ->SetLineColor(kGreen+2);
 
   //Legend
-  TLegend* lz_Rjet = new TLegend(0.5,0.17,0.8,0.42);
+  TLegend* lz_Rjet = new TLegend(0.55,0.17,0.75,0.42);
   lz_Rjet->SetBorderSize(0);
-  lz_Rjet->AddEntry(hzj_Rjet,   "#font[132]{All jets}",   "p");
-  lz_Rjet->AddEntry(hzj_Rjetb,  "#font[132]{b-jets}",     "p");
-  lz_Rjet->AddEntry(hzj_Rjetc,  "#font[132]{c-jets}",     "p");
-  lz_Rjet->AddEntry(hzj_Rjets,  "#font[132]{s-jets}",     "p");
-  lz_Rjet->AddEntry(hzj_Rjetud, "#font[132]{ud-jets}",    "p");
-  lz_Rjet->AddEntry(hzj_Rjetg,  "#font[132]{gluon jets}", "p");
+  lz_Rjet->AddEntry(hzj_Rjet,   "All",   "p");
+  lz_Rjet->AddEntry(hzj_Rjetb,  "b",     "p");
+  lz_Rjet->AddEntry(hzj_Rjetc,  "c",     "p");
+  lz_Rjet->AddEntry(hzj_Rjets,  "s",     "p");
+  lz_Rjet->AddEntry(hzj_Rjetud, "ud",    "p");
+  lz_Rjet->AddEntry(hzj_Rjetg,  "gluon", "p");
 
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
@@ -1931,11 +2009,13 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjet->GetXaxis()->SetMoreLogLabels();
   hzj_Rjet->GetXaxis()->SetNoExponent();
   canv_Rjet->SetLogx();
-  hzj_Rjet->GetYaxis()->SetTitleOffset(1.8);
-  hzj_Rjet->GetXaxis()->SetTitleOffset(1.2);
+  hzj_Rjet->GetYaxis()->SetTitleOffset(1.1);
+  hzj_Rjet->GetXaxis()->SetTitleOffset(1.1);
 
-  //hzj_Rjet->GetYaxis()->SetTitleSize(20);
-  //hzj_Rjet->GetXaxis()->SetTitleSize(20);
+  hzj_Rjet->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  hzj_Rjet->GetXaxis()->SetTitleSize(0.05);
+  hzj_Rjet->GetYaxis()->SetTitle("R_{jet}");
+  hzj_Rjet->GetYaxis()->SetTitleSize(0.05);
 
 
   gPad->SetTickx(); gPad->SetTicky();
@@ -1994,7 +2074,7 @@ void CMSJES::plotF(int gen, int Nevt)
 
 
   //Canvas
-  TCanvas* canv_F = new TCanvas("canv_F","",600,600);
+  TCanvas* canv_F = new TCanvas("canv_F","",500,400);
   canv_F->SetLeftMargin(0.15);
   canv_F->SetBottomMargin(0.13);
 
@@ -2011,29 +2091,38 @@ void CMSJES::plotF(int gen, int Nevt)
   hzj_Fs->SetLineColor(kOrange+1);
   hzj_Fc->SetLineColor(kGreen+2);
 
+  double markersize = 0.8;
+  hzj_Fb ->SetMarkerSize(markersize);              
+  hzj_Fg ->SetMarkerSize(markersize);
+  hzj_Fud->SetMarkerSize(markersize);
+  hzj_Fs->SetMarkerSize(markersize);
+  hzj_Fc->SetMarkerSize(markersize);
+
   //Legend
-  TLegend* lz_F = new TLegend(0.62,0.65,0.89,0.89);
+  TLegend* lz_F = new TLegend(0.62,0.65,0.89,0.88);
   lz_F->SetBorderSize(0);
-  lz_F->AddEntry(hzj_Fb,  "#font[132]{b}",     "p");
-  lz_F->AddEntry(hzj_Fg,  "#font[132]{gluon}", "p");
-  lz_F->AddEntry(hzj_Fud, "#font[132]{ud}",    "p");
-  lz_F->AddEntry(hzj_Fs,  "#font[132]{s}",     "p");
-  lz_F->AddEntry(hzj_Fc,  "#font[132]{c}",     "p");
+  lz_F->AddEntry(hzj_Fb,  "b",     "p");
+  lz_F->AddEntry(hzj_Fc,  "c",     "p");
+  lz_F->AddEntry(hzj_Fs,  "s",     "p");
+  lz_F->AddEntry(hzj_Fud, "ud",    "p");
+  lz_F->AddEntry(hzj_Fg,  "gluon", "p");
+
 
   //Title and axis setup
   hzj_Fb->SetStats(0); //Suppress stat box
   hzj_Fb->SetTitle("");
-  hzj_Fb->SetAxisRange(0.97,1.03,"Y"); //Vertical axis limits
+  hzj_Fb->SetAxisRange(0.98,1.02,"Y"); //Vertical axis limits
 
-  //hzj_F->GetYaxis()->SetTitleFont(133);
-  //int titleSize = 20; //Common title size everywhere
-  hzj_Fb->GetXaxis()->SetTitle("p_{T,gen}^{jet}");
+  hzj_Fb->GetYaxis()->SetTitleOffset(1.1);
+  hzj_Fb->GetXaxis()->SetTitleOffset(1.1);
+  hzj_Fb->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  hzj_Fb->GetXaxis()->SetTitleSize(0.05);
   hzj_Fb->GetYaxis()->SetTitle("F");
+  hzj_Fb->GetYaxis()->SetTitleSize(0.05);
+
   hzj_Fb->GetXaxis()->SetMoreLogLabels();
   hzj_Fb->GetXaxis()->SetNoExponent();
   canv_F->SetLogx();
-  hzj_Fb->GetYaxis()->SetTitleOffset(1.8);
-  hzj_Fb->GetXaxis()->SetTitleOffset(1.2);
   gPad->SetTickx(); gPad->SetTicky();
 
   //Savefile name setup
@@ -2058,54 +2147,74 @@ void CMSJES::plotF(int gen, int Nevt)
 void CMSJES::plotVariants(int gen, int Nevt)
 {
 
-  //C-parameter variation
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
-  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCm3.root");
+  string outname = "./output_ROOT_files/varPlots_5000000"; //Output file
+  outname += ".root";
+  TFile *foutvar = new TFile(outname.c_str(),"RECREATE");
 
   // SPR +-3% JEC paper
-  TGraph *JEC_SPRp3 = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRplus3.txt" );
-  TGraph *JEC_SPRm3 = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRminus3.txt" );
+  TGraph *JEC_SPRp3      = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRplus3.txt" );
+  TGraph *JEC_SPRm3      = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRminus3.txt" );
   TGraph *JEC_calo_SPRp3 = new TGraph("data_and_MC_input/Response/JEC_Calo_SPRplus3.txt" );
   TGraph *JEC_calo_SPRm3 = new TGraph("data_and_MC_input/Response/JEC_Calo_SPRminus3.txt" );
-
 
   JEC_SPRp3->SetMarkerStyle(kOpenCircle);            JEC_SPRp3->SetMarkerColor(kRed);
   JEC_SPRm3->SetMarkerStyle(kOpenSquare);            JEC_SPRm3->SetMarkerColor(kBlue+1);
   JEC_calo_SPRp3->SetMarkerStyle(kOpenTriangleUp);   JEC_calo_SPRp3->SetMarkerColor(kOrange+1);
   JEC_calo_SPRm3->SetMarkerStyle(kOpenTriangleDown); JEC_calo_SPRm3->SetMarkerColor(kGreen+2);
 
+  double markersize = 0.8;
+  JEC_SPRp3->SetMarkerSize(markersize);
+  JEC_SPRm3->SetMarkerSize(markersize);
+  JEC_calo_SPRp3->SetMarkerSize(markersize);
+  JEC_calo_SPRm3->SetMarkerSize(markersize);
 
-  TProfile *pr_Rjet=0;
-  TProfile *pr_Rjet_Cp3=0;
-  TProfile *pr_Rjet_Cm3=0;
-  TProfile *pr_Rjet_calo=0;
-  TProfile *pr_Rjet_calo_Cp3=0;
-  TProfile *pr_Rjet_calo_Cm3=0;
+  //C-parameter variation
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
+  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
+
+  TProfile *pr_Rjet = 0;
+  TProfile *pr_Rjet_b = 0; 
+  TProfile *pr_Rjet_Cp3 = 0;
+  TProfile *pr_Rjet_Cp3_b = 0;
+  TProfile *pr_Rjet_Cm3 = 0;
+  TProfile *pr_Rjet_Cm3_b = 0;
+  TProfile *pr_Rjet_calo = 0;
+  TProfile *pr_Rjet_calo_Cp3 = 0;
+  TProfile *pr_Rjet_calo_Cm3 = 0;
 
   //Create Histograms
-  fzj    ->GetObject("prRjet",pr_Rjet);
-  fzj_Cp3->GetObject("prRjet",pr_Rjet_Cp3);
+  fzj    ->GetObject("prRjet", pr_Rjet);
+  fzj    ->GetObject("prRjetb",pr_Rjet_b);
+  fzj_Cp3->GetObject("prRjet", pr_Rjet_Cp3);
+  fzj_Cp3->GetObject("prRjetb", pr_Rjet_Cp3_b);
   fzj_Cm3->GetObject("prRjet", pr_Rjet_Cm3);
+  fzj_Cm3->GetObject("prRjetb", pr_Rjet_Cm3_b);
+
   fzj    ->GetObject("prRjet_calo",pr_Rjet_calo);
   fzj_Cp3->GetObject("prRjet_calo",pr_Rjet_calo_Cp3);
   fzj_Cm3->GetObject("prRjet_calo",pr_Rjet_calo_Cm3);
 
-  TH1D* h_Rjet     = pr_Rjet->ProjectionX();
-  TH1D* h_Rjet_Cp3 = pr_Rjet_Cp3->ProjectionX();
-  TH1D* h_Rjet_Cm3 = pr_Rjet_Cm3->ProjectionX();
+  TH1D* h_Rjet       = pr_Rjet->ProjectionX();
+  TH1D* h_Rjet_b     = pr_Rjet_b->ProjectionX();
+  TH1D* h_Rjet_Cp3   = pr_Rjet_Cp3->ProjectionX();
+  TH1D* h_Rjet_Cp3_b = pr_Rjet_Cp3_b->ProjectionX();
+  TH1D* h_Rjet_Cm3   = pr_Rjet_Cm3->ProjectionX();
+  TH1D* h_Rjet_Cm3_b = pr_Rjet_Cm3_b->ProjectionX();
 
   TH1D* h_Rjet_calo     = pr_Rjet_calo->ProjectionX();
   TH1D* h_Rjet_calo_Cp3 = pr_Rjet_calo_Cp3->ProjectionX();
   TH1D* h_Rjet_calo_Cm3 = pr_Rjet_calo_Cm3->ProjectionX();
 
   h_Rjet_Cp3->Divide(h_Rjet);
+  h_Rjet_Cp3_b->Divide(h_Rjet_b);
   h_Rjet_Cm3->Divide(h_Rjet);
+  h_Rjet_Cm3_b->Divide(h_Rjet_b);
   h_Rjet_calo_Cp3->Divide(h_Rjet_calo);
   h_Rjet_calo_Cm3->Divide(h_Rjet_calo);
 
   //Canvas
-  TCanvas* canv_var = new TCanvas("canv_var","",600,600);
+  TCanvas* canv_var = new TCanvas("canv_var","",500,400);
   canv_var->SetLeftMargin(0.15);
   canv_var->SetBottomMargin(0.13);
 
@@ -2117,18 +2226,21 @@ void CMSJES::plotVariants(int gen, int Nevt)
   h_Rjet_calo_Cm3->SetMarkerStyle(kFullTriangleDown); h_Rjet_calo_Cm3->SetMarkerColor(kGreen+2);
   h_Rjet_calo_Cp3->SetLineColor(kOrange+1);           h_Rjet_calo_Cm3->SetLineColor(kGreen+2); 
 
+  h_Rjet_Cp3->SetMarkerSize(markersize);        h_Rjet_Cm3->SetMarkerSize(markersize);
+  h_Rjet_calo_Cp3->SetMarkerSize(markersize);   h_Rjet_calo_Cm3->SetMarkerSize(markersize);
+
   //Legend
   TLegend* lz_Rjet = new TLegend(0.18,0.67,0.88,0.89);
   lz_Rjet->SetNColumns(2);
   lz_Rjet->SetBorderSize(0);
-  lz_Rjet->AddEntry(h_Rjet_Cp3,      "PF jet C+3%",   "p");
-  lz_Rjet->AddEntry(h_Rjet_calo_Cp3, "Calo jet C+3% ",   "p");
-  lz_Rjet->AddEntry(h_Rjet_Cm3,      "PF jet C-3%",   "p");
-  lz_Rjet->AddEntry(h_Rjet_calo_Cm3, "Calo jet C-3%",   "p");
-  lz_Rjet->AddEntry(JEC_SPRp3,       "PF jet C+3% (CMS-JME-13-004)", "p");
-  lz_Rjet->AddEntry(JEC_calo_SPRp3,  "Calo jet C+3% (CMS-JME-13-004)", "p");
-  lz_Rjet->AddEntry(JEC_SPRm3,       "PF jet C-3% (CMS-JME-13-004)", "p");  
-  lz_Rjet->AddEntry(JEC_calo_SPRm3,  "Calo jet C-3% (CMS-JME-13-004)", "p"); 
+  lz_Rjet->AddEntry(h_Rjet_Cp3,      "Reco jet C+3% (Our)",   "p");
+  lz_Rjet->AddEntry(h_Rjet_calo_Cp3, "Calo jet C+3% (Our)",   "p");
+  lz_Rjet->AddEntry(h_Rjet_Cm3,      "Reco jet C-3% (Our)",   "p");
+  lz_Rjet->AddEntry(h_Rjet_calo_Cm3, "Calo jet C-3% (Our)",   "p");
+  lz_Rjet->AddEntry(JEC_SPRp3,       "Reco jet C+3% (FastSim)", "p");
+  lz_Rjet->AddEntry(JEC_calo_SPRp3,  "Calo jet C+3% (FastSim)", "p");
+  lz_Rjet->AddEntry(JEC_SPRm3,       "Reco jet C-3% (FastSim)", "p");  
+  lz_Rjet->AddEntry(JEC_calo_SPRm3,  "Calo jet C-3% (FastSim)", "p"); 
 
 
   TH1D* setup = new TH1D("setup","", h_Rjet_Cp3->GetXaxis()->GetNbins(),
@@ -2137,14 +2249,16 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //Title and axis setup
   setup->SetStats(0); //Suppress stat box
   setup->SetTitle("");
-  setup->SetAxisRange(0.96,1.07,"Y"); //Vertical axis limits
+  setup->SetAxisRange(0.97,1.05,"Y"); //Vertical axis limits
   setup->GetXaxis()->SetMoreLogLabels();
   setup->GetXaxis()->SetNoExponent();
   canv_var->SetLogx();
-  setup->GetYaxis()->SetTitleOffset(1.8);
-  setup->GetXaxis()->SetTitleOffset(1.2);
-  setup->GetYaxis()->SetTitle("Response ratio");
-  setup->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup->GetYaxis()->SetTitleOffset(1.1);
+  setup->GetXaxis()->SetTitleOffset(1.1);
+  setup->GetYaxis()->SetTitle("F^{var}");
+  setup->GetYaxis()->SetTitleSize(0.05);
+  setup->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup->GetXaxis()->SetTitleSize(0.05);
 
   gPad->SetTickx(); gPad->SetTicky();
 
@@ -2169,33 +2283,106 @@ void CMSJES::plotVariants(int gen, int Nevt)
 
   delete canv_var;
 
-  //////////////////// Tracking efficiency /////////////////////////
-  // Tracking efficieny
-  TFile* fzj_Trk = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varTrkEff.root");
-
-  TProfile *pr_Rjet_Trk=0;
-
-  //Create Histograms
-
-  fzj_Trk->GetObject("prRjet",pr_Rjet_Trk);
-
-  TH1D* h_Rjet_Trk = pr_Rjet_Trk->ProjectionX();
-
-
-  h_Rjet_Trk->Divide(h_Rjet);
-
   //Canvas
-  TCanvas* canv_trk = new TCanvas("canv_trk","",600,600);
-  canv_trk->SetLeftMargin(0.15); canv_trk->SetBottomMargin(0.13);
+  TCanvas* canv_var2 = new TCanvas("canv_var2","",500,400);
+  canv_var2->SetLeftMargin(0.15);
+  canv_var2->SetBottomMargin(0.13);
 
-  h_Rjet_Trk->SetMarkerStyle(kFullSquare); h_Rjet_Trk->SetMarkerColor(kRed);
-  h_Rjet_Trk->SetLineColor(kRed);  
+  h_Rjet_Cp3->SetMarkerStyle(kOpenCircle); 
+  h_Rjet_Cp3->SetMarkerColor(kBlack);
+  h_Rjet_Cp3->SetLineColor(kBlack);
+  h_Rjet_Cp3->SetMarkerSize(markersize);
+
+  h_Rjet_Cp3_b->SetMarkerStyle(kFullCircle); 
+  h_Rjet_Cp3_b->SetMarkerColor(kRed);
+  h_Rjet_Cp3_b->SetLineColor(kRed);
+  h_Rjet_Cp3_b->SetMarkerSize(markersize);
+
+       
+  h_Rjet_Cm3->SetLineColor(kBlack);
+  h_Rjet_Cm3->SetMarkerStyle(kOpenSquare); 
+  h_Rjet_Cm3->SetMarkerColor(kBlack);
+  h_Rjet_Cm3->SetMarkerSize(markersize);
+
+  h_Rjet_Cm3_b->SetLineColor(kBlue+1);
+  h_Rjet_Cm3_b->SetMarkerStyle(kFullSquare); 
+  h_Rjet_Cm3_b->SetMarkerColor(kBlue+1);
+  h_Rjet_Cm3_b->SetMarkerSize(markersize);
+
 
   //Legend
-  TLegend* lz_Rjet_trk = new TLegend(0.2,0.7,0.7,0.89);
-  lz_Rjet_trk->SetNColumns(2);
+  TLegend* lz_Rjet2 = new TLegend(0.3,0.7,0.6,0.85);
+  lz_Rjet2->SetBorderSize(0);
+  lz_Rjet2->AddEntry(h_Rjet_Cp3, "All jets C+3%", "p");
+  lz_Rjet2->AddEntry(h_Rjet_Cm3, "All jets C-3%", "p");
+  lz_Rjet2->AddEntry(h_Rjet_Cp3_b, "b jets C+3%", "p");
+  lz_Rjet2->AddEntry(h_Rjet_Cm3_b, "b jets C-3%", "p");
+
+  TH1D* setup2 = new TH1D("setup","", h_Rjet_Cp3->GetXaxis()->GetNbins(),
+			 h_Rjet_Cp3->GetXaxis()->GetXmin(), h_Rjet_Cp3->GetXaxis()->GetXmax());
+
+  //Title and axis setup
+  setup2->SetStats(0); //Suppress stat box
+  setup2->SetTitle("");
+  setup2->SetAxisRange(0.98,1.02,"Y"); //Vertical axis limits
+  setup2->GetXaxis()->SetMoreLogLabels();
+  setup2->GetXaxis()->SetNoExponent();
+  canv_var2->SetLogx();
+  setup2->GetYaxis()->SetTitleOffset(1.8);
+  setup2->GetXaxis()->SetTitleOffset(1.2);
+  setup2->GetYaxis()->SetTitle("Response ratio");
+  setup2->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+
+  gPad->SetTickx(); gPad->SetTicky();
+
+  //Savefile name setup
+  string savename2 = "./plots/varPlots/varSPR2";
+  savename2+=".eps";
+
+  //Plot
+  setup2->Draw();
+  h_Rjet_Cm3_b->Draw("SAMEP");
+  h_Rjet_Cp3_b->Draw("SAMEP");
+  h_Rjet_Cm3->Draw("SAMEP");
+  h_Rjet_Cp3->Draw("SAMEP");
+  lz_Rjet2->Draw("SAMEP");
+
+  //Save plot
+  canv_var2->Print(savename2.c_str());
+
+  delete canv_var2;
+
+  //////////////////// Tracking efficiency /////////////////////////
+  // Tracking efficieny
+  TFile* fzj_Trk = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEff.root");
+
+  TProfile *pr_Rjet_Trk=0;
+  TProfile *pr_Rjet_Trk_b=0;
+
+  //Create Histograms
+  fzj_Trk->GetObject("prRjet",pr_Rjet_Trk);
+  fzj_Trk->GetObject("prRjetb",pr_Rjet_Trk_b);
+
+  TH1D* h_Rjet_Trk = pr_Rjet_Trk->ProjectionX();
+  TH1D* h_Rjet_Trk_b = pr_Rjet_Trk_b->ProjectionX();
+
+  h_Rjet_Trk->Divide(h_Rjet); h_Rjet_Trk_b->Divide(h_Rjet_b);
+
+  //Canvas
+  TCanvas* canv_trk = new TCanvas("canv_trk","",500,400);
+  canv_trk->SetLeftMargin(0.15); canv_trk->SetBottomMargin(0.13);
+
+  h_Rjet_Trk->SetMarkerStyle(kOpenCircle); h_Rjet_Trk->SetMarkerColor(kBlack);
+  h_Rjet_Trk->SetLineColor(kBlack);          h_Rjet_Trk->SetMarkerSize(0.8);
+
+  h_Rjet_Trk_b->SetMarkerStyle(kFullSquare); h_Rjet_Trk_b->SetMarkerColor(kRed);
+  h_Rjet_Trk_b->SetLineColor(kRed);          h_Rjet_Trk_b->SetMarkerSize(0.8);
+
+  //Legend
+  TLegend* lz_Rjet_trk = new TLegend(0.3,0.7,0.6,0.8);
   lz_Rjet_trk->SetBorderSize(0);
-  lz_Rjet_trk->AddEntry(h_Rjet_Trk, "Tracking efficiency -1%", "p"); 
+  lz_Rjet_trk->AddEntry(h_Rjet_Trk,   "All jets", "p");
+  lz_Rjet_trk->AddEntry(h_Rjet_Trk_b, "b jets", "p");
 
   TH1D* setup_trk = new TH1D("setup_trk","", h_Rjet_Trk->GetXaxis()->GetNbins(),
 		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
@@ -2203,8 +2390,8 @@ void CMSJES::plotVariants(int gen, int Nevt)
 
   //Title and axis setup
   setup_trk->SetStats(0); //Suppress stat box
-  setup_trk->SetTitle("");
-  setup_trk->SetAxisRange(0.99,1.01,"Y"); //Vertical axis limits
+  setup_trk->SetTitle("Tracking efficiency -1%");
+  setup_trk->SetAxisRange(0.994,1.004,"Y"); //Vertical axis limits
   setup_trk->GetXaxis()->SetMoreLogLabels();
   setup_trk->GetXaxis()->SetNoExponent();
   canv_trk->SetLogx();
@@ -2219,12 +2406,11 @@ void CMSJES::plotVariants(int gen, int Nevt)
   string savename_trk = "./plots/varPlots/varTrk";
   savename_trk+=".eps";
 
-
   TLine *line = new TLine(31.75,1,1258.25,1); 
-
   //Plot
   setup_trk->Draw();
   line->Draw("SAME");
+  h_Rjet_Trk_b->Draw("SAMEP");
   h_Rjet_Trk->Draw("SAMEP");
   lz_Rjet_trk->Draw("SAMEP");
 
@@ -2233,28 +2419,34 @@ void CMSJES::plotVariants(int gen, int Nevt)
 
 //////////////////// Photon scale variation /////////////////////////
   // Tracking efficieny
-  TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varPhoton.root");
-  TProfile *pr_Rjet_Photon=0;
+  TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhoton.root");
+  TProfile *pr_Rjet_Photon=0; TProfile *pr_Rjet_Photon_b=0;
 
   //Create Histograms
   fzj_Photon->GetObject("prRjet",pr_Rjet_Photon);
+  fzj_Photon->GetObject("prRjetb",pr_Rjet_Photon_b);
 
   TH1D* h_Rjet_Photon = pr_Rjet_Photon->ProjectionX();
+  TH1D* h_Rjet_Photon_b = pr_Rjet_Photon_b->ProjectionX();
 
   h_Rjet_Photon->Divide(h_Rjet);
+  h_Rjet_Photon_b->Divide(h_Rjet_b);
 
   //Canvas
-  TCanvas* canv_Photon = new TCanvas("canv_Photon","",600,600);
+  TCanvas* canv_Photon = new TCanvas("canv_Photon","",500,400);
   canv_Photon->SetLeftMargin(0.15); canv_Photon->SetBottomMargin(0.13);
 
-  h_Rjet_Photon->SetMarkerStyle(kFullSquare); h_Rjet_Photon->SetMarkerColor(kRed);
-  h_Rjet_Photon->SetLineColor(kRed);  
+  h_Rjet_Photon->SetMarkerStyle(kOpenCircle); h_Rjet_Photon->SetMarkerColor(kBlack);
+  h_Rjet_Photon->SetLineColor(kBlack);          h_Rjet_Photon->SetMarkerSize(0.8);
+
+  h_Rjet_Photon_b->SetMarkerStyle(kFullSquare); h_Rjet_Photon_b->SetMarkerColor(kRed);
+  h_Rjet_Photon_b->SetLineColor(kRed);          h_Rjet_Photon_b->SetMarkerSize(0.8); 
 
   //Legend
-  TLegend* lz_Rjet_Photon = new TLegend(0.2,0.7,0.7,0.89);
-  lz_Rjet_Photon->SetNColumns(2);
+  TLegend* lz_Rjet_Photon = new TLegend(0.3,0.7,0.6,0.8);
   lz_Rjet_Photon->SetBorderSize(0);
-  lz_Rjet_Photon->AddEntry(h_Rjet_Photon, "Photon response -1%", "p"); 
+  lz_Rjet_Photon->AddEntry(h_Rjet_Photon, "All jets", "p");
+  lz_Rjet_Photon->AddEntry(h_Rjet_Photon_b, "b jets", "p"); 
 
   TH1D* setup_Photon = new TH1D("setup_Photon","", h_Rjet_Photon->GetXaxis()->GetNbins(),
 		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
@@ -2262,15 +2454,15 @@ void CMSJES::plotVariants(int gen, int Nevt)
 
   //Title and axis setup
   setup_Photon->SetStats(0); //Suppress stat box
-  setup_Photon->SetTitle("");
-  setup_Photon->SetAxisRange(0.99,1.01,"Y"); //Vertical axis limits
+  setup_Photon->SetTitle("Photon response -1%");
+  setup_Photon->SetAxisRange(0.993,1.003,"Y"); //Vertical axis limits
   setup_Photon->GetXaxis()->SetMoreLogLabels();
   setup_Photon->GetXaxis()->SetNoExponent();
   canv_Photon->SetLogx();
   setup_Photon->GetYaxis()->SetTitleOffset(1.8);
   setup_Photon->GetXaxis()->SetTitleOffset(1.2);
   setup_Photon->GetYaxis()->SetTitle("Response ratio");
-  setup_Photon->GetXaxis()->SetTitle("p_{T}^{gen} [GeV]");
+  setup_Photon->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
 
   gPad->SetTickx(); gPad->SetTicky();
 
@@ -2284,13 +2476,15 @@ void CMSJES::plotVariants(int gen, int Nevt)
   //Plot
   setup_Photon->Draw();
   line_photon->Draw("SAME");
+  h_Rjet_Photon_b->Draw("SAMEP");
   h_Rjet_Photon->Draw("SAMEP");
   lz_Rjet_Photon->Draw("SAMEP");
 
   //Save plot
   canv_Photon->Print(savename_Photon.c_str());
 
-
+  foutvar->Write();
+  foutvar->Close();
 
 }
 
