@@ -137,8 +137,9 @@ void CMSJES::Loop()
   double probe_e;
 
   //Partial derivative values for a hadron
-  unsigned int i_tag = 0;   //Stepper to find tag object index
+  unsigned int i_tag   = 0; //Stepper to find tag object index
   unsigned int i_probe = 0; //       -||-     probe jet index
+  unsigned int i_jet2  = 1; //       -||-     2nd jet index
   double eta_muon  = 2.3;   //Max |eta| for a single muon in Z+jet      
   double eta_tag_z = 2.5;   //Max |eta| for mumu tag object
   double eta_probe = 1.3;   //Max |eta| for probe jets
@@ -368,12 +369,14 @@ void CMSJES::Loop()
     //Skip events that didn't pass cuts earlier. Useful in e.g. repeating Loop
     if (GetuseEarlierCuts() && passedCuts.size()>jentry && !passedCuts[jentry]) continue;
  
+
+
     Long64_t ientry = LoadTree(jentry);	//Load new event
     if (ientry < 0) break;		//When no more events
     nb = fChain->GetEntry(jentry); nbytes += nb;
 
     //Reinit
-    i_tag = 0; i_probe = 0;
+    i_tag = 0; i_probe = 0; i_jet2 = 1;
     p4.SetPtEtaPhiE(0,0,0,0);      p4_calo.SetPtEtaPhiE(0,0,0,0); 
     MET_r.SetPtEtaPhiE(0,0,0,0);
 
@@ -397,10 +400,13 @@ void CMSJES::Loop()
 
     //**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************//
     int muPDG=13; int muTAG=3; //mu PDGID and parton tag
+    if (ReadName.find("H7")!=string::npos) muTAG=2; 
+
     int i_tag1 = -137;	       // These values won't change if...
     int i_tag2 = -731;	       // ...muons not found.
 
     for (int a=0; a!= prtn_tag->size(); ++a) {
+
       // Find muons with tag == 3 and store those in i_tag1 and i_tag2
       if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
         if      (i_tag1 == -137) i_tag1 = a;
@@ -408,7 +414,9 @@ void CMSJES::Loop()
         else {cout << "More than two muons with tag 3 in the event." << endl; continue;}
       }
     }
+
     if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
+
 
     //***** 1st muon *****
     p4.SetPtEtaPhiE((*prtn_pt )[i_tag1], (*prtn_eta)[i_tag1],
@@ -416,8 +424,6 @@ void CMSJES::Loop()
 
     tag = p4;//gen lvl
 
-
-    //p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.P()));
     p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
@@ -430,8 +436,6 @@ void CMSJES::Loop()
 
     tag += p4;//gen lvl
 
-
-    //p4 *= gRandom->Gaus(1,piTrkReso->Eval(p4.P()));
     p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
     if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue; mumuCut++;
@@ -444,14 +448,26 @@ void CMSJES::Loop()
     //Tag eta and pT cuts:
     if (fabs(tag_r.Eta()) > eta_tag_z || tag_r.Pt() < pTmin_tag_z) continue; tagCut++;
 
-    /************************** SELECT THE PROBE JET **************************/
-    //At the moment always the leading pT jet
+    /********************* SELECT THE PROBE JET AND 2nd JET ********************/
+    //Probe
     i_probe = 0;
+    //2nd jet
+    i_jet2 = 1;
 
+    // If muon is found from the jet it is not acceptable
+    // Confirm implementation and optimize
+    for (int i=0; i < int(jet_e->size()); ++i) { // Loop over jets
+      for (int j=0; j != prtcl_pt->size(); ++j) { // Loop over all particles
+        if ((*prtcl_jet)[j] == i) {
+          if ((*prtn_pt )[i_tag1]==(*prtcl_pt)[j] || (*prtn_pt )[i_tag2]==(*prtcl_pt)[j]) {
+            if (i_probe == i) {i_probe++; i_jet2++;}
+            if (i_jet2 == i)   i_jet2++;
+          }
+        }
+      }
+    }
 
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
-    
-    
 
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
@@ -472,7 +488,7 @@ void CMSJES::Loop()
           if (PDG == 11) {
             probe_e += resp*p4.E(); //Probe electron energy for the fraction calculation
           }
-        } else if ((*prtcl_jet)[i]==1) {
+        } else if ((*prtcl_jet)[i] == i_jet2) { //2nd jet
           jet2_r  += resp*p4;
         }
       } 
@@ -858,7 +874,7 @@ void CMSJES::Loop()
           probe_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
         }
         //Second leading jet reconstruction for Alpha cut
-        if (p4.DeltaR(jets_g[1]) < RCone) {
+        if (p4.DeltaR(jets_g[i_jet2]) < RCone) {
           jet2_r += p4;
         }
       }
@@ -872,7 +888,6 @@ void CMSJES::Loop()
     //reco probe cuts
     if (fabs(probe_r.Eta()) > eta_probe || probe_r.Pt() < pTmin_probe) continue; probeCut ++;
 
-    
     //MET cuts
     if (MET_r.Pt() > 0.9*tag_r.Pt())   continue; METtag ++;
     //if (MET_r.Pt() > 0.7*probe_r.Pt()) continue; METprobe ++;
@@ -1435,6 +1450,7 @@ void CMSJES::InputNameConstructor() {
   //#events
   if      (ReadName.find("10000000") !=string::npos) num = "10000000";
   else if (ReadName.find("5000000")  !=string::npos) num = "5000000";
+  else if (ReadName.find("1000000")  !=string::npos) num = "1000000";
   else if (ReadName.find("600000")   !=string::npos) num = "600000";
   else if (ReadName.find("300000")   !=string::npos) num = "300000";
   else if (ReadName.find("100000")   !=string::npos) num = "100000";
@@ -2509,15 +2525,16 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 
   //Set #events
   string num;
-  cout << "#Events (0) 3k (1) 10k (2) 30k (3) 100k (4) 600k (5) 5M (6) 10M" << endl;
+  cout << "#Events (0) 3k (1) 10k (2) 30k (3) 100k (4) 600k (5) 1M (6) 5M (7) 10M" << endl;
   while (Nevt<0 || Nevt>5) cin >> Nevt;
   if      (Nevt==0) num = "3000";
   else if (Nevt==1) num = "10000";
   else if (Nevt==2) num = "30000";
   else if (Nevt==3) num = "100000";
   else if (Nevt==4) num = "600000";
-  else if (Nevt==5) num = "5000000";
-  else if (Nevt==6) num = "10000000";
+  else if (Nevt==5) num = "1000000";
+  else if (Nevt==6) num = "5000000";
+  else if (Nevt==7) num = "10000000";
 
   //Construct all-flavor filenames
   zjstr = respStr + "Zjet_" + num + root;

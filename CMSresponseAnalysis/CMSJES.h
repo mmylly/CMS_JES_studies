@@ -326,10 +326,14 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       //Add here all the files one should be able to study
       vector<string> files;	//To contain studiable filenames
       files.push_back("P8_Zjet_3000"  );
+      files.push_back("H7_Zjet_3000"  );
       files.push_back("P8_Zjet_10000" );
       files.push_back("P8_Zjet_30000" );
+      files.push_back("H7_Zjet_30000" );
       files.push_back("P8_Zjet_100000");
       files.push_back("P8_Zjet_600000");
+      files.push_back("P8_Zjet_1000000");
+      files.push_back("H7_Zjet_1000000");
       files.push_back("P8_Zjet_5000000");
       files.push_back("P8_Zjet_10000000");
       //User interface
@@ -348,8 +352,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       }
       ReadName = files[input];			//Pick the filename to study
     }
-    OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
-    //OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
+    //OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
+    OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
     printf("Opening file: %s\n", OpenName.c_str());
     TFile *f = (TFile*)gROOT->GetListOfFiles()
 			    ->FindObject(OpenName.c_str());

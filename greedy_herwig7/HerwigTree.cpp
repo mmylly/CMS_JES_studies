@@ -489,6 +489,7 @@ bool HerwigTree::JetLoop()
             } else {
                 #ifdef STORE_PRTCLS
                 ParticleAdd(mFinals[prt],jet);
+                ParticleAdd(mFinals[prt],-1);
                 #endif
                 continue;
             }
@@ -521,9 +522,9 @@ bool HerwigTree::JetLoop()
      *   separately from the particles associated with jets. */
     if (cfg::StoreNIJ) {
         vector<int> jetIndices = clustSeq.particle_jet_indices(mSortedJets);
-        for (int a=0; a!=jetIndices.size(); ++a) {
+        for (unsigned int a=0; a!=jetIndices.size(); ++a) {
             int prt = mJetInputs[a].user_index();
-            if (prt > 0 and jetIndices[a] == -1) ParticleAdd(prt);
+            if (prt > 0 and jetIndices[a] == -1) ParticleAdd(mFinals[prt],-1);
         }
     }
     #endif

@@ -14,7 +14,7 @@ seeds=[840744607,431166825,11489507,859341684,719632152,384411333,90405435,29759
 tune = 0
 
 # Kt min (i.e. pthat) should be chosen by the user, unless it's a ttbar event
-minKT=20.0
+minKT=10.0 #Earlier 20.0
 # In ttbar events, the user should set the mass of top
 mTop=175.0
 
@@ -162,7 +162,8 @@ if Weighting and mode<4:
     f.write('mkdir /Herwig/Weights\n')
     f.write('cd /Herwig/Weights\n')
     f.write('create ThePEG::ReweightMinPT reweightMinPT ReweightMinPT.so\n')
-    f.write('set reweightMinPT:Power 4.5\n')
+    #f.write('set reweightMinPT:Power 4.5\n')
+    f.write('set reweightMinPT:Power 3.0\n') # Earlier 4.5 
     f.write('set reweightMinPT:Scale 10*GeV\n')
     f.write('set reweightMinPT:OnlyColoured true\n\n')
     f.write('cd /Herwig/MatrixElements/\n')

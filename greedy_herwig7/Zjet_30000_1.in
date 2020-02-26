@@ -1,0 +1,65 @@
+################################################################
+# This file is based on the CUETHS1 Herwig++ tune from CMSSW,
+# which is based on the generic Herwig++ tune EE-5C for CTEQ6l1.
+# See CMSSW/Configuration/Generator/python Hpp configurations.
+################################################################
+
+################################
+# Setting up the event generator
+################################
+cd /Herwig/Generators
+set EventGenerator:RandomNumberGenerator:Seed 431166825
+set EventGenerator:NumberOfEvents 30000
+set EventGenerator:DebugLevel 3
+set EventGenerator:UseStdout 0
+set EventGenerator:PrintEvent 10
+set EventGenerator:MaxErrors 10000
+set EventGenerator:EventHandler:StatLevel Full
+
+# Make some particles stable, according to their nominal lifetimes
+set /Herwig/Decays/DecayHandler:MaxLifeTime 10*mm
+
+########################
+# LHC running parameters
+########################
+
+# LHAPDF settings
+cd /Herwig/Partons
+# CM energy
+read snippets/PPCollider.in
+set /Herwig/Generators/EventGenerator:EventHandler:LuminosityFunction:Energy 13000.0*GeV
+
+# Intrinsic pT tune extrapolated to LHC energy
+set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV
+
+# ptHat min
+set /Herwig/Cuts/JetKtCut:MinKT 10.0*GeV
+
+##############################################
+# Matrix Elements for hadron-hadron collisions
+##############################################
+
+# Set matrix element settings
+cd /Herwig/MatrixElements/
+set MEZJet:ZDecay Muon
+set MEZJet:GammaZ All
+set /Herwig/Cuts/Cuts:MHatMin 75.0*GeV
+insert SubProcess:MatrixElements[0] MEZJet
+# Event weighting scheme
+mkdir /Herwig/Weights
+cd /Herwig/Weights
+create ThePEG::ReweightMinPT reweightMinPT ReweightMinPT.so
+set reweightMinPT:Power 3.0
+set reweightMinPT:Scale 10*GeV
+set reweightMinPT:OnlyColoured true
+
+cd /Herwig/MatrixElements/
+insert SubProcess:Preweights[0] /Herwig/Weights/reweightMinPT
+
+# Save final particles and hardest subprocess particles
+cd /Herwig/Analysis
+create Herwig::HerwigTree jetAnalysis libGHerwigTree.so
+insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 jetAnalysis
+
+# For now saverun does not work with LHAPDF
+run Zjet_30000_1 /Herwig/Generators/EventGenerator
