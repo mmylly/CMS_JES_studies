@@ -3,8 +3,6 @@ void plotVariants()
 
   double markersize = 0.8;
 
-
-
   //Variants file
   TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
 
@@ -72,13 +70,9 @@ void plotVariants()
 
 // C +-3%
 
-
-
   TCanvas* canv_C_all = new TCanvas("canv_C_all","",500,400);
   canv_C_all->SetLeftMargin(0.15);
   canv_C_all->SetBottomMargin(0.13);
-
-
 
   h_Rjet_Cp3->SetMarkerStyle(2);             h_Rjet_Cm3->SetMarkerStyle(5);
   h_Rjet_Cp3->SetMarkerColor(kBlack);        h_Rjet_Cm3->SetMarkerColor(kBlack);
@@ -110,8 +104,6 @@ void plotVariants()
   h_Rjetg_Cp3->SetLineColor(kBlue+1);       h_Rjetg_Cm3->SetLineColor(kBlue+1);
   h_Rjetg_Cp3->SetMarkerSize(markersize);   h_Rjetg_Cm3->SetMarkerSize(markersize);
 
-
-
   //Legend
   TLegend* lz_C = new TLegend(0.2,0.65,0.55,0.87);
   lz_C->SetBorderSize(0);
@@ -134,15 +126,19 @@ void plotVariants()
 
   //Title and axis setup
   setup->SetStats(0); //Suppress stat box
-  setup->SetTitle("Hadron calorimeter deposit +-3%");
   setup->SetAxisRange(0.978,1.028,"Y"); //Vertical axis limits
   setup->GetXaxis()->SetMoreLogLabels();
   setup->GetXaxis()->SetNoExponent();
   canv_C_all->SetLogx();
-  setup->GetYaxis()->SetTitleOffset(1.6);
-  setup->GetXaxis()->SetTitleOffset(1.2);
-  setup->GetYaxis()->SetTitle("Response ratio");
-  setup->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup->GetYaxis()->SetTitleOffset(1.1);
+  setup->GetXaxis()->SetTitleOffset(1.1);
+  setup->GetYaxis()->SetTitle("F^{var}");
+  setup->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup->GetYaxis()->SetTitleSize(0.05);
+  setup->GetXaxis()->SetTitleSize(0.05);
+
+
+
   gPad->SetTickx(); gPad->SetTicky();
 
   //Plot
@@ -160,14 +156,8 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
   lz_C->Draw("SAMEP");
-
-
-
   //Save plot
-  canv_C_all->Print("./plots/varPlots/varC_all.eps");
-
-
-
+  canv_C_all->Print("./plots/varPlots/varC_all.pdf");
   delete canv_C_all;
 
   // b jets
@@ -184,7 +174,6 @@ void plotVariants()
 			 h_Rjet_Cp3->GetXaxis()->GetXmin(), h_Rjet_Cp3->GetXaxis()->GetXmax());
   //Title and axis setup
   setupb->SetStats(0); //Suppress stat box
-  //setupb->SetTitle("Hadron calorimeter deposit +-3%");
   setupb->SetAxisRange(0.98,1.02,"Y"); //Vertical axis limits
   setupb->GetXaxis()->SetMoreLogLabels();
   setupb->GetXaxis()->SetNoExponent();
@@ -192,11 +181,9 @@ void plotVariants()
   setupb->GetYaxis()->SetTitleOffset(1.1);
   setupb->GetXaxis()->SetTitleOffset(1.1);
   setupb->GetYaxis()->SetTitle("F^{var}");
-  setupb->GetYaxis()->SetTitleSize(0.05);
   setupb->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setupb->GetYaxis()->SetTitleSize(0.05);
   setupb->GetXaxis()->SetTitleSize(0.05);
-
-
 
   gPad->SetTickx(); gPad->SetTicky();
   //Plot
@@ -207,7 +194,7 @@ void plotVariants()
   h_Rjet_Cp3->Draw("SAMEP");
   lz_Cb->Draw("SAMEP");
   //Save plot
-  canv_C_b->Print("./plots/varPlots/varC_b.eps"); delete canv_C_b;
+  canv_C_b->Print("./plots/varPlots/varC_b.pdf"); delete canv_C_b;
 
   // c jets
   TCanvas* canv_C_c = new TCanvas("canv_C_c","",500,400);
@@ -222,15 +209,17 @@ void plotVariants()
 			 h_Rjet_Cp3->GetXaxis()->GetXmin(), h_Rjet_Cp3->GetXaxis()->GetXmax());
   //Title and axis setup
   setupc->SetStats(0); //Suppress stat box
-  setupc->SetTitle("Hadron calorimeter deposit +-3%");
   setupc->SetAxisRange(0.978,1.022,"Y"); //Vertical axis limits
   setupc->GetXaxis()->SetMoreLogLabels();
   setupc->GetXaxis()->SetNoExponent();
   canv_C_c->SetLogx();
-  setupc->GetYaxis()->SetTitleOffset(1.6);
-  setupc->GetXaxis()->SetTitleOffset(1.2);
-  setupc->GetYaxis()->SetTitle("Response ratio");
-  setupc->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setupc->GetYaxis()->SetTitleOffset(1.1);
+  setupc->GetXaxis()->SetTitleOffset(1.1);
+  setupc->GetYaxis()->SetTitle("F^{var}");
+  setupc->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setupc->GetYaxis()->SetTitleSize(0.05);
+  setupc->GetXaxis()->SetTitleSize(0.05);
+
   gPad->SetTickx(); gPad->SetTicky();
   setupc->Draw();
   h_Rjetc_Cm3->Draw("SAMEP");
@@ -238,7 +227,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
   lz_Cc->Draw("SAMEP");
-  canv_C_c->Print("./plots/varPlots/varC_c.eps"); delete canv_C_c;
+  canv_C_c->Print("./plots/varPlots/varC_c.pdf"); delete canv_C_c;
 
   // s jets
   TCanvas* canv_C_s = new TCanvas("canv_C_s","",500,400);
@@ -253,15 +242,18 @@ void plotVariants()
 			 h_Rjet_Cp3->GetXaxis()->GetXmin(), h_Rjet_Cp3->GetXaxis()->GetXmax());
   //Title and axis setup
   setups->SetStats(0); //Suppress stat box
-  setups->SetTitle("Hadron calorimeter deposit +-3%");
   setups->SetAxisRange(0.978,1.022,"Y"); //Vertical axis limits
   setups->GetXaxis()->SetMoreLogLabels();
   setups->GetXaxis()->SetNoExponent();
   canv_C_s->SetLogx();
-  setups->GetYaxis()->SetTitleOffset(1.6);
-  setups->GetXaxis()->SetTitleOffset(1.2);
-  setups->GetYaxis()->SetTitle("Response ratio");
-  setups->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setups->GetYaxis()->SetTitleOffset(1.1);
+  setups->GetXaxis()->SetTitleOffset(1.1);
+  setups->GetYaxis()->SetTitle("F^{var}");
+  setups->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setups->GetYaxis()->SetTitleSize(0.05);
+  setups->GetXaxis()->SetTitleSize(0.05);
+
+
   gPad->SetTickx(); gPad->SetTicky();
   setups->Draw();
   lz_Cs->Draw("SAMEP");
@@ -270,7 +262,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
 
-  canv_C_s->Print("./plots/varPlots/varC_s.eps"); delete canv_C_s;
+  canv_C_s->Print("./plots/varPlots/varC_s.pdf"); delete canv_C_s;
 
   // ud jets
   TCanvas* canv_C_ud = new TCanvas("canv_C_ud","",500,400);
@@ -285,15 +277,16 @@ void plotVariants()
 			 h_Rjet_Cp3->GetXaxis()->GetXmin(), h_Rjet_Cp3->GetXaxis()->GetXmax());
   //Title and axis setup
   setupud->SetStats(0); //Suppress stat box
-  setupud->SetTitle("Hadron calorimeter deposit +-3%");
   setupud->SetAxisRange(0.978,1.022,"Y"); //Vertical axis limits
   setupud->GetXaxis()->SetMoreLogLabels();
   setupud->GetXaxis()->SetNoExponent();
   canv_C_ud->SetLogx();
-  setupud->GetYaxis()->SetTitleOffset(1.6);
-  setupud->GetXaxis()->SetTitleOffset(1.2);
-  setupud->GetYaxis()->SetTitle("Response ratio");
-  setupud->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setupud->GetYaxis()->SetTitleOffset(1.1);
+  setupud->GetXaxis()->SetTitleOffset(1.1);
+  setupud->GetYaxis()->SetTitle("F^{var}");
+  setupud->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setupud->GetYaxis()->SetTitleSize(0.05);
+  setupud->GetXaxis()->SetTitleSize(0.05);
   gPad->SetTickx(); gPad->SetTicky();
   setupud->Draw();
   lz_Cud->Draw("SAMEP");
@@ -302,7 +295,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
 
-  canv_C_ud->Print("./plots/varPlots/varC_ud.eps"); delete canv_C_ud;
+  canv_C_ud->Print("./plots/varPlots/varC_ud.pdf"); delete canv_C_ud;
 
   // g jets
   TCanvas* canv_C_g = new TCanvas("canv_C_g","",500,400);
@@ -317,15 +310,16 @@ void plotVariants()
 			 h_Rjet_Cp3->GetXaxis()->GetXmin(), h_Rjet_Cp3->GetXaxis()->GetXmax());
   //Title and axis setup
   setupg->SetStats(0); //Suppress stat box
-  setupg->SetTitle("Hadron calorimeter deposit +-3%");
   setupg->SetAxisRange(0.978,1.022,"Y"); //Vertical axis limits
   setupg->GetXaxis()->SetMoreLogLabels();
   setupg->GetXaxis()->SetNoExponent();
   canv_C_g->SetLogx();
-  setupg->GetYaxis()->SetTitleOffset(1.6);
-  setupg->GetXaxis()->SetTitleOffset(1.2);
-  setupg->GetYaxis()->SetTitle("Response ratio");
-  setupg->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setupg->GetYaxis()->SetTitleOffset(1.1);
+  setupg->GetXaxis()->SetTitleOffset(1.1);
+  setupg->GetYaxis()->SetTitle("F^{var}");
+  setupg->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setupg->GetYaxis()->SetTitleSize(0.05);
+  setupg->GetXaxis()->SetTitleSize(0.05);
   gPad->SetTickx(); gPad->SetTicky();
   setupg->Draw();
   lz_Cg->Draw("SAMEP");
@@ -334,7 +328,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
 
-  canv_C_g->Print("./plots/varPlots/varC_g.eps"); delete canv_C_g;
+  canv_C_g->Print("./plots/varPlots/varC_g.pdf"); delete canv_C_g;
 
 
 //////////////////// Tracking efficiency /////////////////////////
@@ -346,7 +340,7 @@ void plotVariants()
   h_Rjetb_Trk->SetMarkerStyle(kOpenCircle);       h_Rjetb_Trk->SetMarkerColor(kRed+1);
   h_Rjetb_Trk->SetLineColor(kRed+1);              h_Rjetb_Trk->SetMarkerSize(0.8);
   h_Rjetc_Trk->SetMarkerStyle(kOpenTriangleDown); h_Rjetc_Trk->SetMarkerColor(kGreen+3);
-  h_Rjetc_Trk->SetLineColor(kGreen+3);             h_Rjetc_Trk->SetMarkerSize(0.8);
+  h_Rjetc_Trk->SetLineColor(kGreen+3);            h_Rjetc_Trk->SetMarkerSize(0.8);
   h_Rjets_Trk->SetMarkerStyle(kOpenTriangleUp);   
   h_Rjets_Trk->SetMarkerColor(kOrange+7);
   h_Rjets_Trk->SetLineColor(kOrange+7);           h_Rjets_Trk->SetMarkerSize(0.8);
@@ -370,15 +364,16 @@ void plotVariants()
 		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
                                              h_Rjet_Trk->GetXaxis()->GetXmax());
   setup_trk->SetStats(0); //Suppress stat box
-  setup_trk->SetTitle("Tracking efficiency -1%");
   setup_trk->SetAxisRange(0.9938,1.0035,"Y"); //Vertical axis limits
   setup_trk->GetXaxis()->SetMoreLogLabels();
   setup_trk->GetXaxis()->SetNoExponent();
   canv_trk->SetLogx();
-  setup_trk->GetYaxis()->SetTitleOffset(1.5);
-  setup_trk->GetXaxis()->SetTitleOffset(1.2);
-  setup_trk->GetYaxis()->SetTitle("Response ratio");
-  setup_trk->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_trk->GetYaxis()->SetTitleOffset(1.1); 
+  setup_trk->GetXaxis()->SetTitleOffset(1.1);
+  setup_trk->GetYaxis()->SetTitle("F^{var}");
+  setup_trk->GetYaxis()->SetTitleSize(0.05);
+  setup_trk->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_trk->GetXaxis()->SetTitleSize(0.05);
 
   gPad->SetTickx(); gPad->SetTicky();
 
@@ -395,7 +390,7 @@ void plotVariants()
   lz_Rjet_trk->Draw("SAMEP");
 
   //Save plot
-  canv_trk->Print("./plots/varPlots/varTrk_all.eps"); delete canv_trk;
+  canv_trk->Print("./plots/varPlots/varTrk_all.pdf"); delete canv_trk;
 
   //b jet
   TCanvas* canv_trkb = new TCanvas("canv_trkb","",500,400); canv_trk->SetLogx();
@@ -407,7 +402,6 @@ void plotVariants()
 		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
                                              h_Rjet_Trk->GetXaxis()->GetXmax());
   setup_trkb->SetStats(0);
-  //setup_trkb->SetTitle("Tracking efficiency -1%");
   setup_trkb->SetAxisRange(0.9948,1.0033,"Y");
   setup_trkb->GetXaxis()->SetMoreLogLabels();  setup_trkb->GetXaxis()->SetNoExponent();
   setup_trkb->GetYaxis()->SetTitleOffset(1.1); 
@@ -422,7 +416,7 @@ void plotVariants()
   h_Rjetb_Trk->Draw("SAMEP");
   h_Rjet_Trk->Draw("SAMEP");
   lz_trkb->Draw("SAMEP");
-  canv_trkb->Print("./plots/varPlots/varTrk_b.eps"); delete canv_trkb;
+  canv_trkb->Print("./plots/varPlots/varTrk_b.pdf"); delete canv_trkb;
 
   //c jet
   TCanvas* canv_trkc = new TCanvas("canv_trkc","",500,400); canv_trkc->SetLogx();
@@ -434,19 +428,21 @@ void plotVariants()
 		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
                                              h_Rjet_Trk->GetXaxis()->GetXmax());
   setup_trkc->SetStats(0);
-  setup_trkc->SetTitle("Tracking efficiency -1%");
   setup_trkc->SetAxisRange(0.9938,1.0035,"Y");
   setup_trkc->GetXaxis()->SetMoreLogLabels();  setup_trkc->GetXaxis()->SetNoExponent();
-  setup_trkc->GetYaxis()->SetTitleOffset(1.5); setup_trkc->GetXaxis()->SetTitleOffset(1.2);
-  setup_trkc->GetYaxis()->SetTitle("Response ratio");
-  setup_trkc->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_trkc->GetYaxis()->SetTitleOffset(1.1); 
+  setup_trkc->GetXaxis()->SetTitleOffset(1.1);
+  setup_trkc->GetYaxis()->SetTitle("F^{var}");
+  setup_trkc->GetYaxis()->SetTitleSize(0.05);
+  setup_trkc->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_trkc->GetXaxis()->SetTitleSize(0.05);
 
   setup_trkc->Draw();
   line->Draw("SAME");
   h_Rjetc_Trk->Draw("SAMEP");
   h_Rjet_Trk->Draw("SAMEP");
   lz_trkc->Draw("SAMEP");
-  canv_trkc->Print("./plots/varPlots/varTrk_c.eps"); delete canv_trkc;
+  canv_trkc->Print("./plots/varPlots/varTrk_c.pdf"); delete canv_trkc;
 
   //s jet
   TCanvas* canv_trks = new TCanvas("canv_trks","",500,400); canv_trks->SetLogx();
@@ -458,19 +454,21 @@ void plotVariants()
 		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
                                              h_Rjet_Trk->GetXaxis()->GetXmax());
   setup_trks->SetStats(0);
-  setup_trks->SetTitle("Tracking efficiency -1%");
   setup_trks->SetAxisRange(0.9938,1.0035,"Y");
   setup_trks->GetXaxis()->SetMoreLogLabels();  setup_trks->GetXaxis()->SetNoExponent();
-  setup_trks->GetYaxis()->SetTitleOffset(1.5); setup_trks->GetXaxis()->SetTitleOffset(1.2);
-  setup_trks->GetYaxis()->SetTitle("Response ratio");
-  setup_trks->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_trks->GetYaxis()->SetTitleOffset(1.1); 
+  setup_trks->GetXaxis()->SetTitleOffset(1.1);
+  setup_trks->GetYaxis()->SetTitle("F^{var}");
+  setup_trks->GetYaxis()->SetTitleSize(0.05);
+  setup_trks->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_trks->GetXaxis()->SetTitleSize(0.05);
 
   setup_trks->Draw();
   line->Draw("SAME");
   h_Rjets_Trk->Draw("SAMEP");
   h_Rjet_Trk->Draw("SAMEP");
   lz_trks->Draw("SAMEP");
-  canv_trks->Print("./plots/varPlots/varTrk_s.eps"); delete canv_trks;
+  canv_trks->Print("./plots/varPlots/varTrk_s.pdf"); delete canv_trks;
 
   //ud jet
   TCanvas* canv_trkud = new TCanvas("canv_trkud","",500,400); canv_trkud->SetLogx();
@@ -482,19 +480,21 @@ void plotVariants()
 		                                 h_Rjet_Trk->GetXaxis()->GetXmin(), 
                                                  h_Rjet_Trk->GetXaxis()->GetXmax());
   setup_trkud->SetStats(0);
-  setup_trkud->SetTitle("Tracking efficiency -1%");
   setup_trkud->SetAxisRange(0.9938,1.0035,"Y");
   setup_trkud->GetXaxis()->SetMoreLogLabels();  setup_trkud->GetXaxis()->SetNoExponent();
-  setup_trkud->GetYaxis()->SetTitleOffset(1.5); setup_trkud->GetXaxis()->SetTitleOffset(1.2);
-  setup_trkud->GetYaxis()->SetTitle("Response ratio");
-  setup_trkud->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_trkud->GetYaxis()->SetTitleOffset(1.1); 
+  setup_trkud->GetXaxis()->SetTitleOffset(1.1);
+  setup_trkud->GetYaxis()->SetTitle("F^{var}");
+  setup_trkud->GetYaxis()->SetTitleSize(0.05);
+  setup_trkud->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_trkud->GetXaxis()->SetTitleSize(0.05);
 
   setup_trkud->Draw();
   line->Draw("SAME");
   h_Rjetud_Trk->Draw("SAMEP");
   h_Rjet_Trk->Draw("SAMEP");
   lz_trkud->Draw("SAMEP");
-  canv_trkud->Print("./plots/varPlots/varTrk_ud.eps"); delete canv_trkud;
+  canv_trkud->Print("./plots/varPlots/varTrk_ud.pdf"); delete canv_trkud;
 
   //g jet
   TCanvas* canv_trkg = new TCanvas("canv_trkg","",500,400); canv_trkg->SetLogx();
@@ -506,19 +506,21 @@ void plotVariants()
 		                               h_Rjet_Trk->GetXaxis()->GetXmin(), 
                                                h_Rjet_Trk->GetXaxis()->GetXmax());
   setup_trkg->SetStats(0);
-  setup_trkg->SetTitle("Tracking efficiency -1%");
   setup_trkg->SetAxisRange(0.9938,1.0035,"Y");
   setup_trkg->GetXaxis()->SetMoreLogLabels();  setup_trkg->GetXaxis()->SetNoExponent();
-  setup_trkg->GetYaxis()->SetTitleOffset(1.5); setup_trkg->GetXaxis()->SetTitleOffset(1.2);
-  setup_trkg->GetYaxis()->SetTitle("Response ratio");
-  setup_trkg->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_trkg->GetYaxis()->SetTitleOffset(1.1); 
+  setup_trkg->GetXaxis()->SetTitleOffset(1.1);
+  setup_trkg->GetYaxis()->SetTitle("F^{var}");
+  setup_trkg->GetYaxis()->SetTitleSize(0.05);
+  setup_trkg->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_trkg->GetXaxis()->SetTitleSize(0.05);
 
   setup_trkg->Draw();
   line->Draw("SAME");
   h_Rjetg_Trk->Draw("SAMEP");
   h_Rjet_Trk->Draw("SAMEP");
   lz_trkg->Draw("SAMEP");
-  canv_trkg->Print("./plots/varPlots/varTrk_g.eps"); delete canv_trkg;
+  canv_trkg->Print("./plots/varPlots/varTrk_g.pdf"); delete canv_trkg;
 
 
 
@@ -554,15 +556,16 @@ void plotVariants()
 		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
                                              h_Rjet_Photon->GetXaxis()->GetXmax());
   setup_Photon->SetStats(0);
-  setup_Photon->SetTitle("Photon response -1%");
   setup_Photon->SetAxisRange(0.993,1.002,"Y");
   setup_Photon->GetXaxis()->SetMoreLogLabels();
   setup_Photon->GetXaxis()->SetNoExponent();
   canv_Photon->SetLogx();
-  setup_Photon->GetYaxis()->SetTitleOffset(1.6);
-  setup_Photon->GetXaxis()->SetTitleOffset(1.2);
-  setup_Photon->GetYaxis()->SetTitle("Response ratio");
-  setup_Photon->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_Photon->GetYaxis()->SetTitleOffset(1.1); 
+  setup_Photon->GetXaxis()->SetTitleOffset(1.1);
+  setup_Photon->GetYaxis()->SetTitle("F^{var}");
+  setup_Photon->GetYaxis()->SetTitleSize(0.05);
+  setup_Photon->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_Photon->GetXaxis()->SetTitleSize(0.05);
 
   gPad->SetTickx(); gPad->SetTicky();
 
@@ -579,7 +582,7 @@ void plotVariants()
   lz_Rjet_Photon->Draw("SAMEP");
 
   //Save plot
-  canv_Photon->Print("./plots/varPlots/varPhoton_all.eps"); delete canv_Photon;
+  canv_Photon->Print("./plots/varPlots/varPhoton_all.pdf"); delete canv_Photon;
 
   //b jet
   TCanvas* canv_Photonb = new TCanvas("canv_Photonb","",500,400); canv_Photon->SetLogx();
@@ -591,7 +594,6 @@ void plotVariants()
 		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
                                              h_Rjet_Photon->GetXaxis()->GetXmax());
   setup_Photonb->SetStats(0);
-  //setup_Photonb->SetTitle("Photon response -1%");
   setup_Photonb->SetAxisRange(0.9932,1.0016,"Y");
   setup_Photonb->GetXaxis()->SetMoreLogLabels();  setup_Photonb->GetXaxis()->SetNoExponent();
   setup_Photonb->GetYaxis()->SetTitleOffset(1.1); 
@@ -607,7 +609,7 @@ void plotVariants()
   h_Rjetb_Photon->Draw("SAMEP");
   h_Rjet_Photon->Draw("SAMEP");
   lz_Photonb->Draw("SAMEP");
-  canv_Photonb->Print("./plots/varPlots/varPhoton_b.eps"); delete canv_Photonb;
+  canv_Photonb->Print("./plots/varPlots/varPhoton_b.pdf"); delete canv_Photonb;
 
   //c jet
   TCanvas* canv_Photonc = new TCanvas("canv_Photonc","",500,400); canv_Photon->SetLogx();
@@ -619,19 +621,21 @@ void plotVariants()
 		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
                                              h_Rjet_Photon->GetXaxis()->GetXmax());
   setup_Photonc->SetStats(0);
-  setup_Photonc->SetTitle("Photon response -1%");
   setup_Photonc->SetAxisRange(0.993,1.002,"Y");
   setup_Photonc->GetXaxis()->SetMoreLogLabels();  setup_Photonc->GetXaxis()->SetNoExponent();
-  setup_Photonc->GetYaxis()->SetTitleOffset(1.5); setup_Photonc->GetXaxis()->SetTitleOffset(1.2);
-  setup_Photonc->GetYaxis()->SetTitle("Response ratio");
-  setup_Photonc->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_Photonc->GetYaxis()->SetTitleOffset(1.1); 
+  setup_Photonc->GetXaxis()->SetTitleOffset(1.1);
+  setup_Photonc->GetYaxis()->SetTitle("F^{var}");
+  setup_Photonc->GetYaxis()->SetTitleSize(0.05);
+  setup_Photonc->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_Photonc->GetXaxis()->SetTitleSize(0.05);
 
   setup_Photonc->Draw();
   line->Draw("SAME");
   h_Rjetc_Photon->Draw("SAMEP");
   h_Rjet_Photon->Draw("SAMEP");
   lz_Photonc->Draw("SAMEP");
-  canv_Photonc->Print("./plots/varPlots/varPhoton_c.eps"); delete canv_Photonc;
+  canv_Photonc->Print("./plots/varPlots/varPhoton_c.pdf"); delete canv_Photonc;
 
   //s jet
   TCanvas* canv_Photons = new TCanvas("canv_Photons","",500,400); canv_Photon->SetLogx();
@@ -643,19 +647,21 @@ void plotVariants()
 		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
                                              h_Rjet_Photon->GetXaxis()->GetXmax());
   setup_Photons->SetStats(0);
-  setup_Photons->SetTitle("Photon response -1%");
   setup_Photons->SetAxisRange(0.993,1.002,"Y");
   setup_Photons->GetXaxis()->SetMoreLogLabels();  setup_Photons->GetXaxis()->SetNoExponent();
-  setup_Photons->GetYaxis()->SetTitleOffset(1.5); setup_Photons->GetXaxis()->SetTitleOffset(1.2);
-  setup_Photons->GetYaxis()->SetTitle("Response ratio");
-  setup_Photons->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_Photons->GetYaxis()->SetTitleOffset(1.1); 
+  setup_Photons->GetXaxis()->SetTitleOffset(1.1);
+  setup_Photons->GetYaxis()->SetTitle("F^{var}");
+  setup_Photons->GetYaxis()->SetTitleSize(0.05);
+  setup_Photons->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_Photons->GetXaxis()->SetTitleSize(0.05);
 
   setup_Photons->Draw();
   line->Draw("SAME");
   h_Rjets_Photon->Draw("SAMEP");
   h_Rjet_Photon->Draw("SAMEP");
   lz_Photons->Draw("SAMEP");
-  canv_Photons->Print("./plots/varPlots/varPhoton_s.eps"); delete canv_Photons;
+  canv_Photons->Print("./plots/varPlots/varPhoton_s.pdf"); delete canv_Photons;
 
   //ud jet
   TCanvas* canv_Photonud = new TCanvas("canv_Photonud","",500,400); canv_Photon->SetLogx();
@@ -667,20 +673,21 @@ void plotVariants()
 		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
                                              h_Rjet_Photon->GetXaxis()->GetXmax());
   setup_Photonud->SetStats(0);
-  setup_Photonud->SetTitle("Photon response -1%");
   setup_Photonud->SetAxisRange(0.993,1.002,"Y");
   setup_Photonud->GetXaxis()->SetMoreLogLabels();  setup_Photonud->GetXaxis()->SetNoExponent();
-  setup_Photonud->GetYaxis()->SetTitleOffset(1.5); 
-  setup_Photonud->GetXaxis()->SetTitleOffset(1.2);
-  setup_Photonud->GetYaxis()->SetTitle("Response ratio");
-  setup_Photonud->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_Photonud->GetYaxis()->SetTitleOffset(1.1); 
+  setup_Photonud->GetXaxis()->SetTitleOffset(1.1);
+  setup_Photonud->GetYaxis()->SetTitle("F^{var}");
+  setup_Photonud->GetYaxis()->SetTitleSize(0.05);
+  setup_Photonud->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_Photonud->GetXaxis()->SetTitleSize(0.05);
 
   setup_Photonud->Draw();
   line->Draw("SAME");
   h_Rjetud_Photon->Draw("SAMEP");
   h_Rjet_Photon->Draw("SAMEP");
   lz_Photonud->Draw("SAMEP");
-  canv_Photonud->Print("./plots/varPlots/varPhoton_ud.eps"); delete canv_Photonud;
+  canv_Photonud->Print("./plots/varPlots/varPhoton_ud.pdf"); delete canv_Photonud;
 
   //g jet
   TCanvas* canv_Photong = new TCanvas("canv_Photong","",500,400); canv_Photon->SetLogx();
@@ -692,18 +699,22 @@ void plotVariants()
 		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
                                              h_Rjet_Photon->GetXaxis()->GetXmax());
   setup_Photong->SetStats(0);
-  setup_Photong->SetTitle("Photon response -1%");
   setup_Photong->SetAxisRange(0.993,1.002,"Y");
   setup_Photong->GetXaxis()->SetMoreLogLabels();  setup_Photong->GetXaxis()->SetNoExponent();
-  setup_Photong->GetYaxis()->SetTitleOffset(1.5); setup_Photong->GetXaxis()->SetTitleOffset(1.2);
-  setup_Photong->GetYaxis()->SetTitle("Response ratio");
-  setup_Photong->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
+  setup_Photong->GetYaxis()->SetTitleOffset(1.1); 
+  setup_Photong->GetXaxis()->SetTitleOffset(1.1);
+  setup_Photong->GetYaxis()->SetTitle("F^{var}");
+  setup_Photong->GetYaxis()->SetTitleSize(0.05);
+  setup_Photong->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
+  setup_Photong->GetXaxis()->SetTitleSize(0.05);
 
   setup_Photong->Draw();
   line->Draw("SAME");
   h_Rjetg_Photon->Draw("SAMEP");
   h_Rjet_Photon->Draw("SAMEP");
   lz_Photong->Draw("SAMEP");
-  canv_Photong->Print("./plots/varPlots/varPhoton_g.eps"); delete canv_Photong;
+  canv_Photong->Print("./plots/varPlots/varPhoton_g.pdf"); delete canv_Photong;
+
+  gApplication->Terminate(0); //Exit root command prompt
 
 }

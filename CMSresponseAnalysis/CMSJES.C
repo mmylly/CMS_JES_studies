@@ -1803,35 +1803,35 @@ void CMSJES::plotMPF(int gen, int Nevt)
   //Initialize histograms and open ROOT files and fetch the stored objects
   //  TH1 params: name, title, #bins, #lowlimit, #highlimit
   TFile* fzj = TFile::Open(zjetFile.c_str());
-  TProfile *przj_MPF=0; TProfile *przj_MPFb=0; TProfile *przj_MPFg=0; TProfile *przj_MPFlq=0;
+  TProfile *przj_MPF=0;  TProfile *przj_MPFb=0;  TProfile *przj_MPFc=0;
+  TProfile *przj_MPFs=0; TProfile *przj_MPFud=0; TProfile *przj_MPFg=0;
 
-  /* 1: Z+jet */
-  fzj->GetObject("prMPF" ,przj_MPF);
-  fzj->GetObject("prMPFb" ,przj_MPFb);
-  fzj->GetObject("prMPFg" ,przj_MPFg);
-  fzj->GetObject("prMPFlq" ,przj_MPFlq);
+  fzj->GetObject("prMPF",   przj_MPF);
+  fzj->GetObject("prMPFb",  przj_MPFb);
+  fzj->GetObject("prMPFc",  przj_MPFc);
+  fzj->GetObject("prMPFs",  przj_MPFs);
+  fzj->GetObject("prMPFud", przj_MPFud);
+  fzj->GetObject("prMPFg",  przj_MPFg);
+
   TH1D* hzj_MPF   = przj_MPF  ->ProjectionX();
   TH1D* hzj_MPFb  = przj_MPFb ->ProjectionX();
+  TH1D* hzj_MPFc  = przj_MPFc ->ProjectionX();
+  TH1D* hzj_MPFs  = przj_MPFs ->ProjectionX();
+  TH1D* hzj_MPFud = przj_MPFud->ProjectionX();
   TH1D* hzj_MPFg  = przj_MPFg ->ProjectionX();
-  TH1D* hzj_MPFlq = przj_MPFlq->ProjectionX();
 
   //CMS MC points
-  TGraphErrors* mc_zj_MPFntI_2018 = new TGraphErrors(nMC_MPFntI,zj_MC_pTp_MPFntI_2018,
-                                                    zj_MC_MPFntI_2018,0,zj_MC_MPFntI_ER_2018);
-
+  TGraphErrors* mc_zj_MPFntI_2018 = new TGraphErrors(nMC_MPFntI, zj_MC_pTp_MPFntI_2018,
+                                                     zj_MC_MPFntI_2018, 0, zj_MC_MPFntI_ER_2018);
   //Canvas
   TCanvas* canv_MPF = new TCanvas("MPF","",500,400);
   canv_MPF->SetLeftMargin(0.13);
   canv_MPF->SetBottomMargin(0.13);
+  canv_MPF->SetLogx();
 
-  hzj_MPF ->SetLineColor( kBlack);
-  hzj_MPF  ->SetMarkerStyle(kFullCircle);       hzj_MPF  ->SetMarkerColor(kBlack);
-  hzj_MPFb ->SetMarkerStyle(kFullSquare);       hzj_MPFb ->SetMarkerColor(kRed  );
-  hzj_MPFg ->SetMarkerStyle(kFullTriangleUp);   hzj_MPFg ->SetMarkerColor(kBlue+1);
-  hzj_MPFlq->SetMarkerStyle(kFullTriangleDown); hzj_MPFlq->SetMarkerColor(kGreen+2);
-  hzj_MPFb->SetLineColor(kRed+1);               hzj_MPFg->SetLineColor(kBlue+1);
-  hzj_MPFlq->SetLineColor(kGreen+2);
-
+  hzj_MPF->SetLineColor( kBlack);
+  hzj_MPF->SetMarkerStyle(kFullCircle);       
+  hzj_MPF->SetMarkerColor(kBlack);
 
   mc_zj_MPFntI_2018->SetMarkerStyle( kOpenSquare); mc_zj_MPFntI_2018->SetMarkerColor( kBlack  );
 
@@ -1840,9 +1840,6 @@ void CMSJES::plotMPF(int gen, int Nevt)
   TLegend* lz_MPF = new TLegend(0.62,0.70,0.89,0.89);
   lz_MPF->SetBorderSize(0);
   lz_MPF->AddEntry(hzj_MPF, "All jets"  , "p");
-  //lz_MPF->AddEntry(hzj_MPFb, "b-jets"    , "p");
-  //lz_MPF->AddEntry(hzj_MPFg, "gluon jets", "p");
-  //lz_MPF->AddEntry(hzj_MPFlq, "lq-jets"   , "p");
   lz_MPF->AddEntry(mc_zj_MPFntI_2018, "FullSim 2018ABCD", "p");
 
   //Title and axis setup
@@ -1851,34 +1848,86 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF->SetAxisRange(0.86,1.0,"Y"); //Vertical axis limits
 
   hzj_MPF->GetXaxis()->SetMoreLogLabels();
-  //hzj_MPF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   hzj_MPF->GetXaxis()->SetNoExponent();
-  canv_MPF->SetLogx();
   hzj_MPF->GetYaxis()->SetTitleOffset(1.1);
   hzj_MPF->GetXaxis()->SetTitleOffset(1.1);
-  gPad->SetTickx();   gPad->SetTicky();
-
-
+  hzj_MPF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   hzj_MPF->GetYaxis()->SetTitle("R_{MPF}");
   hzj_MPF->GetYaxis()->SetTitleSize(0.05);
-  hzj_MPF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   hzj_MPF->GetXaxis()->SetTitleSize(0.05);
+
+  gPad->SetTickx();   gPad->SetTicky();
 
   //Savefile name setup
   string savename = "./plots/mpf/MPF_zmmjet";
   string MPFtitle = hzj_MPF->GetTitle();
-  savename+=".eps";
+  savename+=".pdf";
 
   //Plot
   hzj_MPF->Draw("p");
   mc_zj_MPFntI_2018->Draw("P SAME");
-  //hzj_MPFb->Draw("SAMEP");
-  //hzj_MPFg->Draw("SAMEP");
-  //hzj_MPFlq->Draw("SAMEP");
   lz_MPF->Draw();
 
   //Save plot
-  canv_MPF->Print(savename.c_str());
+  canv_MPF->Print(savename.c_str()); delete canv_MPF;
+
+  //All flavours
+
+  TCanvas* canv_all = new TCanvas("canv_all","",500,400);
+  canv_all->SetLeftMargin(0.13); canv_all->SetBottomMargin(0.13);
+  canv_all->SetLogx();
+
+  hzj_MPF->SetMarkerStyle(5); hzj_MPF->SetLineColor(kBlack); 
+  hzj_MPF->SetMarkerColor(kBlack);
+  hzj_MPFb->SetMarkerStyle(kFullCircle);       hzj_MPFb->SetMarkerColor(kRed+1);
+  hzj_MPFb->SetLineColor(kRed+1);
+  hzj_MPFc->SetMarkerStyle(kFullTriangleDown); hzj_MPFc->SetMarkerColor(kGreen+3);
+  hzj_MPFc->SetLineColor(kGreen+3);
+  hzj_MPFs->SetMarkerStyle(kFullTriangleUp); hzj_MPFs->SetMarkerColor(kOrange+7);
+  hzj_MPFs->SetLineColor(kOrange+7);
+  hzj_MPFud->SetMarkerStyle(kFullDiamond);    hzj_MPFud->SetMarkerColor(kMagenta+2);
+  hzj_MPFud->SetLineColor(kMagenta+2);
+  hzj_MPFg ->SetMarkerStyle(kFullSquare);   hzj_MPFg ->SetMarkerColor(kBlue+1);
+  hzj_MPFg->SetLineColor(kBlue+1);
+
+  TLegend* lz_all = new TLegend(0.68,0.7,0.86,0.87);
+  lz_all->SetBorderSize(0);
+  lz_all->AddEntry(hzj_MPF,   "All", "p");
+  lz_all->AddEntry(hzj_MPFb,  "b",   "p");
+  lz_all->AddEntry(hzj_MPFc,  "c",   "p");
+  lz_all->AddEntry(hzj_MPFs,  "s",   "p");
+  lz_all->AddEntry(hzj_MPFud, "ud",  "p");
+  lz_all->AddEntry(hzj_MPFg,  "g",   "p");
+  lz_all->SetNColumns(2);
+
+  TH1D* setup = new TH1D("setup","", hzj_MPF->GetXaxis()->GetNbins(),
+			 hzj_MPF->GetXaxis()->GetXmin(), hzj_MPF->GetXaxis()->GetXmax());
+
+  setup->SetStats(0); //Suppress stat box
+  setup->SetTitle("");
+  setup->SetAxisRange(0.84,0.98,"Y"); //Vertical axis limits
+  setup->GetXaxis()->SetMoreLogLabels();
+  setup->GetXaxis()->SetNoExponent();
+  setup->GetYaxis()->SetTitleOffset(1.1);
+  setup->GetXaxis()->SetTitleOffset(1.1);
+  setup->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
+  setup->GetYaxis()->SetTitle("R_{MPF}");
+  setup->GetYaxis()->SetTitleSize(0.05);
+  setup->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
+
+  setup->Draw();
+  hzj_MPF->Draw("SAMEP");
+  hzj_MPFb->Draw("SAMEP");
+  hzj_MPFc->Draw("SAMEP");
+  hzj_MPFs->Draw("SAMEP");
+  hzj_MPFud->Draw("SAMEP");
+  hzj_MPFg->Draw("SAMEP");
+  lz_all->Draw("SAMEP");
+
+  canv_all->Print("./plots/mpf/MPF_zmmjet_all.pdf"); delete canv_all;
+  
+
 }
 
 //-------------------------------------------------------------------------------------------
@@ -2526,7 +2575,7 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
   //Set #events
   string num;
   cout << "#Events (0) 3k (1) 10k (2) 30k (3) 100k (4) 600k (5) 1M (6) 5M (7) 10M" << endl;
-  while (Nevt<0 || Nevt>5) cin >> Nevt;
+  while (Nevt<0 || Nevt>7) cin >> Nevt;
   if      (Nevt==0) num = "3000";
   else if (Nevt==1) num = "10000";
   else if (Nevt==2) num = "30000";
