@@ -48,9 +48,6 @@ void CMSJES::Loop()
   const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25,
                                     228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
 
-  string pTbalTitle = ";#font[132]{#font[12]{p}_{T,tag}^{MC} [GeV]}; p_{T}^{probe}/p_{T}^{tag}";
-  TProfile* prpTbal = new TProfile("prpTbal", pTbalTitle.c_str(), nbinsMPF-1, binsxMPF);
-
   //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
   string MPFTitle = ";p_{T,tag}^{MC} [GeV];R_{MPF}";
   TProfile* prMPF   = new TProfile("prMPF"  , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -356,6 +353,7 @@ void CMSJES::Loop()
 
   // 90% parametes
   TF1* allTrkReso = new TF1("allTrkReso","2.006093e-05*pow(x,2)+0.00103068*x+0.0190268",0,5000);
+
 
 //***********************************************************************************************
 
@@ -753,6 +751,7 @@ void CMSJES::Loop()
         cellPhi = cht->GetXaxis()->GetBinCenter(i);
         cellEta = cht->GetYaxis()->GetBinCenter(j);
         
+        
         if (varCp3) {
           nhECAL     ->SetBinContent(i,j, 1.03*nhECAL->GetBinContent(i,j));
           nhHCAL     ->SetBinContent(i,j, 1.03*nhHCAL->GetBinContent(i,j));
@@ -768,6 +767,7 @@ void CMSJES::Loop()
         } else if (varPhoton) {
           ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale
         }
+
 
         //**** Cold cells
         iEtaCold = floor((cellEta+fabs(coldCells->GetXaxis()->GetBinLowEdge(1)))/
@@ -899,9 +899,6 @@ void CMSJES::Loop()
     prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
     prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
     pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight); 
-
-    //pT balance
-    prpTbal->Fill(tag_r.Pt(), probe_r.Pt()/tag_r.Pt(), weight);
 
     //MPF response
     R_MPF_r = 1.0 + (MET_r.Px()*tag_r.Px() + MET_r.Py()*tag_r.Py()) / pow((tag_r.Pt()),2);
@@ -1391,6 +1388,7 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   if (zero || isnan(retA)   || retA   <=0) retA   = 0.0;
   if (zero || isnan(retEHE) || retEHE <=0) retEHE = 0.0;
   if (zero || isnan(retHHe) || retHHe <=0) retHHe = 0.0;
+
 } //Response
 
 //-----------------------------------------------------------------------------
@@ -1442,8 +1440,7 @@ void CMSJES::InputNameConstructor() {
   string num = "";	//#events in the sample to study
 
   //Generator and sample event content indicators
-  if      (ReadName.find("P6")!=string::npos) {zjFile="P6_";}
-  else if (ReadName.find("P8")!=string::npos) {zjFile="P8_";}
+  if (ReadName.find("P8")!=string::npos) {zjFile="P8_";}
   else if (ReadName.find("H7")!=string::npos) {zjFile="H7_";}
   zjFile += "Zjet_";
 
@@ -1525,7 +1522,9 @@ void CMSJES::plotEff(int gen, int Nevt) {
 
   tex->DrawLatex(0.75,0.82,"|#eta|<2.5");
 
-  c4->Print("./plots/Efficiency/trkEff.eps");
+  string plotName = "./plots/Efficiency/trkEff_" + ReadName + ".eps";
+  c4->Print(plotName.c_str());
+  delete c4;
 }
 
 void CMSJES::plotJEF(int gen, int Nevt) {
@@ -1603,8 +1602,6 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   hstack_JEF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   hstack_JEF->GetXaxis()->SetTitleSize(0.05);
 
-
-
   lg->Draw();
   lgEff->Draw();
   chf->Draw("samep");
@@ -1616,9 +1613,9 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   tex->SetTextColor(kBlack);
   tex->DrawLatex(0.21,0.42,"|#eta^{probe}|<1.3");
 
-  //Save particle content histogram plot
-  string plotName = "./plots/particleComposition/PC_jets.eps";
+  string plotName = "./plots/particleComposition/JEF_probe_" + ReadName + ".eps";
   canv_c->Print(plotName.c_str());
+  delete canv_c;
 }
 
 //Flavour fraction
@@ -1663,7 +1660,7 @@ void CMSJES::plotFF(int gen, int Nevt) {
   TCanvas* FFcanv = new TCanvas(FFcanvName.c_str(),"",500,400);
   TLegend* FFlg = new TLegend(0.91, 0.67, 1.00, 0.90);
   FFcanv->SetLogx();
-  FFlg->SetBorderSize(0);  FFlg->SetFillStyle(0);
+  FFlg->SetBorderSize(0); FFlg->SetFillStyle(0);
   FFcanv->SetBottomMargin(0.13);
   FFlg->AddEntry(FFb,  "b",  "f");
   FFlg->AddEntry(FFc,  "c",  "f");
@@ -1689,109 +1686,13 @@ void CMSJES::plotFF(int gen, int Nevt) {
   FFstack->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   FFstack->GetXaxis()->SetTitleSize(0.05);
 
-
-  //FFstack->GetYaxis()->SetTitleOffset(1.5);
   gPad->Modified();
-
 
   FFlg->Draw();
   FFcanvName = "./plots/FlavourFraction/" + FFcanvName + ".eps";
-
-
   FFcanv->Print(FFcanvName.c_str());
+  delete FFcanv;
 }
-
-//-----------------------------------------------------------------------------
-void CMSJES::plotPT(int gen, int Nevt)
-{
-
-  //Choose filenames to open
-  string nameAdd, zjetFile;
-  plotQuery(nameAdd, zjetFile, gen, Nevt);
-
-  //Initialize histograms and open ROOT files and fetch the stored objects
-  TFile* fzj = TFile::Open(zjetFile.c_str()); // Z+jet file
-  TProfile* przj_pTp=0;
-
-  /* Z+jet */
-  fzj->GetObject("prpTbal", przj_pTp);	//Z+jet response pTp
-  TH1D* hzj_pTp = przj_pTp->ProjectionX();
-
-  hzj_pTp->SetLineColor(kBlack);
-
-  //CMS MC points
-  TGraphErrors* mc_zj_pTbal_2018 = new TGraphErrors(nMC_pTbal2018,zj_MC_pTp_pTbal_2018,
-                                                    zj_MC_pTbal_2018,0,zj_MC_pTbal_ER_2018);
-
-  mc_zj_pTbal_2018->SetMarkerStyle(kOpenCircle);  mc_zj_pTbal_2018->SetMarkerColor(kGreen+2);
-
-  //Savefile name setup
-  string savename = "P8_Zjet";
-  savename+=".eps";
-
-  //Canvas and dividing it into pads.
-  //TPad: name,title,xlow,ylow,xup,yup,color
-  TCanvas* canv = new TCanvas("canvas","canvas",500,350/*500*/);
-  TPad *pad1 = new TPad("pad1","",0,0/*0.3*/,1,1,0);	//Modify for 1 or 2 pads
-  pad1->Draw();
-
-  //General plot setup
-  pad1->SetLeftMargin(0.12);	//Room for axis label
-  pad1->SetBottomMargin(0.115);
-  pad1->cd();			//Go to pad1
-  pad1->SetLogx();		//Logarithmic horizontal axis
-  hzj_pTp->GetXaxis()->SetRangeUser(10,1000);
-
-  //Suppress stat boxes
-  hzj_pTp->SetStats(0);
-
-  //Axis setup. New dummy TH1 for easy usage in multiple plots
-  TH1D* setup = new TH1D("setup",""/*hdj->GetTitle()*/, hzj_pTp->GetXaxis()->GetNbins(),
-			 hzj_pTp->GetXaxis()->GetXmin(),    hzj_pTp->GetXaxis()->GetXmax());
-  setup->SetStats(0);				//Suppress stat box
-  setup->GetXaxis()->SetTitle(hzj_pTp->GetXaxis()->GetTitle());
-  setup->GetYaxis()->SetTitle(hzj_pTp->GetYaxis()->GetTitle());
-  setup->SetAxisRange(0.6, 1.0,"Y");		//Vertical axis limits
-  setup->GetYaxis()->SetTitleFont(133);
-  int titleSize = 18;				//Common title size everywhere
-  setup->GetYaxis()->SetTitleSize(titleSize);
-  setup->GetXaxis()->SetMoreLogLabels();
-  setup->GetXaxis()->SetNoExponent();
-  setup->GetXaxis()->SetTitleFont(133);
-  setup->GetXaxis()->SetTitleSize(titleSize);
-  setup->GetXaxis()->SetTitleOffset(0.9);
-  setup->GetYaxis()->SetTitleOffset(0.9);
-  
-  //Separate legends for dijet and gamma+jet
-  double lz_horiz[2] = {0.67, 0.89};
-  double vertical[2] = {0.13, 0.37};
-  vertical[1] -= 0.12;
-  vertical[0] += 0.06;
-
-  TLegend* lz = new TLegend(lz_horiz[0],vertical[0],lz_horiz[1],vertical[1]);
-  lz->SetBorderSize(0);	//No box around legend
-  lz->SetFillStyle( 0);	//No background fill
-
-  lz->AddEntry(mc_zj_pTbal_2018,"#font[132]{CMS Z+jet MC}", "p");
-  lz->AddEntry(hzj_pTp,  "#font[132]{Our Z+jet MC pTp-bins}", "l");
-
-  //Main plot
-  setup->Draw();
-  hzj_pTp->Draw("SAME");
-  mc_zj_pTbal_2018->Draw("P SAME");
-  lz->Draw();	//Legends
-
-  //Save plot
-  string saveTo = "./plots/pT-bal/";
-  saveTo = saveTo + "MC_" + savename;
-
-  canv->Print(saveTo.c_str());
-
-  //Free memory
-  delete setup;  delete lz;   delete pad1;   delete canv;
-
-} //plotPT
-
 
 //-------------------------------------------------------------------------------------------
 void CMSJES::plotMPF(int gen, int Nevt)
@@ -1858,21 +1759,15 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   gPad->SetTickx();   gPad->SetTicky();
 
-  //Savefile name setup
-  string savename = "./plots/mpf/MPF_zmmjet";
-  string MPFtitle = hzj_MPF->GetTitle();
-  savename+=".pdf";
-
   //Plot
   hzj_MPF->Draw("p");
   mc_zj_MPFntI_2018->Draw("P SAME");
   lz_MPF->Draw();
 
-  //Save plot
-  canv_MPF->Print(savename.c_str()); delete canv_MPF;
+  string plotName = "./plots/mpf/MPF_zmmjet_" + ReadName + ".pdf";
+  canv_MPF->Print(plotName.c_str()); delete canv_MPF;
 
   //All flavours
-
   TCanvas* canv_all = new TCanvas("canv_all","",500,400);
   canv_all->SetLeftMargin(0.13); canv_all->SetBottomMargin(0.13);
   canv_all->SetLogx();
@@ -1925,9 +1820,9 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPFg->Draw("SAMEP");
   lz_all->Draw("SAMEP");
 
-  canv_all->Print("./plots/mpf/MPF_zmmjet_all.pdf"); delete canv_all;
-  
-
+  plotName = "./plots/mpf/MPF_zmmjet_all_" + ReadName + ".pdf";
+  canv_all->Print(plotName.c_str());
+  delete canv_all;
 }
 
 //-------------------------------------------------------------------------------------------
@@ -2033,7 +1928,10 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffcg->Draw("SAMEP");
   lz_diffg->Draw("SAMEP");
   canv_diffg->SetLogx();
-  canv_diffg->Print("./plots/Rjet/gluonDiff.eps");
+
+  string plotName = "./plots/Rjet/gluonDiff_" + ReadName + ".eps";
+  canv_diffg->Print(plotName.c_str());
+  delete canv_diffg;
 
 
   //Canvas
@@ -2085,10 +1983,6 @@ void CMSJES::plotRjet(int gen, int Nevt)
 
   gPad->SetTickx(); gPad->SetTicky();
 
-  //Savefile name setup
-  string savename = "./plots/Rjet/Rjet";
-  savename+=".eps";
-
   //Plot
   hzj_Rjet->Draw("P");
   hzj_Rjetb->Draw("SAMEP");
@@ -2098,8 +1992,8 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjetc->Draw("SAMEP");
   lz_Rjet->Draw("SAMEP");
 
-  //Save plot
-  canv_Rjet->Print(savename.c_str());
+  plotName = "./plots/Rjet/Rjet_" + ReadName + ".eps";
+  canv_Rjet->Print(plotName.c_str()); delete canv_Rjet;
 }
 
 void CMSJES::plotF(int gen, int Nevt)
@@ -2172,7 +2066,6 @@ void CMSJES::plotF(int gen, int Nevt)
   lz_F->AddEntry(hzj_Fud, "ud",    "p");
   lz_F->AddEntry(hzj_Fg,  "gluon", "p");
 
-
   //Title and axis setup
   hzj_Fb->SetStats(0); //Suppress stat box
   hzj_Fb->SetTitle("");
@@ -2190,10 +2083,6 @@ void CMSJES::plotF(int gen, int Nevt)
   canv_F->SetLogx();
   gPad->SetTickx(); gPad->SetTicky();
 
-  //Savefile name setup
-  string savename = "./plots/F/F";
-  savename+=".eps";
-
   TLine *line = new TLine(31.75,1,1258.25,1); 
 
   //Plot
@@ -2206,7 +2095,8 @@ void CMSJES::plotF(int gen, int Nevt)
   lz_F->Draw("SAMEP");
 
   //Save plot
-  canv_F->Print(savename.c_str());
+  string plotName = "./plots/F/F_" + ReadName + ".eps";
+  canv_F->Print(plotName.c_str()); delete canv_F;
 }
 
 void CMSJES::plotVariants(int gen, int Nevt)
@@ -2234,9 +2124,13 @@ void CMSJES::plotVariants(int gen, int Nevt)
   JEC_calo_SPRm3->SetMarkerSize(markersize);
 
   //C-parameter variation
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
-  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
+  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
+  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
+  //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
+
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
+  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCm3.root");
 
   TProfile *pr_Rjet = 0;
   TProfile *pr_Rjet_b = 0; 
@@ -2568,9 +2462,9 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
 
   /* User interface */
   //Choose generator
-  cout << "Which generator to use? (1) P6 (2) H7 (3) P8" << endl;
-  while (gen<1 || gen>3) cin >> gen;
-  respStr += (gen==3 ? "P8_": (gen==1 ? "P6_": (gen==2 ? "H7_" : "")));
+  cout << "(1) H7 (2) P8" << endl;
+  while (gen<1 || gen>2) cin >> gen;
+  respStr += (gen==2 ? "P8_": (gen==1 ? "H7_": ""));
 
   //Set #events
   string num;

@@ -252,7 +252,6 @@ public :
   virtual void     Loop();
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
-  void   plotPT(int gen=0,int Nevt=-1);
   void   plotJEF(int gen=0,int Nevt=-1);
   void   plotEff(int gen=0,int Nevt=-1);
   void   plotFF(int gen=0,int Nevt=-1);
@@ -352,8 +351,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       }
       ReadName = files[input];			//Pick the filename to study
     }
-    //OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
-    OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
+    OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
+    //OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
     printf("Opening file: %s\n", OpenName.c_str());
     TFile *f = (TFile*)gROOT->GetListOfFiles()
 			    ->FindObject(OpenName.c_str());
