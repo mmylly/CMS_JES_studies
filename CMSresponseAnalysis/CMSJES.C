@@ -2097,7 +2097,7 @@ void CMSJES::plotF(int gen, int Nevt)
   canv_F->Print(plotName.c_str()); delete canv_F;
 }
 
-void CMSJES::plotVariants(int gen, int Nevt)
+void CMSJES::plotVarSPR(int gen, int Nevt)
 {
 
   string outname = "./output_ROOT_files/varPlots_5000000"; //Output file
@@ -2121,9 +2121,9 @@ void CMSJES::plotVariants(int gen, int Nevt)
   JEC_calo_SPRp3->SetMarkerSize(markersize);
   JEC_calo_SPRm3->SetMarkerSize(markersize);
 
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCp3.root");
-  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
+  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
 
   TProfile *pr_Rjet = 0;
   TProfile *pr_Rjet_b = 0; 
