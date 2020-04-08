@@ -13,12 +13,12 @@ int main() {
   // 1: MPF plot
   // 2: Loop one sample and produce all the plots
   // 3: Loop + MPF
-  int mode = 3;
+  int mode = 0;
 
   switch (mode) {
     case 0 :
-      //d.Loop();
-      d.plotF(-1,-1);
+      d.Loop();
+      //d.plotF(-1,-1);
       //d.plotJEF(-1,-1);
       break;
     case 1 :

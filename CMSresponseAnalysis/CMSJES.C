@@ -134,27 +134,27 @@ void CMSJES::Loop()
   double probe_e;
 
   //Partial derivative values for a hadron
-  unsigned int i_tag   = 0; //Stepper to find tag object index
-  unsigned int i_probe = 0; //       -||-     probe jet index
-  unsigned int i_jet2  = 1; //       -||-     2nd jet index
-  double eta_muon  = 2.3;   //Max |eta| for a single muon in Z+jet      
-  double eta_tag_z = 2.5;   //Max |eta| for mumu tag object
-  double eta_probe = 1.3;   //Max |eta| for probe jets
-  int PDG = 1;              //Shorthand, to store a particle's PDGID
-  int JI = 0;               //Shorthand, particle's jet index
-  double phiMin = 2.8;      //Minimum azimuth angle between tag and probe
-  double pTmin_probe = 15;  //Minimum probe jet p_T (GeV)
-  double pTmin_muon  = 15;  //Minimum single tag muon pT (GeV)
-  double pTmin_tag_z = 15;  //Minimum tag muon pair pT (GeV)   
-  double resp   = 1.0;	    //SPR value                (dummy init)
-  double respA  = 0.0;	    //Calorimeter response for All-hadrons
-  double respEHE  = 0.0;    //Calorimeter response for EHE-hadrons
-  double respHHe  = 0.0;    //Calorimeter response for HHe-hadrons
-  double R_MPF_r = 0;       //MC-reco'd MPF response
-  double Rjet = 0.0;        //Jet pT-response
-  double Rjet_calo = 0.0;   //Calo jet pT-response
+  unsigned int i_tag   = 0;   //Stepper to find tag object index
+  unsigned int i_probe = 0;   //       -||-     probe jet index
+  unsigned int i_jet2  = 1;   //       -||-     2nd jet index
+  double eta_muon      = 2.3; //Max |eta| for a single muon in Z+jet      
+  double eta_tag_z     = 2.5; //Max |eta| for mumu tag object
+  double eta_probe     = 1.3; //Max |eta| for probe jets
+  int PDG              = 1;   //Shorthand, to store a particle's PDGID
+  int JI               = 0;   //Shorthand, particle's jet index
+  double phiMin        = 2.8; //Minimum azimuth angle between tag and probe
+  double pTmin_probe   = 15;  //Minimum probe jet p_T (GeV)
+  double pTmin_muon    = 15;  //Minimum single tag muon pT (GeV)
+  double pTmin_tag_z   = 15;  //Minimum tag muon pair pT (GeV)   
+  double resp          = 1.0; //SPR value                (dummy init)
+  double respA         = 0.0; //Calorimeter response for All-hadrons
+  double respEHE       = 0.0; //Calorimeter response for EHE-hadrons
+  double respHHe       = 0.0; //Calorimeter response for HHe-hadrons
+  double R_MPF_r       = 0;   //MC-reco'd MPF response
+  double Rjet          = 0.0; //Jet pT-response
+  double Rjet_calo     = 0.0; //Calo jet pT-response
 
-  double RCone = 0.4; //Jet radius
+  double RCone         = 0.4; //Jet radius
 
   unsigned long njets;          //#jets in the event, for resizing vectors
   TLorentzVector MET_r;         //Reconstructed MET four vector
@@ -2031,12 +2031,10 @@ void CMSJES::plotF(int gen, int Nevt)
   hzj_Fs->Divide(hzj_F);
   hzj_Fc->Divide(hzj_F);
 
-
   //Canvas
   TCanvas* canv_F = new TCanvas("canv_F","",500,400);
   canv_F->SetLeftMargin(0.15);
   canv_F->SetBottomMargin(0.13);
-
 
   hzj_Fb ->SetMarkerStyle(kFullCircle);      hzj_Fb ->SetMarkerColor(kRed+1);
   hzj_Fg ->SetMarkerStyle(kFullSquare);      hzj_Fg ->SetMarkerColor(kBlue+1);
@@ -2123,14 +2121,9 @@ void CMSJES::plotVariants(int gen, int Nevt)
   JEC_calo_SPRp3->SetMarkerSize(markersize);
   JEC_calo_SPRm3->SetMarkerSize(markersize);
 
-  //C-parameter variation
-  //TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
-  //TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
-  //TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
-
-  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
-  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
-  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCm3.root");
+  TFile* fzj     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000.root");
+  TFile* fzj_Cp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCp3.root");
+  TFile* fzj_Cm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
 
   TProfile *pr_Rjet = 0;
   TProfile *pr_Rjet_b = 0; 
@@ -2241,206 +2234,6 @@ void CMSJES::plotVariants(int gen, int Nevt)
   canv_var->Print(savename.c_str());
 
   delete canv_var;
-
-  //Canvas
-  TCanvas* canv_var2 = new TCanvas("canv_var2","",500,400);
-  canv_var2->SetLeftMargin(0.15);
-  canv_var2->SetBottomMargin(0.13);
-
-  h_Rjet_Cp3->SetMarkerStyle(kOpenCircle); 
-  h_Rjet_Cp3->SetMarkerColor(kBlack);
-  h_Rjet_Cp3->SetLineColor(kBlack);
-  h_Rjet_Cp3->SetMarkerSize(markersize);
-
-  h_Rjet_Cp3_b->SetMarkerStyle(kFullCircle); 
-  h_Rjet_Cp3_b->SetMarkerColor(kRed);
-  h_Rjet_Cp3_b->SetLineColor(kRed);
-  h_Rjet_Cp3_b->SetMarkerSize(markersize);
-
-       
-  h_Rjet_Cm3->SetLineColor(kBlack);
-  h_Rjet_Cm3->SetMarkerStyle(kOpenSquare); 
-  h_Rjet_Cm3->SetMarkerColor(kBlack);
-  h_Rjet_Cm3->SetMarkerSize(markersize);
-
-  h_Rjet_Cm3_b->SetLineColor(kBlue+1);
-  h_Rjet_Cm3_b->SetMarkerStyle(kFullSquare); 
-  h_Rjet_Cm3_b->SetMarkerColor(kBlue+1);
-  h_Rjet_Cm3_b->SetMarkerSize(markersize);
-
-
-  //Legend
-  TLegend* lz_Rjet2 = new TLegend(0.3,0.7,0.6,0.85);
-  lz_Rjet2->SetBorderSize(0);
-  lz_Rjet2->AddEntry(h_Rjet_Cp3, "All jets C+3%", "p");
-  lz_Rjet2->AddEntry(h_Rjet_Cm3, "All jets C-3%", "p");
-  lz_Rjet2->AddEntry(h_Rjet_Cp3_b, "b jets C+3%", "p");
-  lz_Rjet2->AddEntry(h_Rjet_Cm3_b, "b jets C-3%", "p");
-
-  TH1D* setup2 = new TH1D("setup","", h_Rjet_Cp3->GetXaxis()->GetNbins(),
-			 h_Rjet_Cp3->GetXaxis()->GetXmin(), h_Rjet_Cp3->GetXaxis()->GetXmax());
-
-  //Title and axis setup
-  setup2->SetStats(0); //Suppress stat box
-  setup2->SetTitle("");
-  setup2->SetAxisRange(0.98,1.02,"Y"); //Vertical axis limits
-  setup2->GetXaxis()->SetMoreLogLabels();
-  setup2->GetXaxis()->SetNoExponent();
-  canv_var2->SetLogx();
-  setup2->GetYaxis()->SetTitleOffset(1.8);
-  setup2->GetXaxis()->SetTitleOffset(1.2);
-  setup2->GetYaxis()->SetTitle("Response ratio");
-  setup2->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
-
-  gPad->SetTickx(); gPad->SetTicky();
-
-  //Savefile name setup
-  string savename2 = "./plots/varPlots/varSPR2";
-  savename2+=".eps";
-
-  //Plot
-  setup2->Draw();
-  h_Rjet_Cm3_b->Draw("SAMEP");
-  h_Rjet_Cp3_b->Draw("SAMEP");
-  h_Rjet_Cm3->Draw("SAMEP");
-  h_Rjet_Cp3->Draw("SAMEP");
-  lz_Rjet2->Draw("SAMEP");
-
-  //Save plot
-  canv_var2->Print(savename2.c_str());
-
-  delete canv_var2;
-
-  //////////////////// Tracking efficiency /////////////////////////
-  // Tracking efficieny
-  TFile* fzj_Trk = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEff.root");
-
-  TProfile *pr_Rjet_Trk=0;
-  TProfile *pr_Rjet_Trk_b=0;
-
-  //Create Histograms
-  fzj_Trk->GetObject("prRjet",pr_Rjet_Trk);
-  fzj_Trk->GetObject("prRjetb",pr_Rjet_Trk_b);
-
-  TH1D* h_Rjet_Trk = pr_Rjet_Trk->ProjectionX();
-  TH1D* h_Rjet_Trk_b = pr_Rjet_Trk_b->ProjectionX();
-
-  h_Rjet_Trk->Divide(h_Rjet); h_Rjet_Trk_b->Divide(h_Rjet_b);
-
-  //Canvas
-  TCanvas* canv_trk = new TCanvas("canv_trk","",500,400);
-  canv_trk->SetLeftMargin(0.15); canv_trk->SetBottomMargin(0.13);
-
-  h_Rjet_Trk->SetMarkerStyle(kOpenCircle); h_Rjet_Trk->SetMarkerColor(kBlack);
-  h_Rjet_Trk->SetLineColor(kBlack);          h_Rjet_Trk->SetMarkerSize(0.8);
-
-  h_Rjet_Trk_b->SetMarkerStyle(kFullSquare); h_Rjet_Trk_b->SetMarkerColor(kRed);
-  h_Rjet_Trk_b->SetLineColor(kRed);          h_Rjet_Trk_b->SetMarkerSize(0.8);
-
-  //Legend
-  TLegend* lz_Rjet_trk = new TLegend(0.3,0.7,0.6,0.8);
-  lz_Rjet_trk->SetBorderSize(0);
-  lz_Rjet_trk->AddEntry(h_Rjet_Trk,   "All jets", "p");
-  lz_Rjet_trk->AddEntry(h_Rjet_Trk_b, "b jets", "p");
-
-  TH1D* setup_trk = new TH1D("setup_trk","", h_Rjet_Trk->GetXaxis()->GetNbins(),
-		                             h_Rjet_Trk->GetXaxis()->GetXmin(), 
-                                             h_Rjet_Trk->GetXaxis()->GetXmax());
-
-  //Title and axis setup
-  setup_trk->SetStats(0); //Suppress stat box
-  setup_trk->SetTitle("Tracking efficiency -1%");
-  setup_trk->SetAxisRange(0.994,1.004,"Y"); //Vertical axis limits
-  setup_trk->GetXaxis()->SetMoreLogLabels();
-  setup_trk->GetXaxis()->SetNoExponent();
-  canv_trk->SetLogx();
-  setup_trk->GetYaxis()->SetTitleOffset(1.8);
-  setup_trk->GetXaxis()->SetTitleOffset(1.2);
-  setup_trk->GetYaxis()->SetTitle("Response ratio");
-  setup_trk->GetXaxis()->SetTitle("p_{T}^{gen} [GeV]");
-
-  gPad->SetTickx(); gPad->SetTicky();
-
-  //Savefile name setup
-  string savename_trk = "./plots/varPlots/varTrk";
-  savename_trk+=".eps";
-
-  TLine *line = new TLine(31.75,1,1258.25,1); 
-  //Plot
-  setup_trk->Draw();
-  line->Draw("SAME");
-  h_Rjet_Trk_b->Draw("SAMEP");
-  h_Rjet_Trk->Draw("SAMEP");
-  lz_Rjet_trk->Draw("SAMEP");
-
-  //Save plot
-  canv_trk->Print(savename_trk.c_str());
-
-//////////////////// Photon scale variation /////////////////////////
-  // Tracking efficieny
-  TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhoton.root");
-  TProfile *pr_Rjet_Photon=0; TProfile *pr_Rjet_Photon_b=0;
-
-  //Create Histograms
-  fzj_Photon->GetObject("prRjet",pr_Rjet_Photon);
-  fzj_Photon->GetObject("prRjetb",pr_Rjet_Photon_b);
-
-  TH1D* h_Rjet_Photon = pr_Rjet_Photon->ProjectionX();
-  TH1D* h_Rjet_Photon_b = pr_Rjet_Photon_b->ProjectionX();
-
-  h_Rjet_Photon->Divide(h_Rjet);
-  h_Rjet_Photon_b->Divide(h_Rjet_b);
-
-  //Canvas
-  TCanvas* canv_Photon = new TCanvas("canv_Photon","",500,400);
-  canv_Photon->SetLeftMargin(0.15); canv_Photon->SetBottomMargin(0.13);
-
-  h_Rjet_Photon->SetMarkerStyle(kOpenCircle); h_Rjet_Photon->SetMarkerColor(kBlack);
-  h_Rjet_Photon->SetLineColor(kBlack);          h_Rjet_Photon->SetMarkerSize(0.8);
-
-  h_Rjet_Photon_b->SetMarkerStyle(kFullSquare); h_Rjet_Photon_b->SetMarkerColor(kRed);
-  h_Rjet_Photon_b->SetLineColor(kRed);          h_Rjet_Photon_b->SetMarkerSize(0.8); 
-
-  //Legend
-  TLegend* lz_Rjet_Photon = new TLegend(0.3,0.7,0.6,0.8);
-  lz_Rjet_Photon->SetBorderSize(0);
-  lz_Rjet_Photon->AddEntry(h_Rjet_Photon, "All jets", "p");
-  lz_Rjet_Photon->AddEntry(h_Rjet_Photon_b, "b jets", "p"); 
-
-  TH1D* setup_Photon = new TH1D("setup_Photon","", h_Rjet_Photon->GetXaxis()->GetNbins(),
-		                             h_Rjet_Photon->GetXaxis()->GetXmin(), 
-                                             h_Rjet_Photon->GetXaxis()->GetXmax());
-
-  //Title and axis setup
-  setup_Photon->SetStats(0); //Suppress stat box
-  setup_Photon->SetTitle("Photon response -1%");
-  setup_Photon->SetAxisRange(0.993,1.003,"Y"); //Vertical axis limits
-  setup_Photon->GetXaxis()->SetMoreLogLabels();
-  setup_Photon->GetXaxis()->SetNoExponent();
-  canv_Photon->SetLogx();
-  setup_Photon->GetYaxis()->SetTitleOffset(1.8);
-  setup_Photon->GetXaxis()->SetTitleOffset(1.2);
-  setup_Photon->GetYaxis()->SetTitle("Response ratio");
-  setup_Photon->GetXaxis()->SetTitle("p_{T,gen}^{jet} [GeV]");
-
-  gPad->SetTickx(); gPad->SetTicky();
-
-  //Savefile name setup
-  string savename_Photon = "./plots/varPlots/varPhoton";
-  savename_Photon+=".eps";
-
-
-  TLine *line_photon = new TLine(31.75,1,1258.25,1); 
-
-  //Plot
-  setup_Photon->Draw();
-  line_photon->Draw("SAME");
-  h_Rjet_Photon_b->Draw("SAMEP");
-  h_Rjet_Photon->Draw("SAMEP");
-  lz_Rjet_Photon->Draw("SAMEP");
-
-  //Save plot
-  canv_Photon->Print(savename_Photon.c_str());
 
   foutvar->Write();
   foutvar->Close();

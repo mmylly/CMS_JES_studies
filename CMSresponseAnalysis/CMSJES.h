@@ -163,18 +163,6 @@ public :
   vector<vector<double>> params_Kpm; //Kaon +-
   vector<vector<double>> params_K0;  //KaonL & KaonS
 
-  //CMS jecsys pT-balance data points and errors zj for Z+jet
-  static int const ndata_pTbal = 10; //#Data points available from CMS
-  double zj_pTp[ndata_pTbal];
-  double zj_pTbal[ndata_pTbal];
-  double zj_pTbal_ER[ndata_pTbal];
-
-  //CMS jecsys pT-balance MC points
-  static int const nMC_pTbal = 10;	
-  double zj_MC_pTp[nMC_pTbal];	
-  double zj_MC_pTbal[nMC_pTbal];
-  double zj_MC_pTbal_ER[nMC_pTbal];
-
   //CMS jecsys MPF data points and errors for Z+jet
   static int const ndata_MPF = 11;
   double zj_pTp_MPF[ndata_MPF];
@@ -203,12 +191,6 @@ public :
   double zj_MC_pTp_MPFntI_2018[nMC_MPFntI];
   double zj_MC_MPFntI_2018[nMC_MPFntI];
   double zj_MC_MPFntI_ER_2018[nMC_MPFntI];
-
-  //CMS 2018 pTbal MC points and errors for Z+jet
-  static int const nMC_pTbal2018 = 14;
-  double zj_MC_pTp_pTbal_2018[nMC_pTbal2018];
-  double zj_MC_pTbal_2018[nMC_pTbal2018];
-  double zj_MC_pTbal_ER_2018[nMC_pTbal2018];
 
   //Flags etc. for changing calculation properties
   vector<bool> passedCuts;	//Flags for all evts if they passed cuts before
@@ -365,15 +347,9 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   Init(tree);	//Setup branch adresses etc.
 
   /* Read CMS data and MC points */
-  ifstream inzj_data_pTbal;     ifstream inzj_MC_pTbal; //CMS jecdata pT Z+jet
   ifstream inzj_data_MPF;       ifstream inzj_MC_MPF;   //CMS jecdata MPF Z+jet
   ifstream inzj_data_MPFntI;    ifstream inzj_MC_MPFntI;//CMS jecdata MPF-notypeI Z+jet
-  ifstream inzj_MC_MPFntI_2018; ifstream inzj_MC_pTbal_2018;
-
-  //CMS jecdataGH pT-balance
-  inzj_data_pTbal.open("./data_and_MC_input/pTbal/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/zmmjet_data");
-  inzj_MC_pTbal.open("./data_and_MC_input/pTbal/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/zmmjet_mc");
-  inzj_MC_pTbal_2018.open("./data_and_MC_input/pTbal/FullCombination_Zmm_17Sep2018_Autumn18_JECv17/2018pTbal_zmmjet_mc");
+  ifstream inzj_MC_MPFntI_2018;
 
   //CMS jecdataGH MPF 
   inzj_data_MPF.open("./data_and_MC_input/MPF/jecdataGH/MPF_zmmjet_data");
@@ -384,20 +360,13 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   inzj_MC_MPFntI.open("./data_and_MC_input/MPF/zjet_combination_07Aug2017_Summer16_JECV6_Zmm_GH_2018-03-06/MPF-notypeI_zmmjet_mc");
   inzj_MC_MPFntI_2018.open("./data_and_MC_input/MPF/FullCombination_Zmm_17Sep2018_Autumn18_JECv17/2018MPF-notypeI_zmmjet_mc");
 
-  if (!inzj_data_pTbal.is_open()     || !inzj_MC_pTbal.is_open() ||
-      !inzj_data_MPF.is_open()       || !inzj_MC_MPF.is_open()   ||
+  if (!inzj_data_MPF.is_open()       || !inzj_MC_MPF.is_open()   ||
       !inzj_data_MPFntI.is_open()    || !inzj_MC_MPFntI.is_open()||
-      !inzj_MC_MPFntI_2018.is_open() || !inzj_MC_pTbal_2018.is_open())
+      !inzj_MC_MPFntI_2018.is_open())
   {
     cout << "Error opening CMS data/MC point files!" << endl; return;
   }
-  
-  for (int step=0; step != ndata_pTbal; ++step) { //CMS pT-balance data
-    inzj_data_pTbal   >> zj_pTp[step] >> zj_pTbal[step] >> zj_pTbal_ER[step];
-  }
-  for (int step=0; step != nMC_pTbal; ++step) {	//CMS pT-balance MC points
-    inzj_MC_pTbal   >> zj_MC_pTp[step] >> zj_MC_pTbal[step] >> zj_MC_pTbal_ER[step];
-  }
+
   for (int step=0; step != ndata_MPF; ++step) {	//CMS jecsys MPF data
     inzj_data_MPF   >> zj_pTp_MPF[step] >> zj_MPF[step] >> zj_MPF_ER[step];
   }
@@ -413,19 +382,13 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
   for (int step=0; step != nMC_MPFntI; ++step) { //CMS 2018 MPF-notypeI MC points
     inzj_MC_MPFntI_2018   >> zj_MC_pTp_MPFntI_2018[step] >> zj_MC_MPFntI_2018[step] >> zj_MC_MPFntI_ER_2018[step];
   }
-  for (int step=0; step != nMC_pTbal2018; ++step) { //CMS 2018 pTbal MC points
-    inzj_MC_pTbal_2018   >> zj_MC_pTp_pTbal_2018[step] >> zj_MC_pTbal_2018[step] >> zj_MC_pTbal_ER_2018[step];
-  }
 
   //Close the CMS MC / data point files
-  inzj_data_pTbal.close(); 
-  inzj_MC_pTbal.close();
   inzj_data_MPF.close();
   inzj_MC_MPF.close();
   inzj_data_MPFntI.close();
   inzj_MC_MPFntI.close();
   inzj_MC_MPFntI_2018.close();
-  inzj_MC_pTbal_2018.close();
 
   /* Read params from files to matrices */
 
