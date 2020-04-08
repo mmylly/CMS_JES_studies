@@ -12,7 +12,7 @@ void CMSJES::Loop()
   varCp3    = 0;
   varCm3    = 0;
   varTrkEff = 0;
-  varPhoton = 0;
+  varPhoton = 1;
 
   if (varCp3 && varCm3) {cout << "Both C-variants enabled!" << endl; return;}
 
@@ -134,7 +134,7 @@ void CMSJES::Loop()
   double probe_e;
 
   //Partial derivative values for a hadron
-  unsigned int i_tag   = 0;   //Stepper to find tag object index
+  unsigned int i_tag   = 0;    //Stepper to find tag object index
   unsigned int i_probe = 0;   //       -||-     probe jet index
   unsigned int i_jet2  = 1;   //       -||-     2nd jet index
   double eta_muon      = 2.3; //Max |eta| for a single muon in Z+jet      

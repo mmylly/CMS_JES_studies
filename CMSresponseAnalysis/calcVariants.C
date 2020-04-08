@@ -1,11 +1,21 @@
 void calcVariants()
 {
   //C-parameter variation
-  TFile* fzj        = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
-  TFile* fzj_Cp3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
-  TFile* fzj_Cm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
-  TFile* fzj_Trk    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEff.root");
-  TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhoton.root");
+  //TFile* fzj        = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
+  //TFile* fzj_Cp3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
+  //TFile* fzj_Cm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
+  //TFile* fzj_Trk    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEff.root");
+  //TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhoton.root");
+
+  //string outname = "./output_ROOT_files/varPlots_5000000.root"; //Output file
+
+  TFile* fzj        = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000.root");
+  TFile* fzj_Cp3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCp3.root");
+  TFile* fzj_Cm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
+  TFile* fzj_Trk    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varTrkEff.root");
+  TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varPhoton.root");
+
+  string outname = "./output_ROOT_files/varPlots_3000.root"; //Output file
 
   //All jets
   TProfile *pr_Rjet        = 0;
@@ -229,8 +239,7 @@ void calcVariants()
   h_Rjetg_Photon->GetYaxis()->SetTitle("R_{g-jet}^{var} / R_{g-jet}");
   h_Rjetg_Photon->GetYaxis()->SetTitleOffset(1.2);
 
-  string outname = "./output_ROOT_files/varPlots_5000000"; //Output file
-  outname += ".root";
+
   TFile *foutvar = new TFile(outname.c_str(),"RECREATE");
 
   h_Rjet_Cm3->Write("h_Rjet_Cm3");
