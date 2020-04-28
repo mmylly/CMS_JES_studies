@@ -1,21 +1,21 @@
 void calcVariants()
 {
   //C-parameter variation
-  //TFile* fzj        = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
-  //TFile* fzj_Cp3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
-  //TFile* fzj_Cm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
-  //TFile* fzj_Trk    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEff.root");
-  //TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhoton.root");
+  TFile* fzj        = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
+  TFile* fzj_Cp3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
+  TFile* fzj_Cm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
+  TFile* fzj_Trk    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEff.root");
+  TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhoton.root");
 
-  //string outname = "./output_ROOT_files/varPlots_5000000.root"; //Output file
+  string outname = "./output_ROOT_files/varPlots_5000000.root"; //Output file
 
-  TFile* fzj        = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000.root");
-  TFile* fzj_Cp3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCp3.root");
-  TFile* fzj_Cm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varCm3.root");
-  TFile* fzj_Trk    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varTrkEff.root");
-  TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_3000_varPhoton.root");
+  //TFile* fzj        = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000.root");
+  //TFile* fzj_Cp3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCp3.root");
+  //TFile* fzj_Cm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varCm3.root");
+  //TFile* fzj_Trk    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varTrkEff.root");
+  //TFile* fzj_Photon = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_30000_varPhoton.root");
 
-  string outname = "./output_ROOT_files/varPlots_3000.root"; //Output file
+  //string outname = "./output_ROOT_files/varPlots_30000.root"; //Output file
 
   //All jets
   TProfile *pr_Rjet        = 0;
@@ -140,6 +140,7 @@ void calcVariants()
   h_Rjet_Cm3->SetTitle("All jets, Hadron response -3%");
   h_Rjet_Cm3->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
   h_Rjet_Cm3->GetYaxis()->SetTitleOffset(1.2);
+  
   h_Rjet_Trk->Divide(h_Rjet);
   h_Rjet_Trk->SetTitle("All jets, Tracking efficiency -1%");
   h_Rjet_Trk->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
@@ -148,6 +149,7 @@ void calcVariants()
   h_Rjet_Photon->SetTitle("All jets, Photon response -1%");
   h_Rjet_Photon->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
   h_Rjet_Photon->GetYaxis()->SetTitleOffset(1.2);
+  
 
   //b jet
   h_Rjetb_Cp3->Divide(h_Rjetb);
@@ -166,7 +168,7 @@ void calcVariants()
   h_Rjetb_Photon->SetTitle("b-jets, Photon response -1%");
   h_Rjetb_Photon->GetYaxis()->SetTitle("R_{b-jet}^{var} / R_{b-jet}");
   h_Rjetb_Photon->GetYaxis()->SetTitleOffset(1.2);
-
+  
   //c jets
   h_Rjetc_Cp3->Divide(h_Rjetc);
   h_Rjetc_Cp3->SetTitle("c-jets, Hadron response +3%");
@@ -176,6 +178,7 @@ void calcVariants()
   h_Rjetc_Cm3->SetTitle("c-jets, Hadron response -3%");
   h_Rjetc_Cm3->GetYaxis()->SetTitle("R_{c-jet}^{var} / R_{c-jet}");
   h_Rjetc_Cm3->GetYaxis()->SetTitleOffset(1.2);
+  
   h_Rjetc_Trk->Divide(h_Rjetc);
   h_Rjetc_Trk->SetTitle("c-jets, Tracking efficiency -1%");
   h_Rjetc_Trk->GetYaxis()->SetTitle("R_{c-jet}^{var} / R_{c-jet}");
@@ -184,6 +187,7 @@ void calcVariants()
   h_Rjetc_Photon->SetTitle("c-jets, Photon response -1%");
   h_Rjetc_Photon->GetYaxis()->SetTitle("R_{c-jet}^{var} / R_{c-jet}");
   h_Rjetc_Photon->GetYaxis()->SetTitleOffset(1.2);
+  
 
   //s jet
   h_Rjets_Cp3->Divide(h_Rjets);
@@ -194,6 +198,7 @@ void calcVariants()
   h_Rjets_Cm3->SetTitle("s-jets, Hadron response -3%");
   h_Rjets_Cm3->GetYaxis()->SetTitle("R_{s-jet}^{var} / R_{s-jet}");
   h_Rjets_Cm3->GetYaxis()->SetTitleOffset(1.2);
+  
   h_Rjets_Trk->Divide(h_Rjets);
   h_Rjets_Trk->SetTitle("s-jets, Tracking efficiency -1%");
   h_Rjets_Trk->GetYaxis()->SetTitle("R_{s-jet}^{var} / R_{s-jet}");
@@ -202,7 +207,8 @@ void calcVariants()
   h_Rjets_Photon->SetTitle("s-jets, Photon response -1%");
   h_Rjets_Photon->GetYaxis()->SetTitle("R_{s-jet}^{var} / R_{s-jet}");
   h_Rjets_Photon->GetYaxis()->SetTitleOffset(1.2);
-
+  
+ 
   //ud jet
   h_Rjetud_Cp3->Divide(h_Rjetud);
   h_Rjetud_Cp3->SetTitle("ud-jets, Hadron response +3%");
@@ -212,6 +218,7 @@ void calcVariants()
   h_Rjetud_Cm3->SetTitle("ud-jets, Hadron response -3%");
   h_Rjetud_Cm3->GetYaxis()->SetTitle("R_{ud-jet}^{var} / R_{ud-jet}");
   h_Rjetud_Cm3->GetYaxis()->SetTitleOffset(1.2);
+  
   h_Rjetud_Trk->Divide(h_Rjetud);
   h_Rjetud_Trk->SetTitle("ud-jets, Tracking efficiency -1%");
   h_Rjetud_Trk->GetYaxis()->SetTitle("R_{ud-jet}^{var} / R_{ud-jet}");
@@ -220,6 +227,7 @@ void calcVariants()
   h_Rjetud_Photon->SetTitle("ud-jets, Photon response -1%");
   h_Rjetud_Photon->GetYaxis()->SetTitle("R_{ud-jet}^{var} / R_{ud-jet}");
   h_Rjetud_Photon->GetYaxis()->SetTitleOffset(1.2);
+  
 
   //g jet
   h_Rjetg_Cp3->Divide(h_Rjetg);
@@ -230,6 +238,7 @@ void calcVariants()
   h_Rjetg_Cm3->SetTitle("g-jets, Hadron response -3%");
   h_Rjetg_Cm3->GetYaxis()->SetTitle("R_{g-jet}^{var} / R_{g-jet}");
   h_Rjetg_Cm3->GetYaxis()->SetTitleOffset(1.2);
+  
   h_Rjetg_Trk->Divide(h_Rjetg);
   h_Rjetg_Trk->SetTitle("g-jets, Tracking efficiency -1%");
   h_Rjetg_Trk->GetYaxis()->SetTitle("R_{g-jet}^{var} / R_{g-jet}");
@@ -238,7 +247,7 @@ void calcVariants()
   h_Rjetg_Photon->SetTitle("g-jets, Photon response -1%");
   h_Rjetg_Photon->GetYaxis()->SetTitle("R_{g-jet}^{var} / R_{g-jet}");
   h_Rjetg_Photon->GetYaxis()->SetTitleOffset(1.2);
-
+  
 
   TFile *foutvar = new TFile(outname.c_str(),"RECREATE");
 

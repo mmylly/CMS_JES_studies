@@ -4,8 +4,8 @@ void plotVariants()
   double markersize = 0.8;
 
   //Variants file
-  //TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
-  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_3000.root");
+  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
+  //TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_30000.root");
 
   TH1D* h_Rjet_Cp3;
   TH1D* h_Rjet_Cm3;
@@ -427,6 +427,7 @@ void plotVariants()
   setup_trkb->GetYaxis()->SetTitleSize(0.05);
   setup_trkb->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_trkb->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_trkb->Draw();
   line->Draw("SAME");
@@ -453,6 +454,7 @@ void plotVariants()
   setup_trkc->GetYaxis()->SetTitleSize(0.05);
   setup_trkc->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_trkc->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_trkc->Draw();
   line->Draw("SAME");
@@ -479,6 +481,7 @@ void plotVariants()
   setup_trks->GetYaxis()->SetTitleSize(0.05);
   setup_trks->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_trks->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_trks->Draw();
   line->Draw("SAME");
@@ -505,6 +508,7 @@ void plotVariants()
   setup_trkud->GetYaxis()->SetTitleSize(0.05);
   setup_trkud->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_trkud->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_trkud->Draw();
   line->Draw("SAME");
@@ -531,6 +535,7 @@ void plotVariants()
   setup_trkg->GetYaxis()->SetTitleSize(0.05);
   setup_trkg->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_trkg->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_trkg->Draw();
   line->Draw("SAME");
@@ -619,7 +624,7 @@ void plotVariants()
   setup_Photonb->GetYaxis()->SetTitleSize(0.05);
   setup_Photonb->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Photonb->GetXaxis()->SetTitleSize(0.05);
-
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_Photonb->Draw();
   line->Draw("SAME");
@@ -646,6 +651,7 @@ void plotVariants()
   setup_Photonc->GetYaxis()->SetTitleSize(0.05);
   setup_Photonc->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Photonc->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_Photonc->Draw();
   line->Draw("SAME");
@@ -672,6 +678,7 @@ void plotVariants()
   setup_Photons->GetYaxis()->SetTitleSize(0.05);
   setup_Photons->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Photons->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_Photons->Draw();
   line->Draw("SAME");
@@ -698,6 +705,7 @@ void plotVariants()
   setup_Photonud->GetYaxis()->SetTitleSize(0.05);
   setup_Photonud->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Photonud->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_Photonud->Draw();
   line->Draw("SAME");
@@ -724,6 +732,7 @@ void plotVariants()
   setup_Photong->GetYaxis()->SetTitleSize(0.05);
   setup_Photong->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Photong->GetXaxis()->SetTitleSize(0.05);
+  gPad->SetTickx(); gPad->SetTicky();
 
   setup_Photong->Draw();
   line->Draw("SAME");

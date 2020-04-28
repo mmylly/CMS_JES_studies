@@ -12,7 +12,7 @@ void CMSJES::Loop()
   varCp3    = 0;
   varCm3    = 0;
   varTrkEff = 0;
-  varPhoton = 1;
+  varPhoton = 0;
 
   if (varCp3 && varCm3) {cout << "Both C-variants enabled!" << endl; return;}
 
@@ -44,9 +44,12 @@ void CMSJES::Loop()
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
+  //Binit https://github.com/miquork/jetphys/blob/master/settings.h_template
   int const nbinsMPF = 15;
-  const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25,
-                                    228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
+  const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25, 228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
+  //int const nbinsMPF = 25;
+  //const double binsxMPF[nbinsMPF] = 
+  //{15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713};
 
   //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
   string MPFTitle = ";p_{T,tag}^{MC} [GeV];R_{MPF}";
@@ -767,7 +770,6 @@ void CMSJES::Loop()
         } else if (varPhoton) {
           ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale
         }
-
 
         //**** Cold cells
         iEtaCold = floor((cellEta+fabs(coldCells->GetXaxis()->GetBinLowEdge(1)))/
@@ -1514,6 +1516,8 @@ void CMSJES::plotEff(int gen, int Nevt) {
   PFeff->SetMarkerSize(1.5);
   PFeffFr->SetMarkerSize(1.2);
 
+  gPad->SetTickx(); gPad->SetTicky();
+
   gStyle->SetOptStat();
   c4->SetLogx();
   chhEff->Draw("same");
@@ -1522,7 +1526,7 @@ void CMSJES::plotEff(int gen, int Nevt) {
 
   tex->DrawLatex(0.75,0.82,"|#eta|<2.5");
 
-  string plotName = "./plots/Efficiency/trkEff_" + ReadName + ".eps";
+  string plotName = "./plots/Efficiency/trkEff_" + ReadName + ".pdf";
   c4->Print(plotName.c_str());
   delete c4;
 }
@@ -1596,11 +1600,13 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
   hstack_JEF->GetXaxis()->SetTitleOffset(1.1);
   hstack_JEF->GetYaxis()->SetTitleOffset(0.9);
-
   hstack_JEF->GetYaxis()->SetTitle("Jet energy fraction");
   hstack_JEF->GetYaxis()->SetTitleSize(0.045);
   hstack_JEF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   hstack_JEF->GetXaxis()->SetTitleSize(0.05);
+
+  //gPad->SetTickx(); 
+  gPad->SetTicky();
 
   lg->Draw();
   lgEff->Draw();
@@ -1613,7 +1619,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   tex->SetTextColor(kBlack);
   tex->DrawLatex(0.21,0.42,"|#eta^{probe}|<1.3");
 
-  string plotName = "./plots/particleComposition/JEF_probe_" + ReadName + ".eps";
+  string plotName = "./plots/particleComposition/JEF_probe_" + ReadName + ".pdf";
   canv_c->Print(plotName.c_str());
   delete canv_c;
 }
@@ -1685,11 +1691,12 @@ void CMSJES::plotFF(int gen, int Nevt) {
   FFstack->GetYaxis()->SetTitleSize(0.045);
   FFstack->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   FFstack->GetXaxis()->SetTitleSize(0.05);
-
+  //gPad->SetTickx(); 
+  gPad->SetTicky();
   gPad->Modified();
 
   FFlg->Draw();
-  FFcanvName = "./plots/FlavourFraction/" + FFcanvName + ".eps";
+  FFcanvName = "./plots/FlavourFraction/" + FFcanvName + ".pdf";
   FFcanv->Print(FFcanvName.c_str());
   delete FFcanv;
 }
@@ -1873,7 +1880,6 @@ void CMSJES::plotRjet(int gen, int Nevt)
   diff_s ->SetMarkerStyle(kOpenTriangleUp);   diff_s ->SetMarkerColor(kOrange+1);
   diff_c ->SetMarkerStyle(kOpenTriangleDown); diff_c ->SetMarkerColor(kGreen+1);
 
-
   h_diffbg ->SetMarkerStyle(kFullCircle);       h_diffbg ->SetMarkerColor(kRed+1);
   h_diffudg->SetMarkerStyle(kFullDiamond);      h_diffudg->SetMarkerColor(kMagenta+2);
   h_diffsg ->SetMarkerStyle(kFullTriangleUp);   h_diffsg ->SetMarkerColor(kOrange+1);
@@ -1882,7 +1888,6 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffudg->SetLineColor(kMagenta+2);
   h_diffsg ->SetLineColor(kOrange+1);     
   h_diffcg ->SetLineColor(kGreen+1 );
-
 
   TCanvas* canv_diffg = new TCanvas("canv_diffg","",500,400);
   canv_diffg->SetLeftMargin(0.15);
@@ -1900,8 +1905,6 @@ void CMSJES::plotRjet(int gen, int Nevt)
   lz_diffg->AddEntry(diff_s,  "s (PF)",  "p");
   lz_diffg->AddEntry(diff_ud, "ud (PF)", "p");
 
-
-
   h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
   h_diffbg->GetYaxis()->SetTitleSize(0.042);
   h_diffbg->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
@@ -1912,8 +1915,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffbg->GetXaxis()->SetMoreLogLabels();
   h_diffbg->GetXaxis()->SetNoExponent();
 
-
-
+  gPad->SetTickx();   gPad->SetTicky();
 
   h_diffbg->SetStats(0); h_diffbg->SetTitle("");
   h_diffbg->SetAxisRange(0.0,0.042,"Y"); //Vertical axis limits
