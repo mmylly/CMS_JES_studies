@@ -8,13 +8,16 @@ void CMSJES::Loop()
   clock_t t_begin = clock();
 
   //Variant flags
-  bool varCp3, varCm3, varTrkEff, varPhoton;
+  bool varCp3, varCm3, varHCALp3, varHCALm3, varTrkEff, varPhoton;
   varCp3    = 0;
   varCm3    = 0;
+  varHCALp3 = 0;
+  varHCALm3 = 0;
   varTrkEff = 0;
   varPhoton = 0;
 
-  if (varCp3 && varCm3) {cout << "Both C-variants enabled!" << endl; return;}
+  if ((varCp3 + varCm3 + varHCALp3 + varHCALm3 + varTrkEff + varPhoton) > 1) 
+    {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
   srand(1); //srand(time(0));
@@ -39,6 +42,8 @@ void CMSJES::Loop()
   string outname          = "./output_ROOT_files/CMSJES_" + ReadName; //Output file
   if (varCp3)    outname += "_varCp3";
   if (varCm3)    outname += "_varCm3";
+  if (varHCALp3) outname += "_varHCALp3";
+  if (varHCALm3) outname += "_varHCALm3";
   if (varTrkEff) outname += "_varTrkEff";
   if (varPhoton) outname += "_varPhoton";
   outname += ".root";
@@ -318,7 +323,8 @@ void CMSJES::Loop()
   TH2D* cht          = new TH2D("cht"          ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
   TH2D* chtPt        = new TH2D("chtPt"        ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
   TH2D* chtP_curv    = new TH2D("chtP_curv"    ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
-  TH2D* chc          = new TH2D("chc"          ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chcECAL      = new TH2D("chcECAL"      ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
+  TH2D* chcHCAL      = new TH2D("chcHCAL"      ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
   TH2D* chECAL_curv  = new TH2D("chECAL_curv"  ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
   TH2D* chHCAL_curv  = new TH2D("chHCAL_curv"  ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
   TH2D* sigmaTrk     = new TH2D("sigmaTrk"     ,"",nPhi,-TMath::Pi(),TMath::Pi(),nEta,-5.2,5.2);
@@ -563,7 +569,8 @@ void CMSJES::Loop()
     cht          ->Reset();	//Original directions of
     chtPt        ->Reset();	//Charged hadrons
     chtP_curv    ->Reset();	//Linking track momentum to the cell
-    chc          ->Reset();	//For calo-trk weighting
+    chcECAL      ->Reset();	//For calo-trk weighting
+    chcHCAL      ->Reset();	//For calo-trk weighting
     chECAL_curv  ->Reset();	//Calo jet calculation
     chHCAL_curv  ->Reset();	//       -||-
     nhECAL       ->Reset();	//Neutral hadrons depositing in ECAL (also ch when trk fails)
@@ -684,7 +691,11 @@ void CMSJES::Loop()
 
           //Calorimeter deposit for the weighting
           if (!trkFail) {
-            chc->Fill((*prtclnij_phi)[i], p4.Eta(), respA*p4.E());
+            //chc->Fill((*prtclnij_phi)[i], p4.Eta(), respA*p4.E());
+            chcECAL->Fill((*prtclnij_phi)[i], p4.Eta(),
+                           0.5*(1-HHeFrac)*respEHE*p4.E());
+            chcHCAL->Fill((*prtclnij_phi)[i], p4.Eta(), 
+                          (0.5*(1-HHeFrac)*respEHE + HHeFrac*respHHe)*p4.E());
           }
 
           //ECAL and HCAL deposits
@@ -738,15 +749,16 @@ void CMSJES::Loop()
         
         //Skip if no energy deposit in the cell
         if (cht->GetBinContent(i,j)         == 0.0 && chtPt->GetBinContent(i,j)       == 0.0 &&
-            chtP_curv->GetBinContent(i,j)   == 0.0 && chc->GetBinContent(i,j)         == 0.0 &&
+            chtP_curv->GetBinContent(i,j)   == 0.0 && 
+            chcECAL->GetBinContent(i,j)     == 0.0 && chcHCAL->GetBinContent(i,j)     == 0.0 &&
             chECAL_curv->GetBinContent(i,j) == 0.0 && chHCAL_curv->GetBinContent(i,j) == 0.0 &&
             nhECAL->GetBinContent(i,j)      == 0.0 && nhHCAL->GetBinContent(i,j)      == 0.0 &&
             ne->GetBinContent(i,j)          == 0.0 && eCalo->GetBinContent(i,j)       == 0.0)
             continue;
         
 
-        double w = 1.0; int iEtaCold; double totalChargedMomentum; 
-        double nhHCAL_calib = 0.0; double chc_calib = 0.0; double caloResolution = 0.0;
+        double w = 1.0; int iEtaCold; double totalChargedMomentum; double chc = 0.0;
+        double nhHCAL_calib = 0.0;    double chc_calib = 0.0;      double caloResolution = 0.0;
         p4_chc.SetPtEtaPhiE(0,0,0,0); p4_cht.SetPtEtaPhiE(0,0,0,0);
         p4.SetPtEtaPhiE(0,0,0,0);     p4_rescale.SetPtEtaPhiE(0,0,0,0);
         delta = 0.0; cellSigma = 0.0;        
@@ -758,13 +770,15 @@ void CMSJES::Loop()
         if (varCp3) {
           nhECAL     ->SetBinContent(i,j, 1.03*nhECAL->GetBinContent(i,j));
           nhHCAL     ->SetBinContent(i,j, 1.03*nhHCAL->GetBinContent(i,j));
-          chc        ->SetBinContent(i,j, 1.03*chc->GetBinContent(i,j));
+          chcECAL    ->SetBinContent(i,j, 1.03*chcECAL->GetBinContent(i,j));
+          chcHCAL    ->SetBinContent(i,j, 1.03*chcHCAL->GetBinContent(i,j));
           chECAL_curv->SetBinContent(i,j, 1.03*chECAL_curv->GetBinContent(i,j));
           chHCAL_curv->SetBinContent(i,j, 1.03*chHCAL_curv->GetBinContent(i,j));
         } else if (varCm3) {
           nhECAL     ->SetBinContent(i,j, 0.97*nhECAL->GetBinContent(i,j));
           nhHCAL     ->SetBinContent(i,j, 0.97*nhHCAL->GetBinContent(i,j));
-          chc        ->SetBinContent(i,j, 0.97*chc->GetBinContent(i,j));
+          chcECAL    ->SetBinContent(i,j, 0.97*chcECAL->GetBinContent(i,j));
+          chcHCAL    ->SetBinContent(i,j, 0.97*chcHCAL->GetBinContent(i,j));
           chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
           chHCAL_curv->SetBinContent(i,j, 0.97*chHCAL_curv->GetBinContent(i,j));
         } else if (varPhoton) {
@@ -823,8 +837,13 @@ void CMSJES::Loop()
         delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL_calib;
 
         //Calibrated calorimetric energy deposit from charged hadrons
-        if (chc->GetBinContent(i,j) > 0.0) {
-          chc_calib = fr_all->GetX(chc->GetBinContent(i,j), 0.1, 7000.0);
+
+
+
+        chc = chcECAL->GetBinContent(i,j) + chcHCAL->GetBinContent(i,j);
+
+        if (chc > 0.0) {
+          chc_calib = fr_all->GetX(chc, 0.1, 7000.0);
         }
 
         if (delta < cellSigma) { //Shadowing
