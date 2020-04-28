@@ -781,6 +781,14 @@ void CMSJES::Loop()
           chcHCAL    ->SetBinContent(i,j, 0.97*chcHCAL->GetBinContent(i,j));
           chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
           chHCAL_curv->SetBinContent(i,j, 0.97*chHCAL_curv->GetBinContent(i,j));
+        } else if (varHCALp3) {
+          nhHCAL     ->SetBinContent(i,j, 1.03*nhHCAL->GetBinContent(i,j));
+          chcHCAL    ->SetBinContent(i,j, 1.03*chcHCAL->GetBinContent(i,j));
+          chHCAL_curv->SetBinContent(i,j, 1.03*chHCAL_curv->GetBinContent(i,j));
+        } else if (varHCALm3) {
+          nhHCAL     ->SetBinContent(i,j, 0.97*nhHCAL->GetBinContent(i,j));
+          chcHCAL    ->SetBinContent(i,j, 0.97*chcHCAL->GetBinContent(i,j));
+          chHCAL_curv->SetBinContent(i,j, 0.97*chHCAL_curv->GetBinContent(i,j));
         } else if (varPhoton) {
           ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale
         }
