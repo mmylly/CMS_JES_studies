@@ -12,6 +12,7 @@ void CMSJES::Loop()
        varHadHCALp3, varHadHCALm3, 
        varHadECALp3, varHadECALm3, 
        varTrkEffm1,  varTrkEffm3,
+       varECALm1, varECALm3,
        varPhoton;
   varCp3       = 0;
   varCm3       = 0;
@@ -21,10 +22,12 @@ void CMSJES::Loop()
   varHadECALm3 = 0;
   varTrkEffm1  = 0;
   varTrkEffm3  = 0;
+  varECALm1    = 0;
+  varECALm3    = 0;
   varPhoton    = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
-       + varTrkEffm1 + varTrkEffm3 + varPhoton) > 1) 
+       + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhoton) > 1) 
     {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
@@ -56,6 +59,8 @@ void CMSJES::Loop()
   if (varHadECALm3) outname += "_varHadECALm3";
   if (varTrkEffm1) outname  += "_varTrkEffm1";
   if (varTrkEffm3) outname  += "_varTrkEffm3";
+  if (varECALm1) outname    += "_varECALm1";
+  if (varECALm3) outname    += "_varECALm3";
   if (varPhoton) outname    += "_varPhoton";
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -809,6 +814,16 @@ void CMSJES::Loop()
           nhECAL     ->SetBinContent(i,j, 0.97*nhECAL->GetBinContent(i,j));
           chcECAL    ->SetBinContent(i,j, 0.97*chcECAL->GetBinContent(i,j));
           chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
+        } else if (varECALm1) { //ECAL scale variation -1% for photons and hadrons
+          nhECAL     ->SetBinContent(i,j, 0.99*nhECAL->GetBinContent(i,j));
+          chcECAL    ->SetBinContent(i,j, 0.99*chcECAL->GetBinContent(i,j));
+          chECAL_curv->SetBinContent(i,j, 0.99*chECAL_curv->GetBinContent(i,j));
+          ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j));
+        } else if (varECALm3) { //ECAL scale variation -3% for photons and hadrons
+          nhECAL     ->SetBinContent(i,j, 0.97*nhECAL->GetBinContent(i,j));
+          chcECAL    ->SetBinContent(i,j, 0.97*chcECAL->GetBinContent(i,j));
+          chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
+          ne         ->SetBinContent(i,j, 0.97*ne->GetBinContent(i,j));
         } else if (varPhoton) {
           ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale
         }
