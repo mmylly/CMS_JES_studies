@@ -4,8 +4,8 @@ void plotVariants()
   double markersize = 0.8;
 
   //Variants file
-  //TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
-  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_30000.root");
+  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
+  //TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_30000.root");
 
   TH1D* h_Rjet_Cp3;
   TH1D* h_Rjet_Cm3;
@@ -68,24 +68,6 @@ void plotVariants()
   fzj->GetObject("h_Rjetg_Cm3", h_Rjetg_Cm3);
   //fzj->GetObject("h_Rjetg_Trk", h_Rjetg_Trk);
   //fzj->GetObject("h_Rjetg_Photon", h_Rjetg_Photon);
-
-//Var SPR
-
-  // SPR +-3% JEC paper
-  TGraph *JEC_SPRp3      = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRplus3.txt" );
-  TGraph *JEC_SPRm3      = new TGraph("data_and_MC_input/Response/JEC_PFJet_SPRminus3.txt" );
-  TGraph *JEC_calo_SPRp3 = new TGraph("data_and_MC_input/Response/JEC_Calo_SPRplus3.txt" );
-  TGraph *JEC_calo_SPRm3 = new TGraph("data_and_MC_input/Response/JEC_Calo_SPRminus3.txt" );
-
-  JEC_SPRp3->SetMarkerStyle(kOpenCircle);            JEC_SPRp3->SetMarkerColor(kRed);
-  JEC_SPRm3->SetMarkerStyle(kOpenSquare);            JEC_SPRm3->SetMarkerColor(kBlue+1);
-  JEC_calo_SPRp3->SetMarkerStyle(kOpenTriangleUp);   JEC_calo_SPRp3->SetMarkerColor(kOrange+1);
-  JEC_calo_SPRm3->SetMarkerStyle(kOpenTriangleDown); JEC_calo_SPRm3->SetMarkerColor(kGreen+2);
-
-  JEC_SPRp3->SetMarkerSize(markersize);
-  JEC_SPRm3->SetMarkerSize(markersize);
-  JEC_calo_SPRp3->SetMarkerSize(markersize);
-  JEC_calo_SPRm3->SetMarkerSize(markersize);
 
 // C +-3%
 
