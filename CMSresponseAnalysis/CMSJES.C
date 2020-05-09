@@ -11,7 +11,7 @@ void CMSJES::Loop()
   bool varCp3, varCm3, 
        varHadHCALp3, varHadHCALm3, 
        varHadECALp3, varHadECALm3, 
-       varTrkEff, 
+       varTrkEffm1,  varTrkEffm3,
        varPhoton;
   varCp3       = 0;
   varCm3       = 0;
@@ -19,11 +19,12 @@ void CMSJES::Loop()
   varHadHCALm3 = 0;
   varHadECALp3 = 0;
   varHadECALm3 = 0;
-  varTrkEff    = 0;
+  varTrkEffm1  = 0;
+  varTrkEffm3  = 0;
   varPhoton    = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
-       + varTrkEff + varPhoton) > 1) 
+       + varTrkEffm1 + varTrkEffm3 + varPhoton) > 1) 
     {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
@@ -53,7 +54,8 @@ void CMSJES::Loop()
   if (varHadHCALm3) outname += "_varHadHCALm3";
   if (varHadECALp3) outname += "_varHadECALp3";
   if (varHadECALm3) outname += "_varHadECALm3";
-  if (varTrkEff) outname    += "_varTrkEff";
+  if (varTrkEffm1) outname  += "_varTrkEffm1";
+  if (varTrkEffm3) outname  += "_varTrkEffm3";
   if (varPhoton) outname    += "_varPhoton";
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -666,7 +668,8 @@ void CMSJES::Loop()
 
           eff = max(eff,0.0);
 
-          if (varTrkEff) eff *= 0.99; //-1% variation to track efficiency
+          if (varTrkEffm1) eff *= 0.99; //-1% variation to track efficiency
+          if (varTrkEffm3) eff *= 0.97; //-3% variation to track efficiency
 
           //Tracking efficiency plot
           if (fabs((*prtclnij_eta)[i]) < 2.5) {
