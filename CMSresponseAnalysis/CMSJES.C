@@ -8,15 +8,22 @@ void CMSJES::Loop()
   clock_t t_begin = clock();
 
   //Variant flags
-  bool varCp3, varCm3, varHCALp3, varHCALm3, varTrkEff, varPhoton;
-  varCp3    = 0;
-  varCm3    = 0;
-  varHCALp3 = 0;
-  varHCALm3 = 0;
-  varTrkEff = 0;
-  varPhoton = 0;
+  bool varCp3, varCm3, 
+       varHadHCALp3, varHadHCALm3, 
+       varHadECALp3, varHadECALm3, 
+       varTrkEff, 
+       varPhoton;
+  varCp3       = 0;
+  varCm3       = 0;
+  varHadHCALp3 = 0;
+  varHadHCALm3 = 0;
+  varHadECALp3 = 0;
+  varHadECALm3 = 0;
+  varTrkEff    = 0;
+  varPhoton    = 0;
 
-  if ((varCp3 + varCm3 + varHCALp3 + varHCALm3 + varTrkEff + varPhoton) > 1) 
+  if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
+       + varTrkEff + varPhoton) > 1) 
     {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
@@ -38,14 +45,16 @@ void CMSJES::Loop()
   }
 
   if (fChain == 0) return;
-  Long64_t nentries       = fChain->GetEntriesFast();
-  string outname          = "./output_ROOT_files/CMSJES_" + ReadName; //Output file
-  if (varCp3)    outname += "_varCp3";
-  if (varCm3)    outname += "_varCm3";
-  if (varHCALp3) outname += "_varHCALp3";
-  if (varHCALm3) outname += "_varHCALm3";
-  if (varTrkEff) outname += "_varTrkEff";
-  if (varPhoton) outname += "_varPhoton";
+  Long64_t nentries          = fChain->GetEntriesFast();
+  string outname             = "./output_ROOT_files/CMSJES_" + ReadName; //Output file
+  if (varCp3)    outname    += "_varCp3";
+  if (varCm3)    outname    += "_varCm3";
+  if (varHadHCALp3) outname += "_varHadHCALp3";
+  if (varHadHCALm3) outname += "_varHadHCALm3";
+  if (varHadECALp3) outname += "_varHadECALp3";
+  if (varHadECALm3) outname += "_varHadECALm3";
+  if (varTrkEff) outname    += "_varTrkEff";
+  if (varPhoton) outname    += "_varPhoton";
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
@@ -781,14 +790,22 @@ void CMSJES::Loop()
           chcHCAL    ->SetBinContent(i,j, 0.97*chcHCAL->GetBinContent(i,j));
           chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
           chHCAL_curv->SetBinContent(i,j, 0.97*chHCAL_curv->GetBinContent(i,j));
-        } else if (varHCALp3) {
+        } else if (varHadHCALp3) {
           nhHCAL     ->SetBinContent(i,j, 1.03*nhHCAL->GetBinContent(i,j));
           chcHCAL    ->SetBinContent(i,j, 1.03*chcHCAL->GetBinContent(i,j));
           chHCAL_curv->SetBinContent(i,j, 1.03*chHCAL_curv->GetBinContent(i,j));
-        } else if (varHCALm3) {
+        } else if (varHadHCALm3) {
           nhHCAL     ->SetBinContent(i,j, 0.97*nhHCAL->GetBinContent(i,j));
           chcHCAL    ->SetBinContent(i,j, 0.97*chcHCAL->GetBinContent(i,j));
           chHCAL_curv->SetBinContent(i,j, 0.97*chHCAL_curv->GetBinContent(i,j));
+        } else if (varHadECALp3) {
+          nhECAL     ->SetBinContent(i,j, 1.03*nhECAL->GetBinContent(i,j));
+          chcECAL    ->SetBinContent(i,j, 1.03*chcECAL->GetBinContent(i,j));
+          chECAL_curv->SetBinContent(i,j, 1.03*chECAL_curv->GetBinContent(i,j));
+        } else if (varHadECALm3) {
+          nhECAL     ->SetBinContent(i,j, 0.97*nhECAL->GetBinContent(i,j));
+          chcECAL    ->SetBinContent(i,j, 0.97*chcECAL->GetBinContent(i,j));
+          chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
         } else if (varPhoton) {
           ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale
         }
