@@ -13,7 +13,7 @@ void CMSJES::Loop()
        varHadECALp3, varHadECALm3, 
        varTrkEffm1,  varTrkEffm3,
        varECALm1, varECALm3,
-       varPhoton;
+       varPhotonm1;
   varCp3       = 0;
   varCm3       = 0;
   varHadHCALp3 = 0;
@@ -24,10 +24,10 @@ void CMSJES::Loop()
   varTrkEffm3  = 0;
   varECALm1    = 0;
   varECALm3    = 0;
-  varPhoton    = 0;
+  varPhotonm1  = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
-       + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhoton) > 1) 
+       + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1) > 1) 
     {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
@@ -61,7 +61,7 @@ void CMSJES::Loop()
   if (varTrkEffm3) outname  += "_varTrkEffm3";
   if (varECALm1) outname    += "_varECALm1";
   if (varECALm3) outname    += "_varECALm3";
-  if (varPhoton) outname    += "_varPhoton";
+  if (varPhotonm1) outname  += "_varPhotonm1";
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
@@ -824,7 +824,7 @@ void CMSJES::Loop()
           chcECAL    ->SetBinContent(i,j, 0.97*chcECAL->GetBinContent(i,j));
           chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
           ne         ->SetBinContent(i,j, 0.97*ne->GetBinContent(i,j));
-        } else if (varPhoton) {
+        } else if (varPhotonm1) {
           ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale
         }
 
@@ -2030,8 +2030,9 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
-  hzj_Rjet->SetAxisRange(0.90,0.95,"Y");
-  hzj_Rjet->SetAxisRange(31.75,1258,"X"); 
+  hzj_Rjet->SetAxisRange(0.905,0.95,"Y");
+  //hzj_Rjet->SetAxisRange(31.75,1258,"X");
+  //hzj_Rjet->GetXaxis()->SetRangeUser(31.75,1258); 
 
   hzj_Rjet->GetXaxis()->SetMoreLogLabels();
   hzj_Rjet->GetXaxis()->SetNoExponent();
@@ -2056,7 +2057,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjetc->Draw("SAMEP");
   lz_Rjet->Draw("SAMEP");
 
-  plotName = "./plots/Rjet/Rjet_" + ReadName + ".eps";
+  plotName = "./plots/Rjet/Rjet_" + ReadName + ".pdf";
   canv_Rjet->Print(plotName.c_str()); delete canv_Rjet;
 }
 
@@ -2120,7 +2121,7 @@ void CMSJES::plotF(int gen, int Nevt)
   hzj_Fc->SetMarkerSize(markersize);
 
   //Legend
-  TLegend* lz_F = new TLegend(0.62,0.65,0.89,0.88);
+  TLegend* lz_F = new TLegend(0.62,0.65,0.8,0.88);
   lz_F->SetBorderSize(0);
   lz_F->AddEntry(hzj_Fb,  "b",     "p");
   lz_F->AddEntry(hzj_Fc,  "c",     "p");
@@ -2157,7 +2158,7 @@ void CMSJES::plotF(int gen, int Nevt)
   lz_F->Draw("SAMEP");
 
   //Save plot
-  string plotName = "./plots/F/F_" + ReadName + ".eps";
+  string plotName = "./plots/F/F_" + ReadName + ".pdf";
   canv_F->Print(plotName.c_str()); delete canv_F;
 }
 
