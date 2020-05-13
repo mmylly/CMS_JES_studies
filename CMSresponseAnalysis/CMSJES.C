@@ -13,7 +13,7 @@ void CMSJES::Loop()
        varHadECALp3, varHadECALm3, 
        varTrkEffm1,  varTrkEffm3,
        varECALm1, varECALm3,
-       varPhotonm1;
+       varPhotonm1, varPhotonm3;
   varCp3       = 0;
   varCm3       = 0;
   varHadHCALp3 = 0;
@@ -25,9 +25,10 @@ void CMSJES::Loop()
   varECALm1    = 0;
   varECALm3    = 0;
   varPhotonm1  = 0;
+  varPhotonm3  = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
-       + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1) > 1) 
+       + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1 + varPhotonm3) > 1) 
     {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
@@ -62,6 +63,7 @@ void CMSJES::Loop()
   if (varECALm1) outname    += "_varECALm1";
   if (varECALm3) outname    += "_varECALm3";
   if (varPhotonm1) outname  += "_varPhotonm1";
+  if (varPhotonm3) outname  += "_varPhotonm3";
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
@@ -825,7 +827,9 @@ void CMSJES::Loop()
           chECAL_curv->SetBinContent(i,j, 0.97*chECAL_curv->GetBinContent(i,j));
           ne         ->SetBinContent(i,j, 0.97*ne->GetBinContent(i,j));
         } else if (varPhotonm1) {
-          ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale
+          ne         ->SetBinContent(i,j, 0.99*ne->GetBinContent(i,j)); // Photon scale -1%
+        } else if (varPhotonm3) {
+          ne         ->SetBinContent(i,j, 0.97*ne->GetBinContent(i,j)); // Photon scale -3%
         }
 
         //**** Cold cells
