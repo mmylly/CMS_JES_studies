@@ -68,11 +68,11 @@ void CMSJES::Loop()
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
   //Binit https://github.com/miquork/jetphys/blob/master/settings.h_template
-  //int const nbinsMPF = 15;
-  //const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25, 228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
-  int const nbinsMPF = 25;
-  const double binsxMPF[nbinsMPF] = 
-  {15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713};
+  int const nbinsMPF = 15;
+  const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25, 228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
+  //int const nbinsMPF = 25;
+  //const double binsxMPF[nbinsMPF] = 
+  //{15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713};
 
   //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
   string MPFTitle = ";p_{T,tag}^{MC} [GeV];R_{MPF}";
@@ -1652,14 +1652,16 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   lg->AddEntry(hnhf,    "NH",    "f");
   lg->AddEntry(hchf,    "CH",    "f");
 
-  TLegend* lgEff = new TLegend(0.15,0.3,0.4,0.4);
+  TLegend* lgEff = new TLegend(0.15,0.25,0.4,0.35);
   lgEff->AddEntry(chnhf,"#bf{NH Run2016GH}", "p");
   lgEff->AddEntry(chf,  "#bf{CH Run2016GH}", "p");
   lgEff->SetBorderSize(0); lgEff->SetFillStyle(0);
   lgEff->SetTextSize(0.035);
 
+
   hstack_JEF->Draw("HISTO");
-  hstack_JEF->GetYaxis()->SetRange(0.0,1.0);
+  hstack_JEF->GetYaxis()->SetRangeUser(0.0,1.0);
+  hstack_JEF->Draw("HISTO");
   hstack_JEF->SetTitle("");
   hstack_JEF->GetXaxis()->SetMoreLogLabels();
   hstack_JEF->GetXaxis()->SetNoExponent();
@@ -1670,8 +1672,11 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   hstack_JEF->GetYaxis()->SetTitleSize(0.045);
   hstack_JEF->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   hstack_JEF->GetXaxis()->SetTitleSize(0.05);
+  //hstack_JEF->Draw("same"); //For error bars
 
-  //gPad->SetTickx(); 
+  gStyle->SetHistTopMargin(0.);
+
+  gPad->SetTickx(); 
   gPad->SetTicky();
 
   lg->Draw();
@@ -1683,7 +1688,11 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   tex->SetNDC();
   tex->SetTextSize(0.04);
   tex->SetTextColor(kBlack);
-  tex->DrawLatex(0.21,0.42,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.21,0.41,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.21,0.36,"#alpha<0.3");
+  tex->DrawLatex(0.75,0.92,"#sqrt{s}=13 TeV");
+
+
 
   string plotName = "./plots/particleComposition/JEF_probe_" + ReadName + ".pdf";
   canv_c->Print(plotName.c_str());
@@ -1730,15 +1739,15 @@ void CMSJES::plotFF(int gen, int Nevt) {
 
   string FFcanvName = ReadName + "_FF";
   TCanvas* FFcanv = new TCanvas(FFcanvName.c_str(),"",500,400);
-  TLegend* FFlg = new TLegend(0.91, 0.67, 1.00, 0.90);
+  TLegend* FFlg = new TLegend(0.91, 0.6, 1.00, 0.90);
   FFcanv->SetLogx();
   FFlg->SetBorderSize(0); FFlg->SetFillStyle(0);
   FFcanv->SetBottomMargin(0.13);
-  FFlg->AddEntry(FFb,  "b",  "f");
-  FFlg->AddEntry(FFc,  "c",  "f");
-  FFlg->AddEntry(FFs,  "s",  "f");
-  FFlg->AddEntry(FFud, "ud", "f");
-  FFlg->AddEntry(FFg,  "g",  "f");
+  FFlg->AddEntry(FFb,  " b",  "f");
+  FFlg->AddEntry(FFc,  " c",  "f");
+  FFlg->AddEntry(FFs,  " s",  "f");
+  FFlg->AddEntry(FFud, " ud", "f");
+  FFlg->AddEntry(FFg,  " g",  "f");
   FFb->SetFillColor(46);  
   FFc->SetFillColor(kOrange);
   FFs->SetFillColor(kSpring+8);
@@ -1757,11 +1766,24 @@ void CMSJES::plotFF(int gen, int Nevt) {
   FFstack->GetYaxis()->SetTitleSize(0.045);
   FFstack->GetXaxis()->SetTitle("p_{T,tag}^{reco} (GeV)");
   FFstack->GetXaxis()->SetTitleSize(0.05);
-  //gPad->SetTickx(); 
+  gPad->SetTickx(); 
   gPad->SetTicky();
   gPad->Modified();
 
+  gStyle->SetHistTopMargin(0.);
+
+
   FFlg->Draw();
+
+  TLatex *tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextSize(0.04);
+  tex->SetTextColor(kBlack);
+  tex->DrawLatex(0.21,0.41,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.21,0.36,"#alpha<0.3");
+  tex->DrawLatex(0.75,0.92,"#sqrt{s}=13 TeV");
+
+
   FFcanvName = "./plots/FlavourFraction/" + FFcanvName + ".pdf";
   FFcanv->Print(FFcanvName.c_str());
   delete FFcanv;
@@ -1809,17 +1831,16 @@ void CMSJES::plotMPF(int gen, int Nevt)
 
   mc_zj_MPFntI_2018->SetMarkerStyle( kOpenSquare); mc_zj_MPFntI_2018->SetMarkerColor( kBlack  );
 
-
   //Legend
-  TLegend* lz_MPF = new TLegend(0.62,0.70,0.89,0.89);
+  TLegend* lz_MPF = new TLegend(0.6,0.76,0.87,0.87);
   lz_MPF->SetBorderSize(0);
-  lz_MPF->AddEntry(hzj_MPF, "All jets"  , "p");
+  lz_MPF->AddEntry(hzj_MPF, "All jets", "p");
   lz_MPF->AddEntry(mc_zj_MPFntI_2018, "FullSim 2018ABCD", "p");
 
   //Title and axis setup
   hzj_MPF->SetStats(0); //Suppress stat box
   hzj_MPF->SetTitle("");
-  hzj_MPF->SetAxisRange(0.86,1.0,"Y"); //Vertical axis limits
+  hzj_MPF->SetAxisRange(0.89,0.95,"Y"); //Vertical axis limits
 
   hzj_MPF->GetXaxis()->SetMoreLogLabels();
   hzj_MPF->GetXaxis()->SetNoExponent();
@@ -1836,6 +1857,12 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPF->Draw("p");
   mc_zj_MPFntI_2018->Draw("P SAME");
   lz_MPF->Draw();
+
+  TLatex *tex = new TLatex(); tex->SetNDC();
+  tex->SetTextSize(0.04); tex->SetTextColor(kBlack);
+  tex->DrawLatex(0.75,0.92,"#sqrt{s}=13 TeV");
+  tex->DrawLatex(0.18,0.82,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.18,0.77,"#alpha<0.3");
 
   string plotName = "./plots/mpf/MPF_zmmjet_" + ReadName + ".pdf";
   canv_MPF->Print(plotName.c_str()); delete canv_MPF;
@@ -1892,6 +1919,12 @@ void CMSJES::plotMPF(int gen, int Nevt)
   hzj_MPFud->Draw("SAMEP");
   hzj_MPFg->Draw("SAMEP");
   lz_all->Draw("SAMEP");
+
+  TLatex *tex2 = new TLatex(); tex2->SetNDC();
+  tex2->SetTextSize(0.04); tex2->SetTextColor(kBlack);
+  tex2->DrawLatex(0.75,0.92,"#sqrt{s}=13 TeV");
+  tex2->DrawLatex(0.18,0.82,"|#eta^{probe}|<1.3");
+  tex2->DrawLatex(0.18,0.77,"#alpha<0.3");
 
   plotName = "./plots/mpf/MPF_zmmjet_all_" + ReadName + ".pdf";
   canv_all->Print(plotName.c_str());
@@ -1955,21 +1988,22 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffsg ->SetLineColor(kOrange+1);     
   h_diffcg ->SetLineColor(kGreen+1 );
 
-  TCanvas* canv_diffg = new TCanvas("canv_diffg","",500,400);
+  TCanvas* canv_diffg = new TCanvas("canv_diffg","",500,500);
   canv_diffg->SetLeftMargin(0.15);
   canv_diffg->SetBottomMargin(0.13);
 
   //Legend
-  TLegend* lz_diffg = new TLegend(0.62,0.60,0.89,0.89);
+  TLegend* lz_diffg = new TLegend(0.5,0.7,0.85,0.85);
+  lz_diffg->SetNColumns(2);
   lz_diffg->SetBorderSize(0);
-  lz_diffg->AddEntry(h_diffbg,           "b");
-  lz_diffg->AddEntry(h_diffcg,           "c");
-  lz_diffg->AddEntry(h_diffsg,           "s");
-  lz_diffg->AddEntry(h_diffudg,         "ud");
-  lz_diffg->AddEntry(diff_b,  "b (PF)",  "p");
-  lz_diffg->AddEntry(diff_c,  "c (PF)",  "p");
-  lz_diffg->AddEntry(diff_s,  "s (PF)",  "p");
-  lz_diffg->AddEntry(diff_ud, "ud (PF)", "p");
+  lz_diffg->AddEntry(h_diffbg,           "b (Our)");
+  lz_diffg->AddEntry(diff_b,  "b (FullSim)",  "p");
+  lz_diffg->AddEntry(h_diffcg,           "c (Our)");
+  lz_diffg->AddEntry(diff_c,  "c (FullSim)",  "p");
+  lz_diffg->AddEntry(h_diffsg,           "s (Our)");
+  lz_diffg->AddEntry(diff_s,  "s (FullSim)",  "p");
+  lz_diffg->AddEntry(h_diffudg,         "ud (Our)");
+  lz_diffg->AddEntry(diff_ud, "ud (Fullsim)", "p");
 
   h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
   h_diffbg->GetYaxis()->SetTitleSize(0.042);
@@ -1984,9 +2018,12 @@ void CMSJES::plotRjet(int gen, int Nevt)
   gPad->SetTickx();   gPad->SetTicky();
 
   h_diffbg->SetStats(0); h_diffbg->SetTitle("");
-  h_diffbg->SetAxisRange(0.0,0.042,"Y"); //Vertical axis limits
+  h_diffbg->SetAxisRange(-0.01,0.058,"Y"); //Vertical axis limits
+
+  TLine *line = new TLine(31.75,0,1258.25,0); 
 
   h_diffbg->Draw("P");
+  line->Draw("SAME");
   diff_ud->Draw("SAMEP");
   diff_b->Draw("SAMEP");
   diff_s->Draw("SAMEP");
@@ -1997,13 +2034,19 @@ void CMSJES::plotRjet(int gen, int Nevt)
   lz_diffg->Draw("SAMEP");
   canv_diffg->SetLogx();
 
-  string plotName = "./plots/Rjet/gluonDiff_" + ReadName + ".eps";
+  TLatex *tex = new TLatex(); tex->SetNDC();
+  tex->SetTextSize(0.04); tex->SetTextColor(kBlack);
+  tex->DrawLatex(0.7,0.92,"#sqrt{s}=13 TeV");
+  tex->DrawLatex(0.2,0.81,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.2,0.76,"#alpha<0.3");
+
+  string plotName = "./plots/Rjet/gluonDiff_" + ReadName + ".pdf";
   canv_diffg->Print(plotName.c_str());
   delete canv_diffg;
 
 
   //Canvas
-  TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",500,400);
+  TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",500,500);
   canv_Rjet->SetLeftMargin(0.15);
   canv_Rjet->SetBottomMargin(0.13);
 
@@ -2022,7 +2065,8 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjetc ->SetLineColor(kGreen+2);
 
   //Legend
-  TLegend* lz_Rjet = new TLegend(0.55,0.17,0.75,0.42);
+  TLegend* lz_Rjet = new TLegend(0.62,0.75,0.87,0.87);
+  lz_Rjet->SetNColumns(2);
   lz_Rjet->SetBorderSize(0);
   lz_Rjet->AddEntry(hzj_Rjet,   "All",   "p");
   lz_Rjet->AddEntry(hzj_Rjetb,  "b",     "p");
@@ -2034,14 +2078,14 @@ void CMSJES::plotRjet(int gen, int Nevt)
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
-  hzj_Rjet->SetAxisRange(0.905,0.95,"Y");
+  hzj_Rjet->SetAxisRange(0.912,0.955,"Y");
   //hzj_Rjet->SetAxisRange(31.75,1258,"X");
   //hzj_Rjet->GetXaxis()->SetRangeUser(31.75,1258); 
 
   hzj_Rjet->GetXaxis()->SetMoreLogLabels();
   hzj_Rjet->GetXaxis()->SetNoExponent();
   canv_Rjet->SetLogx();
-  hzj_Rjet->GetYaxis()->SetTitleOffset(1.1);
+  hzj_Rjet->GetYaxis()->SetTitleOffset(1.5);
   hzj_Rjet->GetXaxis()->SetTitleOffset(1.1);
 
   hzj_Rjet->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
@@ -2060,6 +2104,13 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjets->Draw("SAMEP");
   hzj_Rjetc->Draw("SAMEP");
   lz_Rjet->Draw("SAMEP");
+
+  TLatex *tex2 = new TLatex(); tex2->SetNDC();
+  tex2->SetTextSize(0.04); tex2->SetTextColor(kBlack);
+  tex2->DrawLatex(0.7,0.92,"#sqrt{s}=13 TeV");
+  tex2->DrawLatex(0.2,0.82,"|#eta^{probe}|<1.3");
+  tex2->DrawLatex(0.2,0.77,"#alpha<0.3");
+
 
   plotName = "./plots/Rjet/Rjet_" + ReadName + ".pdf";
   canv_Rjet->Print(plotName.c_str()); delete canv_Rjet;
@@ -2160,6 +2211,12 @@ void CMSJES::plotF(int gen, int Nevt)
   hzj_Fs->Draw("SAMEP");
   hzj_Fc->Draw("SAMEP");
   lz_F->Draw("SAMEP");
+
+  TLatex *tex = new TLatex(); tex->SetNDC();
+  tex->SetTextSize(0.04); tex->SetTextColor(kBlack);
+  tex->DrawLatex(0.75,0.92,"#sqrt{s}=13 TeV");
+  tex->DrawLatex(0.2,0.82,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.2,0.77,"#alpha<0.3");
 
   //Save plot
   string plotName = "./plots/F/F_" + ReadName + ".pdf";
