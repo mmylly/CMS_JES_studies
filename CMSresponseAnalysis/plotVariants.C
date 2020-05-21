@@ -5,7 +5,6 @@ void plotVariants()
 
   //Variants file
   TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
-  //TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_30000.root");
 
   TH1D* h_Rjet_Cp3;
   TH1D* h_Rjet_Cm3;
@@ -69,8 +68,8 @@ void plotVariants()
   //fzj->GetObject("h_Rjetg_Trk", h_Rjetg_Trk);
   //fzj->GetObject("h_Rjetg_Photon", h_Rjetg_Photon);
 
-// C +-3%
 
+// C +-3%
   TCanvas* canv_C_all = new TCanvas("canv_C_all","",500,400);
   canv_C_all->SetLeftMargin(0.15);
   canv_C_all->SetBottomMargin(0.13);
@@ -156,7 +155,7 @@ void plotVariants()
   h_Rjet_Cp3->Draw("SAMEP");
   lz_C->Draw("SAMEP");
   //Save plot
-  canv_C_all->Print("./plots/varPlots/varC_all.pdf");
+  canv_C_all->Print("./plots/varPlots/SPR/varC_all.pdf");
   delete canv_C_all;
 
   // b jets
@@ -193,7 +192,7 @@ void plotVariants()
   h_Rjet_Cp3->Draw("SAMEP");
   lz_Cb->Draw("SAMEP");
   //Save plot
-  canv_C_b->Print("./plots/varPlots/varC_b.pdf"); delete canv_C_b;
+  canv_C_b->Print("./plots/varPlots/SPR/varC_b.pdf"); delete canv_C_b;
 
   // c jets
   TCanvas* canv_C_c = new TCanvas("canv_C_c","",500,400);
@@ -226,7 +225,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
   lz_Cc->Draw("SAMEP");
-  canv_C_c->Print("./plots/varPlots/varC_c.pdf"); delete canv_C_c;
+  canv_C_c->Print("./plots/varPlots/SPR/varC_c.pdf"); delete canv_C_c;
 
   // s jets
   TCanvas* canv_C_s = new TCanvas("canv_C_s","",500,400);
@@ -261,7 +260,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
 
-  canv_C_s->Print("./plots/varPlots/varC_s.pdf"); delete canv_C_s;
+  canv_C_s->Print("./plots/varPlots/SPR/varC_s.pdf"); delete canv_C_s;
 
   // ud jets
   TCanvas* canv_C_ud = new TCanvas("canv_C_ud","",500,400);
@@ -294,7 +293,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
 
-  canv_C_ud->Print("./plots/varPlots/varC_ud.pdf"); delete canv_C_ud;
+  canv_C_ud->Print("./plots/varPlots/SPR/varC_ud.pdf"); delete canv_C_ud;
 
   // g jets
   TCanvas* canv_C_g = new TCanvas("canv_C_g","",500,400);
@@ -327,7 +326,7 @@ void plotVariants()
   h_Rjet_Cm3->Draw("SAMEP");
   h_Rjet_Cp3->Draw("SAMEP");
 
-  canv_C_g->Print("./plots/varPlots/varC_g.pdf"); delete canv_C_g;
+  canv_C_g->Print("./plots/varPlots/SPR/varC_g.pdf"); delete canv_C_g;
 
 /*
 //////////////////// Tracking efficiency /////////////////////////

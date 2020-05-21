@@ -33,10 +33,9 @@ void calcVariants()
   TProfile *pr_Rjet_ECALm3    = 0;
   TProfile *pr_Rjet_Photonm1  = 0;
   TProfile *pr_Rjet_Photonm3  = 0;
-
-  //TProfile *pr_Rjet_calo   = 0;
-  //TProfile *pr_Rjet_calo_HCALp3 = 0;
-  //TProfile *pr_Rjet_calo_HCALm3 = 0;
+  TProfile *pr_Rjet_calo     = 0;
+  TProfile *pr_Rjet_calo_Cp3 = 0;
+  TProfile *pr_Rjet_calo_Cm3 = 0;
 
   //b jets
   TProfile *pr_Rjetb           = 0;
@@ -128,9 +127,9 @@ void calcVariants()
   fzj_Photonm1 ->GetObject("prRjet", pr_Rjet_Photonm1);
   fzj_Photonm3 ->GetObject("prRjet", pr_Rjet_Photonm3);
 
-  //fzj    ->GetObject("prRjet_calo", pr_Rjet_calo);
-  //fzj_HCALp3->GetObject("prRjet_calo", pr_Rjet_calo_HCALp3);
-  //fzj_HCALm3->GetObject("prRjet_calo", pr_Rjet_calo_HCALm3);
+  fzj->GetObject("prRjet_calo", pr_Rjet_calo);
+  fzj_Cp3->GetObject("prRjet_calo", pr_Rjet_calo_Cp3);
+  fzj_Cm3->GetObject("prRjet_calo", pr_Rjet_calo_Cm3);
 
   fzj          ->GetObject("prRjetb", pr_Rjetb);
   fzj_Cp3      ->GetObject("prRjetb", pr_Rjetb_Cp3);
@@ -215,9 +214,10 @@ void calcVariants()
   TH1D* h_Rjet_ECALm3    = pr_Rjet_ECALm3->ProjectionX();
   TH1D* h_Rjet_Photonm1  = pr_Rjet_Photonm1->ProjectionX();
   TH1D* h_Rjet_Photonm3  = pr_Rjet_Photonm3->ProjectionX();
-  //TH1D* h_Rjet_calo_HCALp3 = pr_Rjet_calo_HCALp3->ProjectionX();
-  //TH1D* h_Rjet_calo_HCALm3 = pr_Rjet_calo_HCALm3->ProjectionX();
-  //TH1D* h_Rjet_calo   = pr_Rjet_calo->ProjectionX();
+  TH1D* h_Rjet_calo      = pr_Rjet_calo->ProjectionX();
+  TH1D* h_Rjet_calo_Cp3  = pr_Rjet_calo_Cp3->ProjectionX();
+  TH1D* h_Rjet_calo_Cm3  = pr_Rjet_calo_Cm3->ProjectionX();
+
 
 
   TH1D* h_Rjetb           = pr_Rjetb->ProjectionX();
@@ -351,17 +351,16 @@ void calcVariants()
   h_Rjet_Photonm3->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
   h_Rjet_Photonm3->GetYaxis()->SetTitleOffset(1.2);
 
-  /*
 
-  h_Rjet_calo_HCALp3->Divide(h_Rjet_calo);
-  h_Rjet_calo_HCALp3->SetTitle("Calo jets, HCAL +3%");
-  h_Rjet_calo_HCALp3->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
-  h_Rjet_calo_HCALp3->GetYaxis()->SetTitleOffset(1.2);
-  h_Rjet_calo_HCALm3->Divide(h_Rjet_calo);
-  h_Rjet_calo_HCALm3->SetTitle("Calo jets, HCAL -3%");
-  h_Rjet_calo_HCALm3->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
-  h_Rjet_calo_HCALm3->GetYaxis()->SetTitleOffset(1.2);
-  */
+  h_Rjet_calo_Cp3->Divide(h_Rjet_calo);
+  h_Rjet_calo_Cp3->SetTitle("Calo jets, C+3%");
+  h_Rjet_calo_Cp3->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
+  h_Rjet_calo_Cp3->GetYaxis()->SetTitleOffset(1.2);
+
+  h_Rjet_calo_Cm3->Divide(h_Rjet_calo);
+  h_Rjet_calo_Cm3->SetTitle("Calo jets, C-3%");
+  h_Rjet_calo_Cm3->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
+  h_Rjet_calo_Cm3->GetYaxis()->SetTitleOffset(1.2);
 
   //b jet
 
@@ -1079,9 +1078,8 @@ void calcVariants()
   h_Rjet_ECALm3   ->Write("h_Rjet_ECALm3");
   h_Rjet_Photonm1 ->Write("h_Rjet_Photonm1");
   h_Rjet_Photonm3 ->Write("h_Rjet_Photonm3");
-
-  //h_Rjet_calo_HCALm3->Write("h_Rjet_calo_HCALm3");
-  //h_Rjet_calo_HCALp3->Write("h_Rjet_calo_HCALp3");
+  h_Rjet_calo_Cm3->Write("h_Rjet_calo_Cm3");
+  h_Rjet_calo_Cp3->Write("h_Rjet_calo_Cp3");
   //h_Rjet_Trk->Write("h_Rjet_Trk");
   //h_Rjet_Photon->Write("h_Rjet_Photon");
 
