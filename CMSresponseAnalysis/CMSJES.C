@@ -68,11 +68,11 @@ void CMSJES::Loop()
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
   //Binit https://github.com/miquork/jetphys/blob/master/settings.h_template
-  int const nbinsMPF = 15;
-  const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25, 228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
-  //int const nbinsMPF = 25;
-  //const double binsxMPF[nbinsMPF] = 
-  //{15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713};
+  //int const nbinsMPF = 15;
+  //const double binsxMPF[nbinsMPF] = {31.75, 41.0, 50.5, 63.5, 83.0, 105.25, 132.5, 173.25, 228.25, 300.0, 391.25, 503.75, 681.75, 951.5, 1258.25};
+  int const nbinsMPF = 25;
+  const double binsxMPF[nbinsMPF] = 
+  {15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713};
 
   //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
   string MPFTitle = ";p_{T,tag}^{MC} [GeV];R_{MPF}";
@@ -884,8 +884,6 @@ void CMSJES::Loop()
         delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL_calib;
 
         //Calibrated calorimetric energy deposit from charged hadrons
-
-
 
         chc = chcECAL->GetBinContent(i,j) + chcHCAL->GetBinContent(i,j);
 
