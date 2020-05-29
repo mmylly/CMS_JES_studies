@@ -13,7 +13,8 @@ void CMSJES::Loop()
        varHadECALp3, varHadECALm3, 
        varTrkEffm1,  varTrkEffm3,
        varECALm1, varECALm3,
-       varPhotonm1, varPhotonm3;
+       varPhotonm1, varPhotonm3,
+       Calibm10;
   varCp3       = 0;
   varCm3       = 0;
   varHadHCALp3 = 0;
@@ -26,6 +27,8 @@ void CMSJES::Loop()
   varECALm3    = 0;
   varPhotonm1  = 0;
   varPhotonm3  = 0;
+
+  Calibm10 = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
        + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1 + varPhotonm3) > 1) 
@@ -52,6 +55,7 @@ void CMSJES::Loop()
   if (fChain == 0) return;
   Long64_t nentries          = fChain->GetEntriesFast();
   string outname             = "./output_ROOT_files/CMSJES_" + ReadName; //Output file
+  if (Calibm10) outname     += "_Calibm10";
   if (varCp3)    outname    += "_varCp3";
   if (varCm3)    outname    += "_varCm3";
   if (varHadHCALp3) outname += "_varHadHCALp3";
@@ -64,6 +68,7 @@ void CMSJES::Loop()
   if (varECALm3) outname    += "_varECALm3";
   if (varPhotonm1) outname  += "_varPhotonm1";
   if (varPhotonm3) outname  += "_varPhotonm3";
+
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
 
@@ -598,6 +603,7 @@ void CMSJES::Loop()
     sigmaTrk     ->Reset();	//For weighting
     sigmaTrk_curv->Reset();	//For shadowing effect
 
+    
 
     //Probe flavor check, prtn_tag=0 for outgoing hard process partons
     //for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
@@ -610,6 +616,8 @@ void CMSJES::Loop()
 
     //****************** MET calculation *******************//
     //Add tag object to the MET
+
+
     MET_r -= tag_r;
 
     //Loop over all particles
@@ -864,6 +872,8 @@ void CMSJES::Loop()
           nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
         }
 
+        if (Calibm10) nhHCAL_calib = 0.9*nhHCAL_calib;
+ 
         //***** PF-code calorimeter resolution *****
         totalChargedMomentum = chtP_curv->GetBinContent(i,j);
 
@@ -890,6 +900,8 @@ void CMSJES::Loop()
         if (chc > 0.0) {
           chc_calib = fr_all->GetX(chc, 0.1, 7000.0);
         }
+
+        if (Calibm10) chc_calib = 0.9*chc_calib;
 
         if (delta < cellSigma) { //Shadowing
           nhHCAL_calib = 0.0;
@@ -922,7 +934,6 @@ void CMSJES::Loop()
           p4_rescale.SetPtEtaPhiE(chtPt->GetBinContent(i,j), cellEta, cellPhi, 
                                   cht->GetBinContent(i,j));
         }
-        //***********************************************************************//
 
         //Cell 4-vector
         cellE = ne->GetBinContent(i,j) + nhECAL->GetBinContent(i,j) + nhHCAL_calib;
@@ -946,7 +957,7 @@ void CMSJES::Loop()
       }
     }
 
-    /**************************** FILL HISTOGRAMS ****************************/
+    /**************************** FILL HISTOGRAMS ****************************
 
     //reco Alpha cut?
     if (jet2_r.Pt() > 0.3*tag_r.Pt()) continue; alpha ++;
@@ -979,6 +990,7 @@ void CMSJES::Loop()
     //All jets
     prRjet->Fill(probe_g.Pt(), Rjet, weight);
     prRjet_calo->Fill(probe_g.Pt(), Rjet_calo, weight);
+
 
 
     //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
@@ -1026,7 +1038,10 @@ void CMSJES::Loop()
 
     //If the old list of cut events is not read, a new one is written
     if (!GetuseEarlierCuts()) passedCuts[jentry]=true;
-  } //Loop Tree entries
+    
+   } //Loop Tree entries
+
+
 
   if (!GetuseEarlierCuts()) {
     //Write the accepted event information into a binary file
@@ -1038,13 +1053,19 @@ void CMSJES::Loop()
     cutflag_stream.close();	//Close the output stream
   }
 
-  
+
+ 
   if (GetcontHistos()) { //Particle composition and flavour fraction histograms
 
     //Canvas and related setup
     string canvName = ReadName + "_prtclCont";
-    TCanvas* canv = new TCanvas(canvName.c_str(),"",1500,750);
+    TCanvas* canv = new TCanvas(canvName.c_str(),"",1600,800);
+    canv->SetBottomMargin(100);
+    canv->SetLeftMargin(0.13);
+
     canv->Divide(2,1);
+
+
 
     TLegend* lg      = new TLegend(0.865, 0.1, 1.0,  0.9);
     TLegend* lgOther = new TLegend(0.865,0.55, 1.0, 0.90);
@@ -1097,37 +1118,41 @@ void CMSJES::Loop()
 
       //General particle composition histograms
     canv->cd(1);
+
+    
+
     hstack->Draw("HISTO");
     hstack->GetYaxis()->SetRange(0.0,0.5);
-    hstack->GetXaxis()->SetTitle("#font[12]{E}_{jet}^{gen} [GeV]");
-    hstack->GetYaxis()->SetTitle("Fraction of jet #font[12]{E}");
-    hstack->GetYaxis()->SetTitleFont(133);
-    hstack->GetYaxis()->SetTitleSize(20);
-    hstack->GetXaxis()->SetTitleFont(133);
-    hstack->GetXaxis()->SetTitleSize(20);
-    hstack->GetXaxis()->SetTitleOffset(1.8);
-    hstack->GetYaxis()->SetTitleOffset(2.0);
+    hstack->GetXaxis()->SetTitle("E_{jet}^{gen} (GeV)");
+    hstack->GetYaxis()->SetTitle("Fraction of jet E");
+    hstack->GetYaxis()->SetTitleSize(0.045);
+    hstack->GetXaxis()->SetTitleSize(0.045);
+    hstack->GetXaxis()->SetTitleOffset(0.95);
+    hstack->GetYaxis()->SetTitleOffset(1.1);
+
     lg->Draw();
 
     //More specific "other particles" histograms
     canv->cd(2);
+ 
 
     hstackOther->Draw("HISTO");
     hstackOther->GetYaxis()->SetRange(0.0,1.0);
-    hstackOther->GetXaxis()->SetTitle("#font[12]{E}_{jet}^{gen} [GeV]");
+    hstackOther->GetXaxis()->SetTitle("E_{jet}^{gen} (GeV)");
     hstackOther->GetYaxis()->SetTitle("Fraction of #font[12]{other}");
-    hstackOther->GetYaxis()->SetTitleFont(133);
-    hstackOther->GetYaxis()->SetTitleSize(20);
-    hstackOther->GetXaxis()->SetTitleFont(133);
-    hstackOther->GetXaxis()->SetTitleSize(20);
-    hstackOther->GetXaxis()->SetTitleOffset(1.8);
-    hstackOther->GetYaxis()->SetTitleOffset(2.0);
+    hstackOther->GetYaxis()->SetTitleSize(0.045);
+    hstackOther->GetXaxis()->SetTitleSize(0.045);
+    hstackOther->GetXaxis()->SetTitleOffset(0.95);
+    hstackOther->GetYaxis()->SetTitleOffset(1.1);
     lgOther->Draw();
+    gStyle->SetHistTopMargin(0.);
 
     //Save particle content histogram plot
     string plotName = "./plots/particleComposition/PC_" + ReadName;
-    plotName += ".eps";	//Filetype suffix
+    plotName += ".pdf";	//Filetype suffix
     canv->Print(plotName.c_str());
+
+
 
     //Print unclassified particles
     if (printProg && otherIDs.size()!=0) {
@@ -1145,6 +1170,7 @@ void CMSJES::Loop()
     delete h_Om;   delete h_all;
     delete hstack; delete hstackOther;
     delete canv;
+
   } //Particle composition histograms
 
   cout << endl << "Event cuts:" << endl;
@@ -1746,11 +1772,20 @@ void CMSJES::plotFF(int gen, int Nevt) {
   FFlg->AddEntry(FFs,  " s",  "f");
   FFlg->AddEntry(FFud, " ud", "f");
   FFlg->AddEntry(FFg,  " g",  "f");
-  FFb->SetFillColor(46);  
-  FFc->SetFillColor(kOrange);
-  FFs->SetFillColor(kSpring+8);
-  FFud->SetFillColor(33);
-  FFg->SetFillColor(kGray+1);
+
+  /*
+  FFb ->SetFillColor(kRed-7);  
+  FFc ->SetFillColor(kGreen-6);
+  FFs ->SetFillColor(kOrange-4);
+  FFud->SetFillColor(kMagenta-6);
+  FFg ->SetFillColor(kBlue-7);
+  */
+
+  FFb ->SetFillColor(46);  
+  FFc ->SetFillColor(30);
+  FFs ->SetFillColor(42);
+  FFud->SetFillColor(40);
+  FFg ->SetFillColor(38);
 
   FFstack->Draw("HISTO");
 
@@ -1975,16 +2010,16 @@ void CMSJES::plotRjet(int gen, int Nevt)
   diff_b ->SetMarkerStyle(kOpenCircle);       diff_b ->SetMarkerColor(kRed+1);
   diff_ud->SetMarkerStyle(kOpenDiamond);      diff_ud->SetMarkerColor(kMagenta+2);
   diff_s ->SetMarkerStyle(kOpenTriangleUp);   diff_s ->SetMarkerColor(kOrange+1);
-  diff_c ->SetMarkerStyle(kOpenTriangleDown); diff_c ->SetMarkerColor(kGreen+1);
+  diff_c ->SetMarkerStyle(kOpenTriangleDown); diff_c ->SetMarkerColor(kGreen+2);
 
   h_diffbg ->SetMarkerStyle(kFullCircle);       h_diffbg ->SetMarkerColor(kRed+1);
   h_diffudg->SetMarkerStyle(kFullDiamond);      h_diffudg->SetMarkerColor(kMagenta+2);
   h_diffsg ->SetMarkerStyle(kFullTriangleUp);   h_diffsg ->SetMarkerColor(kOrange+1);
-  h_diffcg ->SetMarkerStyle(kFullTriangleDown); h_diffcg ->SetMarkerColor(kGreen+1 );
+  h_diffcg ->SetMarkerStyle(kFullTriangleDown); h_diffcg ->SetMarkerColor(kGreen+2 );
   h_diffbg ->SetLineColor(kRed+1);        
   h_diffudg->SetLineColor(kMagenta+2);
   h_diffsg ->SetLineColor(kOrange+1);     
-  h_diffcg ->SetLineColor(kGreen+1 );
+  h_diffcg ->SetLineColor(kGreen+2 );
 
   TCanvas* canv_diffg = new TCanvas("canv_diffg","",500,500);
   canv_diffg->SetLeftMargin(0.15);
