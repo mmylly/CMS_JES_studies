@@ -12,9 +12,15 @@ VPATH= events:jetanalysis:lib:pythia6:pythia8:herwig:ptcut:greedy_pythia8:greedy
 
 INCLUDE := $(INCLUDE) -I.
 
+# 0 - generic
+# 1 - dijet
+# 2 - gammajet
+# 3 - Z + jet
+# 4 - ttbarjet
+
 # Parameter vals:
 NUM_EVT := 30000
-MODE := 3
+MODE := 1
 NUM_PROC := 3
 START_IDX := 0
 

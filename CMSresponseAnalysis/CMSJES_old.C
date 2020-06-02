@@ -46,12 +46,9 @@ void CMSJES::Loop()
   int studyMode = -1;
   if (ReadName.find("Zjet")!=string::npos) {
     studyMode = 3;
-    cout << "File is for Z+jet sample, with study mode: "<< studyMode << endl;
-  } else if (ReadName.find("dijet")!=string::npos) {
-    studyMode = 1;
-    cout << "File is for dijet sample, with study mode: "<< studyMode << endl;
+    cout << "File is for Z+jet sample, with stydy mode: "<< studyMode << endl;
   } else {
-    cout << "Error: File not for Z+jet or dijet sample! Exiting." << endl;
+    cout << "Error: File not for Z+jet sample! Exiting." << endl;
     return;
   }
 
@@ -160,25 +157,17 @@ void CMSJES::Loop()
   TLorentzVector probe_calo; //Calo reconstructed probe 4-vector
 
   TLorentzVector jet2_r;     //Second leading pT jet
-  TLorentzVector jet3_r;     //Third leading pT jet
 
   //Cell energies of the probe object
   double probe_ch;
   double probe_nh;
   double probe_gamma;
   double probe_e;
-  double jet2_ch;
-  double jet2_nh;
-  double jet2_gamma;
-  double jet2_e;
 
   //Partial derivative values for a hadron
-  unsigned int i_tag   = 0;   //Stepper to find tag object index
-  unsigned int i_tag1;        //1st tag muon
-  unsigned int i_tag2;        //2nd tag muon
+  unsigned int i_tag   = 0;    //Stepper to find tag object index
   unsigned int i_probe = 0;   //       -||-     probe jet index
   unsigned int i_jet2  = 1;   //       -||-     2nd jet index
-  unsigned int i_jet3  = 2;   //       -||-     3rd jet index
   double eta_muon      = 2.3; //Max |eta| for a single muon in Z+jet      
   double eta_tag_z     = 2.5; //Max |eta| for mumu tag object
   double eta_probe     = 1.3; //Max |eta| for probe jets
@@ -200,7 +189,6 @@ void CMSJES::Loop()
 
   unsigned long njets;          //#jets in the event, for resizing vectors
   TLorentzVector MET_r;         //Reconstructed MET four vector
-  double sumEt         = 0.0;
   vector<TLorentzVector> jets_g;//Gen lvl jet 4-vectors
 
   //HHe / (HHe + EHE)
@@ -349,7 +337,8 @@ void CMSJES::Loop()
   int genprobeCut = 0;
   int b2b = 0;
   int probeCut = 0;
-  int METcut = 0;
+  int METtag = 0;
+  int METprobe = 0;
 
 //***********************************************************************************************
   //Granularity of cells following the granularity of the HCAL 
@@ -404,9 +393,7 @@ void CMSJES::Loop()
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
     //Print progress for long runs
     if ((GetprintProg() && jentry % 1000==0)){
-      cout << "Looping event " << jentry; 
-      if (studyMode == 1) cout << " in dijet" << endl;
-      if (studyMode == 3) cout << " in Z+jet" << endl;
+      cout << "Looping event " << jentry; cout << " in Z+jet" << endl;
     }
 
     //Skip events that didn't pass cuts earlier. Useful in e.g. repeating Loop
@@ -419,9 +406,9 @@ void CMSJES::Loop()
     nb = fChain->GetEntry(jentry); nbytes += nb;
 
     //Reinit
-    i_tag = 0; i_probe = 0; i_jet2 = 1; i_jet3 = 2;
+    i_tag = 0; i_probe = 0; i_jet2 = 1;
     p4.SetPtEtaPhiE(0,0,0,0);      p4_calo.SetPtEtaPhiE(0,0,0,0); 
-    MET_r.SetPtEtaPhiE(0,0,0,0);   sumEt = 0.0;
+    MET_r.SetPtEtaPhiE(0,0,0,0);
 
     tag.SetPtEtaPhiE(0,0,0,0);     tag_r.SetPtEtaPhiE(0,0,0,0);
     
@@ -430,12 +417,9 @@ void CMSJES::Loop()
     probe_calo.SetPtEtaPhiE(0,0,0,0);
 
     jet2_r.SetPtEtaPhiE(0,0,0,0);
-    jet3_r.SetPtEtaPhiE(0,0,0,0);
 
-    probe_ch    = 0.0; jet2_ch    = 0.0;
-    probe_nh    = 0.0; jet2_nh    = 0.0;
-    probe_gamma = 0.0; jet2_gamma = 0.0;
-    probe_e     = 0.0; jet2_e     = 0.0;
+    probe_ch    = 0.0; probe_nh    = 0.0;
+    probe_gamma = 0.0; probe_e     = 0.0;
 
     jets_g.clear();
     njets = (unsigned long)jet_pt->size();
@@ -445,82 +429,74 @@ void CMSJES::Loop()
     }
 
     //**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************//
-    if (studyMode == 3) {
+    int muPDG=13; int muTAG=3; //mu PDGID and parton tag
+    if (ReadName.find("H7")!=string::npos) muTAG=2; 
 
-      int muPDG=13; int muTAG=3; //mu PDGID and parton tag
-      if (ReadName.find("H7")!=string::npos) muTAG=2; 
+    int i_tag1 = -137;	       // These values won't change if...
+    int i_tag2 = -731;	       // ...muons not found.
 
-      i_tag1 = -137;	       // These values won't change if...
-      i_tag2 = -731;	       // ...muons not found.
+    for (int a=0; a!= prtn_tag->size(); ++a) {
 
-      for (int a=0; a!= prtn_tag->size(); ++a) {
-
-        // Find muons with tag == 3 and store those in i_tag1 and i_tag2
-        if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
-          if      (i_tag1 == -137) i_tag1 = a;
-          else if (i_tag2 == -731) i_tag2 = a;
-          else {cout << "More than two muons with tag 3 in the event." << endl; continue;}
-        }
+      // Find muons with tag == 3 and store those in i_tag1 and i_tag2
+      if ((*prtn_tag)[a] == muTAG && abs((*prtn_pdgid)[a]) == muPDG) {
+        if      (i_tag1 == -137) i_tag1 = a;
+        else if (i_tag2 == -731) i_tag2 = a;
+        else {cout << "More than two muons with tag 3 in the event." << endl; continue;}
       }
+    }
 
-      if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
+    if (i_tag1 == -137 && i_tag2 == -731) continue; //No two muons found
 
-      //***** 1st muon *****
-      p4.SetPtEtaPhiE((*prtn_pt )[i_tag1], (*prtn_eta)[i_tag1],
-                      (*prtn_phi)[i_tag1], (*prtn_e  )[i_tag1]);
 
-      tag = p4;//gen lvl
+    //***** 1st muon *****
+    p4.SetPtEtaPhiE((*prtn_pt )[i_tag1], (*prtn_eta)[i_tag1],
+                    (*prtn_phi)[i_tag1], (*prtn_e  )[i_tag1]);
 
-      p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
+    tag = p4;//gen lvl
 
-      if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
+    p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
-      tag_r = p4;
+    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue;
 
-      //***** 2nd muon *****
-      p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
-                      (*prtn_phi)[i_tag2], (*prtn_e  )[i_tag2]);
+    tag_r = p4;
 
-      tag += p4;//gen lvl
+    //***** 2nd muon *****
+    p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
+                    (*prtn_phi)[i_tag2], (*prtn_e  )[i_tag2]);
 
-      p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
+    tag += p4;//gen lvl
 
-      if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue; mumuCut++;
+    p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
-      tag_r += p4;      
+    if (fabs(p4.Eta()) > eta_muon || p4.Pt() < pTmin_muon) continue; mumuCut++;
 
-      //Invariant mass in range 70-110 GeV since Z boson mass is 91 GeV
-      if (tag.M()<70.0 || tag.M()>110.0) continue; invM ++;
+    tag_r += p4;      
 
-      //Tag eta and pT cuts:
-      if (fabs(tag_r.Eta()) > eta_tag_z || tag_r.Pt() < pTmin_tag_z) continue; tagCut++;
+    //Invariant mass in range 70-110 GeV since Z boson mass is 91 GeV
+    if (tag.M()<70.0 || tag.M()>110.0) continue; invM ++;
 
-      /********************* SELECT THE PROBE JET AND 2nd JET ********************/
-      //Probe
-      i_probe = 0;
-      //2nd jet
-      i_jet2 = 1;
+    //Tag eta and pT cuts:
+    if (fabs(tag_r.Eta()) > eta_tag_z || tag_r.Pt() < pTmin_tag_z) continue; tagCut++;
 
-      // If muon is found from the jet it is not acceptable
-      // Confirm implementation and optimize
-      for (int i=0; i < int(jet_e->size()); ++i) { // Loop over jets
-        for (int j=0; j != prtcl_pt->size(); ++j) { // Loop over all particles
-          if ((*prtcl_jet)[j] == i) {
-            if ((*prtn_pt )[i_tag1]==(*prtcl_pt)[j] || (*prtn_pt )[i_tag2]==(*prtcl_pt)[j]) {
-              if (i_probe == i) {i_probe++; i_jet2++;}
-              if (i_jet2 == i)   i_jet2++;
-            }
+    /********************* SELECT THE PROBE JET AND 2nd JET ********************/
+    //Probe
+    i_probe = 0;
+    //2nd jet
+    i_jet2 = 1;
+
+    // If muon is found from the jet it is not acceptable
+    // Confirm implementation and optimize
+    for (int i=0; i < int(jet_e->size()); ++i) { // Loop over jets
+      for (int j=0; j != prtcl_pt->size(); ++j) { // Loop over all particles
+        if ((*prtcl_jet)[j] == i) {
+          if ((*prtn_pt )[i_tag1]==(*prtcl_pt)[j] || (*prtn_pt )[i_tag2]==(*prtcl_pt)[j]) {
+            if (i_probe == i) {i_probe++; i_jet2++;}
+            if (i_jet2 == i)   i_jet2++;
           }
         }
       }
-    } else if (studyMode == 3) {
-      //Probe
-      i_probe = 0;
-      //2nd jet
-      i_jet2  = 1;
-      //3rd jet
-      i_jet3  = 2;
     }
+
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
 
     for (int i=0; i != prtcl_pt->size(); ++i) {
@@ -543,43 +519,26 @@ void CMSJES::Loop()
             probe_e += resp*p4.E(); //Probe electron energy for the fraction calculation
           }
         } else if ((*prtcl_jet)[i] == i_jet2) { //2nd jet
-          jet2_r += resp*p4;
-          if (PDG == 11) {
-            jet2_e += resp*p4.E(); //Jet2 electron energy for the fraction calculation
-          }
-        } else if ((*prtcl_jet)[i] == i_jet3) { //3rd jet
-          jet3_r += resp*p4;
+          jet2_r  += resp*p4;
         }
       } 
     } //Loop particles in jets
-
-
+    
     /********************* RECONSTRUCT GEN LEVEL PROBES *********************/
 
     //Gen lvl as output by FastJet
     probe_g.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
-                         (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
+                       (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
 
     /****************************** COMMON CUTS FOR Z+JET ******************************/
-    if (studyMode == 3) {
-      //PF probe-tag cuts
-      if (fabs(probe_g.Eta())>eta_probe || probe_g.Pt()<pTmin_probe) continue; genprobeCut ++;
 
-      //Back-to-back cut
-      if (fabs(tag.DeltaPhi(probe_g)) < phiMin) continue; b2b ++;
-    } 
-    /****************************** COMMON CUTS FOR DIJET ******************************/
-    if (studyMode == 1) {
-      //probe and 2nd jet cuts
-      //Both must have pT higher than 15 GeV
-      if (probe_g.Pt()<pTmin_probe || jets_g[i_jet2].Pt()<pTmin_probe) continue;
-      //Other must be in barrel region
-      if (fabs(probe_g.Eta())>eta_probe && fabs(jets_g[i_jet2].Eta())>eta_probe) continue; 
-      genprobeCut ++;
+    //PF probe-tag cuts
+    if (fabs(probe_g.Eta()) > eta_probe || probe_g.Pt() < pTmin_probe) continue; genprobeCut ++;
 
-      //Back-to-back cut
-      if (fabs(probe_g.DeltaPhi(jets_g[i_jet2])) < 2.7) continue; b2b ++;
-    }
+    //Back-to-back leikkaus
+    if (fabs(tag.DeltaPhi(probe_g)) < phiMin) continue; b2b ++;
+
+
     /********************** PROBE GEN PARTICLE CONTENT **********************/
     
     if (GetcontHistos()) {
@@ -628,8 +587,6 @@ void CMSJES::Loop()
       }
     }
     
-
-
     /******************* RECONSTRUCT PARTICLES NOT IN JETS *******************/
     //Reset histograms
     cht          ->Reset();	//Original directions of
@@ -661,14 +618,10 @@ void CMSJES::Loop()
     //Add tag object to the MET
 
 
-    if (studyMode==3) {
-      MET_r -= tag_r;
-      sumEt += tag_r.Et();
-    }
+    MET_r -= tag_r;
 
     //Loop over all particles
     for (int i=0; i!=prtclnij_pt->size(); ++i) {
-      
 
       PDG = fabs((*prtclnij_pdgid)[i]);
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
@@ -689,15 +642,9 @@ void CMSJES::Loop()
 
         //LEPTONS
         case 13 : case 11 :
-          if (studyMode == 3) {
-            // Not one of the tag muons
-            if ((*prtclnij_pt)[i]!=(*prtn_pt)[i_tag1]&&(*prtclnij_pt )[i]!=(*prtn_pt)[i_tag2]){ 
-              MET_r -= p4; //Muons and electrons to the MET
-              sumEt += p4.Et();
-            }
-          } else if (studyMode == 1) {
-            MET_r -= p4;
-            sumEt += p4.Et();
+          // Not one of the tag muons
+          if ((*prtclnij_pt)[i]!=(*prtn_pt)[i_tag1] && (*prtclnij_pt )[i]!=(*prtn_pt)[i_tag2]){ 
+            MET_r -= p4; //Muons and electrons to the MET
           }
 
           //Electron ECAL deposit taking into account track curvature with response = 1
@@ -995,7 +942,6 @@ void CMSJES::Loop()
         p4 += p4_rescale;                                 //Charged hadron deposit
 
         MET_r -= p4;
-        sumEt += p4.Et();
 
         //Probe reconstruction
         if (p4.DeltaR(probe_g) < RCone) {
@@ -1005,131 +951,90 @@ void CMSJES::Loop()
           probe_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
         }
         //Second leading jet reconstruction for Alpha cut
-        if (p4.DeltaR(jets_g[i_jet2]) < RCone) { 
-          jet2_r     += p4;
-          jet2_ch    += p4_rescale.E();
-          jet2_nh    += nhHCAL_calib;
-          jet2_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
+        if (p4.DeltaR(jets_g[i_jet2]) < RCone) {
+          jet2_r += p4;
         }
-        if (p4.DeltaR(jets_g[i_jet3]) < RCone) { jet3_r += p4;}
       }
     }
-
-    /**************************** RECO CUTS ****************************/
-
-    if (studyMode == 1) { //Dijet reco cuts
-      //alpha cut
-      if (jet3_r.Pt() > 0.3*(0.5*(probe_r.Pt() + jet2_r.Pt()))) continue; alpha ++;
-
-      //reco jet cuts
-      if (probe_r.Pt()<pTmin_probe || jet2_r.Pt()<pTmin_probe) continue; probeCut ++;
-
-      //MET cut
-      if (MET_r.Pt() > 45.0 && MET_r.Pt() > 0.4*sumEt) continue; METcut ++;
-
-    } else if (studyMode == 3) { //Z+jet cuts
-      //alpha cut
-      if (jet2_r.Pt() > 0.3*tag_r.Pt()) continue; alpha ++;
-
-      //reco probe cuts
-      if (fabs(probe_r.Eta()) > eta_probe || probe_r.Pt() < pTmin_probe) continue; probeCut ++;
-
-      //MET cut
-      if (MET_r.Pt() > 45.0 && MET_r.Pt() > 0.4*sumEt) continue; METcut ++;
-      
-    }
-
-    double totalE;
 
     /**************************** FILL HISTOGRAMS ****************************/
- 
 
-    for (unsigned int j = 0; j!=((studyMode==1) ? 2:1); ++j) {
+    //reco Alpha cut?
+    if (jet2_r.Pt() > 0.3*tag_r.Pt()) continue; alpha ++;
 
-      //Dijet cuts
-      if (studyMode ==1) {
-        if (j==0) {
-          if ( fabs(probe_r.Eta()) > eta_probe ) continue;
-          tag_r = jet2_r;
-        } else if (j==1) {
-          if ( fabs(jet2_r.Eta()) > eta_probe ) continue;
-          tag_r   = probe_r;
-          probe_r = jet2_r;
-          //JEF
-          probe_ch    = jet2_ch;
-          probe_nh    = jet2_nh;
-          probe_gamma = jet2_gamma;
-          probe_e     = jet2_e;
-        }
+    //reco probe cuts
+    if (fabs(probe_r.Eta()) > eta_probe || probe_r.Pt() < pTmin_probe) continue; probeCut ++;
+
+    //MET cuts
+    if (MET_r.Pt() > 0.9*tag_r.Pt())   continue; METtag ++;
+    //if (MET_r.Pt() > 0.7*probe_r.Pt()) continue; METprobe ++;
+
+    double totalE;
+    totalE = probe_ch + probe_nh + probe_gamma + probe_e;
+
+    prchf   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+    prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+    prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+    pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight); 
+
+    //MPF response
+    R_MPF_r = 1.0 + (MET_r.Px()*tag_r.Px() + MET_r.Py()*tag_r.Py()) / pow((tag_r.Pt()),2);
+    //R_MPF_r = 1.0 + MET_r.Pt()*cos(tag_r.DeltaPhi(MET_r))/tag_r.Pt();
+
+    //Fill MPF profile
+    prMPF->Fill(tag_r.Pt(), R_MPF_r, weight);
+
+    Rjet      = probe_r.Pt()/probe_g.Pt();
+    Rjet_calo = probe_calo.Pt()/probe_g.Pt(); 
+
+    //All jets
+    prRjet->Fill(probe_g.Pt(), Rjet, weight);
+    prRjet_calo->Fill(probe_g.Pt(), Rjet_calo, weight);
+
+
+
+    //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
+    //Loop partons to find where jets originated from
+    for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
+      //prtn_tag=0 for outgoing hard process partons
+      //Suffix "a" for "all jet flavours", needed for averaging etc.
+      if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
+
+        //Probe flavour
+        probeFlav = abs((*prtn_pdgid)[j]);
+
+        if (probeFlav == 5) {                           //b-jets
+          FFb->Fill(tag_r.Pt(), weight);
+          prMPFb->Fill(tag_r.Pt(), R_MPF_r, weight);
+          prRjetb->Fill(probe_g.Pt(), Rjet, weight);
+
+        } else if (probeFlav < 5) {                     //Light quark (u,d,s,c) jets
+          FFlq->Fill(tag_r.Pt(), weight);
+          prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight);
+          prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
+
+          if (probeFlav == 4) {                         //c-jets
+            FFc->Fill(tag_r.Pt(), weight);
+            prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
+            prRjetc->Fill(probe_g.Pt(), Rjet, weight);            
+          } else if (probeFlav == 3) {                  //s-jets
+            FFs->Fill(tag_r.Pt(), weight);
+            prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight);
+            prRjets->Fill(probe_g.Pt(), Rjet, weight);         
+          } else if (probeFlav < 3) {                   //(u,d)
+            FFud->Fill(tag_r.Pt(), weight);
+            prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
+            prRjetud->Fill(probe_g.Pt(), Rjet, weight);  
+          }
+        } else if (probeFlav == 21) {                   //Gluon jets
+          FFg->Fill(tag_r.Pt(), weight);
+          prMPFg->Fill(tag_r.Pt(), R_MPF_r, weight);
+          prRjetg->Fill(probe_g.Pt(), Rjet, weight);
+
+        } else continue; //Undetermined flavour
+        FFa->Fill(tag_r.Pt(), weight); continue;
       }
-
-      totalE = probe_ch + probe_nh + probe_gamma + probe_e;
-
-      prchf   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-      prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-      prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-      pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight); 
-
-
-      //MPF response
-      R_MPF_r = 1.0 + (MET_r.Px()*tag_r.Px() + MET_r.Py()*tag_r.Py()) / pow((tag_r.Pt()),2);
-      //R_MPF_r = 1.0 + MET_r.Pt()*cos(tag_r.DeltaPhi(MET_r))/tag_r.Pt();
-
-
-      //Fill MPF profile
-      prMPF->Fill(tag_r.Pt(), R_MPF_r, weight);
-
-      Rjet      = probe_r.Pt()/probe_g.Pt();
-      Rjet_calo = probe_calo.Pt()/probe_g.Pt(); 
-
-      //All jets
-      prRjet->Fill(probe_g.Pt(), Rjet, weight);
-      prRjet_calo->Fill(probe_g.Pt(), Rjet_calo, weight);
-
-      //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
-      //Loop partons to find where jets originated from
-      for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
-        //prtn_tag=0 for outgoing hard process partons
-        //Suffix "a" for "all jet flavours", needed for averaging etc.
-        if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
-
-          //Probe flavour
-          probeFlav = abs((*prtn_pdgid)[j]);
-
-          if (probeFlav == 5) {                           //b-jets
-            FFb->Fill(tag_r.Pt(), weight);
-            prMPFb->Fill(tag_r.Pt(), R_MPF_r, weight);
-            prRjetb->Fill(probe_g.Pt(), Rjet, weight);
-
-          } else if (probeFlav < 5) {                     //Light quark (u,d,s,c) jets
-            FFlq->Fill(tag_r.Pt(), weight);
-            prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight);
-            prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
-
-            if (probeFlav == 4) {                         //c-jets
-              FFc->Fill(tag_r.Pt(), weight);
-              prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
-              prRjetc->Fill(probe_g.Pt(), Rjet, weight);            
-            } else if (probeFlav == 3) {                  //s-jets
-              FFs->Fill(tag_r.Pt(), weight);
-              prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight);
-              prRjets->Fill(probe_g.Pt(), Rjet, weight);         
-            } else if (probeFlav < 3) {                   //(u,d)
-              FFud->Fill(tag_r.Pt(), weight);
-              prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
-              prRjetud->Fill(probe_g.Pt(), Rjet, weight);  
-            }
-          } else if (probeFlav == 21) {                   //Gluon jets
-            FFg->Fill(tag_r.Pt(), weight);
-            prMPFg->Fill(tag_r.Pt(), R_MPF_r, weight);
-            prRjetg->Fill(probe_g.Pt(), Rjet, weight);
-
-          } else continue; //Undetermined flavour
-          FFa->Fill(tag_r.Pt(), weight); continue;
-        }
-      } //Loop partons
-
-    }
+    } //Loop partons
 
     //If the old list of cut events is not read, a new one is written
     if (!GetuseEarlierCuts()) passedCuts[jentry]=true;
@@ -1277,7 +1182,8 @@ void CMSJES::Loop()
   cout << "Btb tag-probe:          " << b2b         << endl;
   cout << "Alpha:                  " << alpha       << endl;
   cout << "Reco level Probe:       " << probeCut    << endl;
-  cout << "MET cut:                " << METcut      << endl << endl;
+  cout << "MET-tag cut:            " << METtag      << endl;
+  cout << "MET-probe cut:          " << METprobe    << endl << endl;
   
   //Charged hadron efficiency Profile
   TCanvas *c4     = new TCanvas("","c4",500,500);
