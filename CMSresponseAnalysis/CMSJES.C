@@ -185,7 +185,8 @@ void CMSJES::Loop()
   int PDG              = 1;   //Shorthand, to store a particle's PDGID
   int JI               = 0;   //Shorthand, particle's jet index
   double phiMin        = 2.8; //Minimum azimuth angle between tag and probe
-  double pTmin_probe   = 15;  //Minimum probe jet p_T (GeV)
+  double pTmin_probe_g = 10;  //Minimum probe gen-jet p_T (GeV)
+  double pTmin_probe_r = 15;  //Minimum probe reco-jet p_T (GeV)
   double pTmin_muon    = 15;  //Minimum single tag muon pT (GeV)
   double pTmin_tag_z   = 15;  //Minimum tag muon pair pT (GeV)   
   double resp          = 1.0; //SPR value                (dummy init)
@@ -350,6 +351,7 @@ void CMSJES::Loop()
   int b2b = 0;
   int probeCut = 0;
   int METcut = 0;
+  int evt = 0;
 
 //***********************************************************************************************
   //Granularity of cells following the granularity of the HCAL 
@@ -411,8 +413,6 @@ void CMSJES::Loop()
 
     //Skip events that didn't pass cuts earlier. Useful in e.g. repeating Loop
     if (GetuseEarlierCuts() && passedCuts.size()>jentry && !passedCuts[jentry]) continue;
- 
-
 
     Long64_t ientry = LoadTree(jentry);	//Load new event
     if (ientry < 0) break;		//When no more events
@@ -446,7 +446,7 @@ void CMSJES::Loop()
 
     //**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************//
     if (studyMode == 3) {
-
+      cout << "meniko" << endl;
       int muPDG=13; int muTAG=3; //mu PDGID and parton tag
       if (ReadName.find("H7")!=string::npos) muTAG=2; 
 
@@ -563,17 +563,18 @@ void CMSJES::Loop()
     /****************************** COMMON CUTS FOR Z+JET ******************************/
     if (studyMode == 3) {
       //PF probe-tag cuts
-      if (fabs(probe_g.Eta())>eta_probe || probe_g.Pt()<pTmin_probe) continue; genprobeCut ++;
+      if (fabs(probe_g.Eta())>eta_probe || probe_g.Pt()<pTmin_probe_g) continue; genprobeCut ++;
 
       //Back-to-back cut
       if (fabs(tag.DeltaPhi(probe_g)) < phiMin) continue; b2b ++;
     } 
     /****************************** COMMON CUTS FOR DIJET ******************************/
     if (studyMode == 1) {
-      //probe and 2nd jet cuts
-      //Both must have pT higher than 15 GeV
-      if (probe_g.Pt()<pTmin_probe || jets_g[i_jet2].Pt()<pTmin_probe) continue;
-      //Other must be in barrel region
+
+      //probe and 2nd jet cuts, Both must have pT higher than 15 GeV
+      if (probe_g.Pt()<pTmin_probe_g || jets_g[i_jet2].Pt()<pTmin_probe_g) continue;
+
+      //One must be in barrel region
       if (fabs(probe_g.Eta())>eta_probe && fabs(jets_g[i_jet2].Eta())>eta_probe) continue; 
       genprobeCut ++;
 
@@ -659,8 +660,6 @@ void CMSJES::Loop()
 
     //****************** MET calculation *******************//
     //Add tag object to the MET
-
-
     if (studyMode==3) {
       MET_r -= tag_r;
       sumEt += tag_r.Et();
@@ -1022,7 +1021,7 @@ void CMSJES::Loop()
       if (jet3_r.Pt() > 0.3*(0.5*(probe_r.Pt() + jet2_r.Pt()))) continue; alpha ++;
 
       //reco jet cuts
-      if (probe_r.Pt()<pTmin_probe || jet2_r.Pt()<pTmin_probe) continue; probeCut ++;
+      if (probe_r.Pt()<pTmin_probe_r || jet2_r.Pt()<pTmin_probe_r) continue; probeCut ++;
 
       //MET cut
       if (MET_r.Pt() > 45.0 && MET_r.Pt() > 0.4*sumEt) continue; METcut ++;
@@ -1032,7 +1031,7 @@ void CMSJES::Loop()
       if (jet2_r.Pt() > 0.3*tag_r.Pt()) continue; alpha ++;
 
       //reco probe cuts
-      if (fabs(probe_r.Eta()) > eta_probe || probe_r.Pt() < pTmin_probe) continue; probeCut ++;
+      if (fabs(probe_r.Eta()) > eta_probe || probe_r.Pt() < pTmin_probe_r) continue; probeCut ++;
 
       //MET cut
       if (MET_r.Pt() > 45.0 && MET_r.Pt() > 0.4*sumEt) continue; METcut ++;
@@ -1062,6 +1061,8 @@ void CMSJES::Loop()
           probe_e     = jet2_e;
         }
       }
+
+      evt ++;
 
       totalE = probe_ch + probe_nh + probe_gamma + probe_e;
 
@@ -1277,7 +1278,8 @@ void CMSJES::Loop()
   cout << "Btb tag-probe:          " << b2b         << endl;
   cout << "Alpha:                  " << alpha       << endl;
   cout << "Reco level Probe:       " << probeCut    << endl;
-  cout << "MET cut:                " << METcut      << endl << endl;
+  cout << "MET cut:                " << METcut      << endl; 
+  cout << "Total events:           " << evt         << endl << endl;
   
   //Charged hadron efficiency Profile
   TCanvas *c4     = new TCanvas("","c4",500,500);
