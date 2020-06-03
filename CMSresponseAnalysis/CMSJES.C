@@ -159,7 +159,9 @@ void CMSJES::Loop()
   TLorentzVector probe_r;    //PF reconstructed probe 4-vector
   TLorentzVector probe_calo; //Calo reconstructed probe 4-vector
 
+  TLorentzVector jet2_g;     //Second leading pT jet
   TLorentzVector jet2_r;     //Second leading pT jet
+  TLorentzVector jet3_g;     //Third leading pT jet
   TLorentzVector jet3_r;     //Third leading pT jet
 
   //Cell energies of the probe object
@@ -429,7 +431,9 @@ void CMSJES::Loop()
     probe_r.SetPtEtaPhiE(0,0,0,0); 
     probe_calo.SetPtEtaPhiE(0,0,0,0);
 
+    jet2_g.SetPtEtaPhiE(0,0,0,0);
     jet2_r.SetPtEtaPhiE(0,0,0,0);
+    jet3_g.SetPtEtaPhiE(0,0,0,0);
     jet3_r.SetPtEtaPhiE(0,0,0,0);
 
     probe_ch    = 0.0; jet2_ch    = 0.0;
@@ -446,7 +450,6 @@ void CMSJES::Loop()
 
     //**************** Z+JET: FIND AND RECONSTRUCT TAG MUONS ****************//
     if (studyMode == 3) {
-      cout << "meniko" << endl;
       int muPDG=13; int muTAG=3; //mu PDGID and parton tag
       if (ReadName.find("H7")!=string::npos) muTAG=2; 
 
@@ -513,7 +516,10 @@ void CMSJES::Loop()
           }
         }
       }
-    } else if (studyMode == 3) {
+
+      i_jet3 = i_jet2 + 1; //3rd leadin pT jet
+
+    } else if (studyMode == 1) {
       //Probe
       i_probe = 0;
       //2nd jet
@@ -521,6 +527,7 @@ void CMSJES::Loop()
       //3rd jet
       i_jet3  = 2;
     }
+
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
 
     for (int i=0; i != prtcl_pt->size(); ++i) {
@@ -554,11 +561,30 @@ void CMSJES::Loop()
     } //Loop particles in jets
 
 
-    /********************* RECONSTRUCT GEN LEVEL PROBES *********************/
+    /********************* RECONSTRUCT GEN LEVEL PROBE, jet2, jet3 *********************/
 
     //Gen lvl as output by FastJet
-    probe_g.SetPtEtaPhiE((*jet_pt)[i_probe],  (*jet_eta)[i_probe],
-                         (*jet_phi)[i_probe], (*jet_e)[i_probe]  );
+    if (njets > 0) {
+      probe_g.SetPtEtaPhiE((*jet_pt)[i_probe], (*jet_eta)[i_probe],
+                          (*jet_phi)[i_probe],   (*jet_e)[i_probe] );
+    } else {
+      probe_g.SetPtEtaPhiE(0,0,0,0);
+    }
+
+    if (njets > 1) {
+      jet2_g.SetPtEtaPhiE( (*jet_pt)[i_jet2], (*jet_eta)[i_jet2],
+                          (*jet_phi)[i_jet2],   (*jet_e)[i_jet2] );
+    } else {
+      jet2_g.SetPtEtaPhiE(0,0,0,0);
+    }
+
+    if (njets > 2) {
+      jet3_g.SetPtEtaPhiE( (*jet_pt)[i_jet3], (*jet_eta)[i_jet3],
+                          (*jet_phi)[i_jet3],   (*jet_e)[i_jet3] );
+    } else {
+      jet3_g.SetPtEtaPhiE(0,0,0,0);
+    }
+
 
     /****************************** COMMON CUTS FOR Z+JET ******************************/
     if (studyMode == 3) {
@@ -570,16 +596,15 @@ void CMSJES::Loop()
     } 
     /****************************** COMMON CUTS FOR DIJET ******************************/
     if (studyMode == 1) {
+      //probe and 2nd jet cuts, Both must have pT higher than 10 GeV
+      if (probe_g.Pt()<pTmin_probe_g || jet2_g.Pt()<pTmin_probe_g) continue;
 
-      //probe and 2nd jet cuts, Both must have pT higher than 15 GeV
-      if (probe_g.Pt()<pTmin_probe_g || jets_g[i_jet2].Pt()<pTmin_probe_g) continue;
-
-      //One must be in barrel region
-      if (fabs(probe_g.Eta())>eta_probe && fabs(jets_g[i_jet2].Eta())>eta_probe) continue; 
+      //Both must be in the barrel
+      if (fabs(probe_g.Eta())>eta_probe || fabs(jet2_g.Eta())>eta_probe) continue;
       genprobeCut ++;
 
       //Back-to-back cut
-      if (fabs(probe_g.DeltaPhi(jets_g[i_jet2])) < 2.7) continue; b2b ++;
+      if (fabs(probe_g.DeltaPhi(jet2_g)) < phiMin) continue; b2b ++;
     }
     /********************** PROBE GEN PARTICLE CONTENT **********************/
     
@@ -647,7 +672,6 @@ void CMSJES::Loop()
     sigmaTrk     ->Reset();	//For weighting
     sigmaTrk_curv->Reset();	//For shadowing effect
 
-    
 
     //Probe flavor check, prtn_tag=0 for outgoing hard process partons
     //for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
@@ -660,6 +684,7 @@ void CMSJES::Loop()
 
     //****************** MET calculation *******************//
     //Add tag object to the MET
+
     if (studyMode==3) {
       MET_r -= tag_r;
       sumEt += tag_r.Et();
@@ -668,7 +693,6 @@ void CMSJES::Loop()
     //Loop over all particles
     for (int i=0; i!=prtclnij_pt->size(); ++i) {
       
-
       PDG = fabs((*prtclnij_pdgid)[i]);
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                       (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
@@ -717,7 +741,7 @@ void CMSJES::Loop()
 
           //Efficiency from chs
           if (fabs(p4.Eta() < 2.5)) {
-            for (int ijet=0; ijet!=jets_g.size(); ++ijet) {
+            for (int ijet=0; ijet!=njets; ++ijet) {
               if (p4.DeltaR(jets_g[ijet]) < RCone) {
                 eff = pchf->Eval(jets_g[ijet].Pt()) / 0.607;
                 eff -= 0.1381969 - 0.1606539/pow(2,((*prtclnij_pt)[i]/45.31742));
@@ -996,7 +1020,7 @@ void CMSJES::Loop()
         MET_r -= p4;
         sumEt += p4.Et();
 
-        //Probe reconstruction
+        //Jet Reconstruction
         if (p4.DeltaR(probe_g) < RCone) {
           probe_r     += p4;
           probe_ch    += p4_rescale.E();
@@ -1004,13 +1028,15 @@ void CMSJES::Loop()
           probe_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
         }
         //Second leading jet reconstruction for Alpha cut
-        if (p4.DeltaR(jets_g[i_jet2]) < RCone) { 
+        if (p4.DeltaR(jet2_g) < RCone && jet2_g.Pt() != 0.0) {
           jet2_r     += p4;
           jet2_ch    += p4_rescale.E();
           jet2_nh    += nhHCAL_calib;
           jet2_gamma += nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j);
         }
-        if (p4.DeltaR(jets_g[i_jet3]) < RCone) { jet3_r += p4;}
+        if (p4.DeltaR(jet3_g) < RCone && jet3_g.Pt() != 0.0) {
+          jet3_r += p4;
+        }
       }
     }
 
@@ -1020,8 +1046,10 @@ void CMSJES::Loop()
       //alpha cut
       if (jet3_r.Pt() > 0.3*(0.5*(probe_r.Pt() + jet2_r.Pt()))) continue; alpha ++;
 
-      //reco jet cuts
-      if (probe_r.Pt()<pTmin_probe_r || jet2_r.Pt()<pTmin_probe_r) continue; probeCut ++;
+      //reco jet pT cuts
+      if (probe_r.Pt()<pTmin_probe_r || jet2_r.Pt()<pTmin_probe_r) continue;
+      if (fabs(probe_r.Eta())>eta_probe || fabs(jet2_r.Eta())>eta_probe) continue;
+      probeCut ++;
 
       //MET cut
       if (MET_r.Pt() > 45.0 && MET_r.Pt() > 0.4*sumEt) continue; METcut ++;
@@ -1041,19 +1069,18 @@ void CMSJES::Loop()
     double totalE;
 
     /**************************** FILL HISTOGRAMS ****************************/
- 
+
 
     for (unsigned int j = 0; j!=((studyMode==1) ? 2:1); ++j) {
 
       //Dijet cuts
       if (studyMode ==1) {
         if (j==0) {
-          if ( fabs(probe_r.Eta()) > eta_probe ) continue;
           tag_r = jet2_r;
         } else if (j==1) {
-          if ( fabs(jet2_r.Eta()) > eta_probe ) continue;
           tag_r   = probe_r;
           probe_r = jet2_r;
+          probe_g = jet2_g;
           //JEF
           probe_ch    = jet2_ch;
           probe_nh    = jet2_nh;
