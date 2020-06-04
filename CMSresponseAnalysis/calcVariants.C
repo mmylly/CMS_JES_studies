@@ -1,23 +1,81 @@
 void calcVariants()
 {
+  #include <stdio.h>
+  #include <string.h>
+
+  int temp=-1;
+
+  string filename="";
+
+
+  cout << "(1) Pythia 8 (2) Herwig 7" << endl;
+  while (temp!=1 && temp!=2) cin >> temp;
+  string gen="";
+  if      (temp==1) gen = "P8_";
+  else if (temp==2) gen = "H7_";
+
+  filename.append(gen);
+
+  //Sample type
+  temp=-1;
+  cout << "(1) Zjet (2) dijet" << endl;
+  while (temp!=1 && temp!=2) cin >> temp;
+  string mode="";
+  if      (temp==1) mode = "Zjet_";
+  else if (temp==2) mode = "dijet_";
+  else {
+    cout << "ERROR: Unknown mode" << endl;
+    return;
+  }
+
+  filename.append(mode);
+
+  //Number of events
+  cout << "#Events? (1) 3k (2) 10k (3) 30k (4) 100k (5) 1M (6) 5M" << endl;
+  temp=-1;	//Reinit
+  while (temp<1 || temp >6) cin >> temp;
+  string n_evts = "3000";	//#Events in the file
+  if      (temp==2) n_evts = "10000";
+  else if (temp==3) n_evts = "30000";
+  else if (temp==4) n_evts = "100000";
+  else if (temp==5) n_evts = "1000000";
+  else if (temp==6) n_evts = "5000000";
+
+  filename.append(n_evts);
+
+  string folder = "output_ROOT_files/CMSJES_";
+  filename = folder.append(filename);
+  string fn_temp = filename;
+
   //C-parameter variation
-  
-  TFile* fzj           = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000.root");
-  TFile* fzj_Cp3       = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCp3.root");
-  TFile* fzj_Cm3       = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varCm3.root");
-  TFile* fzj_HadHCALp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varHadHCALp3.root");
-  TFile* fzj_HadHCALm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varHadHCALm3.root");
-  TFile* fzj_HadECALp3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varHadECALp3.root");
-  TFile* fzj_HadECALm3 = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varHadECALm3.root");
-  TFile* fzj_Trkm1     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEffm1.root");
-  TFile* fzj_Trkm3     = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varTrkEffm3.root");
-  TFile* fzj_ECALm1    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varECALm1.root");
-  TFile* fzj_ECALm3    = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varECALm3.root");
-  TFile* fzj_Photonm1  = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhotonm1.root");
-  TFile* fzj_Photonm3  = TFile::Open("output_ROOT_files/CMSJES_P8_Zjet_5000000_varPhotonm3.root");
+  TFile* fzj           = TFile::Open(filename.append(".root").c_str());
+  filename = fn_temp;
+  TFile* fzj_Cp3       = TFile::Open(filename.append("_varCp3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_Cm3       = TFile::Open(filename.append("_varCm3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_HadHCALp3 = TFile::Open(filename.append("_varHadHCALp3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_HadHCALm3 = TFile::Open(filename.append("_varHadHCALm3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_HadECALp3 = TFile::Open(filename.append("_varHadECALp3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_HadECALm3 = TFile::Open(filename.append("_varHadECALm3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_Trkm1     = TFile::Open(filename.append("_varTrkEffm1.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_Trkm3     = TFile::Open(filename.append("_varTrkEffm3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_ECALm1    = TFile::Open(filename.append("_varECALm1.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_ECALm3    = TFile::Open(filename.append("_varECALm3.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_Photonm1  = TFile::Open(filename.append("_varPhotonm1.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_Photonm3  = TFile::Open(filename.append("_varPhotonm3.root").c_str());
 
-
-  string outname = "./output_ROOT_files/varPlots_5000000.root"; //Output file
+  string outname = "./output_ROOT_files/varPlots_";
+  outname.append(gen).append(mode).append(n_evts).append(".root");
 
   //All jets
   TProfile *pr_Rjet           = 0;
@@ -1205,6 +1263,8 @@ void calcVariants()
 
   foutvar->Write();
   foutvar->Close();
+
+  gApplication->Terminate(0);
 
 }
 
