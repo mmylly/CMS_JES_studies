@@ -318,9 +318,12 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       files.push_back("P8_Zjet_5000000");
       files.push_back("P8_Zjet_10000000");
       files.push_back("P8_dijet_3000");
+      files.push_back("H7_dijet_3000");
       files.push_back("P8_dijet_30000");
+      files.push_back("H7_dijet_30000");
       files.push_back("P8_dijet_100000");
       files.push_back("P8_dijet_1000000");
+      files.push_back("H7_dijet_1000000");
       //User interface
       printf("No filename given, choose file (y = default file):\n");
       for (int i=0; i!=files.size(); ++i) {

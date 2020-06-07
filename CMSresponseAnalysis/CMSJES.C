@@ -178,6 +178,8 @@ void CMSJES::Loop()
   unsigned int i_tag   = 0;   //Stepper to find tag object index
   unsigned int i_tag1;        //1st tag muon
   unsigned int i_tag2;        //2nd tag muon
+  int i_mujet1;
+  int i_mujet2;
   unsigned int i_probe = 0;   //       -||-     probe jet index
   unsigned int i_jet2  = 1;   //       -||-     2nd jet index
   unsigned int i_jet3  = 2;   //       -||-     3rd jet index
@@ -499,25 +501,28 @@ void CMSJES::Loop()
       if (fabs(tag_r.Eta()) > eta_tag_z || tag_r.Pt() < pTmin_tag_z) continue; tagCut++;
 
       /********************* SELECT THE PROBE JET AND 2nd JET ********************/
-      //Probe
-      i_probe = 0;
-      //2nd jet
-      i_jet2 = 1;
+      i_mujet1 = -1; i_mujet2 = -1;
 
       // If muon is found from the jet it is not acceptable
-      // Confirm implementation and optimize
-      for (int i=0; i < int(jet_e->size()); ++i) { // Loop over jets
-        for (int j=0; j != prtcl_pt->size(); ++j) { // Loop over all particles
-          if ((*prtcl_jet)[j] == i) {
-            if ((*prtn_pt )[i_tag1]==(*prtcl_pt)[j] || (*prtn_pt )[i_tag2]==(*prtcl_pt)[j]) {
-              if (i_probe == i) {i_probe++; i_jet2++;}
-              if (i_jet2 == i)   i_jet2++;
-            }
-          }
+      // Confirm implementation
+      for (int j=0; j != prtcl_pt->size(); ++j) { // Loop over all particles
+        if ((*prtn_pt )[i_tag1]==(*prtcl_pt)[j]) {
+          i_mujet1 = int((*prtcl_jet)[j]);
+        }
+        if ((*prtn_pt )[i_tag2]==(*prtcl_pt)[j]) {
+          i_mujet2 = int((*prtcl_jet)[j]);
         }
       }
 
-      i_jet3 = i_jet2 + 1; //3rd leadin pT jet
+      for (int i=0; i < njets; ++i) {
+        if (i_probe == i_mujet1 || i_probe == i_mujet2) {
+          i_probe ++; i_jet2++; i_jet3 ++;
+        } else if (i_jet2 == i_mujet1 || i_jet2 == i_mujet2) {
+          i_jet2 ++; i_jet3 ++;
+        } else if (i_jet3 == i_mujet1 || i_jet3 == i_mujet2) {
+          i_jet3 ++;
+        }
+      }
 
     } else if (studyMode == 1) {
       //Probe
@@ -527,6 +532,7 @@ void CMSJES::Loop()
       //3rd jet
       i_jet3  = 2;
     }
+
 
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
 
@@ -564,27 +570,40 @@ void CMSJES::Loop()
     /********************* RECONSTRUCT GEN LEVEL PROBE, jet2, jet3 *********************/
 
     //Gen lvl as output by FastJet
-    if (njets > 0) {
+    if (njets > 0 && njets > i_probe) {
       probe_g.SetPtEtaPhiE((*jet_pt)[i_probe], (*jet_eta)[i_probe],
                           (*jet_phi)[i_probe],   (*jet_e)[i_probe] );
     } else {
       probe_g.SetPtEtaPhiE(0,0,0,0);
     }
 
-    if (njets > 1) {
+    if (njets > 1 && njets > i_jet2) {
       jet2_g.SetPtEtaPhiE( (*jet_pt)[i_jet2], (*jet_eta)[i_jet2],
                           (*jet_phi)[i_jet2],   (*jet_e)[i_jet2] );
     } else {
       jet2_g.SetPtEtaPhiE(0,0,0,0);
     }
 
-    if (njets > 2) {
+    if (njets > 2 && njets > i_jet3) {
       jet3_g.SetPtEtaPhiE( (*jet_pt)[i_jet3], (*jet_eta)[i_jet3],
                           (*jet_phi)[i_jet3],   (*jet_e)[i_jet3] );
     } else {
       jet3_g.SetPtEtaPhiE(0,0,0,0);
     }
 
+
+    /*
+    if (njets == 3) {
+    cout << endl << njets << endl;
+    cout << i_mujet1 << " " << i_mujet2 << endl;
+    //cout << (*prtn_pt )[i_tag1] << " " << (*prtn_pt )[i_tag2] << endl;
+    cout << i_probe << " " << i_jet2 << " " << i_jet3 << endl;
+    cout << probe_g.Pt() << " " << jet2_g.Pt() << " " << jet3_g.Pt() << endl;
+    cout << probe_r.Pt() << " " << jet2_r.Pt() << " " << jet3_r.Pt() << endl;
+    cout << double((*jet_pt)[0]) << " " << double((*jet_pt)[1]) << " " << double((*jet_pt)[2]) 
+         << " " << double((*jet_pt)[3]) << " " << double((*jet_pt)[4]) << endl;
+    }
+    */
 
     /****************************** COMMON CUTS FOR Z+JET ******************************/
     if (studyMode == 3) {
@@ -737,12 +756,12 @@ void CMSJES::Loop()
         //CHARGED HADRONS
         case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 :
           trkFail = 0;
-          eff = 1.0; //No particle level track failing
+          eff = 1.0; //Initially no track failing
 
           //Efficiency from chs
           if (fabs(p4.Eta() < 2.5)) {
             for (int ijet=0; ijet!=njets; ++ijet) {
-              if (p4.DeltaR(jets_g[ijet]) < RCone) {
+              if (p4.DeltaR(jets_g[ijet]) < RCone && ijet != i_mujet1 && ijet != i_mujet2) {
                 eff = pchf->Eval(jets_g[ijet].Pt()) / 0.607;
                 eff -= 0.1381969 - 0.1606539/pow(2,((*prtclnij_pt)[i]/45.31742));
               }
@@ -1047,8 +1066,8 @@ void CMSJES::Loop()
       if (jet3_r.Pt() > 0.3*(0.5*(probe_r.Pt() + jet2_r.Pt()))) continue; alpha ++;
 
       //reco jet pT cuts
-      if (probe_r.Pt()<pTmin_probe_r || jet2_r.Pt()<pTmin_probe_r) continue;
-      if (fabs(probe_r.Eta())>eta_probe || fabs(jet2_r.Eta())>eta_probe) continue;
+      if (probe_r.Pt() < pTmin_probe_r    || jet2_r.Pt() < pTmin_probe_r) continue;
+      if (fabs(probe_r.Eta()) > eta_probe || fabs(jet2_r.Eta()) > eta_probe) continue;
       probeCut ++;
 
       //MET cut
@@ -1070,14 +1089,16 @@ void CMSJES::Loop()
 
     /**************************** FILL HISTOGRAMS ****************************/
 
+    //cout << endl << tag_r.Pt() << " " << probe_r.Pt() << " " << jet2_r.Pt() << " " <<
+    //     probe_nh << " " << jet2_nh << " " << i_probe << " " << i_jet2 << endl;
 
-    for (unsigned int j = 0; j!=((studyMode==1) ? 2:1); ++j) {
+    for (unsigned int i = 0; i!=((studyMode==1) ? 2:1); ++i) {
 
       //Dijet cuts
       if (studyMode ==1) {
-        if (j==0) {
+        if (i==0) {
           tag_r = jet2_r;
-        } else if (j==1) {
+        } else if (i==1) {
           tag_r   = probe_r;
           probe_r = jet2_r;
           probe_g = jet2_g;
@@ -1086,8 +1107,14 @@ void CMSJES::Loop()
           probe_nh    = jet2_nh;
           probe_gamma = jet2_gamma;
           probe_e     = jet2_e;
+          i_probe     = i_jet2;
         }
       }
+
+      //cout << i << endl;
+      //cout << tag_r.Pt() << " " << probe_r.Pt() << " " << jet2_r.Pt() << " " << probe_nh << " "
+      //     << i_probe << endl; 
+
 
       evt ++;
 
@@ -1114,11 +1141,12 @@ void CMSJES::Loop()
       prRjet->Fill(probe_g.Pt(), Rjet, weight);
       prRjet_calo->Fill(probe_g.Pt(), Rjet_calo, weight);
 
+
+
       //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
       //Loop partons to find where jets originated from
       for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
         //prtn_tag=0 for outgoing hard process partons
-        //Suffix "a" for "all jet flavours", needed for averaging etc.
         if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
 
           //Probe flavour
