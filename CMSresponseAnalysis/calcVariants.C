@@ -276,8 +276,6 @@ void calcVariants()
   TH1D* h_Rjet_calo_Cp3  = pr_Rjet_calo_Cp3->ProjectionX();
   TH1D* h_Rjet_calo_Cm3  = pr_Rjet_calo_Cm3->ProjectionX();
 
-
-
   TH1D* h_Rjetb           = pr_Rjetb->ProjectionX();
   TH1D* h_Rjetb_Cp3       = pr_Rjetb_Cp3->ProjectionX();
   TH1D* h_Rjetb_Cm3       = pr_Rjetb_Cm3->ProjectionX();
@@ -1138,10 +1136,6 @@ void calcVariants()
   h_Rjet_Photonm3 ->Write("h_Rjet_Photonm3");
   h_Rjet_calo_Cm3->Write("h_Rjet_calo_Cm3");
   h_Rjet_calo_Cp3->Write("h_Rjet_calo_Cp3");
-  //h_Rjet_Trk->Write("h_Rjet_Trk");
-  //h_Rjet_Photon->Write("h_Rjet_Photon");
-
-
 
   h_Rjetb_Cp3      ->Write("h_Rjetb_Cp3");
   h_Rjetb_Cm3      ->Write("h_Rjetb_Cm3");
@@ -1259,7 +1253,6 @@ void calcVariants()
   hnhf_Photonm3    ->Write("hnhf_Photonm3");
   hgammaf_Photonm3 ->Write("hgammaf_Photonm3");
   hef_Photonm3     ->Write("hef_Photonm3");
-
 
   foutvar->Write();
   foutvar->Close();

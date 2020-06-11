@@ -5,6 +5,8 @@
 void CMSJES::Loop()
 {
 
+  //fstream weight_stream;
+
   clock_t t_begin = clock();
 
   //Variant flags
@@ -403,12 +405,15 @@ void CMSJES::Loop()
   // 90% parametes
   TF1* allTrkReso = new TF1("allTrkReso","2.006093e-05*pow(x,2)+0.00103068*x+0.0190268",0,5000);
 
-
+  
 //***********************************************************************************************
+  //string weight_file = "./weights.txt";
+  //weight_stream.open(weight_file, std::ios::out); //Write mode
 
   //Loop Tree entries = events
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
     //Print progress for long runs
+    
     if ((GetprintProg() && jentry % 1000==0)){
       cout << "Looping event " << jentry; 
       if (studyMode == 1) cout << " in dijet" << endl;
@@ -1111,9 +1116,10 @@ void CMSJES::Loop()
         }
       }
 
-      //cout << i << endl;
-      //cout << tag_r.Pt() << " " << probe_r.Pt() << " " << jet2_r.Pt() << " " << probe_nh << " "
-      //     << i_probe << endl; 
+     //weight_stream << probe_g.Pt();
+     //weight_stream << " ";
+     //weight_stream << weight;
+     //weight_stream << "\n";
 
 
       evt ++;
@@ -1136,6 +1142,9 @@ void CMSJES::Loop()
 
       Rjet      = probe_r.Pt()/probe_g.Pt();
       Rjet_calo = probe_calo.Pt()/probe_g.Pt(); 
+
+      //15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713
+
 
       //All jets
       prRjet->Fill(probe_g.Pt(), Rjet, weight);
@@ -1192,7 +1201,7 @@ void CMSJES::Loop()
     
    } //Loop Tree entries
 
-
+  //weight_stream.close();	//Close the output stream
 
   if (!GetuseEarlierCuts()) {
     //Write the accepted event information into a binary file

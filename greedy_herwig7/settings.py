@@ -15,6 +15,7 @@ tune = 0
 
 # Kt min (i.e. pthat) should be chosen by the user, unless it's a ttbar event
 minKT=10.0 #Earlier 20.0
+#minKT=15.0
 # In ttbar events, the user should set the mass of top
 mTop=175.0
 
