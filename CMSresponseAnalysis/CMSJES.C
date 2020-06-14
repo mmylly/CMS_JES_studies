@@ -94,6 +94,9 @@ void CMSJES::Loop()
   TProfile* prMPFs  = new TProfile("prMPFs" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFc  = new TProfile("prMPFc" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
+  //Weight profile
+  TProfile* prWeight = new TProfile("prWeight", ";p_{T,gen}^{jet} [GeV]", nbinsMPF-1, binsxMPF);
+
   //Jet response
   string RjetTitle    = ";p_{T,gen}^{jet} [GeV]";
          RjetTitle   += ";p_{T,reco}^{jet} / p_{T,gen}^{jet}";
@@ -249,10 +252,10 @@ void CMSJES::Loop()
                                548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832};
 
   //Jet energy fraction profiles
-  TProfile* prchf    = new TProfile("prchf"    , "", nbins_chf, bins_chf);
-  TProfile* prnhf    = new TProfile("prnhf"    , "", nbins_chf, bins_chf);
-  TProfile* prgammaf = new TProfile("prgammaf" , "", nbins_chf, bins_chf);  
-  TProfile* pref     = new TProfile("pref"     , "", nbins_chf, bins_chf);  
+  TProfile* prchf    = new TProfile("prchf"   , ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);
+  TProfile* prnhf    = new TProfile("prnhf"   , ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);
+  TProfile* prgammaf = new TProfile("prgammaf", ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);  
+  TProfile* pref     = new TProfile("pref"    , ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);  
 
   if (GetcontHistos()) {
     h_e     = new TH1F("", "", nbins_h, bins_h_lo, bins_h_hi); //e^+-
@@ -413,12 +416,14 @@ void CMSJES::Loop()
   //Loop Tree entries = events
   for (Long64_t jentry=0; jentry != nentries; ++jentry) {
     //Print progress for long runs
-    
     if ((GetprintProg() && jentry % 1000==0)){
       cout << "Looping event " << jentry; 
       if (studyMode == 1) cout << " in dijet" << endl;
       if (studyMode == 3) cout << " in Z+jet" << endl;
     }
+
+    // Bad entry for P8 dijet 5M sample
+    //if (jentry == 468473) continue;
 
     //Skip events that didn't pass cuts earlier. Useful in e.g. repeating Loop
     if (GetuseEarlierCuts() && passedCuts.size()>jentry && !passedCuts[jentry]) continue;
@@ -1116,10 +1121,12 @@ void CMSJES::Loop()
         }
       }
 
-     //weight_stream << probe_g.Pt();
-     //weight_stream << " ";
-     //weight_stream << weight;
-     //weight_stream << "\n";
+      prWeight->Fill(probe_g.Pt(), weight);
+ 
+      //weight_stream << probe_g.Pt();
+      //weight_stream << " ";
+      //weight_stream << weight;
+      //weight_stream << "\n";
 
 
       evt ++;
