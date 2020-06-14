@@ -85,7 +85,7 @@ void CMSJES::Loop()
   {15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713};
 
   //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
-  string MPFTitle = ";p_{T,tag}^{MC} [GeV];R_{MPF}";
+  string MPFTitle = ";p_{T,reco}^{tag} [GeV];R_{MPF}";
   TProfile* prMPF   = new TProfile("prMPF"  , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFb  = new TProfile("prMPFb" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFg  = new TProfile("prMPFg" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -252,10 +252,10 @@ void CMSJES::Loop()
                                548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832};
 
   //Jet energy fraction profiles
-  TProfile* prchf    = new TProfile("prchf"   , ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);
-  TProfile* prnhf    = new TProfile("prnhf"   , ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);
-  TProfile* prgammaf = new TProfile("prgammaf", ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);  
-  TProfile* pref     = new TProfile("pref"    , ";p_{T,tag}^{MC} [GeV]", nbins_chf, bins_chf);  
+  TProfile* prchf    = new TProfile("prchf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
+  TProfile* prnhf    = new TProfile("prnhf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
+  TProfile* prgammaf = new TProfile("prgammaf", ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);  
+  TProfile* pref     = new TProfile("pref"    , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);  
 
   if (GetcontHistos()) {
     h_e     = new TH1F("", "", nbins_h, bins_h_lo, bins_h_hi); //e^+-
