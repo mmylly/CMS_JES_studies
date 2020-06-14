@@ -174,10 +174,12 @@ void CMSJES::Loop()
   double probe_nh;
   double probe_gamma;
   double probe_e;
+  double probe_mu;
   double jet2_ch;
   double jet2_nh;
   double jet2_gamma;
   double jet2_e;
+  double jet2_mu;
 
   //Partial derivative values for a hadron
   unsigned int i_tag   = 0;   //Stepper to find tag object index
@@ -254,8 +256,10 @@ void CMSJES::Loop()
   //Jet energy fraction profiles
   TProfile* prchf    = new TProfile("prchf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
   TProfile* prnhf    = new TProfile("prnhf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
-  TProfile* prgammaf = new TProfile("prgammaf", ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);  
-  TProfile* pref     = new TProfile("pref"    , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);  
+  TProfile* prgammaf = new TProfile("prgammaf", ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
+  TProfile* pref     = new TProfile("pref"    , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
+  TProfile* prmuf    = new TProfile("prmuf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
+
 
   if (GetcontHistos()) {
     h_e     = new TH1F("", "", nbins_h, bins_h_lo, bins_h_hi); //e^+-
@@ -452,6 +456,7 @@ void CMSJES::Loop()
     probe_nh    = 0.0; jet2_nh    = 0.0;
     probe_gamma = 0.0; jet2_gamma = 0.0;
     probe_e     = 0.0; jet2_e     = 0.0;
+    probe_mu    = 0.0; jet2_mu    = 0.0;
 
     jets_g.clear();
     njets = (unsigned long)jet_pt->size();
@@ -558,22 +563,28 @@ void CMSJES::Loop()
       //Reconstruct gen-level jets, at the moment has no neutrinos
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
 
-      //Add muons and electrons to the reconstructed probe jet and second jet
-      if (PDG==11 || PDG==13) {
-        if ((*prtcl_jet)[i]==i_probe) {
+      //Electrons to the reconstructed jets
+      if (PDG==11) { 
+        if ((*prtcl_jet)[i]==i_probe) { //Probe
           probe_r += resp*p4;
-          if (PDG == 11) {
-            probe_e += resp*p4.E(); //Probe electron energy for the fraction calculation
-          }
+          probe_e += resp*p4.E();
         } else if ((*prtcl_jet)[i] == i_jet2) { //2nd jet
           jet2_r += resp*p4;
-          if (PDG == 11) {
-            jet2_e += resp*p4.E(); //Jet2 electron energy for the fraction calculation
-          }
+          jet2_e += resp*p4.E();
         } else if ((*prtcl_jet)[i] == i_jet3) { //3rd jet
           jet3_r += resp*p4;
         }
-      } 
+      } else if (PDG==13) { //Muons to the reconstructed jets
+        if ((*prtcl_jet)[i]==i_probe) { //Probe
+          probe_r  += resp*p4;
+          probe_mu += resp*p4.E();
+        } else if ((*prtcl_jet)[i] == i_jet2) { //2nd jet
+          jet2_r  += resp*p4;
+          jet2_mu += resp*p4.E();
+        } else if ((*prtcl_jet)[i] == i_jet3) { //3rd jet
+          jet3_r  += resp*p4;
+        }
+      }
     } //Loop particles in jets
 
 
@@ -1117,6 +1128,7 @@ void CMSJES::Loop()
           probe_nh    = jet2_nh;
           probe_gamma = jet2_gamma;
           probe_e     = jet2_e;
+          probe_mu    = jet2_mu;
           i_probe     = i_jet2;
         }
       }
@@ -1131,12 +1143,13 @@ void CMSJES::Loop()
 
       evt ++;
 
-      totalE = probe_ch + probe_nh + probe_gamma + probe_e;
+      totalE = probe_ch + probe_nh + probe_gamma + probe_e + probe_mu;
 
       prchf   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
       prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
       prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-      pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight); 
+      pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
+      prmuf   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
 
 
       //MPF response
