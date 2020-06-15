@@ -163,8 +163,10 @@ if Weighting and mode<4:
     f.write('mkdir /Herwig/Weights\n')
     f.write('cd /Herwig/Weights\n')
     f.write('create ThePEG::ReweightMinPT reweightMinPT ReweightMinPT.so\n')
-    #f.write('set reweightMinPT:Power 4.5\n')
-    f.write('set reweightMinPT:Power 3.0\n') # Earlier 4.5 
+    if mode==3:
+        f.write('set reweightMinPT:Power 3.0\n') #Z+jet
+    else:
+        f.write('set reweightMinPT:Power 4.5\n') #Dijet
     f.write('set reweightMinPT:Scale 10*GeV\n')
     f.write('set reweightMinPT:OnlyColoured true\n\n')
     f.write('cd /Herwig/MatrixElements/\n')

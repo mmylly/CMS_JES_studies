@@ -135,7 +135,10 @@ if mode<4:
     if weighted:
         f.write("! Event weighting\n")
         f.write("PhaseSpace:bias2Selection = on\n")
-        f.write("PhaseSpace:bias2SelectionPow = 3.0\n") #Earlier 4.5 -> 3.5 -> 3.0
+        if mode==3:
+            f.write("PhaseSpace:bias2SelectionPow = 3.0\n") #Z+jet
+        else:
+            f.write("PhaseSpace:bias2SelectionPow = 4.5\n") #Dijet
         f.write("PhaseSpace:bias2SelectionRef = 10.\n\n") #Earlier 15.
 
 if mode>0:
