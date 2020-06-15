@@ -94,6 +94,17 @@ void CMSJES::Loop()
   TProfile* prMPFs  = new TProfile("prMPFs" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
   TProfile* prMPFc  = new TProfile("prMPFc" , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
 
+  string genMPFTitle = ";p_{T,gen}^{tag} [GeV];R_{MPF}^{gen}";
+  TProfile* prgenMPF   = new TProfile("prgenMPF"  , genMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prgenMPFb  = new TProfile("prgenMPFb" , genMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prgenMPFg  = new TProfile("prgenMPFg" , genMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prgenMPFlq = new TProfile("prgenMPFlq", genMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prgenMPFud = new TProfile("prgenMPFud", genMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prgenMPFs  = new TProfile("prgenMPFs" , genMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+  TProfile* prgenMPFc  = new TProfile("prgenMPFc" , genMPFTitle.c_str(), nbinsMPF-1, binsxMPF);
+
+
+
   //Weight profile
   TProfile* prWeight = new TProfile("prWeight", ";p_{T,gen}^{jet} [GeV]", nbinsMPF-1, binsxMPF);
 
@@ -157,7 +168,7 @@ void CMSJES::Loop()
   TLorentzVector p4_cht;
   TLorentzVector p4_rescale; //rescaled 4-vector 
 
-  TLorentzVector tag;        //Parton level tag object 4-vector
+  TLorentzVector tag_g;      //Parton level tag object 4-vector
   TLorentzVector tag_r;	     //With muon smearing
 
   TLorentzVector probe_g;    //Generator level without neutrinos  
@@ -204,14 +215,18 @@ void CMSJES::Loop()
   double respA         = 0.0; //Calorimeter response for All-hadrons
   double respEHE       = 0.0; //Calorimeter response for EHE-hadrons
   double respHHe       = 0.0; //Calorimeter response for HHe-hadrons
-  double R_MPF_r       = 0;   //MC-reco'd MPF response
+  double R_MPF_g       = 0.0;
+  double R_MPF_r       = 0.0;   //MC-reco'd MPF response
   double Rjet          = 0.0; //Jet pT-response
   double Rjet_calo     = 0.0; //Calo jet pT-response
 
   double RCone         = 0.4; //Jet radius
 
   unsigned long njets;          //#jets in the event, for resizing vectors
+
+  TLorentzVector MET_g;
   TLorentzVector MET_r;         //Reconstructed MET four vector
+
   double sumEt         = 0.0;
   vector<TLorentzVector> jets_g;//Gen lvl jet 4-vectors
 
@@ -440,8 +455,9 @@ void CMSJES::Loop()
     i_tag = 0; i_probe = 0; i_jet2 = 1; i_jet3 = 2;
     p4.SetPtEtaPhiE(0,0,0,0);      p4_calo.SetPtEtaPhiE(0,0,0,0); 
     MET_r.SetPtEtaPhiE(0,0,0,0);   sumEt = 0.0;
+    MET_g.SetPtEtaPhiE(0,0,0,0);
 
-    tag.SetPtEtaPhiE(0,0,0,0);     tag_r.SetPtEtaPhiE(0,0,0,0);
+    tag_g.SetPtEtaPhiE(0,0,0,0);   tag_r.SetPtEtaPhiE(0,0,0,0);
     
     probe_g.SetPtEtaPhiE(0,0,0,0);
     probe_r.SetPtEtaPhiE(0,0,0,0); 
@@ -489,7 +505,7 @@ void CMSJES::Loop()
       p4.SetPtEtaPhiE((*prtn_pt )[i_tag1], (*prtn_eta)[i_tag1],
                       (*prtn_phi)[i_tag1], (*prtn_e  )[i_tag1]);
 
-      tag = p4;//gen lvl
+      tag_g = p4;//gen lvl
 
       p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
@@ -501,7 +517,7 @@ void CMSJES::Loop()
       p4.SetPtEtaPhiE((*prtn_pt )[i_tag2], (*prtn_eta)[i_tag2],
                       (*prtn_phi)[i_tag2], (*prtn_e  )[i_tag2]);
 
-      tag += p4;//gen lvl
+      tag_g += p4;//gen lvl
 
       p4 *= gRandom->Gaus(1,muFSReso->Eval(p4.Pt()));
 
@@ -510,7 +526,7 @@ void CMSJES::Loop()
       tag_r += p4;      
 
       //Invariant mass in range 70-110 GeV since Z boson mass is 91 GeV
-      if (tag.M()<70.0 || tag.M()>110.0) continue; invM ++;
+      if (tag_g.M()<70.0 || tag_g.M()>110.0) continue; invM ++;
 
       //Tag eta and pT cuts:
       if (fabs(tag_r.Eta()) > eta_tag_z || tag_r.Pt() < pTmin_tag_z) continue; tagCut++;
@@ -632,7 +648,7 @@ void CMSJES::Loop()
       if (fabs(probe_g.Eta())>eta_probe || probe_g.Pt()<pTmin_probe_g) continue; genprobeCut ++;
 
       //Back-to-back cut
-      if (fabs(tag.DeltaPhi(probe_g)) < phiMin) continue; b2b ++;
+      if (fabs(tag_g.DeltaPhi(probe_g)) < phiMin) continue; b2b ++;
     } 
     /****************************** COMMON CUTS FOR DIJET ******************************/
     if (studyMode == 1) {
@@ -736,6 +752,10 @@ void CMSJES::Loop()
       PDG = fabs((*prtclnij_pdgid)[i]);
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                       (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
+
+
+      if (!isNeutrino(PDG)) MET_g -= p4; //Gen level MET over all particles
+
 
       Response((*prtclnij_pdgid)[i], p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, HHeFrac, 
                fr_h, resp, respA, respEHE, respHHe);
@@ -1110,17 +1130,16 @@ void CMSJES::Loop()
 
     /**************************** FILL HISTOGRAMS ****************************/
 
-    //cout << endl << tag_r.Pt() << " " << probe_r.Pt() << " " << jet2_r.Pt() << " " <<
-    //     probe_nh << " " << jet2_nh << " " << i_probe << " " << i_jet2 << endl;
-
     for (unsigned int i = 0; i!=((studyMode==1) ? 2:1); ++i) {
 
       //Dijet cuts
       if (studyMode ==1) {
         if (i==0) {
           tag_r = jet2_r;
+          tag_g = jet2_g;
         } else if (i==1) {
           tag_r   = probe_r;
+          tag_g   = probe_g;
           probe_r = jet2_r;
           probe_g = jet2_g;
           //JEF
@@ -1156,9 +1175,12 @@ void CMSJES::Loop()
       R_MPF_r = 1.0 + (MET_r.Px()*tag_r.Px() + MET_r.Py()*tag_r.Py()) / pow((tag_r.Pt()),2);
       //R_MPF_r = 1.0 + MET_r.Pt()*cos(tag_r.DeltaPhi(MET_r))/tag_r.Pt();
 
+      R_MPF_g = 1.0 + (MET_g.Px()*tag_g.Px() + MET_g.Py()*tag_g.Py()) / pow((tag_g.Pt()),2);
 
       //Fill MPF profile
       prMPF->Fill(tag_r.Pt(), R_MPF_r, weight);
+
+      prgenMPF->Fill(tag_g.Pt(), R_MPF_g, weight);
 
       Rjet      = probe_r.Pt()/probe_g.Pt();
       Rjet_calo = probe_calo.Pt()/probe_g.Pt(); 
@@ -1184,29 +1206,35 @@ void CMSJES::Loop()
           if (probeFlav == 5) {                           //b-jets
             FFb->Fill(tag_r.Pt(), weight);
             prMPFb->Fill(tag_r.Pt(), R_MPF_r, weight);
+            prgenMPFb->Fill(tag_g.Pt(), R_MPF_g, weight);
             prRjetb->Fill(probe_g.Pt(), Rjet, weight);
 
           } else if (probeFlav < 5) {                     //Light quark (u,d,s,c) jets
             FFlq->Fill(tag_r.Pt(), weight);
             prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight);
+            prgenMPFlq->Fill(tag_g.Pt(), R_MPF_g, weight);
             prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
 
             if (probeFlav == 4) {                         //c-jets
               FFc->Fill(tag_r.Pt(), weight);
               prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
+              prgenMPFc->Fill(tag_g.Pt(), R_MPF_g, weight);
               prRjetc->Fill(probe_g.Pt(), Rjet, weight);            
             } else if (probeFlav == 3) {                  //s-jets
               FFs->Fill(tag_r.Pt(), weight);
               prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight);
+              prgenMPFs->Fill(tag_g.Pt(), R_MPF_g, weight);
               prRjets->Fill(probe_g.Pt(), Rjet, weight);         
             } else if (probeFlav < 3) {                   //(u,d)
               FFud->Fill(tag_r.Pt(), weight);
               prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
+              prgenMPFud->Fill(tag_g.Pt(), R_MPF_g, weight);
               prRjetud->Fill(probe_g.Pt(), Rjet, weight);  
             }
           } else if (probeFlav == 21) {                   //Gluon jets
             FFg->Fill(tag_r.Pt(), weight);
             prMPFg->Fill(tag_r.Pt(), R_MPF_r, weight);
+            prgenMPFg->Fill(tag_g.Pt(), R_MPF_g, weight);
             prRjetg->Fill(probe_g.Pt(), Rjet, weight);
 
           } else continue; //Undetermined flavour
