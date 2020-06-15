@@ -149,6 +149,20 @@ void CMSJES::Loop()
 
   TProfile* prRjet_calo  = new TProfile("prRjet_calo",  RjetcTitle.c_str(),  nbinsMPF-1, binsxMPF);
 
+  //gen-jet particle type number
+  TProfile* prgenNch   =new TProfile("prgenNch"   ,";p_{T,gen}^{jet} [GeV]; N_{ch}^{gen}",    nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnh   =new TProfile("prgenNnh"   ,";p_{T,gen}^{jet} [GeV]; N_{nh}^{gen}",    nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgamma=new TProfile("prgenNgamma",";p_{T,gen}^{jet} [GeV]; N_{#gamma}^{gen}",nbinsMPF-1, binsxMPF);
+  TProfile* prgenNe    =new TProfile("prgenNe"    ,";p_{T,gen}^{jet} [GeV]; N_{e}^{gen}",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmu   =new TProfile("prgenNmu"   ,";p_{T,gen}^{jet} [GeV]; N_{mu}^{gen}",    nbinsMPF-1, binsxMPF);
+
+  //reco-jet particle type number
+  TProfile* prrecoNch   =new TProfile("prrecoNch"   ,";p_{T,gen}^{jet} [GeV]; N_{ch}^{reco}",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnh   =new TProfile("prrecoNnh"   ,";p_{T,gen}^{jet} [GeV]; N_{nh}^{reco}",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgamma=new TProfile("prrecoNgamma",";p_{T,gen}^{jet} [GeV]; N_{#gamma}^{reco}",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNe    =new TProfile("prrecoNe"    ,";p_{T,gen}^{jet} [GeV]; N_{e}^{reco}",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmu   =new TProfile("prrecoNmu"   ,";p_{T,gen}^{jet} [GeV]; N_{mu}^{reco}",    nbinsMPF-1, binsxMPF);
+
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbinsMPF-1,binsxMPF);
   TH1D* FFg = new TH1D("FFg",  "",nbinsMPF-1,binsxMPF);
@@ -207,6 +221,30 @@ void CMSJES::Loop()
   double jet2_gamma;
   double jet2_e;
   double jet2_mu;
+
+  //Particle type numbers in gen level
+  int probe_genNch;
+  int probe_genNnh;
+  int probe_genNgamma;
+  int probe_genNe;
+  int probe_genNmu;
+  int jet2_genNch;
+  int jet2_genNnh;
+  int jet2_genNgamma;
+  int jet2_genNe;
+  int jet2_genNmu;
+
+  //Particle type numbers in reco level
+  int probe_recoNch;
+  int probe_recoNnh;
+  int probe_recoNgamma;
+  int probe_recoNe;
+  int probe_recoNmu;
+  int jet2_recoNch;
+  int jet2_recoNnh;
+  int jet2_recoNgamma;
+  int jet2_recoNe;
+  int jet2_recoNmu;
 
   //Partial derivative values for a hadron
   unsigned int i_tag   = 0;   //Stepper to find tag object index
@@ -332,7 +370,6 @@ void CMSJES::Loop()
   TProfile* prgammafc=new TProfile("prgammafc",";p_{T,reco}^{tag} [GeV]; gammaf c-jets",nbins_chf,bins_chf);
   TProfile* prefc    =new TProfile("prefc"    ,";p_{T,reco}^{tag} [GeV]; ef c-jets",    nbins_chf,bins_chf);
   TProfile* prmufc   =new TProfile("prmufc"   ,";p_{T,reco}^{tag} [GeV]; muf c-jets",   nbins_chf,bins_chf);
-
 
   if (GetcontHistos()) {
     h_e     = new TH1F("", "", nbins_h, bins_h_lo, bins_h_hi); //e^+-
@@ -532,6 +569,17 @@ void CMSJES::Loop()
     probe_e     = 0.0; jet2_e     = 0.0;
     probe_mu    = 0.0; jet2_mu    = 0.0;
 
+    probe_genNch    = 0; probe_recoNch    = 0;
+    probe_genNnh    = 0; probe_recoNnh    = 0;
+    probe_genNgamma = 0; probe_recoNgamma = 0;
+    probe_genNe     = 0; probe_recoNe     = 0;
+    probe_genNmu    = 0; probe_recoNmu    = 0;
+    jet2_genNch     = 0; jet2_recoNch     = 0;
+    jet2_genNnh     = 0; jet2_recoNnh     = 0;
+    jet2_genNgamma  = 0; jet2_recoNgamma  = 0;
+    jet2_genNe      = 0; jet2_recoNe      = 0;
+    jet2_genNmu     = 0; jet2_recoNmu     = 0;
+
     jets_g.clear();
     njets = (unsigned long)jet_pt->size();
     jets_g.resize(njets);
@@ -625,6 +673,7 @@ void CMSJES::Loop()
 
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
 
+
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
       JI = (*prtcl_jet)[i]; 
@@ -636,6 +685,62 @@ void CMSJES::Loop()
  
       //Reconstruct gen-level jets, at the moment has no neutrinos
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
+
+
+      if ((*prtcl_jet)[i]==i_probe) { //Probe number of particles
+        if (isChHadron(PDG)) {    
+          probe_genNch ++;
+          if (resp!=0.0) probe_recoNch ++;
+        } else if (PDG==11) {
+          probe_genNe ++;
+          if (resp!=0.0) probe_recoNe ++;
+        } else if (PDG==13) {
+          probe_genNmu ++;
+          if (resp!=0.0) probe_recoNmu ++;
+        } else if (PDG==20 || PDG==22) {
+          probe_genNgamma ++;
+          if (resp!=0.0) probe_recoNgamma ++;
+        } else if (PDG==130 ||PDG==310 || PDG==3122 || PDG==2112 || PDG==3212 || PDG==3322) {
+          probe_genNnh    ++;
+          if (resp!=0.0) probe_recoNnh ++;
+        }
+      } else if ((*prtcl_jet)[i] == i_jet2) { //2nd jet number of particles
+        if (isChHadron(PDG)) {    
+          jet2_genNch ++;
+          if (resp!=0.0) jet2_recoNch ++;
+        } else if (PDG==11) {
+          jet2_genNe ++;
+          if (resp!=0.0) jet2_recoNe ++;
+        } else if (PDG==13) {
+          jet2_genNmu ++;
+          if (resp!=0.0) jet2_recoNmu ++;
+        } else if (PDG==20 || PDG==22) {
+          jet2_genNgamma ++;
+          if (resp!=0.0) jet2_recoNgamma ++;
+        } else if (PDG==130 ||PDG==310 || PDG==3122 || PDG==2112 || PDG==3212 || PDG==3322) {
+          jet2_genNnh    ++;
+          if (resp!=0.0) jet2_recoNnh ++;
+        }
+      }
+
+      /*
+      if ((*prtcl_jet)[i]==i_probe) {
+        cout << PDG << " " << resp << endl;
+        cout << "Nch    " << probe_genNch    << " " << probe_recoNch    << endl;
+        cout << "Ne     " << probe_genNe     << " " << probe_recoNe     << endl;
+        cout << "Nmu    " << probe_genNmu    << " " << probe_recoNmu    << endl;
+        cout << "Ngamma " << probe_genNgamma << " " << probe_recoNgamma << endl;
+        cout << "Nnh    " << probe_genNnh    << " " << probe_recoNnh    << endl;
+      }
+      if ((*prtcl_jet)[i]==i_jet2) {
+        cout << PDG << " " << resp << endl;
+        cout << "Nch    " << jet2_genNch    << " " << jet2_recoNch    << endl;
+        cout << "Ne     " << jet2_genNe     << " " << jet2_recoNe     << endl;
+        cout << "Nmu    " << jet2_genNmu    << " " << jet2_recoNmu    << endl;
+        cout << "Ngamma " << jet2_genNgamma << " " << jet2_recoNgamma << endl;
+        cout << "Nnh    " << jet2_genNnh    << " " << jet2_recoNnh    << endl;
+      }*/
+
 
       //Electrons to the reconstructed jets
       if (PDG==11) { 
@@ -1207,8 +1312,24 @@ void CMSJES::Loop()
           probe_e     = jet2_e;
           probe_mu    = jet2_mu;
           i_probe     = i_jet2;
+
+          //N
+          probe_genNch    = jet2_genNch;
+          probe_genNe     = jet2_genNe;
+          probe_genNmu    = jet2_genNmu;
+          probe_genNgamma = jet2_genNgamma;
+          probe_genNnh    = jet2_genNnh;
+
+          probe_recoNch    = jet2_recoNch;
+          probe_recoNe     = jet2_recoNe;
+          probe_recoNmu    = jet2_recoNmu;
+          probe_recoNgamma = jet2_recoNgamma;
+          probe_recoNnh    = jet2_recoNnh;
         }
       }
+
+
+
 
       prWeight->Fill(probe_g.Pt(), weight);
  
@@ -1227,6 +1348,19 @@ void CMSJES::Loop()
       prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
       pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
       prmuf   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
+      prgenNch    ->Fill(probe_g.Pt(), probe_genNch   , weight);
+      prgenNnh    ->Fill(probe_g.Pt(), probe_genNnh   , weight);
+      prgenNgamma ->Fill(probe_g.Pt(), probe_genNgamma, weight);
+      prgenNe     ->Fill(probe_g.Pt(), probe_genNe    , weight);
+      prgenNmu    ->Fill(probe_g.Pt(), probe_genNmu   , weight);
+
+      prrecoNch   ->Fill(probe_g.Pt(), probe_recoNch   , weight);
+      prrecoNnh   ->Fill(probe_g.Pt(), probe_recoNnh   , weight);
+      prrecoNgamma->Fill(probe_g.Pt(), probe_recoNgamma, weight);
+      prrecoNe    ->Fill(probe_g.Pt(), probe_recoNe    , weight);
+      prrecoNmu   ->Fill(probe_g.Pt(), probe_recoNmu   , weight);
+
 
 
       //MPF response
@@ -2826,6 +2960,7 @@ int CMSJES::Charge(int pdgid) {
   }
   return charge;
 }
+
 
 bool CMSJES::isChHadron(int pdgid) {
   bool isChH;
