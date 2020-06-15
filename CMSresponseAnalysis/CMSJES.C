@@ -285,11 +285,53 @@ void CMSJES::Loop()
                                548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832};
 
   //Jet energy fraction profiles
-  TProfile* prchf    = new TProfile("prchf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
-  TProfile* prnhf    = new TProfile("prnhf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
-  TProfile* prgammaf = new TProfile("prgammaf", ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
-  TProfile* pref     = new TProfile("pref"    , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
-  TProfile* prmuf    = new TProfile("prmuf"   , ";p_{T,reco}^{tag} [GeV]", nbins_chf, bins_chf);
+  TProfile* prchf   =new TProfile("prchf"   ,";p_{T,reco}^{tag} [GeV]; chf",   nbins_chf,bins_chf);
+  TProfile* prnhf   =new TProfile("prnhf"   ,";p_{T,reco}^{tag} [GeV]; nhf",   nbins_chf,bins_chf);
+  TProfile* prgammaf=new TProfile("prgammaf",";p_{T,reco}^{tag} [GeV]; gammaf",nbins_chf,bins_chf);
+  TProfile* pref    =new TProfile("pref"    ,";p_{T,reco}^{tag} [GeV]; ef",    nbins_chf,bins_chf);
+  TProfile* prmuf   =new TProfile("prmuf"   ,";p_{T,reco}^{tag} [GeV]; muf",   nbins_chf,bins_chf);
+
+  //b jet compositions
+  TProfile* prchfb   =new TProfile("prchfb"   ,";p_{T,reco}^{tag} [GeV]; chf b-jets",   nbins_chf,bins_chf);
+  TProfile* prnhfb   =new TProfile("prnhfb"   ,";p_{T,reco}^{tag} [GeV]; nhf b-jets",   nbins_chf,bins_chf);
+  TProfile* prgammafb=new TProfile("prgammafb",";p_{T,reco}^{tag} [GeV]; gammaf b-jets",nbins_chf,bins_chf);
+  TProfile* prefb    =new TProfile("prefb"    ,";p_{T,reco}^{tag} [GeV]; ef b-jets",    nbins_chf,bins_chf);
+  TProfile* prmufb   =new TProfile("prmufb"   ,";p_{T,reco}^{tag} [GeV]; muf b-jets",   nbins_chf,bins_chf);
+
+  //gluon jet compositions
+  TProfile* prchfg   =new TProfile("prchfg"   ,";p_{T,reco}^{tag} [GeV]; chf gluon-jets",   nbins_chf,bins_chf);
+  TProfile* prnhfg   =new TProfile("prnhfg"   ,";p_{T,reco}^{tag} [GeV]; nhf gluon-jets",   nbins_chf,bins_chf);
+  TProfile* prgammafg=new TProfile("prgammafg",";p_{T,reco}^{tag} [GeV]; gammaf gluon-jets",nbins_chf,bins_chf);
+  TProfile* prefg    =new TProfile("prefg"    ,";p_{T,reco}^{tag} [GeV]; ef gluon-jets",    nbins_chf,bins_chf);
+  TProfile* prmufg   =new TProfile("prmufg"   ,";p_{T,reco}^{tag} [GeV]; muf gluon-jets",   nbins_chf,bins_chf);
+
+  //lq jet compositions
+  TProfile* prchflq   =new TProfile("prchflq"   ,";p_{T,reco}^{tag} [GeV]; chf lq-jets",   nbins_chf,bins_chf);
+  TProfile* prnhflq   =new TProfile("prnhflq"   ,";p_{T,reco}^{tag} [GeV]; nhf lq-jets",   nbins_chf,bins_chf);
+  TProfile* prgammaflq=new TProfile("prgammaflq",";p_{T,reco}^{tag} [GeV]; gammaf lq-jets",nbins_chf,bins_chf);
+  TProfile* preflq    =new TProfile("preflq"    ,";p_{T,reco}^{tag} [GeV]; ef lq-jets",    nbins_chf,bins_chf);
+  TProfile* prmuflq   =new TProfile("prmuflq"   ,";p_{T,reco}^{tag} [GeV]; muf lq-jets",   nbins_chf,bins_chf);
+
+  //ud jet compositions
+  TProfile* prchfud   =new TProfile("prchfud"   ,";p_{T,reco}^{tag} [GeV]; chf ud-jets",   nbins_chf,bins_chf);
+  TProfile* prnhfud   =new TProfile("prnhfud"   ,";p_{T,reco}^{tag} [GeV]; nhf ud-jets",   nbins_chf,bins_chf);
+  TProfile* prgammafud=new TProfile("prgammafud",";p_{T,reco}^{tag} [GeV]; gammaf ud-jets",nbins_chf,bins_chf);
+  TProfile* prefud    =new TProfile("prefud"    ,";p_{T,reco}^{tag} [GeV]; ef ud-jets",    nbins_chf,bins_chf);
+  TProfile* prmufud   =new TProfile("prmufud"   ,";p_{T,reco}^{tag} [GeV]; muf ud-jets",   nbins_chf,bins_chf);
+
+  //s jet compositions
+  TProfile* prchfs   =new TProfile("prchfs"   ,";p_{T,reco}^{tag} [GeV]; chf s-jets",   nbins_chf,bins_chf);
+  TProfile* prnhfs   =new TProfile("prnhfs"   ,";p_{T,reco}^{tag} [GeV]; nhf s-jets",   nbins_chf,bins_chf);
+  TProfile* prgammafs=new TProfile("prgammafs",";p_{T,reco}^{tag} [GeV]; gammaf s-jets",nbins_chf,bins_chf);
+  TProfile* prefs    =new TProfile("prefs"    ,";p_{T,reco}^{tag} [GeV]; ef s-jets",    nbins_chf,bins_chf);
+  TProfile* prmufs   =new TProfile("prmufs"   ,";p_{T,reco}^{tag} [GeV]; muf s-jets",   nbins_chf,bins_chf);
+
+  //c jet compositions
+  TProfile* prchfc   =new TProfile("prchfc"   ,";p_{T,reco}^{tag} [GeV]; chf c-jets",   nbins_chf,bins_chf);
+  TProfile* prnhfc   =new TProfile("prnhfc"   ,";p_{T,reco}^{tag} [GeV]; nhf c-jets",   nbins_chf,bins_chf);
+  TProfile* prgammafc=new TProfile("prgammafc",";p_{T,reco}^{tag} [GeV]; gammaf c-jets",nbins_chf,bins_chf);
+  TProfile* prefc    =new TProfile("prefc"    ,";p_{T,reco}^{tag} [GeV]; ef c-jets",    nbins_chf,bins_chf);
+  TProfile* prmufc   =new TProfile("prmufc"   ,";p_{T,reco}^{tag} [GeV]; muf c-jets",   nbins_chf,bins_chf);
 
 
   if (GetcontHistos()) {
@@ -1228,6 +1270,12 @@ void CMSJES::Loop()
             prRjetb->Fill(probe_g.Pt(), Rjet, weight);
             prRjetvstagb->Fill(tag_r.Pt(), Rjet, weight);
 
+            prchfb   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+            prnhfb   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+            prgammafb->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+            prefb    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
+            prmufb   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
           } else if (probeFlav < 5) {                     //Light quark (u,d,s,c) jets
             FFlq->Fill(tag_r.Pt(), weight);
             prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight);
@@ -1235,24 +1283,51 @@ void CMSJES::Loop()
             prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
             prRjetvstaglq->Fill(tag_r.Pt(), Rjet, weight);
 
+            prchflq   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+            prnhflq   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+            prgammaflq->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+            preflq    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
+            prmuflq   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
             if (probeFlav == 4) {                         //c-jets
               FFc->Fill(tag_r.Pt(), weight);
               prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
               prgenMPFc->Fill(tag_g.Pt(), R_MPF_g, weight);
               prRjetc->Fill(probe_g.Pt(), Rjet, weight);
-              prRjetvstagc->Fill(tag_r.Pt(), Rjet, weight);         
+              prRjetvstagc->Fill(tag_r.Pt(), Rjet, weight);    
+
+              prchfc   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+              prnhfc   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+              prgammafc->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+              prefc    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
+              prmufc   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+     
             } else if (probeFlav == 3) {                  //s-jets
               FFs->Fill(tag_r.Pt(), weight);
               prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight);
               prgenMPFs->Fill(tag_g.Pt(), R_MPF_g, weight);
               prRjets->Fill(probe_g.Pt(), Rjet, weight);
               prRjetvstags->Fill(tag_r.Pt(), Rjet, weight);  
+
+              prchfs   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+              prnhfs   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+              prgammafs->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+              prefs    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
+              prmufs   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
             } else if (probeFlav < 3) {                   //(u,d)
               FFud->Fill(tag_r.Pt(), weight);
               prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
               prgenMPFud->Fill(tag_g.Pt(), R_MPF_g, weight);
               prRjetud->Fill(probe_g.Pt(), Rjet, weight);
               prRjetvstagud->Fill(tag_r.Pt(), Rjet, weight);
+
+              prchfud   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+              prnhfud   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+              prgammafud->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+              prefud    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
+              prmufud   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
             }
           } else if (probeFlav == 21) {                   //Gluon jets
             FFg->Fill(tag_r.Pt(), weight);
@@ -1260,6 +1335,12 @@ void CMSJES::Loop()
             prgenMPFg->Fill(tag_g.Pt(), R_MPF_g, weight);
             prRjetg->Fill(probe_g.Pt(), Rjet, weight);
             prRjetvstagg->Fill(tag_r.Pt(), Rjet, weight);
+
+            prchfg   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
+            prnhfg   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
+            prgammafg->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
+            prefg    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
+            prmufg   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
 
           } else continue; //Undetermined flavour
           FFa->Fill(tag_r.Pt(), weight); continue;
