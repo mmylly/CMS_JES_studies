@@ -131,6 +131,22 @@ void CMSJES::Loop()
   TProfile* prRjets  = new TProfile("prRjets",  RjetsTitle.c_str(),  nbinsMPF-1, binsxMPF);
   TProfile* prRjetc  = new TProfile("prRjetc",  RjetcTitle.c_str(),  nbinsMPF-1, binsxMPF);
 
+  //Jet response with tag binning
+  string RjetvstagTitle    = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{jet} / p_{T,gen}^{jet}";
+  string RjetvstagbTitle   = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}";
+  string RjetvstaggTitle   = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{g-jet} / p_{T,gen}^{g-jet}";
+  string RjetvstaglqTitle  = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{lq-jet} / p_{T,gen}^{lq-jet}";
+  string RjetvstagudTitle  = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{ud-jet} / p_{T,gen}^{ud-jet}";
+  string RjetvstagsTitle   = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{s-jet} / p_{T,gen}^{s-jet}";
+  string RjetvstagcTitle   = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{c-jet} / p_{T,gen}^{c-jet}";
+  TProfile* prRjetvstag   = new TProfile("prRjetvstag",   RjetvstagTitle.c_str(),   nbinsMPF-1,binsxMPF);
+  TProfile* prRjetvstagb  = new TProfile("prRjetvstagb",  RjetvstagbTitle.c_str(),  nbinsMPF-1,binsxMPF);
+  TProfile* prRjetvstagg  = new TProfile("prRjetvstagg",  RjetvstaggTitle.c_str(),  nbinsMPF-1,binsxMPF);
+  TProfile* prRjetvstaglq = new TProfile("prRjetvstaglq", RjetvstaglqTitle.c_str(), nbinsMPF-1,binsxMPF);
+  TProfile* prRjetvstagud = new TProfile("prRjetvstagud", RjetvstagudTitle.c_str(), nbinsMPF-1,binsxMPF);
+  TProfile* prRjetvstags  = new TProfile("prRjetvstags",  RjetvstagsTitle.c_str(),  nbinsMPF-1,binsxMPF);
+  TProfile* prRjetvstagc  = new TProfile("prRjetvstagc",  RjetvstagcTitle.c_str(),  nbinsMPF-1,binsxMPF);
+
   TProfile* prRjet_calo  = new TProfile("prRjet_calo",  RjetcTitle.c_str(),  nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
@@ -1190,6 +1206,8 @@ void CMSJES::Loop()
 
       //All jets
       prRjet->Fill(probe_g.Pt(), Rjet, weight);
+      prRjetvstag->Fill(tag_r.Pt(), Rjet, weight);
+
       prRjet_calo->Fill(probe_g.Pt(), Rjet_calo, weight);
 
 
@@ -1208,40 +1226,45 @@ void CMSJES::Loop()
             prMPFb->Fill(tag_r.Pt(), R_MPF_r, weight);
             prgenMPFb->Fill(tag_g.Pt(), R_MPF_g, weight);
             prRjetb->Fill(probe_g.Pt(), Rjet, weight);
+            prRjetvstagb->Fill(tag_r.Pt(), Rjet, weight);
 
           } else if (probeFlav < 5) {                     //Light quark (u,d,s,c) jets
             FFlq->Fill(tag_r.Pt(), weight);
             prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight);
             prgenMPFlq->Fill(tag_g.Pt(), R_MPF_g, weight);
             prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
+            prRjetvstaglq->Fill(tag_r.Pt(), Rjet, weight);
 
             if (probeFlav == 4) {                         //c-jets
               FFc->Fill(tag_r.Pt(), weight);
               prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
               prgenMPFc->Fill(tag_g.Pt(), R_MPF_g, weight);
-              prRjetc->Fill(probe_g.Pt(), Rjet, weight);            
+              prRjetc->Fill(probe_g.Pt(), Rjet, weight);
+              prRjetvstagc->Fill(tag_r.Pt(), Rjet, weight);         
             } else if (probeFlav == 3) {                  //s-jets
               FFs->Fill(tag_r.Pt(), weight);
               prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight);
               prgenMPFs->Fill(tag_g.Pt(), R_MPF_g, weight);
-              prRjets->Fill(probe_g.Pt(), Rjet, weight);         
+              prRjets->Fill(probe_g.Pt(), Rjet, weight);
+              prRjetvstags->Fill(tag_r.Pt(), Rjet, weight);  
             } else if (probeFlav < 3) {                   //(u,d)
               FFud->Fill(tag_r.Pt(), weight);
               prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
               prgenMPFud->Fill(tag_g.Pt(), R_MPF_g, weight);
-              prRjetud->Fill(probe_g.Pt(), Rjet, weight);  
+              prRjetud->Fill(probe_g.Pt(), Rjet, weight);
+              prRjetvstagud->Fill(tag_r.Pt(), Rjet, weight);
             }
           } else if (probeFlav == 21) {                   //Gluon jets
             FFg->Fill(tag_r.Pt(), weight);
             prMPFg->Fill(tag_r.Pt(), R_MPF_r, weight);
             prgenMPFg->Fill(tag_g.Pt(), R_MPF_g, weight);
             prRjetg->Fill(probe_g.Pt(), Rjet, weight);
+            prRjetvstagg->Fill(tag_r.Pt(), Rjet, weight);
 
           } else continue; //Undetermined flavour
           FFa->Fill(tag_r.Pt(), weight); continue;
         }
       } //Loop partons
-
     }
 
     //If the old list of cut events is not read, a new one is written
