@@ -729,396 +729,488 @@ void calcVariants()
   TProfile *prnhf   =0; 
   TProfile *prgammaf=0; 
   TProfile *pref    =0;
+  TProfile *prmuf   =0;
 
   TProfile *prchf_Cp3   =0; 
   TProfile *prnhf_Cp3   =0; 
   TProfile *prgammaf_Cp3=0; 
   TProfile *pref_Cp3    =0;
+  TProfile *prmuf_Cp3   =0;
 
   TProfile *prchf_Cm3   =0; 
   TProfile *prnhf_Cm3   =0; 
   TProfile *prgammaf_Cm3=0; 
   TProfile *pref_Cm3    =0;
+  TProfile *prmuf_Cm3   =0;
 
   TProfile *prchf_HadHCALp3   =0; 
   TProfile *prnhf_HadHCALp3   =0; 
   TProfile *prgammaf_HadHCALp3=0; 
   TProfile *pref_HadHCALp3    =0;
+  TProfile *prmuf_HadHCALp3   =0;
 
   TProfile *prchf_HadHCALm3   =0; 
   TProfile *prnhf_HadHCALm3   =0; 
   TProfile *prgammaf_HadHCALm3=0; 
   TProfile *pref_HadHCALm3    =0;
+  TProfile *prmuf_HadHCALm3   =0;
 
   TProfile *prchf_HadECALp3   =0; 
   TProfile *prnhf_HadECALp3   =0; 
   TProfile *prgammaf_HadECALp3=0; 
   TProfile *pref_HadECALp3    =0;
+  TProfile *prmuf_HadECALp3   =0; 
 
   TProfile *prchf_HadECALm3   =0; 
   TProfile *prnhf_HadECALm3   =0; 
   TProfile *prgammaf_HadECALm3=0; 
   TProfile *pref_HadECALm3    =0;
+  TProfile *prmuf_HadECALm3   =0;
 
   TProfile *prchf_Trkm1   =0; 
   TProfile *prnhf_Trkm1   =0; 
   TProfile *prgammaf_Trkm1=0; 
   TProfile *pref_Trkm1    =0;
+  TProfile *prmuf_Trkm1   =0;
 
   TProfile *prchf_Trkm3   =0; 
   TProfile *prnhf_Trkm3   =0; 
   TProfile *prgammaf_Trkm3=0; 
   TProfile *pref_Trkm3    =0;
+  TProfile *prmuf_Trkm3   =0;
 
   TProfile *prchf_ECALm1   =0; 
   TProfile *prnhf_ECALm1   =0; 
   TProfile *prgammaf_ECALm1=0; 
   TProfile *pref_ECALm1    =0;
+  TProfile *prmuf_ECALm1   =0;
 
   TProfile *prchf_ECALm3   =0; 
   TProfile *prnhf_ECALm3   =0; 
   TProfile *prgammaf_ECALm3=0; 
   TProfile *pref_ECALm3    =0;
+  TProfile *prmuf_ECALm3   =0;
 
   TProfile *prchf_Photonm1   =0; 
   TProfile *prnhf_Photonm1   =0; 
   TProfile *prgammaf_Photonm1=0; 
   TProfile *pref_Photonm1    =0;
+  TProfile *prmuf_Photonm1   =0;
 
   TProfile *prchf_Photonm3   =0; 
   TProfile *prnhf_Photonm3   =0; 
   TProfile *prgammaf_Photonm3=0; 
   TProfile *pref_Photonm3    =0;
-
+  TProfile *prmuf_Photonm3   =0;
 
   fzj->GetObject("prchf"    ,prchf   );
   fzj->GetObject("prnhf"    ,prnhf   );
   fzj->GetObject("prgammaf" ,prgammaf);
   fzj->GetObject("pref"     ,pref    );
+  fzj->GetObject("prmuf"    ,prmuf    );
 
   fzj_Cp3->GetObject("prchf"    ,prchf_Cp3   );
   fzj_Cp3->GetObject("prnhf"    ,prnhf_Cp3   );
   fzj_Cp3->GetObject("prgammaf" ,prgammaf_Cp3);
   fzj_Cp3->GetObject("pref"     ,pref_Cp3    );
+  fzj_Cp3->GetObject("prmuf"    ,prmuf_Cp3   );
 
   fzj_Cm3->GetObject("prchf"    ,prchf_Cm3   );
   fzj_Cm3->GetObject("prnhf"    ,prnhf_Cm3   );
   fzj_Cm3->GetObject("prgammaf" ,prgammaf_Cm3);
   fzj_Cm3->GetObject("pref"     ,pref_Cm3    );
+  fzj_Cm3->GetObject("prmuf"    ,prmuf_Cm3   );
 
   fzj_HadHCALp3->GetObject("prchf"    ,prchf_HadHCALp3   );
   fzj_HadHCALp3->GetObject("prnhf"    ,prnhf_HadHCALp3   );
   fzj_HadHCALp3->GetObject("prgammaf" ,prgammaf_HadHCALp3);
   fzj_HadHCALp3->GetObject("pref"     ,pref_HadHCALp3    );
+  fzj_HadHCALp3->GetObject("prmuf"    ,prmuf_HadHCALp3   );
 
   fzj_HadHCALm3->GetObject("prchf"    ,prchf_HadHCALm3   );
   fzj_HadHCALm3->GetObject("prnhf"    ,prnhf_HadHCALm3   );
   fzj_HadHCALm3->GetObject("prgammaf" ,prgammaf_HadHCALm3);
   fzj_HadHCALm3->GetObject("pref"     ,pref_HadHCALm3    );
+  fzj_HadHCALm3->GetObject("prmuf"    ,prmuf_HadHCALm3   );
 
   fzj_HadECALp3->GetObject("prchf"    ,prchf_HadECALp3   );
   fzj_HadECALp3->GetObject("prnhf"    ,prnhf_HadECALp3   );
   fzj_HadECALp3->GetObject("prgammaf" ,prgammaf_HadECALp3);
   fzj_HadECALp3->GetObject("pref"     ,pref_HadECALp3    );
+  fzj_HadECALp3->GetObject("prmuf"    ,prmuf_HadECALp3   );
 
   fzj_HadECALm3->GetObject("prchf"    ,prchf_HadECALm3   );
   fzj_HadECALm3->GetObject("prnhf"    ,prnhf_HadECALm3   );
   fzj_HadECALm3->GetObject("prgammaf" ,prgammaf_HadECALm3);
   fzj_HadECALm3->GetObject("pref"     ,pref_HadECALm3    );
+  fzj_HadECALm3->GetObject("prmuf"    ,prmuf_HadECALm3   );
 
   fzj_Trkm1->GetObject("prchf"    ,prchf_Trkm1   );
   fzj_Trkm1->GetObject("prnhf"    ,prnhf_Trkm1   );
   fzj_Trkm1->GetObject("prgammaf" ,prgammaf_Trkm1);
   fzj_Trkm1->GetObject("pref"     ,pref_Trkm1    );
+  fzj_Trkm1->GetObject("prmuf"    ,prmuf_Trkm1   );
 
   fzj_Trkm3->GetObject("prchf"    ,prchf_Trkm3   );
   fzj_Trkm3->GetObject("prnhf"    ,prnhf_Trkm3   );
   fzj_Trkm3->GetObject("prgammaf" ,prgammaf_Trkm3);
   fzj_Trkm3->GetObject("pref"     ,pref_Trkm3    );
+  fzj_Trkm3->GetObject("prmuf"    ,prmuf_Trkm3   );
 
   fzj_ECALm1->GetObject("prchf"    ,prchf_ECALm1   );
   fzj_ECALm1->GetObject("prnhf"    ,prnhf_ECALm1   );
   fzj_ECALm1->GetObject("prgammaf" ,prgammaf_ECALm1);
   fzj_ECALm1->GetObject("pref"     ,pref_ECALm1    );
+  fzj_ECALm1->GetObject("prmuf"    ,prmuf_ECALm1   );
 
   fzj_ECALm3->GetObject("prchf"    ,prchf_ECALm3   );
   fzj_ECALm3->GetObject("prnhf"    ,prnhf_ECALm3   );
   fzj_ECALm3->GetObject("prgammaf" ,prgammaf_ECALm3);
   fzj_ECALm3->GetObject("pref"     ,pref_ECALm3    );
+  fzj_ECALm3->GetObject("prmuf"    ,prmuf_ECALm3   );
 
   fzj_Photonm1->GetObject("prchf"    ,prchf_Photonm1   );
   fzj_Photonm1->GetObject("prnhf"    ,prnhf_Photonm1   );
   fzj_Photonm1->GetObject("prgammaf" ,prgammaf_Photonm1);
   fzj_Photonm1->GetObject("pref"     ,pref_Photonm1    );
+  fzj_Photonm1->GetObject("prmuf"    ,prmuf_Photonm1   );
 
   fzj_Photonm3->GetObject("prchf"    ,prchf_Photonm3   );
   fzj_Photonm3->GetObject("prnhf"    ,prnhf_Photonm3   );
   fzj_Photonm3->GetObject("prgammaf" ,prgammaf_Photonm3);
   fzj_Photonm3->GetObject("pref"     ,pref_Photonm3    );
+  fzj_Photonm3->GetObject("prmuf"    ,prmuf_Photonm3   );
 
 
   TH1D* hchf    = prchf   ->ProjectionX();
   TH1D* hnhf    = prnhf   ->ProjectionX();
   TH1D* hgammaf = prgammaf->ProjectionX();
   TH1D* hef     = pref    ->ProjectionX();
+  TH1D* hmuf    = prmuf   ->ProjectionX();
 
   TH1D* hchf_Cp3    = prchf_Cp3   ->ProjectionX();
   TH1D* hnhf_Cp3    = prnhf_Cp3   ->ProjectionX();
   TH1D* hgammaf_Cp3 = prgammaf_Cp3->ProjectionX();
   TH1D* hef_Cp3     = pref_Cp3    ->ProjectionX();
+  TH1D* hmuf_Cp3    = prmuf_Cp3   ->ProjectionX();
 
   TH1D* hchf_Cm3    = prchf_Cm3   ->ProjectionX();
   TH1D* hnhf_Cm3    = prnhf_Cm3   ->ProjectionX();
   TH1D* hgammaf_Cm3 = prgammaf_Cm3->ProjectionX();
   TH1D* hef_Cm3     = pref_Cm3    ->ProjectionX();
+  TH1D* hmuf_Cm3    = prmuf_Cm3   ->ProjectionX();
 
   TH1D* hchf_HadHCALp3    = prchf_HadHCALp3   ->ProjectionX();
   TH1D* hnhf_HadHCALp3    = prnhf_HadHCALp3   ->ProjectionX();
   TH1D* hgammaf_HadHCALp3 = prgammaf_HadHCALp3->ProjectionX();
   TH1D* hef_HadHCALp3     = pref_HadHCALp3    ->ProjectionX();
+  TH1D* hmuf_HadHCALp3    = prmuf_HadHCALp3   ->ProjectionX();
 
   TH1D* hchf_HadHCALm3    = prchf_HadHCALm3   ->ProjectionX();
   TH1D* hnhf_HadHCALm3    = prnhf_HadHCALm3   ->ProjectionX();
   TH1D* hgammaf_HadHCALm3 = prgammaf_HadHCALm3->ProjectionX();
   TH1D* hef_HadHCALm3     = pref_HadHCALm3    ->ProjectionX();
+  TH1D* hmuf_HadHCALm3    = prmuf_HadHCALm3   ->ProjectionX();
 
   TH1D* hchf_HadECALp3    = prchf_HadECALp3   ->ProjectionX();
   TH1D* hnhf_HadECALp3    = prnhf_HadECALp3   ->ProjectionX();
   TH1D* hgammaf_HadECALp3 = prgammaf_HadECALp3->ProjectionX();
   TH1D* hef_HadECALp3     = pref_HadECALp3    ->ProjectionX();
+  TH1D* hmuf_HadECALp3    = prmuf_HadECALp3   ->ProjectionX();
 
   TH1D* hchf_HadECALm3    = prchf_HadECALm3   ->ProjectionX();
   TH1D* hnhf_HadECALm3    = prnhf_HadECALm3   ->ProjectionX();
   TH1D* hgammaf_HadECALm3 = prgammaf_HadECALm3->ProjectionX();
   TH1D* hef_HadECALm3     = pref_HadECALm3    ->ProjectionX();
+  TH1D* hmuf_HadECALm3    = prmuf_HadECALm3   ->ProjectionX();
 
   TH1D* hchf_Trkm1    = prchf_Trkm1   ->ProjectionX();
   TH1D* hnhf_Trkm1    = prnhf_Trkm1   ->ProjectionX();
   TH1D* hgammaf_Trkm1 = prgammaf_Trkm1->ProjectionX();
   TH1D* hef_Trkm1     = pref_Trkm1    ->ProjectionX();
+  TH1D* hmuf_Trkm1    = prmuf_Trkm1   ->ProjectionX();
 
   TH1D* hchf_Trkm3    = prchf_Trkm3   ->ProjectionX();
   TH1D* hnhf_Trkm3    = prnhf_Trkm3   ->ProjectionX();
   TH1D* hgammaf_Trkm3 = prgammaf_Trkm3->ProjectionX();
   TH1D* hef_Trkm3     = pref_Trkm3    ->ProjectionX();
+  TH1D* hmuf_Trkm3    = prmuf_Trkm3   ->ProjectionX();
 
   TH1D* hchf_ECALm1    = prchf_ECALm1   ->ProjectionX();
   TH1D* hnhf_ECALm1    = prnhf_ECALm1   ->ProjectionX();
   TH1D* hgammaf_ECALm1 = prgammaf_ECALm1->ProjectionX();
   TH1D* hef_ECALm1     = pref_ECALm1    ->ProjectionX();
+  TH1D* hmuf_ECALm1    = prmuf_ECALm1   ->ProjectionX();
 
   TH1D* hchf_ECALm3    = prchf_ECALm3   ->ProjectionX();
   TH1D* hnhf_ECALm3    = prnhf_ECALm3   ->ProjectionX();
   TH1D* hgammaf_ECALm3 = prgammaf_ECALm3->ProjectionX();
   TH1D* hef_ECALm3     = pref_ECALm3    ->ProjectionX();
+  TH1D* hmuf_ECALm3    = prmuf_ECALm3   ->ProjectionX();
 
   TH1D* hchf_Photonm1    = prchf_Photonm1   ->ProjectionX();
   TH1D* hnhf_Photonm1    = prnhf_Photonm1   ->ProjectionX();
   TH1D* hgammaf_Photonm1 = prgammaf_Photonm1->ProjectionX();
   TH1D* hef_Photonm1     = pref_Photonm1    ->ProjectionX();
+  TH1D* hmuf_Photonm1    = prmuf_Photonm1   ->ProjectionX();
 
   TH1D* hchf_Photonm3    = prchf_Photonm3   ->ProjectionX();
   TH1D* hnhf_Photonm3    = prnhf_Photonm3   ->ProjectionX();
   TH1D* hgammaf_Photonm3 = prgammaf_Photonm3->ProjectionX();
   TH1D* hef_Photonm3     = pref_Photonm3    ->ProjectionX();
+  TH1D* hmuf_Photonm3    = prmuf_Photonm3   ->ProjectionX();
 
-  //hchf_Cp3->Divide(hchf);
+
   hchf_Cp3->Add(hchf,-1);
   hchf_Cp3->SetTitle("Charged hadron fraction, Hadron response +3%");
   hchf_Cp3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_Cp3->Divide(hnhf);
+
   hnhf_Cp3->Add(hnhf,-1);
   hnhf_Cp3->SetTitle("Neutral hadron fraction, Hadron response +3%");
   hnhf_Cp3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_Cp3->Divide(hgammaf);
+
   hgammaf_Cp3->Add(hgammaf,-1);
   hgammaf_Cp3->SetTitle("Photon fraction, Hadron response +3%");
   hgammaf_Cp3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_Cp3->Divide(hef);
+
   hef_Cp3->Add(hef,-1);
   hef_Cp3->SetTitle("Electron fraction, Hadron response +3%");
   hef_Cp3->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_Cm3->Divide(hchf);
+  hmuf_Cp3->Add(hmuf,-1);
+  hmuf_Cp3->SetTitle("Muon fraction, Hadron response +3%");
+  hmuf_Cp3->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_Cm3->Add(hchf,-1);
   hchf_Cm3->SetTitle("Charged hadron fraction, Hadron response -3%");
   hchf_Cm3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_Cm3->Divide(hnhf);
+
   hnhf_Cm3->Add(hnhf,-1);
   hnhf_Cm3->SetTitle("Neutral hadron fraction, Hadron response -3%");
   hnhf_Cm3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_Cm3->Divide(hgammaf);
+
   hgammaf_Cm3->Add(hgammaf,-1);
   hgammaf_Cm3->SetTitle("Photon fraction, Hadron response -3%");
   hgammaf_Cm3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_Cm3->Divide(hef);
+
   hef_Cm3->Add(hef,-1);
   hef_Cm3->SetTitle("Electron fraction, Hadron response -3%");
   hef_Cm3->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_HadHCALp3->Divide(hchf);
+  hmuf_Cm3->Add(hmuf,-1);
+  hmuf_Cm3->SetTitle("Muon fraction, Hadron response -3%");
+  hmuf_Cm3->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_HadHCALp3->Add(hchf,-1);
   hchf_HadHCALp3->SetTitle("Charged hadron fraction, Hadron HCAL +3%");
   hchf_HadHCALp3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_HadHCALp3->Divide(hnhf);
+
   hnhf_HadHCALp3->Add(hnhf,-1);
   hnhf_HadHCALp3->SetTitle("Neutral hadron fraction, Hadron HCAL +3%");
   hnhf_HadHCALp3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_HadHCALp3->Divide(hgammaf);
+
   hgammaf_HadHCALp3->Add(hgammaf,-1);
   hgammaf_HadHCALp3->SetTitle("Photon fraction, Hadron HCAL +3%");
   hgammaf_HadHCALp3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_HadHCALp3->Divide(hef);
+
   hef_HadHCALp3->Add(hef,-1);
   hef_HadHCALp3->SetTitle("Electron fraction, Hadron HCAL +3%");
   hef_HadHCALp3->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_HadHCALm3->Divide(hchf);
+  hmuf_HadHCALp3->Add(hmuf,-1);
+  hmuf_HadHCALp3->SetTitle("Muon fraction, Hadron HCAL +3%");
+  hmuf_HadHCALp3->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_HadHCALm3->Add(hchf,-1);
   hchf_HadHCALm3->SetTitle("Charged hadron fraction, Hadron HCAL -3%");
   hchf_HadHCALm3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_HadHCALm3->Divide(hnhf);
+
   hnhf_HadHCALm3->Add(hnhf,-1);
   hnhf_HadHCALm3->SetTitle("Neutral hadron fraction, Hadron HCAL -3%");
   hnhf_HadHCALm3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_HadHCALm3->Divide(hgammaf);
+
   hgammaf_HadHCALm3->Add(hgammaf,-1);
   hgammaf_HadHCALm3->SetTitle("Photon fraction, Hadron HCAL -3%");
   hgammaf_HadHCALm3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_HadHCALm3->Divide(hef);
+
   hef_HadHCALm3->Add(hef,-1);
   hef_HadHCALm3->SetTitle("Electron fraction, Hadron HCAL -3%");
   hef_HadHCALm3->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_HadECALp3->Divide(hchf);
+  hmuf_HadHCALm3->Add(hmuf,-1);
+  hmuf_HadHCALm3->SetTitle("Muon fraction, Hadron HCAL -3%");
+  hmuf_HadHCALm3->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_HadECALp3->Add(hchf,-1);
   hchf_HadECALp3->SetTitle("Charged hadron fraction, Hadron ECAL +3%");
   hchf_HadECALp3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_HadECALp3->Divide(hnhf);
+
   hnhf_HadECALp3->Add(hnhf,-1);
   hnhf_HadECALp3->SetTitle("Neutral hadron fraction, Hadron ECAL +3%");
   hnhf_HadECALp3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_HadECALp3->Divide(hgammaf);
+
   hgammaf_HadECALp3->Add(hgammaf,-1);
   hgammaf_HadECALp3->SetTitle("Photon fraction, Hadron ECAL +3%");
   hgammaf_HadECALp3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_HadECALp3->Divide(hef);
+
   hef_HadECALp3->Add(hef,-1);
   hef_HadECALp3->SetTitle("Electron fraction, Hadron ECAL +3%");
   hef_HadECALp3->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_HadECALm3->Divide(hchf);
+  hmuf_HadECALp3->Add(hmuf,-1);
+  hmuf_HadECALp3->SetTitle("Muon fraction, Hadron ECAL +3%");
+  hmuf_HadECALp3->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_HadECALm3->Add(hchf,-1);
   hchf_HadECALm3->SetTitle("Charged hadron fraction, Hadron ECAL -3%");
   hchf_HadECALm3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_HadECALm3->Divide(hnhf);
+
   hnhf_HadECALm3->Add(hnhf,-1);
   hnhf_HadECALm3->SetTitle("Neutral hadron fraction, Hadron ECAL -3%");
   hnhf_HadECALm3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_HadECALm3->Divide(hgammaf);
+
   hgammaf_HadECALm3->Add(hgammaf,-1);
   hgammaf_HadECALm3->SetTitle("Photon fraction, Hadron ECAL -3%");
   hgammaf_HadECALm3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_HadECALm3->Divide(hef);
+
   hef_HadECALm3->Add(hef,-1);
   hef_HadECALm3->SetTitle("Electron fraction, Hadron ECAL -3%");
   hef_HadECALm3->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_Trkm1->Divide(hchf);
+  hmuf_HadECALm3->Add(hmuf,-1);
+  hmuf_HadECALm3->SetTitle("Muon fraction, Hadron ECAL -3%");
+  hmuf_HadECALm3->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_Trkm1->Add(hchf,-1);
   hchf_Trkm1->SetTitle("Charged hadron fraction, Tracking efficiency -1%");
   hchf_Trkm1->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_Trkm1->Divide(hnhf);
+
   hnhf_Trkm1->Add(hnhf,-1);
   hnhf_Trkm1->SetTitle("Neutral hadron fraction, Tracking efficiency -1%");
   hnhf_Trkm1->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_Trkm1->Divide(hgammaf);
+
   hgammaf_Trkm1->Add(hgammaf,-1);
   hgammaf_Trkm1->SetTitle("Photon fraction, Tracking efficiency -1%");
   hgammaf_Trkm1->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_Trkm1->Divide(hef);
+
   hef_Trkm1->Add(hef,-1);
   hef_Trkm1->SetTitle("Electron fraction, Tracking efficiency -1%");
   hef_Trkm1->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_Trkm3->Divide(hchf);
+  hmuf_Trkm1->Add(hmuf,-1);
+  hmuf_Trkm1->SetTitle("Muon fraction, Tracking efficiency -1%");
+  hmuf_Trkm1->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_Trkm3->Add(hchf,-1);
   hchf_Trkm3->SetTitle("Charged hadron fraction, Tracking efficiency -3%");
   hchf_Trkm3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_Trkm3->Divide(hnhf);
+
   hnhf_Trkm3->Add(hnhf,-1);
   hnhf_Trkm3->SetTitle("Neutral hadron fraction, Tracking efficiency -3%");
   hnhf_Trkm3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_Trkm3->Divide(hgammaf);
+
   hgammaf_Trkm3->Add(hgammaf,-1);
   hgammaf_Trkm3->SetTitle("Photon fraction, Tracking efficiency -3%");
   hgammaf_Trkm3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_Trkm3->Divide(hef);
+
   hef_Trkm3->Add(hef,-1);
   hef_Trkm3->SetTitle("Electron fraction, Tracking efficiency -3%");
   hef_Trkm3->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_ECALm1->Divide(hchf);
+  hmuf_Trkm3->Add(hmuf,-1);
+  hmuf_Trkm3->SetTitle("Muon fraction, Tracking efficiency -3%");
+  hmuf_Trkm3->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_ECALm1->Add(hchf,-1);
   hchf_ECALm1->SetTitle("Charged hadron fraction, ECAL -1%");
   hchf_ECALm1->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_ECALm1->Divide(hnhf);
+
   hnhf_ECALm1->Add(hnhf,-1);
   hnhf_ECALm1->SetTitle("Neutral hadron fraction, ECAL -1%");
   hnhf_ECALm1->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_ECALm1->Divide(hgammaf);
+
   hgammaf_ECALm1->Add(hgammaf,-1);
   hgammaf_ECALm1->SetTitle("Photon fraction, ECAL -1%");
   hgammaf_ECALm1->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_ECALm1->Divide(hef);
+
   hef_ECALm1->Add(hef,-1);
   hef_ECALm1->SetTitle("Electron fraction, ECAL -1%");
   hef_ECALm1->GetYaxis()->SetTitle("ef_{var} - ef");
 
-  //hchf_ECALm3->Divide(hchf);
+  hmuf_ECALm1->Add(hmuf,-1);
+  hmuf_ECALm1->SetTitle("Muon fraction, ECAL -1%");
+  hmuf_ECALm1->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_ECALm3->Add(hchf,-1);
   hchf_ECALm3->SetTitle("Charged hadron fraction, ECAL -3%");
   hchf_ECALm3->GetYaxis()->SetTitle("chf_{var} - chf");
-  //hnhf_ECALm3->Divide(hnhf);
+
   hnhf_ECALm3->Add(hnhf,-1);
   hnhf_ECALm3->SetTitle("Neutral hadron fraction, ECAL -3%");
   hnhf_ECALm3->GetYaxis()->SetTitle("nhf_{var} - nhf");
-  //hgammaf_ECALm3->Divide(hgammaf);
+
   hgammaf_ECALm3->Add(hgammaf,-1);
   hgammaf_ECALm3->SetTitle("Photon fraction, ECAL -3%");
   hgammaf_ECALm3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
-  //hef_ECALm3->Divide(hef);
+
   hef_ECALm3->Add(hef,-1);
   hef_ECALm3->SetTitle("Electron fraction, ECAL -3%");
   hef_ECALm3->GetYaxis()->SetTitle("ef_{var} - ef");
 
+  hmuf_ECALm3->Add(hmuf,-1);
+  hmuf_ECALm3->SetTitle("Muon fraction, ECAL -3%");
+  hmuf_ECALm3->GetYaxis()->SetTitle("muf_{var} - muf");
 
 
   hchf_Photonm1->Add(hchf,-1);
   hchf_Photonm1->SetTitle("Charged hadron fraction, Photon response -1%");
   hchf_Photonm1->GetYaxis()->SetTitle("chf_{var} - chf");
+
   hnhf_Photonm1->Add(hnhf,-1);
   hnhf_Photonm1->SetTitle("Neutral hadron fraction, Photon response -1%");
   hnhf_Photonm1->GetYaxis()->SetTitle("nhf_{var} - nhf");
+
   hgammaf_Photonm1->Add(hgammaf,-1);
   hgammaf_Photonm1->SetTitle("Photon fraction, Photon response -1%");
   hgammaf_Photonm1->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
+
   hef_Photonm1->Add(hef,-1);
   hef_Photonm1->SetTitle("Electron fraction, Photon response -1%");
   hef_Photonm1->GetYaxis()->SetTitle("ef_{var} - ef");
 
+  hmuf_Photonm1->Add(hmuf,-1);
+  hmuf_Photonm1->SetTitle("Muon fraction, Photon response -1%");
+  hmuf_Photonm1->GetYaxis()->SetTitle("muf_{var} - muf");
+
+
   hchf_Photonm3->Add(hchf,-1);
   hchf_Photonm3->SetTitle("Charged hadron fraction, Photon response -3%");
   hchf_Photonm3->GetYaxis()->SetTitle("chf_{var} - chf");
+
   hnhf_Photonm3->Add(hnhf,-1);
   hnhf_Photonm3->SetTitle("Neutral hadron fraction, Photon response -3%");
   hnhf_Photonm3->GetYaxis()->SetTitle("nhf_{var} - nhf");
+
   hgammaf_Photonm3->Add(hgammaf,-1);
   hgammaf_Photonm3->SetTitle("Photon fraction, Photon response -3%");
   hgammaf_Photonm3->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
+
   hef_Photonm3->Add(hef,-1);
   hef_Photonm3->SetTitle("Electron fraction, Photon response -3%");
   hef_Photonm3->GetYaxis()->SetTitle("ef_{var} - ef");
+
+  hmuf_Photonm3->Add(hmuf,-1);
+  hmuf_Photonm3->SetTitle("Muon fraction, Photon response -3%");
+  hmuf_Photonm3->GetYaxis()->SetTitle("muf_{var} - muf");
 
   TFile *foutvar = new TFile(outname.c_str(),"RECREATE");
 
@@ -1149,7 +1241,6 @@ void calcVariants()
   h_Rjetb_ECALm3   ->Write("h_Rjetb_ECALm3");
   h_Rjetb_Photonm1 ->Write("h_Rjetb_Photonm1");
   h_Rjetb_Photonm3 ->Write("h_Rjetb_Photonm3");
-
 
   h_Rjetc_Cp3      ->Write("h_Rjetc_Cp3");
   h_Rjetc_Cm3      ->Write("h_Rjetc_Cm3");
@@ -1208,51 +1299,73 @@ void calcVariants()
   hnhf_Cp3         ->Write("hnhf_Cp3");
   hgammaf_Cp3      ->Write("hgammaf_Cp3");
   hef_Cp3          ->Write("hef_Cp3");
+  hmuf_Cp3         ->Write("hmuf_Cp3");
+
   hchf_Cm3         ->Write("hchf_Cm3");
   hnhf_Cm3         ->Write("hnhf_Cm3");
   hgammaf_Cm3      ->Write("hgammaf_Cm3");
   hef_Cm3          ->Write("hef_Cm3");
+  hmuf_Cm3         ->Write("hmuf_Cm3");
+
   hchf_HadHCALp3   ->Write("hchf_HadHCALp3");
   hnhf_HadHCALp3   ->Write("hnhf_HadHCALp3");
   hgammaf_HadHCALp3->Write("hgammaf_HadHCALp3");
   hef_HadHCALp3    ->Write("hef_HadHCALp3");
+  hmuf_HadHCALp3   ->Write("hmuf_HadHCALp3");
+
   hchf_HadHCALm3   ->Write("hchf_HadHCALm3");
   hnhf_HadHCALm3   ->Write("hnhf_HadHCALm3");
   hgammaf_HadHCALm3->Write("hgammaf_HadHCALm3");
   hef_HadHCALm3    ->Write("hef_HadHCALm3");
+  hmuf_HadHCALm3   ->Write("hmuf_HadHCALm3");
+
   hchf_HadECALp3   ->Write("hchf_HadECALp3");
   hnhf_HadECALp3   ->Write("hnhf_HadECALp3");
   hgammaf_HadECALp3->Write("hgammaf_HadECALp3");
   hef_HadECALp3    ->Write("hef_HadECALp3");
+  hmuf_HadECALp3   ->Write("hmuf_HadECALp3");
+
   hchf_HadECALm3   ->Write("hchf_HadECALm3");
   hnhf_HadECALm3   ->Write("hnhf_HadECALm3");
   hgammaf_HadECALm3->Write("hgammaf_HadECALm3");
   hef_HadECALm3    ->Write("hef_HadECALm3");
+  hmuf_HadECALm3   ->Write("hmuf_HadECALm3");
+
   hchf_Trkm1       ->Write("hchf_Trkm1");
   hnhf_Trkm1       ->Write("hnhf_Trkm1");
   hgammaf_Trkm1    ->Write("hgammaf_Trkm1");
   hef_Trkm1        ->Write("hef_Trkm1");
+  hmuf_Trkm1       ->Write("hmuf_Trkm1");
+
   hchf_Trkm3       ->Write("hchf_Trkm3");
   hnhf_Trkm3       ->Write("hnhf_Trkm3");
   hgammaf_Trkm3    ->Write("hgammaf_Trkm3");
   hef_Trkm3        ->Write("hef_Trkm3");
+  hmuf_Trkm3       ->Write("hmuf_Trkm3");
+
   hchf_ECALm1      ->Write("hchf_ECALm1");
   hnhf_ECALm1      ->Write("hnhf_ECALm1");
   hgammaf_ECALm1   ->Write("hgammaf_ECALm1");
   hef_ECALm1       ->Write("hef_ECALm1");
+  hmuf_ECALm1      ->Write("hmuf_ECALm1");
+
   hchf_ECALm3      ->Write("hchf_ECALm3");
   hnhf_ECALm3      ->Write("hnhf_ECALm3");
   hgammaf_ECALm3   ->Write("hgammaf_ECALm3");
   hef_ECALm3       ->Write("hef_ECALm3");
+  hmuf_ECALm3      ->Write("hmuf_ECALm3");
   
   hchf_Photonm1    ->Write("hchf_Photonm1");
   hnhf_Photonm1    ->Write("hnhf_Photonm1");
   hgammaf_Photonm1 ->Write("hgammaf_Photonm1");
   hef_Photonm1     ->Write("hef_Photonm1");
+  hmuf_Photonm1    ->Write("hmuf_Photonm1");
+
   hchf_Photonm3    ->Write("hchf_Photonm3");
   hnhf_Photonm3    ->Write("hnhf_Photonm3");
   hgammaf_Photonm3 ->Write("hgammaf_Photonm3");
   hef_Photonm3     ->Write("hef_Photonm3");
+  hmuf_Photonm3    ->Write("hmuf_Photonm3");
 
   foutvar->Write();
   foutvar->Close();
