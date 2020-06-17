@@ -84,6 +84,7 @@ void CMSJES::Loop()
   const double binsxMPF[nbinsMPF] = 
   {15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713};
 
+
   //Jet flavour dependent MPF responses *b = b-jets, *g = g-jets, *lq=(u,d,s,c)-jets
   string MPFTitle = ";p_{T,reco}^{tag} [GeV];R_{MPF}";
   TProfile* prMPF   = new TProfile("prMPF"  , MPFTitle.c_str(), nbinsMPF-1, binsxMPF);
@@ -150,18 +151,18 @@ void CMSJES::Loop()
   TProfile* prRjet_calo  = new TProfile("prRjet_calo",  RjetcTitle.c_str(),  nbinsMPF-1, binsxMPF);
 
   //gen-jet particle type number
-  TProfile* prgenNch   =new TProfile("prgenNch"   ,";p_{T,gen}^{jet} [GeV]; N_{ch}^{gen}",    nbinsMPF-1, binsxMPF);
-  TProfile* prgenNnh   =new TProfile("prgenNnh"   ,";p_{T,gen}^{jet} [GeV]; N_{nh}^{gen}",    nbinsMPF-1, binsxMPF);
-  TProfile* prgenNgamma=new TProfile("prgenNgamma",";p_{T,gen}^{jet} [GeV]; N_{#gamma}^{gen}",nbinsMPF-1, binsxMPF);
-  TProfile* prgenNe    =new TProfile("prgenNe"    ,";p_{T,gen}^{jet} [GeV]; N_{e}^{gen}",     nbinsMPF-1, binsxMPF);
-  TProfile* prgenNmu   =new TProfile("prgenNmu"   ,";p_{T,gen}^{jet} [GeV]; N_{mu}^{gen}",    nbinsMPF-1, binsxMPF);
+  TProfile* prgenNch   =new TProfile("prgenNch"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen}",    nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnh   =new TProfile("prgenNnh"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{gen}",    nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgamma=new TProfile("prgenNgamma",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{gen}",nbinsMPF-1, binsxMPF);
+  TProfile* prgenNe    =new TProfile("prgenNe"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{gen}",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmu   =new TProfile("prgenNmu"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{gen}",    nbinsMPF-1, binsxMPF);
 
   //reco-jet particle type number
-  TProfile* prrecoNch   =new TProfile("prrecoNch"   ,";p_{T,gen}^{jet} [GeV]; N_{ch}^{reco}",    nbinsMPF-1, binsxMPF);
-  TProfile* prrecoNnh   =new TProfile("prrecoNnh"   ,";p_{T,gen}^{jet} [GeV]; N_{nh}^{reco}",    nbinsMPF-1, binsxMPF);
-  TProfile* prrecoNgamma=new TProfile("prrecoNgamma",";p_{T,gen}^{jet} [GeV]; N_{#gamma}^{reco}",nbinsMPF-1, binsxMPF);
-  TProfile* prrecoNe    =new TProfile("prrecoNe"    ,";p_{T,gen}^{jet} [GeV]; N_{e}^{reco}",     nbinsMPF-1, binsxMPF);
-  TProfile* prrecoNmu   =new TProfile("prrecoNmu"   ,";p_{T,gen}^{jet} [GeV]; N_{mu}^{reco}",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNch   =new TProfile("prrecoNch"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{reco}",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnh   =new TProfile("prrecoNnh"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{reco}",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgamma=new TProfile("prrecoNgamma",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{reco}",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNe    =new TProfile("prrecoNe"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco}",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmu   =new TProfile("prrecoNmu"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco}",    nbinsMPF-1, binsxMPF);
 
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbinsMPF-1,binsxMPF);
@@ -1171,6 +1172,7 @@ void CMSJES::Loop()
           nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
         }
 
+
         if (Calibm10) nhHCAL_calib = 0.9*nhHCAL_calib;
  
         //***** PF-code calorimeter resolution *****
@@ -1349,17 +1351,17 @@ void CMSJES::Loop()
       pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
       prmuf   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
 
-      prgenNch    ->Fill(probe_g.Pt(), probe_genNch   , weight);
-      prgenNnh    ->Fill(probe_g.Pt(), probe_genNnh   , weight);
-      prgenNgamma ->Fill(probe_g.Pt(), probe_genNgamma, weight);
-      prgenNe     ->Fill(probe_g.Pt(), probe_genNe    , weight);
-      prgenNmu    ->Fill(probe_g.Pt(), probe_genNmu   , weight);
+      prgenNch    ->Fill(tag_r.Pt(), probe_genNch   , weight);
+      prgenNnh    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
+      prgenNgamma ->Fill(tag_r.Pt(), probe_genNgamma, weight);
+      prgenNe     ->Fill(tag_r.Pt(), probe_genNe    , weight);
+      prgenNmu    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
 
-      prrecoNch   ->Fill(probe_g.Pt(), probe_recoNch   , weight);
-      prrecoNnh   ->Fill(probe_g.Pt(), probe_recoNnh   , weight);
-      prrecoNgamma->Fill(probe_g.Pt(), probe_recoNgamma, weight);
-      prrecoNe    ->Fill(probe_g.Pt(), probe_recoNe    , weight);
-      prrecoNmu   ->Fill(probe_g.Pt(), probe_recoNmu   , weight);
+      prrecoNch   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
+      prrecoNnh   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
+      prrecoNgamma->Fill(tag_r.Pt(), probe_recoNgamma, weight);
+      prrecoNe    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
+      prrecoNmu   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
 
 
 
