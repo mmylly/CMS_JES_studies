@@ -164,6 +164,79 @@ void CMSJES::Loop()
   TProfile* prrecoNe    =new TProfile("prrecoNe"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco}",     nbinsMPF-1, binsxMPF);
   TProfile* prrecoNmu   =new TProfile("prrecoNmu"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco}",    nbinsMPF-1, binsxMPF);
 
+  //b-jets
+  TProfile* prgenNchb    =new TProfile("prgenNchb"    ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen} b-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnhb    =new TProfile("prgenNnhb"    ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{gen} b-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgammab =new TProfile("prgenNgammab" ,";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{gen} b-jets", nbinsMPF-1, binsxMPF);
+  TProfile* prgenNeb     =new TProfile("prgenNeb"     ,";p_{T,reco}^{tag} [GeV]; N_{e}^{gen} b-jets",      nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmub    =new TProfile("prgenNmub"    ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{gen} b-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNchb   =new TProfile("prrecoNchb"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{reco} b-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnhb   =new TProfile("prrecoNnhb"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{reco} b-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgammab=new TProfile("prrecoNgammab",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{reco} b-jets",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNeb    =new TProfile("prrecoNeb"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco} b-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmub   =new TProfile("prrecoNmub"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco} b-jets",    nbinsMPF-1, binsxMPF);
+
+  //gluon jet compositions
+  TProfile* prgenNchg    =new TProfile("prgenNchg"    ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen} gluon-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnhg    =new TProfile("prgenNnhg"    ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{gen} gluon-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgammag =new TProfile("prgenNgammag" ,";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{gen} gluon-jets", nbinsMPF-1, binsxMPF);
+  TProfile* prgenNeg     =new TProfile("prgenNeg"     ,";p_{T,reco}^{tag} [GeV]; N_{e}^{gen} gluon-jets",      nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmug    =new TProfile("prgenNmug"    ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{gen} gluon-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNchg   =new TProfile("prrecoNchg"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{reco} gluon-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnhg   =new TProfile("prrecoNnhg"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{reco} gluon-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgammag=new TProfile("prrecoNgammag",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{reco} gluon-jets",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNeg    =new TProfile("prrecoNeg"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco} gluon-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmug   =new TProfile("prrecoNmug"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco} gluon-jets",    nbinsMPF-1, binsxMPF);
+
+  //lq jet compositions
+  TProfile* prgenNchlq    =new TProfile("prgenNchlq"    ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen} lq-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnhlq    =new TProfile("prgenNnhlq"    ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{gen} lq-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgammalq =new TProfile("prgenNgammalq" ,";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{gen} lq-jets", nbinsMPF-1, binsxMPF);
+  TProfile* prgenNelq     =new TProfile("prgenNelq"     ,";p_{T,reco}^{tag} [GeV]; N_{e}^{gen} lq-jets",      nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmulq    =new TProfile("prgenNmulq"    ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{gen} lq-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNchlq   =new TProfile("prrecoNchlq"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{reco} lq-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnhlq   =new TProfile("prrecoNnhlq"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{reco} lq-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgammalq=new TProfile("prrecoNgammalq",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{reco} lq-jets",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNelq    =new TProfile("prrecoNelq"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco} lq-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmulq   =new TProfile("prrecoNmulq"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco} lq-jets",    nbinsMPF-1, binsxMPF);
+
+  //ud jet compositions
+  TProfile* prgenNchud    =new TProfile("prgenNchud"    ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen} ud-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnhud    =new TProfile("prgenNnhud"    ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{gen} ud-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgammaud =new TProfile("prgenNgammaud" ,";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{gen} ud-jets", nbinsMPF-1, binsxMPF);
+  TProfile* prgenNeud     =new TProfile("prgenNeud"     ,";p_{T,reco}^{tag} [GeV]; N_{e}^{gen} ud-jets",      nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmuud    =new TProfile("prgenNmuud"    ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{gen} ud-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNchud   =new TProfile("prrecoNchud"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{reco} ud-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnhud   =new TProfile("prrecoNnhud"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{reco} ud-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgammaud=new TProfile("prrecoNgammaud",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{reco} ud-jets",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNeud    =new TProfile("prrecoNeud"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco} ud-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmuud   =new TProfile("prrecoNmuud"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco} ud-jets",    nbinsMPF-1, binsxMPF);
+
+  //s jet compositions
+  TProfile* prgenNchs    =new TProfile("prgenNchs"    ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen} s-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnhs    =new TProfile("prgenNnhs"    ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{gen} s-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgammas =new TProfile("prgenNgammas" ,";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{gen} s-jets", nbinsMPF-1, binsxMPF);
+  TProfile* prgenNes     =new TProfile("prgenNes"     ,";p_{T,reco}^{tag} [GeV]; N_{e}^{gen} s-jets",      nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmus    =new TProfile("prgenNmus"    ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{gen} s-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNchs   =new TProfile("prrecoNchs"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{reco} s-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnhs   =new TProfile("prrecoNnhs"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{reco} s-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgammas=new TProfile("prrecoNgammas",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{reco} s-jets",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNes    =new TProfile("prrecoNes"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco} s-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmus   =new TProfile("prrecoNmus"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco} s-jets",    nbinsMPF-1, binsxMPF);
+
+  //c jet compositions
+  TProfile* prgenNchc    =new TProfile("prgenNchc"    ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen} c-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNnhc    =new TProfile("prgenNnhc"    ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{gen} c-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prgenNgammac =new TProfile("prgenNgammac" ,";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{gen} c-jets", nbinsMPF-1, binsxMPF);
+  TProfile* prgenNec     =new TProfile("prgenNec"     ,";p_{T,reco}^{tag} [GeV]; N_{e}^{gen} c-jets",      nbinsMPF-1, binsxMPF);
+  TProfile* prgenNmuc    =new TProfile("prgenNmuc"    ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{gen} c-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNchc   =new TProfile("prrecoNchc"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{reco} c-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNnhc   =new TProfile("prrecoNnhc"   ,";p_{T,reco}^{tag} [GeV]; N_{nh}^{reco} c-jets",    nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNgammac=new TProfile("prrecoNgammac",";p_{T,reco}^{tag} [GeV]; N_{#gamma}^{reco} c-jets",nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNec    =new TProfile("prrecoNec"    ,";p_{T,reco}^{tag} [GeV]; N_{e}^{reco} c-jets",     nbinsMPF-1, binsxMPF);
+  TProfile* prrecoNmuc   =new TProfile("prrecoNmuc"   ,";p_{T,reco}^{tag} [GeV]; N_{mu}^{reco} c-jets",    nbinsMPF-1, binsxMPF);
+
+
   //Jet flavour fraction histos: FFb = b-jets, FFg = g-jets, FFlq=(u,d,s,c)-jets
   TH1D* FFb = new TH1D("FFb",  "",nbinsMPF-1,binsxMPF);
   TH1D* FFg = new TH1D("FFg",  "",nbinsMPF-1,binsxMPF);
@@ -1412,6 +1485,18 @@ void CMSJES::Loop()
             prefb    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
             prmufb   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
 
+            prgenNchb    ->Fill(tag_r.Pt(), probe_genNch   , weight);
+            prgenNnhb    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
+            prgenNgammab ->Fill(tag_r.Pt(), probe_genNgamma, weight);
+            prgenNeb     ->Fill(tag_r.Pt(), probe_genNe    , weight);
+            prgenNmub    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+
+            prrecoNchb   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
+            prrecoNnhb   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
+            prrecoNgammab->Fill(tag_r.Pt(), probe_recoNgamma, weight);
+            prrecoNeb    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
+            prrecoNmub   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+
           } else if (probeFlav < 5) {                     //Light quark (u,d,s,c) jets
             FFlq->Fill(tag_r.Pt(), weight);
             prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight);
@@ -1425,6 +1510,18 @@ void CMSJES::Loop()
             preflq    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
             prmuflq   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
 
+            prgenNchlq    ->Fill(tag_r.Pt(), probe_genNch   , weight);
+            prgenNnhlq    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
+            prgenNgammalq ->Fill(tag_r.Pt(), probe_genNgamma, weight);
+            prgenNelq     ->Fill(tag_r.Pt(), probe_genNe    , weight);
+            prgenNmulq    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+
+            prrecoNchlq   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
+            prrecoNnhlq   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
+            prrecoNgammalq->Fill(tag_r.Pt(), probe_recoNgamma, weight);
+            prrecoNelq    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
+            prrecoNmulq   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+
             if (probeFlav == 4) {                         //c-jets
               FFc->Fill(tag_r.Pt(), weight);
               prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
@@ -1437,6 +1534,18 @@ void CMSJES::Loop()
               prgammafc->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
               prefc    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
               prmufc   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
+              prgenNchc    ->Fill(tag_r.Pt(), probe_genNch   , weight);
+              prgenNnhc    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
+              prgenNgammac ->Fill(tag_r.Pt(), probe_genNgamma, weight);
+              prgenNec     ->Fill(tag_r.Pt(), probe_genNe    , weight);
+              prgenNmuc    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+
+              prrecoNchc   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
+              prrecoNnhc   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
+              prrecoNgammac->Fill(tag_r.Pt(), probe_recoNgamma, weight);
+              prrecoNec    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
+              prrecoNmuc   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
      
             } else if (probeFlav == 3) {                  //s-jets
               FFs->Fill(tag_r.Pt(), weight);
@@ -1451,6 +1560,18 @@ void CMSJES::Loop()
               prefs    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
               prmufs   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
 
+              prgenNchs    ->Fill(tag_r.Pt(), probe_genNch   , weight);
+              prgenNnhs    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
+              prgenNgammas ->Fill(tag_r.Pt(), probe_genNgamma, weight);
+              prgenNes     ->Fill(tag_r.Pt(), probe_genNe    , weight);
+              prgenNmus    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+
+              prrecoNchs   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
+              prrecoNnhs   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
+              prrecoNgammas->Fill(tag_r.Pt(), probe_recoNgamma, weight);
+              prrecoNes    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
+              prrecoNmus   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+
             } else if (probeFlav < 3) {                   //(u,d)
               FFud->Fill(tag_r.Pt(), weight);
               prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
@@ -1463,6 +1584,18 @@ void CMSJES::Loop()
               prgammafud->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
               prefud    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
               prmufud   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
+              prgenNchud    ->Fill(tag_r.Pt(), probe_genNch   , weight);
+              prgenNnhud    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
+              prgenNgammaud ->Fill(tag_r.Pt(), probe_genNgamma, weight);
+              prgenNeud     ->Fill(tag_r.Pt(), probe_genNe    , weight);
+              prgenNmuud    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+
+              prrecoNchud   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
+              prrecoNnhud   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
+              prrecoNgammaud->Fill(tag_r.Pt(), probe_recoNgamma, weight);
+              prrecoNeud    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
+              prrecoNmuud   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
 
             }
           } else if (probeFlav == 21) {                   //Gluon jets
@@ -1477,6 +1610,18 @@ void CMSJES::Loop()
             prgammafg->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
             prefg    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
             prmufg   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+
+            prgenNchg    ->Fill(tag_r.Pt(), probe_genNch   , weight);
+            prgenNnhg    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
+            prgenNgammag ->Fill(tag_r.Pt(), probe_genNgamma, weight);
+            prgenNeg     ->Fill(tag_r.Pt(), probe_genNe    , weight);
+            prgenNmug    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+
+            prrecoNchg   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
+            prrecoNnhg   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
+            prrecoNgammag->Fill(tag_r.Pt(), probe_recoNgamma, weight);
+            prrecoNeg    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
+            prrecoNmug   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
 
           } else continue; //Undetermined flavour
           FFa->Fill(tag_r.Pt(), weight); continue;
