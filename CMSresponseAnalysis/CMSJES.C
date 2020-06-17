@@ -1242,7 +1242,11 @@ void CMSJES::Loop()
 
         //HCAL calibration
         if (nhHCAL->GetBinContent(i,j) > 0.0) {
-          nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
+          if (nhHCAL->GetBinContent(i,j) < 7798.2) {
+            nhHCAL_calib = fr_hcal->GetX(nhHCAL->GetBinContent(i,j), 0.1, 7000.0);
+          } else {
+            nhHCAL_calib = 7000.0;
+          }
         }
 
 
@@ -1272,7 +1276,11 @@ void CMSJES::Loop()
         chc = chcECAL->GetBinContent(i,j) + chcHCAL->GetBinContent(i,j);
 
         if (chc > 0.0) {
-          chc_calib = fr_all->GetX(chc, 0.1, 7000.0);
+          if (chc < 7142.73) {
+            chc_calib = fr_all->GetX(chc, 0.1, 7000.0);
+          } else {
+            chc_calib = 7000.0;
+          }
         }
 
         if (Calibm10) chc_calib = 0.9*chc_calib;
