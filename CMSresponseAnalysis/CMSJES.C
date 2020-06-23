@@ -11,12 +11,12 @@ void CMSJES::Loop()
 
   //Variant flags
   bool varCp3, varCm3, 
-       varHadHCALp3, varHadHCALm3, 
-       varHadECALp3, varHadECALm3, 
-       varTrkEffm1,  varTrkEffm3,
-       varECALm1, varECALm3,
-       varPhotonm1, varPhotonm3,
-       Calibm10;
+       varHadHCALp3,  varHadHCALm3, 
+       varHadECALp3,  varHadECALm3, 
+       varTrkEffm1,   varTrkEffm3,
+       varECALm1,     varECALm3,
+       varPhotonm1,   varPhotonm3,
+       varbfracp50,   Calibm10;
   varCp3       = 0;
   varCm3       = 0;
   varHadHCALp3 = 0;
@@ -30,10 +30,13 @@ void CMSJES::Loop()
   varPhotonm1  = 0;
   varPhotonm3  = 0;
 
+  varbfracp50  = 0;
+
   Calibm10 = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
-       + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1 + varPhotonm3) > 1) 
+       + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1 + varPhotonm3
+       + varbfracp50) > 1) 
     {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
@@ -73,6 +76,7 @@ void CMSJES::Loop()
   if (varECALm3) outname    += "_varECALm3";
   if (varPhotonm1) outname  += "_varPhotonm1";
   if (varPhotonm3) outname  += "_varPhotonm3";
+  if (varbfracp50) outname  += "_varbfracp50";
 
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -1372,11 +1376,13 @@ void CMSJES::Loop()
       
     }
 
-    double totalE;
+    double totalE, weight_temp;
 
     /**************************** FILL HISTOGRAMS ****************************/
 
     for (unsigned int i = 0; i!=((studyMode==1) ? 2:1); ++i) {
+
+      probeFlav = -1;
 
       //Dijet cuts
       if (studyMode ==1) {
@@ -1411,38 +1417,46 @@ void CMSJES::Loop()
         }
       }
 
+      //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
+      //Loop partons to find where jets originated from
+      //Probe flavor check, prtn_tag=0 for outgoing hard process partons
+      for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
+        if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
+          probeFlav = abs((*prtn_pdgid)[j]);
+          continue;
+        }
+      }
+
+      weight_temp = weight;
+
+      if (varbfracp50 && probeFlav == 5) weight_temp *= 1.5;
 
 
+      //if(weight != weight_temp) cout << probeFlav << " " << weight << " " << weight_temp << " "  << weight_temp/weight << endl;
 
-      prWeight->Fill(probe_g.Pt(), weight);
- 
-      //weight_stream << probe_g.Pt();
-      //weight_stream << " ";
-      //weight_stream << weight;
-      //weight_stream << "\n";
-
+      prWeight->Fill(probe_g.Pt(), weight_temp);
 
       evt ++;
 
       totalE = probe_ch + probe_nh + probe_gamma + probe_e + probe_mu;
 
-      prchf   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-      prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-      prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-      pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
-      prmuf   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+      prchf   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight_temp);
+      prnhf   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight_temp);
+      prgammaf->Fill(tag_r.Pt(), probe_gamma/totalE, weight_temp);
+      pref    ->Fill(tag_r.Pt(), probe_e/totalE,     weight_temp);
+      prmuf   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight_temp);
 
-      prgenNch    ->Fill(tag_r.Pt(), probe_genNch   , weight);
-      prgenNnh    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
-      prgenNgamma ->Fill(tag_r.Pt(), probe_genNgamma, weight);
-      prgenNe     ->Fill(tag_r.Pt(), probe_genNe    , weight);
-      prgenNmu    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+      prgenNch    ->Fill(tag_r.Pt(), probe_genNch   , weight_temp);
+      prgenNnh    ->Fill(tag_r.Pt(), probe_genNnh   , weight_temp);
+      prgenNgamma ->Fill(tag_r.Pt(), probe_genNgamma, weight_temp);
+      prgenNe     ->Fill(tag_r.Pt(), probe_genNe    , weight_temp);
+      prgenNmu    ->Fill(tag_r.Pt(), probe_genNmu   , weight_temp);
 
-      prrecoNch   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
-      prrecoNnh   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
-      prrecoNgamma->Fill(tag_r.Pt(), probe_recoNgamma, weight);
-      prrecoNe    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
-      prrecoNmu   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+      prrecoNch   ->Fill(tag_r.Pt(), probe_recoNch   , weight_temp);
+      prrecoNnh   ->Fill(tag_r.Pt(), probe_recoNnh   , weight_temp);
+      prrecoNgamma->Fill(tag_r.Pt(), probe_recoNgamma, weight_temp);
+      prrecoNe    ->Fill(tag_r.Pt(), probe_recoNe    , weight_temp);
+      prrecoNmu   ->Fill(tag_r.Pt(), probe_recoNmu   , weight_temp);
 
 
 
@@ -1453,9 +1467,9 @@ void CMSJES::Loop()
       R_MPF_g = 1.0 + (MET_g.Px()*tag_g.Px() + MET_g.Py()*tag_g.Py()) / pow((tag_g.Pt()),2);
 
       //Fill MPF profile
-      prMPF->Fill(tag_r.Pt(), R_MPF_r, weight);
+      prMPF->Fill(tag_r.Pt(), R_MPF_r, weight_temp);
 
-      prgenMPF->Fill(tag_g.Pt(), R_MPF_g, weight);
+      prgenMPF->Fill(tag_g.Pt(), R_MPF_g, weight_temp);
 
       Rjet      = probe_r.Pt()/probe_g.Pt();
       Rjet_calo = probe_calo.Pt()/probe_g.Pt(); 
@@ -1464,177 +1478,166 @@ void CMSJES::Loop()
 
 
       //All jets
-      prRjet->Fill(probe_g.Pt(), Rjet, weight);
-      prRjetvstag->Fill(tag_r.Pt(), Rjet, weight);
+      prRjet->Fill(probe_g.Pt(), Rjet, weight_temp);
+      prRjetvstag->Fill(tag_r.Pt(), Rjet, weight_temp);
 
-      prRjet_calo->Fill(probe_g.Pt(), Rjet_calo, weight);
+      prRjet_calo->Fill(probe_g.Pt(), Rjet_calo, weight_temp);
 
 
+      //Flavour dependent quantities
+      if (probeFlav == 5) {                           //b-jets
+        FFb->Fill(tag_r.Pt(), weight_temp);
+        prMPFb->Fill(tag_r.Pt(), R_MPF_r, weight_temp);
+        prgenMPFb->Fill(tag_g.Pt(), R_MPF_g, weight_temp);
+        prRjetb->Fill(probe_g.Pt(), Rjet, weight_temp);
+        prRjetvstagb->Fill(tag_r.Pt(), Rjet, weight_temp);
 
-      //CHECK JET FLAVOUR: FIND FLAVOUR-DEPENDENT QUANTITIES
-      //Loop partons to find where jets originated from
-      for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
-        //prtn_tag=0 for outgoing hard process partons
-        if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
+        prchfb   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight_temp);
+        prnhfb   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight_temp);
+        prgammafb->Fill(tag_r.Pt(), probe_gamma/totalE, weight_temp);
+        prefb    ->Fill(tag_r.Pt(), probe_e/totalE,     weight_temp);
+        prmufb   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight_temp);
 
-          //Probe flavour
-          probeFlav = abs((*prtn_pdgid)[j]);
+        prgenNchb    ->Fill(tag_r.Pt(), probe_genNch   , weight_temp);
+        prgenNnhb    ->Fill(tag_r.Pt(), probe_genNnh   , weight_temp);
+        prgenNgammab ->Fill(tag_r.Pt(), probe_genNgamma, weight_temp);
+        prgenNeb     ->Fill(tag_r.Pt(), probe_genNe    , weight_temp);
+        prgenNmub    ->Fill(tag_r.Pt(), probe_genNmu   , weight_temp);
 
-          if (probeFlav == 5) {                           //b-jets
-            FFb->Fill(tag_r.Pt(), weight);
-            prMPFb->Fill(tag_r.Pt(), R_MPF_r, weight);
-            prgenMPFb->Fill(tag_g.Pt(), R_MPF_g, weight);
-            prRjetb->Fill(probe_g.Pt(), Rjet, weight);
-            prRjetvstagb->Fill(tag_r.Pt(), Rjet, weight);
+        prrecoNchb   ->Fill(tag_r.Pt(), probe_recoNch   , weight_temp);
+        prrecoNnhb   ->Fill(tag_r.Pt(), probe_recoNnh   , weight_temp);
+        prrecoNgammab->Fill(tag_r.Pt(), probe_recoNgamma, weight_temp);
+        prrecoNeb    ->Fill(tag_r.Pt(), probe_recoNe    , weight_temp);
+        prrecoNmub   ->Fill(tag_r.Pt(), probe_recoNmu   , weight_temp);
 
-            prchfb   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-            prnhfb   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-            prgammafb->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-            prefb    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
-            prmufb   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+      } else if (probeFlav > 0 && probeFlav < 5) {    //Light quark (u,d,s,c) jets (1,2,3,4)
+        FFlq->Fill(tag_r.Pt(), weight_temp);
+        prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight_temp);
+        prgenMPFlq->Fill(tag_g.Pt(), R_MPF_g, weight_temp);
+        prRjetlq->Fill(probe_g.Pt(), Rjet, weight_temp);
+        prRjetvstaglq->Fill(tag_r.Pt(), Rjet, weight_temp);
 
-            prgenNchb    ->Fill(tag_r.Pt(), probe_genNch   , weight);
-            prgenNnhb    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
-            prgenNgammab ->Fill(tag_r.Pt(), probe_genNgamma, weight);
-            prgenNeb     ->Fill(tag_r.Pt(), probe_genNe    , weight);
-            prgenNmub    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+        prchflq   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight_temp);
+        prnhflq   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight_temp);
+        prgammaflq->Fill(tag_r.Pt(), probe_gamma/totalE, weight_temp);
+        preflq    ->Fill(tag_r.Pt(), probe_e/totalE,     weight_temp);
+        prmuflq   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight_temp);
 
-            prrecoNchb   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
-            prrecoNnhb   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
-            prrecoNgammab->Fill(tag_r.Pt(), probe_recoNgamma, weight);
-            prrecoNeb    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
-            prrecoNmub   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+        prgenNchlq    ->Fill(tag_r.Pt(), probe_genNch   , weight_temp);
+        prgenNnhlq    ->Fill(tag_r.Pt(), probe_genNnh   , weight_temp);
+        prgenNgammalq ->Fill(tag_r.Pt(), probe_genNgamma, weight_temp);
+        prgenNelq     ->Fill(tag_r.Pt(), probe_genNe    , weight_temp);
+        prgenNmulq    ->Fill(tag_r.Pt(), probe_genNmu   , weight_temp);
 
-          } else if (probeFlav < 5) {                     //Light quark (u,d,s,c) jets
-            FFlq->Fill(tag_r.Pt(), weight);
-            prMPFlq->Fill(tag_r.Pt(), R_MPF_r, weight);
-            prgenMPFlq->Fill(tag_g.Pt(), R_MPF_g, weight);
-            prRjetlq->Fill(probe_g.Pt(), Rjet, weight);
-            prRjetvstaglq->Fill(tag_r.Pt(), Rjet, weight);
+        prrecoNchlq   ->Fill(tag_r.Pt(), probe_recoNch   , weight_temp);
+        prrecoNnhlq   ->Fill(tag_r.Pt(), probe_recoNnh   , weight_temp);
+        prrecoNgammalq->Fill(tag_r.Pt(), probe_recoNgamma, weight_temp);
+        prrecoNelq    ->Fill(tag_r.Pt(), probe_recoNe    , weight_temp);
+        prrecoNmulq   ->Fill(tag_r.Pt(), probe_recoNmu   , weight_temp);
 
-            prchflq   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-            prnhflq   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-            prgammaflq->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-            preflq    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
-            prmuflq   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+        if (probeFlav == 4) {                         //c-jets
+          FFc->Fill(tag_r.Pt(), weight_temp);
+          prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight_temp);
+          prgenMPFc->Fill(tag_g.Pt(), R_MPF_g, weight_temp);
+          prRjetc->Fill(probe_g.Pt(), Rjet, weight_temp);
+          prRjetvstagc->Fill(tag_r.Pt(), Rjet, weight_temp);    
 
-            prgenNchlq    ->Fill(tag_r.Pt(), probe_genNch   , weight);
-            prgenNnhlq    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
-            prgenNgammalq ->Fill(tag_r.Pt(), probe_genNgamma, weight);
-            prgenNelq     ->Fill(tag_r.Pt(), probe_genNe    , weight);
-            prgenNmulq    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+          prchfc   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight_temp);
+          prnhfc   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight_temp);
+          prgammafc->Fill(tag_r.Pt(), probe_gamma/totalE, weight_temp);
+          prefc    ->Fill(tag_r.Pt(), probe_e/totalE,     weight_temp);
+          prmufc   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight_temp);
 
-            prrecoNchlq   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
-            prrecoNnhlq   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
-            prrecoNgammalq->Fill(tag_r.Pt(), probe_recoNgamma, weight);
-            prrecoNelq    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
-            prrecoNmulq   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+          prgenNchc    ->Fill(tag_r.Pt(), probe_genNch   , weight_temp);
+          prgenNnhc    ->Fill(tag_r.Pt(), probe_genNnh   , weight_temp);
+          prgenNgammac ->Fill(tag_r.Pt(), probe_genNgamma, weight_temp);
+          prgenNec     ->Fill(tag_r.Pt(), probe_genNe    , weight_temp);
+          prgenNmuc    ->Fill(tag_r.Pt(), probe_genNmu   , weight_temp);
 
-            if (probeFlav == 4) {                         //c-jets
-              FFc->Fill(tag_r.Pt(), weight);
-              prMPFc->Fill(tag_r.Pt(), R_MPF_r, weight);
-              prgenMPFc->Fill(tag_g.Pt(), R_MPF_g, weight);
-              prRjetc->Fill(probe_g.Pt(), Rjet, weight);
-              prRjetvstagc->Fill(tag_r.Pt(), Rjet, weight);    
-
-              prchfc   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-              prnhfc   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-              prgammafc->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-              prefc    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
-              prmufc   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
-
-              prgenNchc    ->Fill(tag_r.Pt(), probe_genNch   , weight);
-              prgenNnhc    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
-              prgenNgammac ->Fill(tag_r.Pt(), probe_genNgamma, weight);
-              prgenNec     ->Fill(tag_r.Pt(), probe_genNe    , weight);
-              prgenNmuc    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
-
-              prrecoNchc   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
-              prrecoNnhc   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
-              prrecoNgammac->Fill(tag_r.Pt(), probe_recoNgamma, weight);
-              prrecoNec    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
-              prrecoNmuc   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+          prrecoNchc   ->Fill(tag_r.Pt(), probe_recoNch   , weight_temp);
+          prrecoNnhc   ->Fill(tag_r.Pt(), probe_recoNnh   , weight_temp);
+          prrecoNgammac->Fill(tag_r.Pt(), probe_recoNgamma, weight_temp);
+          prrecoNec    ->Fill(tag_r.Pt(), probe_recoNe    , weight_temp);
+          prrecoNmuc   ->Fill(tag_r.Pt(), probe_recoNmu   , weight_temp);
      
-            } else if (probeFlav == 3) {                  //s-jets
-              FFs->Fill(tag_r.Pt(), weight);
-              prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight);
-              prgenMPFs->Fill(tag_g.Pt(), R_MPF_g, weight);
-              prRjets->Fill(probe_g.Pt(), Rjet, weight);
-              prRjetvstags->Fill(tag_r.Pt(), Rjet, weight);  
+        } else if (probeFlav == 3) {                  //s-jets
+          FFs->Fill(tag_r.Pt(), weight_temp);
+          prMPFs->Fill(tag_r.Pt(), R_MPF_r, weight_temp);
+          prgenMPFs->Fill(tag_g.Pt(), R_MPF_g, weight_temp);
+          prRjets->Fill(probe_g.Pt(), Rjet, weight_temp);
+          prRjetvstags->Fill(tag_r.Pt(), Rjet, weight_temp);  
 
-              prchfs   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-              prnhfs   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-              prgammafs->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-              prefs    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
-              prmufs   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+          prchfs   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight_temp);
+          prnhfs   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight_temp);
+          prgammafs->Fill(tag_r.Pt(), probe_gamma/totalE, weight_temp);
+          prefs    ->Fill(tag_r.Pt(), probe_e/totalE,     weight_temp);
+          prmufs   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight_temp);
 
-              prgenNchs    ->Fill(tag_r.Pt(), probe_genNch   , weight);
-              prgenNnhs    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
-              prgenNgammas ->Fill(tag_r.Pt(), probe_genNgamma, weight);
-              prgenNes     ->Fill(tag_r.Pt(), probe_genNe    , weight);
-              prgenNmus    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+          prgenNchs    ->Fill(tag_r.Pt(), probe_genNch   , weight_temp);
+          prgenNnhs    ->Fill(tag_r.Pt(), probe_genNnh   , weight_temp);
+          prgenNgammas ->Fill(tag_r.Pt(), probe_genNgamma, weight_temp);
+          prgenNes     ->Fill(tag_r.Pt(), probe_genNe    , weight_temp);
+          prgenNmus    ->Fill(tag_r.Pt(), probe_genNmu   , weight_temp);
 
-              prrecoNchs   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
-              prrecoNnhs   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
-              prrecoNgammas->Fill(tag_r.Pt(), probe_recoNgamma, weight);
-              prrecoNes    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
-              prrecoNmus   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+          prrecoNchs   ->Fill(tag_r.Pt(), probe_recoNch   , weight_temp);
+          prrecoNnhs   ->Fill(tag_r.Pt(), probe_recoNnh   , weight_temp);
+          prrecoNgammas->Fill(tag_r.Pt(), probe_recoNgamma, weight_temp);
+          prrecoNes    ->Fill(tag_r.Pt(), probe_recoNe    , weight_temp);
+          prrecoNmus   ->Fill(tag_r.Pt(), probe_recoNmu   , weight_temp);
 
-            } else if (probeFlav < 3) {                   //(u,d)
-              FFud->Fill(tag_r.Pt(), weight);
-              prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight);
-              prgenMPFud->Fill(tag_g.Pt(), R_MPF_g, weight);
-              prRjetud->Fill(probe_g.Pt(), Rjet, weight);
-              prRjetvstagud->Fill(tag_r.Pt(), Rjet, weight);
+        } else if (probeFlav == 1 || probeFlav == 2) {    //(u,d)
+          FFud->Fill(tag_r.Pt(), weight_temp);
+          prMPFud->Fill(tag_r.Pt(), R_MPF_r, weight_temp);
+          prgenMPFud->Fill(tag_g.Pt(), R_MPF_g, weight_temp);
+          prRjetud->Fill(probe_g.Pt(), Rjet, weight_temp);
+          prRjetvstagud->Fill(tag_r.Pt(), Rjet, weight_temp);
 
-              prchfud   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-              prnhfud   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-              prgammafud->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-              prefud    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
-              prmufud   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
+          prchfud   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight_temp);
+          prnhfud   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight_temp);
+          prgammafud->Fill(tag_r.Pt(), probe_gamma/totalE, weight_temp);
+          prefud    ->Fill(tag_r.Pt(), probe_e/totalE,     weight_temp);
+          prmufud   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight_temp);
 
-              prgenNchud    ->Fill(tag_r.Pt(), probe_genNch   , weight);
-              prgenNnhud    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
-              prgenNgammaud ->Fill(tag_r.Pt(), probe_genNgamma, weight);
-              prgenNeud     ->Fill(tag_r.Pt(), probe_genNe    , weight);
-              prgenNmuud    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
+          prgenNchud    ->Fill(tag_r.Pt(), probe_genNch   , weight_temp);
+          prgenNnhud    ->Fill(tag_r.Pt(), probe_genNnh   , weight_temp);
+          prgenNgammaud ->Fill(tag_r.Pt(), probe_genNgamma, weight_temp);
+          prgenNeud     ->Fill(tag_r.Pt(), probe_genNe    , weight_temp);
+          prgenNmuud    ->Fill(tag_r.Pt(), probe_genNmu   , weight_temp);
 
-              prrecoNchud   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
-              prrecoNnhud   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
-              prrecoNgammaud->Fill(tag_r.Pt(), probe_recoNgamma, weight);
-              prrecoNeud    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
-              prrecoNmuud   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
+          prrecoNchud   ->Fill(tag_r.Pt(), probe_recoNch   , weight_temp);
+          prrecoNnhud   ->Fill(tag_r.Pt(), probe_recoNnh   , weight_temp);
+          prrecoNgammaud->Fill(tag_r.Pt(), probe_recoNgamma, weight_temp);
+          prrecoNeud    ->Fill(tag_r.Pt(), probe_recoNe    , weight_temp);
+          prrecoNmuud   ->Fill(tag_r.Pt(), probe_recoNmu   , weight_temp);
 
-            }
-          } else if (probeFlav == 21) {                   //Gluon jets
-            FFg->Fill(tag_r.Pt(), weight);
-            prMPFg->Fill(tag_r.Pt(), R_MPF_r, weight);
-            prgenMPFg->Fill(tag_g.Pt(), R_MPF_g, weight);
-            prRjetg->Fill(probe_g.Pt(), Rjet, weight);
-            prRjetvstagg->Fill(tag_r.Pt(), Rjet, weight);
-
-            prchfg   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight);
-            prnhfg   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight);
-            prgammafg->Fill(tag_r.Pt(), probe_gamma/totalE, weight);
-            prefg    ->Fill(tag_r.Pt(), probe_e/totalE,     weight);
-            prmufg   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight);
-
-            prgenNchg    ->Fill(tag_r.Pt(), probe_genNch   , weight);
-            prgenNnhg    ->Fill(tag_r.Pt(), probe_genNnh   , weight);
-            prgenNgammag ->Fill(tag_r.Pt(), probe_genNgamma, weight);
-            prgenNeg     ->Fill(tag_r.Pt(), probe_genNe    , weight);
-            prgenNmug    ->Fill(tag_r.Pt(), probe_genNmu   , weight);
-
-            prrecoNchg   ->Fill(tag_r.Pt(), probe_recoNch   , weight);
-            prrecoNnhg   ->Fill(tag_r.Pt(), probe_recoNnh   , weight);
-            prrecoNgammag->Fill(tag_r.Pt(), probe_recoNgamma, weight);
-            prrecoNeg    ->Fill(tag_r.Pt(), probe_recoNe    , weight);
-            prrecoNmug   ->Fill(tag_r.Pt(), probe_recoNmu   , weight);
-
-          } else continue; //Undetermined flavour
-          FFa->Fill(tag_r.Pt(), weight); continue;
         }
-      } //Loop partons
+      } else if (probeFlav == 21) {                   //Gluon jets
+        FFg->Fill(tag_r.Pt(), weight_temp);
+        prMPFg->Fill(tag_r.Pt(), R_MPF_r, weight_temp);
+        prgenMPFg->Fill(tag_g.Pt(), R_MPF_g, weight_temp);
+        prRjetg->Fill(probe_g.Pt(), Rjet, weight_temp);
+        prRjetvstagg->Fill(tag_r.Pt(), Rjet, weight_temp);
+
+        prchfg   ->Fill(tag_r.Pt(), probe_ch/totalE,    weight_temp);
+        prnhfg   ->Fill(tag_r.Pt(), probe_nh/totalE,    weight_temp);
+        prgammafg->Fill(tag_r.Pt(), probe_gamma/totalE, weight_temp);
+        prefg    ->Fill(tag_r.Pt(), probe_e/totalE,     weight_temp);
+        prmufg   ->Fill(tag_r.Pt(), probe_mu/totalE,    weight_temp);
+
+        prgenNchg    ->Fill(tag_r.Pt(), probe_genNch   , weight_temp);
+        prgenNnhg    ->Fill(tag_r.Pt(), probe_genNnh   , weight_temp);
+        prgenNgammag ->Fill(tag_r.Pt(), probe_genNgamma, weight_temp);
+        prgenNeg     ->Fill(tag_r.Pt(), probe_genNe    , weight_temp);
+        prgenNmug    ->Fill(tag_r.Pt(), probe_genNmu   , weight_temp);
+
+        prrecoNchg   ->Fill(tag_r.Pt(), probe_recoNch   , weight_temp);
+        prrecoNnhg   ->Fill(tag_r.Pt(), probe_recoNnh   , weight_temp);
+        prrecoNgammag->Fill(tag_r.Pt(), probe_recoNgamma, weight_temp);
+        prrecoNeg    ->Fill(tag_r.Pt(), probe_recoNe    , weight_temp);
+        prrecoNmug   ->Fill(tag_r.Pt(), probe_recoNmu   , weight_temp);
+
+      } 
+      if (probeFlav != -1) FFa->Fill(tag_r.Pt(), weight_temp);
     }
 
     //If the old list of cut events is not read, a new one is written
