@@ -75,6 +75,8 @@ void calcVariants()
   TFile* fzj_Photonm3  = TFile::Open(filename.append("_varPhotonm3.root").c_str());
   filename = fn_temp;
   TFile* fzj_bfracp50  = TFile::Open(filename.append("_varbfracp50.root").c_str());
+  filename = fn_temp;
+  TFile* fzj_cfracp50  = TFile::Open(filename.append("_varcfracp50.root").c_str());
 
 
   string outname = "./output_ROOT_files/varPlots_";
@@ -95,6 +97,7 @@ void calcVariants()
   TProfile *pr_Rjet_Photonm1  = 0;
   TProfile *pr_Rjet_Photonm3  = 0;
   TProfile *pr_Rjet_bfracp50  = 0;
+  TProfile *pr_Rjet_cfracp50  = 0;
 
   TProfile *pr_Rjet_calo     = 0;
   TProfile *pr_Rjet_calo_Cp3 = 0;
@@ -115,6 +118,7 @@ void calcVariants()
   TProfile *pr_Rjetb_Photonm1  = 0;
   TProfile *pr_Rjetb_Photonm3  = 0;
   TProfile *pr_Rjetb_bfracp50  = 0;
+  TProfile *pr_Rjetb_cfracp50  = 0;
 
   //c jets
   TProfile *pr_Rjetc           = 0;
@@ -131,6 +135,7 @@ void calcVariants()
   TProfile *pr_Rjetc_Photonm1  = 0;
   TProfile *pr_Rjetc_Photonm3  = 0;
   TProfile *pr_Rjetc_bfracp50  = 0;
+  TProfile *pr_Rjetc_cfracp50  = 0;
 
   //s jets
   TProfile *pr_Rjets           = 0;
@@ -147,6 +152,7 @@ void calcVariants()
   TProfile *pr_Rjets_Photonm1  = 0;
   TProfile *pr_Rjets_Photonm3  = 0;
   TProfile *pr_Rjets_bfracp50  = 0;
+  TProfile *pr_Rjets_cfracp50  = 0;
 
   //ud jets
   TProfile *pr_Rjetud           = 0;
@@ -163,6 +169,7 @@ void calcVariants()
   TProfile *pr_Rjetud_Photonm1  = 0;
   TProfile *pr_Rjetud_Photonm3  = 0;
   TProfile *pr_Rjetud_bfracp50  = 0;
+  TProfile *pr_Rjetud_cfracp50  = 0;
 
   //g jets
   TProfile *pr_Rjetg           = 0;
@@ -179,6 +186,7 @@ void calcVariants()
   TProfile *pr_Rjetg_Photonm1  = 0;
   TProfile *pr_Rjetg_Photonm3  = 0;
   TProfile *pr_Rjetg_bfracp50  = 0;
+  TProfile *pr_Rjetg_cfracp50  = 0;
 
 
   fzj          ->GetObject("prRjet", pr_Rjet);
@@ -195,6 +203,7 @@ void calcVariants()
   fzj_Photonm1 ->GetObject("prRjet", pr_Rjet_Photonm1);
   fzj_Photonm3 ->GetObject("prRjet", pr_Rjet_Photonm3);
   fzj_bfracp50 ->GetObject("prRjet", pr_Rjet_bfracp50);
+  fzj_cfracp50 ->GetObject("prRjet", pr_Rjet_cfracp50);
 
   fzj->GetObject("prRjet_calo", pr_Rjet_calo);
   fzj_Cp3->GetObject("prRjet_calo", pr_Rjet_calo_Cp3);
@@ -214,6 +223,7 @@ void calcVariants()
   fzj_Photonm1 ->GetObject("prRjetb", pr_Rjetb_Photonm1);
   fzj_Photonm3 ->GetObject("prRjetb", pr_Rjetb_Photonm3);
   fzj_bfracp50 ->GetObject("prRjetb", pr_Rjetb_bfracp50);
+  fzj_cfracp50 ->GetObject("prRjetb", pr_Rjetb_cfracp50);
 
   fzj          ->GetObject("prRjetc", pr_Rjetc);
   fzj_Cp3      ->GetObject("prRjetc", pr_Rjetc_Cp3);
@@ -229,6 +239,8 @@ void calcVariants()
   fzj_Photonm1 ->GetObject("prRjetc", pr_Rjetc_Photonm1);
   fzj_Photonm3 ->GetObject("prRjetc", pr_Rjetc_Photonm3);
   fzj_bfracp50 ->GetObject("prRjetc", pr_Rjetc_bfracp50);
+  fzj_cfracp50 ->GetObject("prRjetc", pr_Rjetc_cfracp50);
+
 
   fzj          ->GetObject("prRjets", pr_Rjets);
   fzj_Cp3      ->GetObject("prRjets", pr_Rjets_Cp3);
@@ -244,6 +256,7 @@ void calcVariants()
   fzj_Photonm1 ->GetObject("prRjets", pr_Rjets_Photonm1);
   fzj_Photonm3 ->GetObject("prRjets", pr_Rjets_Photonm3);
   fzj_bfracp50 ->GetObject("prRjets", pr_Rjets_bfracp50);
+  fzj_cfracp50 ->GetObject("prRjets", pr_Rjets_cfracp50);
 
   fzj          ->GetObject("prRjetud", pr_Rjetud);
   fzj_Cp3      ->GetObject("prRjetud", pr_Rjetud_Cp3);
@@ -259,6 +272,7 @@ void calcVariants()
   fzj_Photonm1 ->GetObject("prRjetud", pr_Rjetud_Photonm1);
   fzj_Photonm3 ->GetObject("prRjetud", pr_Rjetud_Photonm3);
   fzj_bfracp50 ->GetObject("prRjetud", pr_Rjetud_bfracp50);
+  fzj_cfracp50 ->GetObject("prRjetud", pr_Rjetud_cfracp50);
 
   fzj          ->GetObject("prRjetg", pr_Rjetg);
   fzj_Cp3      ->GetObject("prRjetg", pr_Rjetg_Cp3);
@@ -274,6 +288,7 @@ void calcVariants()
   fzj_Photonm1 ->GetObject("prRjetg", pr_Rjetg_Photonm1);
   fzj_Photonm3 ->GetObject("prRjetg", pr_Rjetg_Photonm3);
   fzj_bfracp50 ->GetObject("prRjetg", pr_Rjetg_bfracp50);
+  fzj_cfracp50 ->GetObject("prRjetg", pr_Rjetg_cfracp50);
 
   TH1D* h_Rjet           = pr_Rjet->ProjectionX();
   TH1D* h_Rjet_Cp3       = pr_Rjet_Cp3->ProjectionX();
@@ -289,6 +304,7 @@ void calcVariants()
   TH1D* h_Rjet_Photonm1  = pr_Rjet_Photonm1->ProjectionX();
   TH1D* h_Rjet_Photonm3  = pr_Rjet_Photonm3->ProjectionX();
   TH1D* h_Rjet_bfracp50  = pr_Rjet_bfracp50->ProjectionX();
+  TH1D* h_Rjet_cfracp50  = pr_Rjet_cfracp50->ProjectionX();
 
   TH1D* h_Rjet_calo      = pr_Rjet_calo->ProjectionX();
   TH1D* h_Rjet_calo_Cp3  = pr_Rjet_calo_Cp3->ProjectionX();
@@ -308,6 +324,7 @@ void calcVariants()
   TH1D* h_Rjetb_Photonm1  = pr_Rjetb_Photonm1->ProjectionX();
   TH1D* h_Rjetb_Photonm3  = pr_Rjetb_Photonm3->ProjectionX();
   TH1D* h_Rjetb_bfracp50  = pr_Rjetb_bfracp50->ProjectionX();
+  TH1D* h_Rjetb_cfracp50  = pr_Rjetb_cfracp50->ProjectionX();
 
   TH1D* h_Rjetc           = pr_Rjetc->ProjectionX();
   TH1D* h_Rjetc_Cp3       = pr_Rjetc_Cp3->ProjectionX();
@@ -323,6 +340,7 @@ void calcVariants()
   TH1D* h_Rjetc_Photonm1  = pr_Rjetc_Photonm1->ProjectionX();
   TH1D* h_Rjetc_Photonm3  = pr_Rjetc_Photonm3->ProjectionX();
   TH1D* h_Rjetc_bfracp50  = pr_Rjetc_bfracp50->ProjectionX();
+  TH1D* h_Rjetc_cfracp50  = pr_Rjetc_cfracp50->ProjectionX();
 
   TH1D* h_Rjets           = pr_Rjets->ProjectionX();
   TH1D* h_Rjets_Cp3       = pr_Rjets_Cp3->ProjectionX();
@@ -338,6 +356,7 @@ void calcVariants()
   TH1D* h_Rjets_Photonm1  = pr_Rjets_Photonm1->ProjectionX();
   TH1D* h_Rjets_Photonm3  = pr_Rjets_Photonm3->ProjectionX();
   TH1D* h_Rjets_bfracp50  = pr_Rjets_bfracp50->ProjectionX();
+  TH1D* h_Rjets_cfracp50  = pr_Rjets_cfracp50->ProjectionX();
 
   TH1D* h_Rjetud           = pr_Rjetud->ProjectionX();
   TH1D* h_Rjetud_Cp3       = pr_Rjetud_Cp3->ProjectionX();
@@ -353,6 +372,7 @@ void calcVariants()
   TH1D* h_Rjetud_Photonm1  = pr_Rjetud_Photonm1->ProjectionX();
   TH1D* h_Rjetud_Photonm3  = pr_Rjetud_Photonm3->ProjectionX();
   TH1D* h_Rjetud_bfracp50  = pr_Rjetud_bfracp50->ProjectionX();
+  TH1D* h_Rjetud_cfracp50  = pr_Rjetud_cfracp50->ProjectionX();
 
   TH1D* h_Rjetg           = pr_Rjetg->ProjectionX();
   TH1D* h_Rjetg_Cp3       = pr_Rjetg_Cp3->ProjectionX();
@@ -368,6 +388,7 @@ void calcVariants()
   TH1D* h_Rjetg_Photonm1  = pr_Rjetg_Photonm1->ProjectionX();
   TH1D* h_Rjetg_Photonm3  = pr_Rjetg_Photonm3->ProjectionX();
   TH1D* h_Rjetg_bfracp50  = pr_Rjetg_bfracp50->ProjectionX();
+  TH1D* h_Rjetg_cfracp50  = pr_Rjetg_cfracp50->ProjectionX();
 
   //All jets
   h_Rjet_Cp3->Divide(h_Rjet);
@@ -435,6 +456,10 @@ void calcVariants()
   h_Rjet_bfracp50->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
   h_Rjet_bfracp50->GetYaxis()->SetTitleOffset(1.2);
 
+  h_Rjet_cfracp50->Divide(h_Rjet);
+  h_Rjet_cfracp50->SetTitle("All jets, C-jet fraction +50%");
+  h_Rjet_cfracp50->GetYaxis()->SetTitle("R_{jet}^{var} / R_{jet}");
+  h_Rjet_cfracp50->GetYaxis()->SetTitleOffset(1.2);
 
   h_Rjet_calo_Cp3->Divide(h_Rjet_calo);
   h_Rjet_calo_Cp3->SetTitle("Calo jets, C+3%");
@@ -513,6 +538,11 @@ void calcVariants()
   h_Rjetb_bfracp50->GetYaxis()->SetTitle("R_{b-jet}^{var} / R_{b-jet}");
   h_Rjetb_bfracp50->GetYaxis()->SetTitleOffset(1.2);
 
+  h_Rjetb_cfracp50->Divide(h_Rjetb);
+  h_Rjetb_cfracp50->SetTitle("b-jets, C-jet fraction +50%");
+  h_Rjetb_cfracp50->GetYaxis()->SetTitle("R_{b-jet}^{var} / R_{b-jet}");
+  h_Rjetb_cfracp50->GetYaxis()->SetTitleOffset(1.2);
+
   //c jets
   h_Rjetc_Cp3->Divide(h_Rjetc);
   h_Rjetc_Cp3->SetTitle("c-jets, Hadron response +3%");
@@ -579,6 +609,12 @@ void calcVariants()
   h_Rjetc_bfracp50->GetYaxis()->SetTitle("R_{c-jet}^{var} / R_{c-jet}");
   h_Rjetc_bfracp50->GetYaxis()->SetTitleOffset(1.2);
 
+  h_Rjetc_cfracp50->Divide(h_Rjetc);
+  h_Rjetc_cfracp50->SetTitle("c-jets, C-jet fraction +50%");
+  h_Rjetc_cfracp50->GetYaxis()->SetTitle("R_{c-jet}^{var} / R_{c-jet}");
+  h_Rjetc_cfracp50->GetYaxis()->SetTitleOffset(1.2);
+
+
   //s jet
   h_Rjets_Cp3->Divide(h_Rjets);
   h_Rjets_Cp3->SetTitle("s-jets, Hadron response +3%");
@@ -644,6 +680,11 @@ void calcVariants()
   h_Rjets_bfracp50->SetTitle("s-jets, B-jet fraction +50%");
   h_Rjets_bfracp50->GetYaxis()->SetTitle("R_{s-jet}^{var} / R_{s-jet}");
   h_Rjets_bfracp50->GetYaxis()->SetTitleOffset(1.2);
+
+  h_Rjets_cfracp50->Divide(h_Rjets);
+  h_Rjets_cfracp50->SetTitle("s-jets, C-jet fraction +50%");
+  h_Rjets_cfracp50->GetYaxis()->SetTitle("R_{s-jet}^{var} / R_{s-jet}");
+  h_Rjets_cfracp50->GetYaxis()->SetTitleOffset(1.2);
  
   //ud jet
   h_Rjetud_Cp3->Divide(h_Rjetud);
@@ -711,6 +752,11 @@ void calcVariants()
   h_Rjetud_bfracp50->GetYaxis()->SetTitle("R_{ud-jet}^{var} / R_{ud-jet}");
   h_Rjetud_bfracp50->GetYaxis()->SetTitleOffset(1.2);
 
+  h_Rjetud_cfracp50->Divide(h_Rjetud);
+  h_Rjetud_cfracp50->SetTitle("ud-jets, C-jet fraction +50%");
+  h_Rjetud_cfracp50->GetYaxis()->SetTitle("R_{ud-jet}^{var} / R_{ud-jet}");
+  h_Rjetud_cfracp50->GetYaxis()->SetTitleOffset(1.2);
+
   //g jet
   h_Rjetg_Cp3->Divide(h_Rjetg);
   h_Rjetg_Cp3->SetTitle("g-jets, Hadron response +3%");
@@ -776,6 +822,11 @@ void calcVariants()
   h_Rjetg_bfracp50->SetTitle("g-jets, B-jet fraction +50%");
   h_Rjetg_bfracp50->GetYaxis()->SetTitle("R_{g-jet}^{var} / R_{g-jet}");
   h_Rjetg_bfracp50->GetYaxis()->SetTitleOffset(1.2);
+
+  h_Rjetg_cfracp50->Divide(h_Rjetg);
+  h_Rjetg_cfracp50->SetTitle("g-jets, C-jet fraction +50%");
+  h_Rjetg_cfracp50->GetYaxis()->SetTitle("R_{g-jet}^{var} / R_{g-jet}");
+  h_Rjetg_cfracp50->GetYaxis()->SetTitleOffset(1.2);
 
   // Fraction variation
   TProfile *prchf   =0; 
@@ -862,6 +913,12 @@ void calcVariants()
   TProfile *pref_bfracp50    =0;
   TProfile *prmuf_bfracp50   =0;
 
+  TProfile *prchf_cfracp50   =0; 
+  TProfile *prnhf_cfracp50   =0; 
+  TProfile *prgammaf_cfracp50=0; 
+  TProfile *pref_cfracp50    =0;
+  TProfile *prmuf_cfracp50   =0;
+
   fzj->GetObject("prchf"    ,prchf   );
   fzj->GetObject("prnhf"    ,prnhf   );
   fzj->GetObject("prgammaf" ,prgammaf);
@@ -945,6 +1002,12 @@ void calcVariants()
   fzj_bfracp50->GetObject("prgammaf" ,prgammaf_bfracp50);
   fzj_bfracp50->GetObject("pref"     ,pref_bfracp50    );
   fzj_bfracp50->GetObject("prmuf"    ,prmuf_bfracp50   );
+
+  fzj_cfracp50->GetObject("prchf"    ,prchf_cfracp50   );
+  fzj_cfracp50->GetObject("prnhf"    ,prnhf_cfracp50   );
+  fzj_cfracp50->GetObject("prgammaf" ,prgammaf_cfracp50);
+  fzj_cfracp50->GetObject("pref"     ,pref_cfracp50    );
+  fzj_cfracp50->GetObject("prmuf"    ,prmuf_cfracp50   );
 
 
   TH1D* hchf    = prchf   ->ProjectionX();
@@ -1030,6 +1093,12 @@ void calcVariants()
   TH1D* hgammaf_bfracp50 = prgammaf_bfracp50->ProjectionX();
   TH1D* hef_bfracp50     = pref_bfracp50    ->ProjectionX();
   TH1D* hmuf_bfracp50    = prmuf_bfracp50   ->ProjectionX();
+
+  TH1D* hchf_cfracp50    = prchf_cfracp50   ->ProjectionX();
+  TH1D* hnhf_cfracp50    = prnhf_cfracp50   ->ProjectionX();
+  TH1D* hgammaf_cfracp50 = prgammaf_cfracp50->ProjectionX();
+  TH1D* hef_cfracp50     = pref_cfracp50    ->ProjectionX();
+  TH1D* hmuf_cfracp50    = prmuf_cfracp50   ->ProjectionX();
 
 
   hchf_Cp3->Add(hchf,-1);
@@ -1304,6 +1373,27 @@ void calcVariants()
   hmuf_bfracp50->SetTitle("Muon fraction, B-jet fraction +50%");
   hmuf_bfracp50->GetYaxis()->SetTitle("muf_{var} - muf");
 
+
+  hchf_cfracp50->Add(hchf,-1);
+  hchf_cfracp50->SetTitle("Charged hadron fraction, C-jet fraction +50%");
+  hchf_cfracp50->GetYaxis()->SetTitle("chf_{var} - chf");
+
+  hnhf_cfracp50->Add(hnhf,-1);
+  hnhf_cfracp50->SetTitle("Neutral hadron fraction, C-jet fraction +50%");
+  hnhf_cfracp50->GetYaxis()->SetTitle("nhf_{var} - nhf");
+
+  hgammaf_cfracp50->Add(hgammaf,-1);
+  hgammaf_cfracp50->SetTitle("Photon fraction, C-jet fraction +50%");
+  hgammaf_cfracp50->GetYaxis()->SetTitle("gammaf_{var} - gammaf");
+
+  hef_cfracp50->Add(hef,-1);
+  hef_cfracp50->SetTitle("Electron fraction, C-jet fraction +50%");
+  hef_cfracp50->GetYaxis()->SetTitle("ef_{var} - ef");
+
+  hmuf_cfracp50->Add(hmuf,-1);
+  hmuf_cfracp50->SetTitle("Muon fraction, C-jet fraction +50%");
+  hmuf_cfracp50->GetYaxis()->SetTitle("muf_{var} - muf");
+
   TFile *foutvar = new TFile(outname.c_str(),"RECREATE");
 
   h_Rjet_Cp3      ->Write("h_Rjet_Cp3");
@@ -1319,6 +1409,7 @@ void calcVariants()
   h_Rjet_Photonm1 ->Write("h_Rjet_Photonm1");
   h_Rjet_Photonm3 ->Write("h_Rjet_Photonm3");
   h_Rjet_bfracp50 ->Write("h_Rjet_bfracp50");
+  h_Rjet_cfracp50 ->Write("h_Rjet_cfracp50");
   h_Rjet_calo_Cm3->Write("h_Rjet_calo_Cm3");
   h_Rjet_calo_Cp3->Write("h_Rjet_calo_Cp3");
 
@@ -1335,6 +1426,7 @@ void calcVariants()
   h_Rjetb_Photonm1 ->Write("h_Rjetb_Photonm1");
   h_Rjetb_Photonm3 ->Write("h_Rjetb_Photonm3");
   h_Rjetb_bfracp50 ->Write("h_Rjetb_bfracp50");
+  h_Rjetb_cfracp50 ->Write("h_Rjetb_cfracp50");
 
   h_Rjetc_Cp3      ->Write("h_Rjetc_Cp3");
   h_Rjetc_Cm3      ->Write("h_Rjetc_Cm3");
@@ -1349,6 +1441,7 @@ void calcVariants()
   h_Rjetc_Photonm1 ->Write("h_Rjetc_Photonm1");
   h_Rjetc_Photonm3 ->Write("h_Rjetc_Photonm3");
   h_Rjetc_bfracp50 ->Write("h_Rjetc_bfracp50");
+  h_Rjetc_cfracp50 ->Write("h_Rjetc_cfracp50");
 
   h_Rjets_Cp3      ->Write("h_Rjets_Cp3");
   h_Rjets_Cm3      ->Write("h_Rjets_Cm3");
@@ -1363,6 +1456,7 @@ void calcVariants()
   h_Rjets_Photonm1 ->Write("h_Rjets_Photonm1");
   h_Rjets_Photonm3 ->Write("h_Rjets_Photonm3");
   h_Rjets_bfracp50 ->Write("h_Rjets_bfracp50");
+  h_Rjets_cfracp50 ->Write("h_Rjets_cfracp50");
 
   h_Rjetud_Cp3      ->Write("h_Rjetud_Cp3");
   h_Rjetud_Cm3      ->Write("h_Rjetud_Cm3");
@@ -1377,6 +1471,7 @@ void calcVariants()
   h_Rjetud_Photonm1 ->Write("h_Rjetud_Photonm1");
   h_Rjetud_Photonm3 ->Write("h_Rjetud_Photonm3");
   h_Rjetud_bfracp50 ->Write("h_Rjetud_bfracp50");
+  h_Rjetud_cfracp50 ->Write("h_Rjetud_cfracp50");
 
   h_Rjetg_Cp3      ->Write("h_Rjetg_Cp3");
   h_Rjetg_Cm3      ->Write("h_Rjetg_Cm3");
@@ -1391,6 +1486,7 @@ void calcVariants()
   h_Rjetg_Photonm1 ->Write("h_Rjetg_Photonm1");
   h_Rjetg_Photonm3 ->Write("h_Rjetg_Photonm3");
   h_Rjetg_bfracp50 ->Write("h_Rjetg_bfracp50");
+  h_Rjetg_cfracp50 ->Write("h_Rjetg_cfracp50");
 
 
   hchf_Cp3         ->Write("hchf_Cp3");
@@ -1470,6 +1566,12 @@ void calcVariants()
   hgammaf_bfracp50 ->Write("hgammaf_bfracp50");
   hef_bfracp50     ->Write("hef_bfracp50");
   hmuf_bfracp50    ->Write("hmuf_bfracp50");
+
+  hchf_cfracp50    ->Write("hchf_cfracp50");
+  hnhf_cfracp50    ->Write("hnhf_cfracp50");
+  hgammaf_cfracp50 ->Write("hgammaf_cfracp50");
+  hef_cfracp50     ->Write("hef_cfracp50");
+  hmuf_cfracp50    ->Write("hmuf_cfracp50");
 
   foutvar->Write();
   foutvar->Close();
