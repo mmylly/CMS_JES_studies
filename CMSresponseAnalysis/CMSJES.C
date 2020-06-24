@@ -10,13 +10,14 @@ void CMSJES::Loop()
   clock_t t_begin = clock();
 
   //Variant flags
-  bool varCp3, varCm3, 
-       varHadHCALp3,  varHadHCALm3, 
-       varHadECALp3,  varHadECALm3, 
-       varTrkEffm1,   varTrkEffm3,
-       varECALm1,     varECALm3,
-       varPhotonm1,   varPhotonm3,
-       varbfracp50,   Calibm10;
+  bool varCp3,       varCm3, 
+       varHadHCALp3, varHadHCALm3, 
+       varHadECALp3, varHadECALm3, 
+       varTrkEffm1,  varTrkEffm3,
+       varECALm1,    varECALm3,
+       varPhotonm1,  varPhotonm3,
+       varbfracp50,  varcfracp50,
+       Calibm10;
   varCp3       = 0;
   varCm3       = 0;
   varHadHCALp3 = 0;
@@ -31,12 +32,13 @@ void CMSJES::Loop()
   varPhotonm3  = 0;
 
   varbfracp50  = 0;
+  varcfracp50  = 0;
 
   Calibm10 = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
        + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1 + varPhotonm3
-       + varbfracp50) > 1) 
+       + varbfracp50 + varcfracp50) > 1) 
     {cout << "More than one variation enabled!" << endl; return;}
 
   //Initialize rng's
@@ -77,6 +79,7 @@ void CMSJES::Loop()
   if (varPhotonm1) outname  += "_varPhotonm1";
   if (varPhotonm3) outname  += "_varPhotonm3";
   if (varbfracp50) outname  += "_varbfracp50";
+  if (varcfracp50) outname  += "_varcfracp50";
 
   outname += ".root";
   TFile *fout = new TFile(outname.c_str(),"RECREATE");
@@ -1430,9 +1433,9 @@ void CMSJES::Loop()
       weight_temp = weight;
 
       if (varbfracp50 && probeFlav == 5) weight_temp *= 1.5;
+      if (varcfracp50 && probeFlav == 4) weight_temp *= 1.5;
 
-
-      //if(weight != weight_temp) cout << probeFlav << " " << weight << " " << weight_temp << " "  << weight_temp/weight << endl;
+      //cout<<probeFlav<<" "<<weight<<" "<<weight_temp<<" "<<weight_temp/weight<<endl;
 
       prWeight->Fill(probe_g.Pt(), weight_temp);
 
