@@ -348,8 +348,8 @@ CMSJES::CMSJES(TTree *tree, string toRead) : fChain(0)
       }
       ReadName = files[input];			//Pick the filename to study
     }
-    OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
-    //OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
+    //OpenName = "./input_ROOT_files/" + inSubDir + ReadName + ".root";
+    OpenName = "/media/mikael/Elements/responseAnalysis/" + inSubDir + ReadName + ".root";
     printf("Opening file: %s\n", OpenName.c_str());
     TFile *f = (TFile*)gROOT->GetListOfFiles()
 			    ->FindObject(OpenName.c_str());

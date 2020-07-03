@@ -114,7 +114,11 @@ void CMSJES::Loop()
 
 
   //Weight profile
-  TProfile* prWeight = new TProfile("prWeight", ";p_{T,gen}^{jet} [GeV]", nbinsMPF-1, binsxMPF);
+  TProfile* prWeight      = new TProfile("prWeight", ";p_{T,gen}^{jet} [GeV]", nbinsMPF-1, binsxMPF);
+  TProfile* prWeight_tagr = new TProfile("prWeight_tagr", ";p_{T,reco}^{tag} [GeV]", nbinsMPF-1, binsxMPF);
+
+  const double meanWeightP8dijet[nbinsMPF] = {0.0218607, 0.00973148, 0.00353589, 0.00115248,
+0.000358334, 0.000109171, 3.05491e-05, 8.09794e-06, 2.39395e-06, 6.86805e-07, 2.06424e-07, 8.95608e-08, 4.10371e-08, 1.97634e-08, 8.60722e-09, 3.25596e-09, 1.3113e-09, 5.50357e-10, 2.19032e-10, 7.6741e-11, 2.84612e-11, 1.10867e-11, 4.45531e-12, 1.93198e-12};
 
   //Jet response
   string RjetTitle    = ";p_{T,gen}^{jet} [GeV]";
@@ -1247,6 +1251,7 @@ void CMSJES::Loop()
           probe_calo += p4_calo;
         }
 
+
         //HCAL calibration
         if (nhHCAL->GetBinContent(i,j) > 0.0) {
           if (nhHCAL->GetBinContent(i,j) < 7798.2) {
@@ -1432,12 +1437,42 @@ void CMSJES::Loop()
 
       weight_temp = weight;
 
+
+      double meanWeight;
+
+      for (unsigned int i=1; i < nbinsMPF; ++i) {
+        if (probe_g.Pt() >= binsxMPF[nbinsMPF-1]) {
+          meanWeight = meanWeightP8dijet[nbinsMPF-2];
+          break;
+        } else if (probe_g.Pt() < binsxMPF[i]) {
+          meanWeight = meanWeightP8dijet[i-1];
+          break;
+        }
+      }
+
+
+
+      //if (weight_temp > 1000*meanWeight) {
+        //cout << probe_g.Pt() << " " << weight_temp << " " << meanWeight << endl;
+      //  continue;
+      //}
+
+
       if (varbfracp50 && probeFlav == 5) weight_temp *= 1.5;
       if (varcfracp50 && probeFlav == 4) weight_temp *= 1.5;
 
       //cout<<probeFlav<<" "<<weight<<" "<<weight_temp<<" "<<weight_temp/weight<<endl;
 
       prWeight->Fill(probe_g.Pt(), weight_temp);
+      prWeight_tagr->Fill(tag_r.Pt(), weight_temp);
+
+      //weight_stream << probe_g.Pt();
+      //weight_stream << " ";
+      //weight_stream << tag_r.Pt();
+      //weight_stream << " ";
+      //weight_stream << weight_temp;
+      //weight_stream << "\n";
+
 
       evt ++;
 
