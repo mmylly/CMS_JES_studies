@@ -117,8 +117,14 @@ void CMSJES::Loop()
   TProfile* prWeight      = new TProfile("prWeight", ";p_{T,gen}^{jet} [GeV]", nbinsMPF-1, binsxMPF);
   TProfile* prWeight_tagr = new TProfile("prWeight_tagr", ";p_{T,reco}^{tag} [GeV]", nbinsMPF-1, binsxMPF);
 
-  const double meanWeightP8dijet[nbinsMPF] = {0.0218607, 0.00973148, 0.00353589, 0.00115248,
+  const double meanWeightP8dijet[nbinsMPF] =      {0.0218607, 0.00973148, 0.00353589, 0.00115248,
 0.000358334, 0.000109171, 3.05491e-05, 8.09794e-06, 2.39395e-06, 6.86805e-07, 2.06424e-07, 8.95608e-08, 4.10371e-08, 1.97634e-08, 8.60722e-09, 3.25596e-09, 1.3113e-09, 5.50357e-10, 2.19032e-10, 7.6741e-11, 2.84612e-11, 1.10867e-11, 4.45531e-12, 1.93198e-12};
+
+  const double meanWeightP8dijet_tagr[nbinsMPF] = {0.0180234, 0.00720017, 0.00257523, 0.0008387, 
+0.000260716, 8.00849e-05, 2.26835e-05, 6.20397e-06, 1.82375e-06, 5.37633e-07, 1.58169e-07, 
+6.85572e-08, 3.13857e-08, 1.50493e-08, 6.52928e-09, 2.4602e-09, 9.894e-10, 4.14897e-10, 
+1.66348e-10, 5.9262e-11, 2.23251e-11, 8.83442e-12, 3.63681e-12, 1.59603e-12,};
+
 
   //Jet response
   string RjetTitle    = ";p_{T,gen}^{jet} [GeV]";
@@ -1438,7 +1444,7 @@ void CMSJES::Loop()
       weight_temp = weight;
 
 
-      double meanWeight;
+      double meanWeight, meanWeight_tagr;
 
       for (unsigned int i=1; i < nbinsMPF; ++i) {
         if (probe_g.Pt() >= binsxMPF[nbinsMPF-1]) {
@@ -1450,13 +1456,28 @@ void CMSJES::Loop()
         }
       }
 
+      for (unsigned int i=1; i < nbinsMPF; ++i) {
+        if (tag_r.Pt() >= binsxMPF[nbinsMPF-1]) {
+          meanWeight_tagr = meanWeightP8dijet_tagr[nbinsMPF-2];
+          break;
+        } else if (tag_r.Pt() < binsxMPF[i]) {
+          meanWeight_tagr = meanWeightP8dijet_tagr[i-1];
+          break;
+        }
+      }
 
 
-      //if (weight_temp > 1000*meanWeight) {
-        //cout << probe_g.Pt() << " " << weight_temp << " " << meanWeight << endl;
-      //  continue;
-      //}
-
+      //Weight cuts for dijet
+      if (studyMode ==1) {
+        if (weight_temp > 1000*meanWeight) {
+          cout << "Probeg: " probe_g.Pt() << " " << weight_temp << " " << meanWeight << endl;
+          continue;
+        }
+        if (weight_temp > 1000*meanWeight_tagr) {
+          cout << "Tagr: " << tag_r.Pt() << " " << weight_temp << " " << meanWeight_tagr << endl;
+          continue;
+        }
+      }
 
       if (varbfracp50 && probeFlav == 5) weight_temp *= 1.5;
       if (varcfracp50 && probeFlav == 4) weight_temp *= 1.5;
