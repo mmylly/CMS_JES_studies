@@ -1469,11 +1469,11 @@ void CMSJES::Loop()
 
       //Weight cuts for dijet
       if (studyMode ==1) {
-        if (weight_temp > 1000*meanWeight) {
+        if (weight_temp > 100*meanWeight) {
           cout << "Probeg: " << probe_g.Pt() << " " << weight_temp << " " << meanWeight << endl;
           continue;
         }
-        if (weight_temp > 1000*meanWeight_tagr) {
+        if (weight_temp > 100*meanWeight_tagr) {
           cout << "Tagr: " << tag_r.Pt() << " " << weight_temp << " " << meanWeight_tagr << endl;
           continue;
         }
