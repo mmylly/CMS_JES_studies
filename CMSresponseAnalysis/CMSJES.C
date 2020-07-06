@@ -125,7 +125,6 @@ void CMSJES::Loop()
 6.85572e-08, 3.13857e-08, 1.50493e-08, 6.52928e-09, 2.4602e-09, 9.894e-10, 4.14897e-10, 
 1.66348e-10, 5.9262e-11, 2.23251e-11, 8.83442e-12, 3.63681e-12, 1.59603e-12,};
 
-
   //Jet response
   string RjetTitle    = ";p_{T,gen}^{jet} [GeV]";
          RjetTitle   += ";p_{T,reco}^{jet} / p_{T,gen}^{jet}";
@@ -565,6 +564,7 @@ void CMSJES::Loop()
   int b2b = 0;
   int probeCut = 0;
   int METcut = 0;
+  int weightCut = 0;
   int evt = 0;
 
 //***********************************************************************************************
@@ -763,8 +763,6 @@ void CMSJES::Loop()
 
 
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
-
-
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
       JI = (*prtcl_jet)[i]; 
@@ -814,25 +812,6 @@ void CMSJES::Loop()
         }
       }
 
-      /*
-      if ((*prtcl_jet)[i]==i_probe) {
-        cout << PDG << " " << resp << endl;
-        cout << "Nch    " << probe_genNch    << " " << probe_recoNch    << endl;
-        cout << "Ne     " << probe_genNe     << " " << probe_recoNe     << endl;
-        cout << "Nmu    " << probe_genNmu    << " " << probe_recoNmu    << endl;
-        cout << "Ngamma " << probe_genNgamma << " " << probe_recoNgamma << endl;
-        cout << "Nnh    " << probe_genNnh    << " " << probe_recoNnh    << endl;
-      }
-      if ((*prtcl_jet)[i]==i_jet2) {
-        cout << PDG << " " << resp << endl;
-        cout << "Nch    " << jet2_genNch    << " " << jet2_recoNch    << endl;
-        cout << "Ne     " << jet2_genNe     << " " << jet2_recoNe     << endl;
-        cout << "Nmu    " << jet2_genNmu    << " " << jet2_recoNmu    << endl;
-        cout << "Ngamma " << jet2_genNgamma << " " << jet2_recoNgamma << endl;
-        cout << "Nnh    " << jet2_genNnh    << " " << jet2_recoNnh    << endl;
-      }*/
-
-
       //Electrons to the reconstructed jets
       if (PDG==11) { 
         if ((*prtcl_jet)[i]==i_probe) { //Probe
@@ -881,20 +860,6 @@ void CMSJES::Loop()
     } else {
       jet3_g.SetPtEtaPhiE(0,0,0,0);
     }
-
-
-    /*
-    if (njets == 3) {
-    cout << endl << njets << endl;
-    cout << i_mujet1 << " " << i_mujet2 << endl;
-    //cout << (*prtn_pt )[i_tag1] << " " << (*prtn_pt )[i_tag2] << endl;
-    cout << i_probe << " " << i_jet2 << " " << i_jet3 << endl;
-    cout << probe_g.Pt() << " " << jet2_g.Pt() << " " << jet3_g.Pt() << endl;
-    cout << probe_r.Pt() << " " << jet2_r.Pt() << " " << jet3_r.Pt() << endl;
-    cout << double((*jet_pt)[0]) << " " << double((*jet_pt)[1]) << " " << double((*jet_pt)[2]) 
-         << " " << double((*jet_pt)[3]) << " " << double((*jet_pt)[4]) << endl;
-    }
-    */
 
     /****************************** COMMON CUTS FOR Z+JET ******************************/
     if (studyMode == 3) {
@@ -1390,10 +1355,9 @@ void CMSJES::Loop()
       
     }
 
-    double totalE, weight_temp;
+    double totalE, weight_temp, meanWeight, meanWeight_tagr;
 
     /**************************** FILL HISTOGRAMS ****************************/
-
     for (unsigned int i = 0; i!=((studyMode==1) ? 2:1); ++i) {
 
       probeFlav = -1;
@@ -1443,9 +1407,6 @@ void CMSJES::Loop()
 
       weight_temp = weight;
 
-
-      double meanWeight, meanWeight_tagr;
-
       for (unsigned int i=1; i < nbinsMPF; ++i) {
         if (probe_g.Pt() >= binsxMPF[nbinsMPF-1]) {
           meanWeight = meanWeightP8dijet[nbinsMPF-2];
@@ -1455,7 +1416,6 @@ void CMSJES::Loop()
           break;
         }
       }
-
       for (unsigned int i=1; i < nbinsMPF; ++i) {
         if (tag_r.Pt() >= binsxMPF[nbinsMPF-1]) {
           meanWeight_tagr = meanWeightP8dijet_tagr[nbinsMPF-2];
@@ -1466,9 +1426,8 @@ void CMSJES::Loop()
         }
       }
 
-
-      //Weight cuts for dijet
-      if (studyMode ==1) {
+      //Weight cuts for P8 dijet
+      if (studyMode ==1 && ReadName.find("P8")!=string::npos) {
         if (weight_temp > 100*meanWeight) {
           cout << "Probeg: " << probe_g.Pt() << " " << weight_temp << " " << meanWeight << endl;
           continue;
@@ -1478,11 +1437,10 @@ void CMSJES::Loop()
           continue;
         }
       }
+      weightCut ++;
 
       if (varbfracp50 && probeFlav == 5) weight_temp *= 1.5;
       if (varcfracp50 && probeFlav == 4) weight_temp *= 1.5;
-
-      //cout<<probeFlav<<" "<<weight<<" "<<weight_temp<<" "<<weight_temp/weight<<endl;
 
       prWeight->Fill(probe_g.Pt(), weight_temp);
       prWeight_tagr->Fill(tag_r.Pt(), weight_temp);
@@ -1532,8 +1490,6 @@ void CMSJES::Loop()
 
       Rjet      = probe_r.Pt()/probe_g.Pt();
       Rjet_calo = probe_calo.Pt()/probe_g.Pt(); 
-
-      //15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468, 548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832, 4713
 
 
       //All jets
@@ -1845,7 +1801,8 @@ void CMSJES::Loop()
   cout << "Btb tag-probe:          " << b2b         << endl;
   cout << "Alpha:                  " << alpha       << endl;
   cout << "Reco level Probe:       " << probeCut    << endl;
-  cout << "MET cut:                " << METcut      << endl; 
+  cout << "MET cut:                " << METcut      << endl;
+  cout << "Weight cut:             " << weightCut   << endl;
   cout << "Total events:           " << evt         << endl << endl;
   
   //Charged hadron efficiency Profile
