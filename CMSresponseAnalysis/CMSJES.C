@@ -16,8 +16,7 @@ void CMSJES::Loop()
        varTrkEffm1,  varTrkEffm3,
        varECALm1,    varECALm3,
        varPhotonm1,  varPhotonm3,
-       varbfracp50,  varcfracp50,
-       Calibm10;
+       varbfracp50,  varcfracp50;
   varCp3       = 0;
   varCm3       = 0;
   varHadHCALp3 = 0;
@@ -33,8 +32,6 @@ void CMSJES::Loop()
 
   varbfracp50  = 0;
   varcfracp50  = 0;
-
-  Calibm10 = 0;
 
   if ((varCp3 + varCm3 + varHadHCALp3 + varHadHCALm3 + varHadECALp3 + varHadECALm3 
        + varTrkEffm1 + varTrkEffm3 + varECALm1 + varECALm3 + varPhotonm1 + varPhotonm3
@@ -65,7 +62,6 @@ void CMSJES::Loop()
   if (fChain == 0) return;
   Long64_t nentries          = fChain->GetEntriesFast();
   string outname             = "./output_ROOT_files/CMSJES_" + ReadName; //Output file
-  if (Calibm10) outname     += "_Calibm10";
   if (varCp3)    outname    += "_varCp3";
   if (varCm3)    outname    += "_varCm3";
   if (varHadHCALp3) outname += "_varHadHCALp3";
@@ -1233,7 +1229,6 @@ void CMSJES::Loop()
         }
 
 
-        if (Calibm10) nhHCAL_calib = 0.9*nhHCAL_calib;
  
         //***** PF-code calorimeter resolution *****
         totalChargedMomentum = chtP_curv->GetBinContent(i,j);
@@ -1266,7 +1261,6 @@ void CMSJES::Loop()
           }
         }
 
-        if (Calibm10) chc_calib = 0.9*chc_calib;
 
         if (delta < cellSigma) { //Shadowing
           nhHCAL_calib = 0.0;
