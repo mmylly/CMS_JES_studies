@@ -2243,10 +2243,10 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   TFile* fzj = TFile::Open(zjetFile.c_str());
 
   TGraph *chf   = new TGraph("data_and_MC_input/Chf/chf.txt");
-  TGraph *chnhf = new TGraph("data_and_MC_input/Chf/chnhf.txt");
-  chf->SetMarkerStyle(kFullDiamond); chnhf->SetMarkerStyle(kOpenSquare);
-  chf->SetMarkerColor(kBlack);       chnhf->SetMarkerColor(kBlack);
-  chf->SetMarkerSize(1);             chnhf->SetMarkerSize(0.7);
+  TGraph *nhf = new TGraph("data_and_MC_input/Chf/nhf.txt");
+  chf->SetMarkerStyle(kFullDiamond); nhf->SetMarkerStyle(kOpenSquare);
+  chf->SetMarkerColor(kBlack);       nhf->SetMarkerColor(kBlack);
+  chf->SetMarkerSize(1);             nhf->SetMarkerSize(0.7);
 
   TProfile *prchf=0; TProfile *prnhf=0; TProfile *prgammaf=0; TProfile *pref=0;
 
@@ -2291,8 +2291,8 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   lg->AddEntry(hchf,    "CH",    "f");
 
   TLegend* lgEff = new TLegend(0.15,0.25,0.4,0.35);
-  lgEff->AddEntry(chnhf,"#bf{NH Run2016GH}", "p");
-  lgEff->AddEntry(chf,  "#bf{CH Run2016GH}", "p");
+  lgEff->AddEntry(nhf,"#bf{NH Run2016GH}", "p");
+  lgEff->AddEntry(chf,"#bf{CH Run2016GH}", "p");
   lgEff->SetBorderSize(0); lgEff->SetFillStyle(0);
   lgEff->SetTextSize(0.035);
 
@@ -2320,7 +2320,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   lg->Draw();
   lgEff->Draw();
   chf->Draw("samep");
-  chnhf->Draw("samep");
+  nhf->Draw("samep");
 
   TLatex *tex = new TLatex();
   tex->SetNDC();
