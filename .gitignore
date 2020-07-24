@@ -14,6 +14,7 @@
 *.synctex.gz
 *.tex
 *.toc
+*.in
 CMSresponseAnalysis/plots/mpf/pdf/*
 CMSresponseAnalysis/plots/mpf/trackerFail/*
 CMSresponseAnalysis/plots/mpf/Other/*
