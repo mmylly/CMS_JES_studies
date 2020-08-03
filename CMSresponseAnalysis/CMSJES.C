@@ -131,6 +131,16 @@ void CMSJES::Loop()
 2.23041e-05, 1.31884e-05, 8.07739e-06, 4.63002e-06, 2.42433e-06, 1.31735e-06, 7.40482e-07, 
 4.10247e-07, 2.10503e-07, 1.11086e-07, 6.31412e-08, 4.00088e-08, 1.74876e-08};
 
+  const double meanWeightH7dijet[nbinsMPF]      = {0.0212449, 0.0101049, 0.00348692, 0.00119542, 
+0.000364203, 0.00010316, 3.24372e-05, 1.05647e-05, 2.18735e-06, 6.35687e-07, 1.90362e-07, 
+8.26376e-08, 3.8129e-08, 1.85116e-08, 8.10081e-09, 3.11052e-09, 1.26076e-09, 5.40562e-10, 
+2.18514e-10, 7.8032e-11, 2.94985e-11, 1.1506e-11, 4.63531e-12, 2.11902e-12};
+
+  const double meanWeightH7dijet_tagr[nbinsMPF] = {0.0181432, 0.0074702, 0.00261957, 0.00088802, 
+0.00024907, 7.7181e-05, 2.74693e-05, 6.90087e-06, 1.69465e-06, 5.02663e-07, 1.47365e-07, 
+6.41552e-08, 2.9521e-08, 1.42132e-08, 6.20323e-09, 2.36782e-09, 9.64066e-10, 4.14199e-10, 
+1.68973e-10, 6.09594e-11, 2.35871e-11, 9.25547e-12, 3.96632e-12, 1.67556e-12};
+
 
   //Jet response
   string RjetTitle    = ";p_{T,gen}^{jet} [GeV]";
@@ -1418,6 +1428,8 @@ void CMSJES::Loop()
             meanWeight = meanWeightP8dijet[nbinsMPF-2];
           } else if (studyMode ==3 && ReadName.find("H7")!=string::npos) {
             meanWeight = meanWeightH7Zjet[nbinsMPF-2];
+          } else if (studyMode ==1 && ReadName.find("H7")!=string::npos) {
+            meanWeight = meanWeightH7dijet[nbinsMPF-2];
           }
           break;
         } else if (probe_g.Pt() < binsxMPF[i]) {
@@ -1425,6 +1437,8 @@ void CMSJES::Loop()
             meanWeight = meanWeightP8dijet[i-1];
           } else if (studyMode ==3 && ReadName.find("H7")!=string::npos) {
             meanWeight = meanWeightH7Zjet[i-1];
+          } else if (studyMode ==1 && ReadName.find("H7")!=string::npos) {
+            meanWeight = meanWeightH7dijet[i-1];
           }
           break;
         }
@@ -1435,6 +1449,8 @@ void CMSJES::Loop()
             meanWeight_tagr = meanWeightP8dijet_tagr[nbinsMPF-2];
           } else if (studyMode ==3 && ReadName.find("H7")!=string::npos) {
             meanWeight_tagr = meanWeightH7Zjet_tagr[nbinsMPF-2];
+          } else if (studyMode ==1 && ReadName.find("H7")!=string::npos) {
+            meanWeight_tagr = meanWeightH7dijet_tagr[nbinsMPF-2];
           }
           break;
         } else if (tag_r.Pt() < binsxMPF[i]) {
@@ -1442,6 +1458,8 @@ void CMSJES::Loop()
             meanWeight_tagr = meanWeightP8dijet_tagr[i-1];
           } else if (studyMode ==3 && ReadName.find("H7")!=string::npos) {
             meanWeight_tagr = meanWeightH7Zjet_tagr[i-1];
+          } else if (studyMode ==1 && ReadName.find("H7")!=string::npos) {
+            meanWeight_tagr = meanWeightH7dijet_tagr[i-1];
           }
           break;
         }
@@ -1451,7 +1469,8 @@ void CMSJES::Loop()
 
       //Weight cuts for P8 dijet && H7 Zjet
       if ((studyMode ==1 && ReadName.find("P8")!=string::npos) ||
-          (studyMode ==3 && ReadName.find("H7")!=string::npos) ) {
+          (studyMode ==3 && ReadName.find("H7")!=string::npos) ||
+          (studyMode ==1 && ReadName.find("H7")!=string::npos)) {
 
         if (weight_temp > 100*meanWeight) {
           cout << "Probeg: " << probe_g.Pt() << " " << weight_temp << " " << meanWeight << endl;

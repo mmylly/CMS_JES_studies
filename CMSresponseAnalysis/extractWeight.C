@@ -4,7 +4,7 @@ void extractWeight() {
 
   //Construct input filename
   stringstream instream;
-  instream << "./CMSJES_H7_Zjet_5000000.root";
+  instream << "./CMSJES_H7_dijet_5000000.root";
 
 
   TFile* f = new TFile(instream.str().c_str());
