@@ -1422,6 +1422,7 @@ void CMSJES::Loop()
 
       weight_temp = weight;
 
+      // Obtain meanweight from the precalculated histograms
       for (unsigned int i=1; i < nbinsMPF; ++i) {
         if (probe_g.Pt() >= binsxMPF[nbinsMPF-1]) {
           if (studyMode ==1 && ReadName.find("P8")!=string::npos) {
@@ -1467,7 +1468,7 @@ void CMSJES::Loop()
 
       
 
-      //Weight cuts for P8 dijet && H7 Zjet
+      //Weight cuts for P8 dijet && H7 Zjet && H7 dijet
       if ((studyMode ==1 && ReadName.find("P8")!=string::npos) ||
           (studyMode ==3 && ReadName.find("H7")!=string::npos) ||
           (studyMode ==1 && ReadName.find("H7")!=string::npos)) {
