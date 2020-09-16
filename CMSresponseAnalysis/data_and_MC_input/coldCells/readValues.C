@@ -22,10 +22,10 @@ void readValues() {
             //cout << hist->GetXaxis()->GetBinCenter(i) << " " 
             //     << hist->GetYaxis()->GetBinCenter(j) << endl;
            
-            if (hist->GetBinContent(i,j)>=0.0){
-	    cout << hist->GetBinContent(i,j) << " ";
-            cout << hist->GetXaxis()->GetBinCenter(i) << " ";
-            cout << hist->GetYaxis()->GetBinCenter(j) << endl;}
+            //if (hist->GetBinContent(i,j)>=0.0){
+	    //cout << hist->GetBinContent(i,j) << " ";
+            //cout << hist->GetXaxis()->GetBinCenter(i) << " ";
+            //cout << hist->GetYaxis()->GetBinCenter(j) << endl;}
           }
         }
         int iPhi; double phi;
