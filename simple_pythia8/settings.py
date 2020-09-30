@@ -83,9 +83,9 @@ f.write("Next:numberShowProcess = 0\n")
 f.write("Next:numberShowEvent = 0\n")
 f.write("Next:numberCount = 0\n\n")
 
-f.write("! PPbar beams\n")
-f.write("Beams:idA = 2212\n")
-f.write("Beams:idB = -2212\n\n")
+#f.write("! PPbar beams\n")
+#f.write("Beams:idA = 2212\n")
+#f.write("Beams:idB = -2212\n\n")
 
 f.write("! Set particles with long enough lifetimes to stable + photon radiation in lepton-pair decays\n")
 f.write("ParticleDecays:allowPhotonRadiation = on\n");

@@ -19,9 +19,9 @@ INCLUDE := $(INCLUDE) -I.
 # 4 - ttbarjet
 
 # Parameter vals:
-NUM_EVT := 100000
+NUM_EVT := 1
 MODE := 3
-NUM_PROC := 4
+NUM_PROC := 1
 START_IDX := 0
 
 all: gpythia8 spythia8 pythia8 pythia6 libHerwigTree.so jetanalysis ptcut
