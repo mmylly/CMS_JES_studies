@@ -1040,7 +1040,8 @@ void CMSJES::Loop()
             for (int ijet=0; ijet!=njets; ++ijet) {
               if (p4.DeltaR(jets_g[ijet]) < RCone && ijet != i_mujet1 && ijet != i_mujet2) {
                 eff = pchf->Eval(jets_g[ijet].Pt()) / 0.607;
-                eff -= 0.1381969 - 0.1606539/pow(2,((*prtclnij_pt)[i]/45.31742));
+                //eff -= 0.1381969 - 0.1606539/pow(2,((*prtclnij_pt)[i]/45.31742));
+                eff -= 0.18 - 0.1802738/pow(2,((*prtclnij_pt)[i]/47.15363));
               }
             }
           }
@@ -1049,7 +1050,7 @@ void CMSJES::Loop()
 
           if ((*prtclnij_pt)[i] < 0.6) {
             eff = 2021.944 - 2022.2565603/(1 + pow(((*prtclnij_pt)[i]/36533650), 0.4126626));
-          } else if ((*prtclnij_pt)[i] > 0.6 && (*prtclnij_pt)[i] < 10.0) {
+          } else if ((*prtclnij_pt)[i] > 0.6) {
             eff -= 0.03836*pow((*prtclnij_pt)[i],-0.70570) - 0.003;
           }
 
