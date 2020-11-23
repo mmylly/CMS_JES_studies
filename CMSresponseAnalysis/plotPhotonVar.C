@@ -4,7 +4,7 @@ void plotPhotonVar()
   double markersize = 0.8;
 
   //Variants file
-  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
+  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_P8_Zjet_5000000.root");
 
   TH1D* h_Rjet_Photonm1;
   TH1D* h_Rjet_Photonm3;
@@ -39,52 +39,52 @@ void plotPhotonVar()
 
   h_Rjet_Photonm1->SetMarkerStyle(5);                  h_Rjet_Photonm1->SetMarkerColor(kBlack);
   h_Rjet_Photonm1->SetLineColor(kBlack);               h_Rjet_Photonm1->SetMarkerSize(0.8);
-  h_Rjetb_Photonm1->SetMarkerStyle(kOpenCircle);       h_Rjetb_Photonm1->SetMarkerColor(kRed+1);
+  h_Rjetb_Photonm1->SetMarkerStyle(kFullCircle);       h_Rjetb_Photonm1->SetMarkerColor(kRed+1);
   h_Rjetb_Photonm1->SetLineColor(kRed+1);              h_Rjetb_Photonm1->SetMarkerSize(0.8);
-  h_Rjetc_Photonm1->SetMarkerStyle(kOpenTriangleDown); h_Rjetc_Photonm1->SetMarkerColor(kGreen+3);
+  h_Rjetc_Photonm1->SetMarkerStyle(kFullTriangleDown); h_Rjetc_Photonm1->SetMarkerColor(kGreen+3);
   h_Rjetc_Photonm1->SetLineColor(kGreen+3);            h_Rjetc_Photonm1->SetMarkerSize(0.8);
-  h_Rjets_Photonm1->SetMarkerStyle(kOpenTriangleUp);   h_Rjets_Photonm1->SetMarkerColor(kOrange+7);
+  h_Rjets_Photonm1->SetMarkerStyle(kFullTriangleUp);   h_Rjets_Photonm1->SetMarkerColor(kOrange+7);
   h_Rjets_Photonm1->SetLineColor(kOrange+7);           h_Rjets_Photonm1->SetMarkerSize(0.8);
-  h_Rjetud_Photonm1->SetMarkerStyle(kOpenDiamond);     h_Rjetud_Photonm1->SetMarkerColor(kMagenta+2);
+  h_Rjetud_Photonm1->SetMarkerStyle(kFullDiamond);     h_Rjetud_Photonm1->SetMarkerColor(kMagenta+2);
   h_Rjetud_Photonm1->SetLineColor(kMagenta+2);         h_Rjetud_Photonm1->SetMarkerSize(0.8);
-  h_Rjetg_Photonm1->SetMarkerStyle(kOpenSquare);       h_Rjetg_Photonm1->SetMarkerColor(kBlue+1);
+  h_Rjetg_Photonm1->SetMarkerStyle(kFullSquare);       h_Rjetg_Photonm1->SetMarkerColor(kBlue+1);
   h_Rjetg_Photonm1->SetLineColor(kBlue+1);             h_Rjetg_Photonm1->SetMarkerSize(0.8);
 
-  h_Rjet_Photonm1->SetAxisRange(28, 1240,"X");
-  h_Rjetb_Photonm1->SetAxisRange(28, 1240,"X");
-  h_Rjetc_Photonm1->SetAxisRange(28, 1240,"X");
-  h_Rjets_Photonm1->SetAxisRange(28, 1240,"X");
-  h_Rjetud_Photonm1->SetAxisRange(28, 1240,"X");
-  h_Rjetg_Photonm1->SetAxisRange(28, 1240,"X");
+  h_Rjet_Photonm1->SetAxisRange(15, 1248,"X");
+  h_Rjetb_Photonm1->SetAxisRange(15, 1248,"X");
+  h_Rjetc_Photonm1->SetAxisRange(15, 1248,"X");
+  h_Rjets_Photonm1->SetAxisRange(15, 1248,"X");
+  h_Rjetud_Photonm1->SetAxisRange(15, 1248,"X");
+  h_Rjetg_Photonm1->SetAxisRange(15, 1248,"X");
 
   //Legend
-  TLegend* lz_Rjet_Photonm1 = new TLegend(0.45,0.19,0.8,0.29);
+  TLegend* lz_Rjet_Photonm1 = new TLegend(0.45,0.71,0.8,0.86);
   lz_Rjet_Photonm1->SetBorderSize(0);
-  lz_Rjet_Photonm1->AddEntry(h_Rjet_Photonm1,  "All jets Photon-1%", "p");
-  lz_Rjet_Photonm1->AddEntry(h_Rjetb_Photonm1, "b jets Photon-1%", "p");
-  lz_Rjet_Photonm1->AddEntry(h_Rjetc_Photonm1, "c jets Photon-1%", "p");
-  lz_Rjet_Photonm1->AddEntry(h_Rjets_Photonm1, "s jets Photon-1%", "p");
-  lz_Rjet_Photonm1->AddEntry(h_Rjetud_Photonm1, "ud jets Photon-1%", "p");
-  lz_Rjet_Photonm1->AddEntry(h_Rjetg_Photonm1,  "g jets Photon-1%", "p");
+  lz_Rjet_Photonm1->AddEntry(h_Rjet_Photonm1,  "#bf{All jets Photon-1%}", "p");
+  lz_Rjet_Photonm1->AddEntry(h_Rjetb_Photonm1, "#bf{b jets Photon-1%}", "p");
+  lz_Rjet_Photonm1->AddEntry(h_Rjetc_Photonm1, "#bf{c jets Photon-1%}", "p");
+  lz_Rjet_Photonm1->AddEntry(h_Rjets_Photonm1, "#bf{s jets Photon-1%}", "p");
+  lz_Rjet_Photonm1->AddEntry(h_Rjetud_Photonm1, "#bf{ud jets Photon-1%}", "p");
+  lz_Rjet_Photonm1->AddEntry(h_Rjetg_Photonm1,  "#bf{g jets Photon-1%}", "p");
   //lz_Rjet_Photonm1->SetNColumns(2);
 
   TH1D* setup_Photonm1 = new TH1D("setup_Photonm1","", h_Rjet_Photonm1->GetXaxis()->GetNbins(),
-  28, 1240);
+  15, 1248);
   setup_Photonm1->SetStats(0);
-  setup_Photonm1->SetAxisRange(0.986,1.004,"Y");
+  setup_Photonm1->SetAxisRange(0.986,1.005,"Y");
   setup_Photonm1->GetXaxis()->SetMoreLogLabels();
   setup_Photonm1->GetXaxis()->SetNoExponent();
   canv_Photonm1->SetLogx();
   setup_Photonm1->GetYaxis()->SetTitleOffset(1.5); 
   setup_Photonm1->GetXaxis()->SetTitleOffset(1.1);
-  setup_Photonm1->GetYaxis()->SetTitle("F^{var}");
+  setup_Photonm1->GetYaxis()->SetTitle("Response ratio");
   setup_Photonm1->GetYaxis()->SetTitleSize(0.05);
   setup_Photonm1->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Photonm1->GetXaxis()->SetTitleSize(0.05);
 
   gPad->SetTickx(); gPad->SetTicky();
 
-  TLine *line = new TLine(31.75,1,1258.25,1); 
+  TLine *line = new TLine(15,1,1258.25,1); 
   //Plot
   setup_Photonm1->Draw();
   line->Draw("SAME");
@@ -99,8 +99,8 @@ void plotPhotonVar()
   TLatex *tex = new TLatex(); tex->SetNDC();
   tex->SetTextSize(0.04); tex->SetTextColor(kBlack);
   tex->DrawLatex(0.7,0.92,"#sqrt{s}=13 TeV");
-  tex->DrawLatex(0.23,0.25,"|#eta^{probe}|<1.3");
-  tex->DrawLatex(0.23,0.2,"#alpha<0.3");
+  tex->DrawLatex(0.35,0.25,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.35,0.2,"#alpha<0.3");
 
   //Save plot
   canv_Photonm1->Print("./plots/varPlots/Photon/varPhotonm1_all.pdf"); delete canv_Photonm1;
@@ -258,45 +258,45 @@ void plotPhotonVar()
 
   h_Rjet_Photonm3->SetMarkerStyle(5);                  h_Rjet_Photonm3->SetMarkerColor(kBlack);
   h_Rjet_Photonm3->SetLineColor(kBlack);               h_Rjet_Photonm3->SetMarkerSize(0.8);
-  h_Rjetb_Photonm3->SetMarkerStyle(kOpenCircle);       h_Rjetb_Photonm3->SetMarkerColor(kRed+1);
+  h_Rjetb_Photonm3->SetMarkerStyle(kFullCircle);       h_Rjetb_Photonm3->SetMarkerColor(kRed+1);
   h_Rjetb_Photonm3->SetLineColor(kRed+1);              h_Rjetb_Photonm3->SetMarkerSize(0.8);
-  h_Rjetc_Photonm3->SetMarkerStyle(kOpenTriangleDown); h_Rjetc_Photonm3->SetMarkerColor(kGreen+3);
+  h_Rjetc_Photonm3->SetMarkerStyle(kFullTriangleDown); h_Rjetc_Photonm3->SetMarkerColor(kGreen+3);
   h_Rjetc_Photonm3->SetLineColor(kGreen+3);            h_Rjetc_Photonm3->SetMarkerSize(0.8);
-  h_Rjets_Photonm3->SetMarkerStyle(kOpenTriangleUp);   h_Rjets_Photonm3->SetMarkerColor(kOrange+7);
+  h_Rjets_Photonm3->SetMarkerStyle(kFullTriangleUp);   h_Rjets_Photonm3->SetMarkerColor(kOrange+7);
   h_Rjets_Photonm3->SetLineColor(kOrange+7);           h_Rjets_Photonm3->SetMarkerSize(0.8);
-  h_Rjetud_Photonm3->SetMarkerStyle(kOpenDiamond);     h_Rjetud_Photonm3->SetMarkerColor(kMagenta+2);
+  h_Rjetud_Photonm3->SetMarkerStyle(kFullDiamond);     h_Rjetud_Photonm3->SetMarkerColor(kMagenta+2);
   h_Rjetud_Photonm3->SetLineColor(kMagenta+2);         h_Rjetud_Photonm3->SetMarkerSize(0.8);
-  h_Rjetg_Photonm3->SetMarkerStyle(kOpenSquare);       h_Rjetg_Photonm3->SetMarkerColor(kBlue+1);
+  h_Rjetg_Photonm3->SetMarkerStyle(kFullSquare);       h_Rjetg_Photonm3->SetMarkerColor(kBlue+1);
   h_Rjetg_Photonm3->SetLineColor(kBlue+1);             h_Rjetg_Photonm3->SetMarkerSize(0.8);
 
-  h_Rjet_Photonm3->SetAxisRange(28, 1240,"X");
-  h_Rjetb_Photonm3->SetAxisRange(28, 1240,"X");
-  h_Rjetc_Photonm3->SetAxisRange(28, 1240,"X");
-  h_Rjets_Photonm3->SetAxisRange(28, 1240,"X");
-  h_Rjetud_Photonm3->SetAxisRange(28, 1240,"X");
-  h_Rjetg_Photonm3->SetAxisRange(28, 1240,"X");
+  h_Rjet_Photonm3->SetAxisRange(15, 1248,"X");
+  h_Rjetb_Photonm3->SetAxisRange(15, 1248,"X");
+  h_Rjetc_Photonm3->SetAxisRange(15, 1248,"X");
+  h_Rjets_Photonm3->SetAxisRange(15, 1248,"X");
+  h_Rjetud_Photonm3->SetAxisRange(15, 1248,"X");
+  h_Rjetg_Photonm3->SetAxisRange(15, 1248,"X");
 
   //Legend
-  TLegend* lz_Rjet_Photonm3 = new TLegend(0.45,0.19,0.8,0.29);
+  TLegend* lz_Rjet_Photonm3 = new TLegend(0.2,0.65,0.5,0.85);
   lz_Rjet_Photonm3->SetBorderSize(0);
-  lz_Rjet_Photonm3->AddEntry(h_Rjet_Photonm3,  "All jets Photon-3%", "p");
-  lz_Rjet_Photonm3->AddEntry(h_Rjetb_Photonm3, "b jets Photon-3%", "p");
-  lz_Rjet_Photonm3->AddEntry(h_Rjetc_Photonm3, "c jets Photon-3%", "p");
-  lz_Rjet_Photonm3->AddEntry(h_Rjets_Photonm3, "s jets Photon-3%", "p");
-  lz_Rjet_Photonm3->AddEntry(h_Rjetud_Photonm3, "ud jets Photon-3%", "p");
-  lz_Rjet_Photonm3->AddEntry(h_Rjetg_Photonm3,  "g jets Photon-3%", "p");
+  lz_Rjet_Photonm3->AddEntry(h_Rjet_Photonm3,  "#bf{All jets Photon-3%}", "p");
+  lz_Rjet_Photonm3->AddEntry(h_Rjetb_Photonm3, "#bf{b jets Photon-3%}", "p");
+  lz_Rjet_Photonm3->AddEntry(h_Rjetc_Photonm3, "#bf{c jets Photon-3%}", "p");
+  lz_Rjet_Photonm3->AddEntry(h_Rjets_Photonm3, "#bf{s jets Photon-3%}", "p");
+  lz_Rjet_Photonm3->AddEntry(h_Rjetud_Photonm3, "#bf{ud jets Photon-3%}", "p");
+  lz_Rjet_Photonm3->AddEntry(h_Rjetg_Photonm3,  "#bf{g jets Photon-3%}", "p");
   //lz_Rjet_Photonm3->SetNColumns(2);
 
   TH1D* setup_Photonm3 = new TH1D("setup_Photonm3","", h_Rjet_Photonm3->GetXaxis()->GetNbins(),
-  28, 1240);
+  15, 1248);
   setup_Photonm3->SetStats(0);
-  setup_Photonm3->SetAxisRange(0.986,1.004,"Y");
+  setup_Photonm3->SetAxisRange(0.98,1.03,"Y");
   setup_Photonm3->GetXaxis()->SetMoreLogLabels();
   setup_Photonm3->GetXaxis()->SetNoExponent();
   canv_Photonm3->SetLogx();
   setup_Photonm3->GetYaxis()->SetTitleOffset(1.5); 
   setup_Photonm3->GetXaxis()->SetTitleOffset(1.1);
-  setup_Photonm3->GetYaxis()->SetTitle("F^{var}");
+  setup_Photonm3->GetYaxis()->SetTitle("Response ratio");
   setup_Photonm3->GetYaxis()->SetTitleSize(0.05);
   setup_Photonm3->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Photonm3->GetXaxis()->SetTitleSize(0.05);
@@ -315,8 +315,8 @@ void plotPhotonVar()
   lz_Rjet_Photonm3->Draw("SAMEP");
 
   tex->DrawLatex(0.7,0.92,"#sqrt{s}=13 TeV");
-  tex->DrawLatex(0.23,0.25,"|#eta^{probe}|<1.3");
-  tex->DrawLatex(0.23,0.2,"#alpha<0.3");
+  tex->DrawLatex(0.25,0.21,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.25,0.16,"#alpha<0.3");
 
   //Save plot
   canv_Photonm3->Print("./plots/varPlots/Photon/varPhotonm3_all.pdf"); delete canv_Photonm3;

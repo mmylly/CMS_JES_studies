@@ -630,6 +630,12 @@ void CMSJES::Loop()
   // 90% parametes
   TF1* allTrkReso = new TF1("allTrkReso","2.006093e-05*pow(x,2)+0.00103068*x+0.0190268",0,5000);
 
+  // Tracking efficiency surface
+  TFile *fePU = new TFile("./data_and_MC_input/Efficiency/effFr2D.root");
+  TH1D *htrkEff1D;
+  TH2D *htrkEff2D;
+  fePU->GetObject("effFr1D", htrkEff1D);
+  fePU->GetObject("effFr2D", htrkEff2D);
   
 //***********************************************************************************************
   //string weight_file = "./weights.txt";
@@ -1035,33 +1041,26 @@ void CMSJES::Loop()
           trkFail = 0;
           eff = 1.0; //Initially no track failing
 
-          //Efficiency from chs
           if (fabs(p4.Eta() < 2.5)) {
             for (int ijet=0; ijet!=njets; ++ijet) {
               if (p4.DeltaR(jets_g[ijet]) < RCone && ijet != i_mujet1 && ijet != i_mujet2) {
-                eff = pchf->Eval(jets_g[ijet].Pt()) / 0.607;
-                //eff -= 0.1381969 - 0.1606539/pow(2,((*prtclnij_pt)[i]/45.31742));
-                eff -= 0.18 - 0.1802738/pow(2,((*prtclnij_pt)[i]/47.15363));
+                eff = htrkEff2D->GetBinContent(htrkEff2D->FindBin((*prtclnij_pt)[i],jets_g[ijet].Pt()));
+
+                break;
               }
             }
           }
 
-          eff = min(eff,0.96);
+          if (eff == 1.0) eff = htrkEff1D->GetBinContent(htrkEff1D->FindBin((*prtclnij_pt)[i]));
 
-          if ((*prtclnij_pt)[i] < 0.6) {
-            eff = 2021.944 - 2022.2565603/(1 + pow(((*prtclnij_pt)[i]/36533650), 0.4126626));
-          } else if ((*prtclnij_pt)[i] > 0.6) {
-            eff -= 0.03836*pow((*prtclnij_pt)[i],-0.70570) - 0.003;
-          }
-
-          eff = max(eff,0.0);
+          eff = min(eff, 1.0);
 
           if (varTrkEffm1) eff *= 0.99; //-1% variation to track efficiency
           if (varTrkEffm3) eff *= 0.97; //-3% variation to track efficiency
 
           //Tracking efficiency plot
           if (fabs((*prtclnij_eta)[i]) < 2.5) {
-            chhEff->Fill((*prtclnij_pt)[i], eff);
+            chhEff->Fill((*prtclnij_pt)[i], eff, weight);
           }
 
           if (resp != 1) eff = 0.0; //If not in tracker
@@ -1850,41 +1849,6 @@ void CMSJES::Loop()
   cout << "MET cut:                " << METcut      << endl;
   cout << "Weight cut:             " << weightCut   << endl;
   cout << "Total events:           " << evt         << endl << endl;
-  
-  //Charged hadron efficiency Profile
-  TCanvas *c4     = new TCanvas("","c4",500,500);
-  TGraph *PFeff   = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_PF.txt");
-  TGraph *PFeffFr = new TGraph("data_and_MC_input/Efficiency/hadron_efficiencyPlusFakerate_PF.txt");
-  TGraph *TRKeff  = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_TRK.txt");
-  PFeff->SetMarkerStyle(kFullCircle ); TRKeff->SetMarkerStyle(kOpenCircle );
-  PFeff->SetMarkerColor(kRed);         TRKeff->SetMarkerColor(kBlue+1);
-  PFeffFr->SetMarkerStyle(kFullDiamond );
-  PFeffFr->SetMarkerColor(kGreen+2);
-
-  TLegend* lgEff = new TLegend(0.5,0.2,0.8,0.40 );
-  lgEff->AddEntry(chhEff, "#font[132]{Our eff}", "l");
-  lgEff->AddEntry(PFeff,  "#font[132]{PF eff}", "p");
-  lgEff->AddEntry(PFeffFr,"#font[132]{PF eff+fakerate}", "p");
-  lgEff->AddEntry(TRKeff, "#font[132]{TRK eff}", "p");
-  lgEff->SetBorderSize(0); lgEff->SetFillStyle(0);
-
-  PFeff->GetXaxis()->SetTitle("pT");
-  PFeff->GetYaxis()->SetTitle("Efficiency");
-   
-  TAxis *PFaxis = PFeff->GetXaxis();
-  PFaxis->SetLimits(0.1,300);
-  PFeff->GetHistogram()->SetMaximum(1.1);
-  PFeff->GetHistogram()->SetMinimum(0.0);
-  PFeff->Draw("ap");      lgEff->Draw("same");
-  PFeffFr->Draw("samep"); TRKeff->Draw("samep");
-
-  gStyle->SetOptStat();
-  c4->SetLogx();
-  chhEff->Draw("same");
-  chhEff->SetLineColor(kBlack);
-  chhEff->SetLineWidth(3);
-  string savename = "./plots/Efficiency/trkEff.eps";
-  c4->Print(savename.c_str());
 
   //Save CMSJES TTree
   fout->Write();
@@ -2235,15 +2199,26 @@ void CMSJES::plotEff(int gen, int Nevt) {
   c4->SetLeftMargin(0.12);
   TGraph *PFeff   = new TGraph("data_and_MC_input/Efficiency/hadron_efficiency_PF.txt");
   TGraph *PFeffFr = new TGraph("data_and_MC_input/Efficiency/hadron_efficiencyPlusFakerate_PF.txt");
+  TGraph *TRKeffFr = new TGraph("data_and_MC_input/Efficiency/hadron_efficiencyPlusFakerate_TRK_alltracks.txt");
+  TGraph *ePUeffFr = new TGraph("data_and_MC_input/Efficiency/hadron_efficiencyPlusFakerate_ePU.txt");
+
   PFeff->SetMarkerStyle(kFullDiamond );
-  PFeff->SetMarkerColor(kBlue);
+  PFeff->SetMarkerColor(kBlue+1);
   PFeffFr->SetMarkerStyle(kFullCircle );
-  PFeffFr->SetMarkerColor(kRed);
+  PFeffFr->SetMarkerColor(kRed+1);
+
+  TRKeffFr->SetMarkerStyle(kFullTriangleUp);
+  TRKeffFr->SetMarkerColor(kGreen+2);
+
+  ePUeffFr->SetMarkerStyle(kFullTriangleDown);
+  ePUeffFr->SetMarkerColor(kOrange+1);
 
   TLegend* lgEff = new TLegend(0.3,0.2,0.75,0.40 );
-  lgEff->AddEntry(chhEff, "Our efficiency", "l");
-  lgEff->AddEntry(PFeffFr,"PF efficiency + fakerate", "p");
-  lgEff->AddEntry(PFeff,  "PF efficiency", "p");
+  lgEff->AddEntry(chhEff,   "Our efficiency", "l");
+  lgEff->AddEntry(TRKeffFr, "TRK efficiency + fakerate (all tracks)", "p");
+  lgEff->AddEntry(ePUeffFr, "ePU efficiency + fakerate", "p");
+  lgEff->AddEntry(PFeffFr,  "PF efficiency + fakerate", "p");
+  lgEff->AddEntry(PFeff,    "PF efficiency", "p");
   lgEff->SetBorderSize(0); lgEff->SetFillStyle(0);
 
   PFeff->GetXaxis()->SetTitleOffset(1.0);
@@ -2261,13 +2236,15 @@ void CMSJES::plotEff(int gen, int Nevt) {
   TAxis *PFaxis = PFeff->GetXaxis();
   PFaxis->SetLimits(0.2,300);
   PFeff->SetTitle("");
-  PFeff->GetHistogram()->SetMaximum(1.0);
+  PFeff->GetHistogram()->SetMaximum(1.4);
   PFeff->GetHistogram()->SetMinimum(0.5);
   PFeff->GetXaxis()->SetMoreLogLabels();
   PFeff->GetXaxis()->SetNoExponent();
   PFeff->Draw("ap"); 
   lgEff->Draw("same");
   PFeffFr->Draw("samep");
+  TRKeffFr->Draw("samep");
+  ePUeffFr->Draw("samep");
 
   PFeff->SetMarkerSize(1.5);
   PFeffFr->SetMarkerSize(1.2);
@@ -2280,7 +2257,7 @@ void CMSJES::plotEff(int gen, int Nevt) {
   chhEff->SetLineColor(kBlack);
   chhEff->SetLineWidth(5);
 
-  tex->DrawLatex(0.75,0.82,"|#eta|<2.5");
+  tex->DrawLatex(0.2,0.82,"|#eta|<2.5");
 
   string plotName = "./plots/Efficiency/trkEff_" + ReadName + ".pdf";
   c4->Print(plotName.c_str());
@@ -2294,7 +2271,7 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
   TFile* fzj = TFile::Open(zjetFile.c_str());
 
-  TGraph *chf   = new TGraph("data_and_MC_input/Chf/chf.txt");
+  TGraph *chf = new TGraph("data_and_MC_input/Chf/chf.txt");
   TGraph *nhf = new TGraph("data_and_MC_input/Chf/nhf.txt");
   chf->SetMarkerStyle(kFullDiamond); nhf->SetMarkerStyle(kOpenSquare);
   chf->SetMarkerColor(kBlack);       nhf->SetMarkerColor(kBlack);

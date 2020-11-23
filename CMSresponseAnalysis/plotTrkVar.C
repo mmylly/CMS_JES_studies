@@ -4,7 +4,7 @@ void plotTrkVar()
   double markersize = 0.8;
 
   //Variants file
-  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
+  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_P8_Zjet_5000000.root");
 
   TH1D* h_Rjet_Trkm1;
   TH1D* h_Rjet_Trkm3;
@@ -39,37 +39,37 @@ void plotTrkVar()
 
   h_Rjet_Trkm1->SetMarkerStyle(5);                  h_Rjet_Trkm1->SetMarkerColor(kBlack);
   h_Rjet_Trkm1->SetLineColor(kBlack);               h_Rjet_Trkm1->SetMarkerSize(0.8);
-  h_Rjetb_Trkm1->SetMarkerStyle(kOpenCircle);       h_Rjetb_Trkm1->SetMarkerColor(kRed+1);
+  h_Rjetb_Trkm1->SetMarkerStyle(kFullCircle);       h_Rjetb_Trkm1->SetMarkerColor(kRed+1);
   h_Rjetb_Trkm1->SetLineColor(kRed+1);              h_Rjetb_Trkm1->SetMarkerSize(0.8);
-  h_Rjetc_Trkm1->SetMarkerStyle(kOpenTriangleDown); h_Rjetc_Trkm1->SetMarkerColor(kGreen+3);
+  h_Rjetc_Trkm1->SetMarkerStyle(kFullTriangleDown); h_Rjetc_Trkm1->SetMarkerColor(kGreen+3);
   h_Rjetc_Trkm1->SetLineColor(kGreen+3);            h_Rjetc_Trkm1->SetMarkerSize(0.8);
-  h_Rjets_Trkm1->SetMarkerStyle(kOpenTriangleUp);   h_Rjets_Trkm1->SetMarkerColor(kOrange+7);
+  h_Rjets_Trkm1->SetMarkerStyle(kFullTriangleUp);   h_Rjets_Trkm1->SetMarkerColor(kOrange+7);
   h_Rjets_Trkm1->SetLineColor(kOrange+7);           h_Rjets_Trkm1->SetMarkerSize(0.8);
-  h_Rjetud_Trkm1->SetMarkerStyle(kOpenDiamond);     h_Rjetud_Trkm1->SetMarkerColor(kMagenta+2);
+  h_Rjetud_Trkm1->SetMarkerStyle(kFullDiamond);     h_Rjetud_Trkm1->SetMarkerColor(kMagenta+2);
   h_Rjetud_Trkm1->SetLineColor(kMagenta+2);         h_Rjetud_Trkm1->SetMarkerSize(0.8);
-  h_Rjetg_Trkm1->SetMarkerStyle(kOpenSquare);       h_Rjetg_Trkm1->SetMarkerColor(kBlue+1);
+  h_Rjetg_Trkm1->SetMarkerStyle(kFullSquare);       h_Rjetg_Trkm1->SetMarkerColor(kBlue+1);
   h_Rjetg_Trkm1->SetLineColor(kBlue+1);             h_Rjetg_Trkm1->SetMarkerSize(0.8);
 
-  h_Rjet_Trkm1->SetAxisRange(28, 1240,"X");
-  h_Rjetb_Trkm1->SetAxisRange(28, 1240,"X");
-  h_Rjetc_Trkm1->SetAxisRange(28, 1240,"X");
-  h_Rjets_Trkm1->SetAxisRange(28, 1240,"X");
-  h_Rjetud_Trkm1->SetAxisRange(28, 1240,"X");
-  h_Rjetg_Trkm1->SetAxisRange(28, 1240,"X");
+  h_Rjet_Trkm1->SetAxisRange(15, 1248,"X");
+  h_Rjetb_Trkm1->SetAxisRange(15, 1248,"X");
+  h_Rjetc_Trkm1->SetAxisRange(15, 1248,"X");
+  h_Rjets_Trkm1->SetAxisRange(15, 1248,"X");
+  h_Rjetud_Trkm1->SetAxisRange(15, 1248,"X");
+  h_Rjetg_Trkm1->SetAxisRange(15, 1248,"X");
 
   //Legend
-  TLegend* lz_Rjet_Trkm1 = new TLegend(0.45,0.19,0.85,0.29);
+  TLegend* lz_Rjet_Trkm1 = new TLegend(0.3,0.7,0.85,0.85);
   lz_Rjet_Trkm1->SetBorderSize(0);
-  lz_Rjet_Trkm1->AddEntry(h_Rjet_Trkm1,  "All jets Tracking-1%", "p");
-  lz_Rjet_Trkm1->AddEntry(h_Rjetb_Trkm1, "b jets Tracking-1%", "p");
-  lz_Rjet_Trkm1->AddEntry(h_Rjetc_Trkm1, "c jets Tracking-1%", "p");
-  lz_Rjet_Trkm1->AddEntry(h_Rjets_Trkm1, "s jets Tracking-1%", "p");
-  lz_Rjet_Trkm1->AddEntry(h_Rjetud_Trkm1, "ud jets Tracking-1%", "p");
-  lz_Rjet_Trkm1->AddEntry(h_Rjetg_Trkm1,  "g jets Tracking-1%", "p");
+  lz_Rjet_Trkm1->AddEntry(h_Rjet_Trkm1,  "#bf{All jets TrkEff-1%}", "p");
+  lz_Rjet_Trkm1->AddEntry(h_Rjetb_Trkm1, "#bf{b jets TrkEff-1%}", "p");
+  lz_Rjet_Trkm1->AddEntry(h_Rjetc_Trkm1, "#bf{c jets TrkEff-1%}", "p");
+  lz_Rjet_Trkm1->AddEntry(h_Rjets_Trkm1, "#bf{s jets TrkEff-1%}", "p");
+  lz_Rjet_Trkm1->AddEntry(h_Rjetud_Trkm1, "#bf{ud jets TrkEff-1%}", "p");
+  lz_Rjet_Trkm1->AddEntry(h_Rjetg_Trkm1,  "#bf{g jets TrkEff-1%}", "p");
   //lz_Rjet_Trkm1->SetNColumns(2);
 
   TH1D* setup_Trkm1 = new TH1D("setup_Trkm1","", h_Rjet_Trkm1->GetXaxis()->GetNbins(),
-  28, 1240);
+  15, 1248);
   setup_Trkm1->SetStats(0);
   setup_Trkm1->SetAxisRange(0.9882,1.005,"Y");
   setup_Trkm1->GetXaxis()->SetMoreLogLabels();
@@ -77,14 +77,14 @@ void plotTrkVar()
   canv_Trkm1->SetLogx();
   setup_Trkm1->GetYaxis()->SetTitleOffset(1.5); 
   setup_Trkm1->GetXaxis()->SetTitleOffset(1.1);
-  setup_Trkm1->GetYaxis()->SetTitle("F^{var}");
+  setup_Trkm1->GetYaxis()->SetTitle("Response ratio");
   setup_Trkm1->GetYaxis()->SetTitleSize(0.05);
   setup_Trkm1->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Trkm1->GetXaxis()->SetTitleSize(0.05);
 
   gPad->SetTickx(); gPad->SetTicky();
 
-  TLine *line = new TLine(31.75,1,1258.25,1); 
+  TLine *line = new TLine(15,1,1258.25,1); 
   //Plot
   setup_Trkm1->Draw();
   line->Draw("SAME");
@@ -96,11 +96,14 @@ void plotTrkVar()
   h_Rjet_Trkm1->Draw("SAMEP");
   lz_Rjet_Trkm1->Draw("SAMEP");
 
+
+
+
   TLatex *tex = new TLatex(); tex->SetNDC();
   tex->SetTextSize(0.04); tex->SetTextColor(kBlack);
   tex->DrawLatex(0.7,0.92,"#sqrt{s}=13 TeV");
-  tex->DrawLatex(0.23,0.25,"|#eta^{probe}|<1.3");
-  tex->DrawLatex(0.23,0.2,"#alpha<0.3");
+  tex->DrawLatex(0.35,0.25,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.35,0.2,"#alpha<0.3");
 
   //Save plot
   canv_Trkm1->Print("./plots/varPlots/Trk/varTrkm1_all.pdf"); delete canv_Trkm1;
@@ -258,45 +261,45 @@ void plotTrkVar()
 
   h_Rjet_Trkm3->SetMarkerStyle(5);                  h_Rjet_Trkm3->SetMarkerColor(kBlack);
   h_Rjet_Trkm3->SetLineColor(kBlack);               h_Rjet_Trkm3->SetMarkerSize(0.8);
-  h_Rjetb_Trkm3->SetMarkerStyle(kOpenCircle);       h_Rjetb_Trkm3->SetMarkerColor(kRed+1);
+  h_Rjetb_Trkm3->SetMarkerStyle(kFullCircle);       h_Rjetb_Trkm3->SetMarkerColor(kRed+1);
   h_Rjetb_Trkm3->SetLineColor(kRed+1);              h_Rjetb_Trkm3->SetMarkerSize(0.8);
-  h_Rjetc_Trkm3->SetMarkerStyle(kOpenTriangleDown); h_Rjetc_Trkm3->SetMarkerColor(kGreen+3);
+  h_Rjetc_Trkm3->SetMarkerStyle(kFullTriangleDown); h_Rjetc_Trkm3->SetMarkerColor(kGreen+3);
   h_Rjetc_Trkm3->SetLineColor(kGreen+3);            h_Rjetc_Trkm3->SetMarkerSize(0.8);
-  h_Rjets_Trkm3->SetMarkerStyle(kOpenTriangleUp);   h_Rjets_Trkm3->SetMarkerColor(kOrange+7);
+  h_Rjets_Trkm3->SetMarkerStyle(kFullTriangleUp);   h_Rjets_Trkm3->SetMarkerColor(kOrange+7);
   h_Rjets_Trkm3->SetLineColor(kOrange+7);           h_Rjets_Trkm3->SetMarkerSize(0.8);
-  h_Rjetud_Trkm3->SetMarkerStyle(kOpenDiamond);     h_Rjetud_Trkm3->SetMarkerColor(kMagenta+2);
+  h_Rjetud_Trkm3->SetMarkerStyle(kFullDiamond);     h_Rjetud_Trkm3->SetMarkerColor(kMagenta+2);
   h_Rjetud_Trkm3->SetLineColor(kMagenta+2);         h_Rjetud_Trkm3->SetMarkerSize(0.8);
-  h_Rjetg_Trkm3->SetMarkerStyle(kOpenSquare);       h_Rjetg_Trkm3->SetMarkerColor(kBlue+1);
+  h_Rjetg_Trkm3->SetMarkerStyle(kFullSquare);       h_Rjetg_Trkm3->SetMarkerColor(kBlue+1);
   h_Rjetg_Trkm3->SetLineColor(kBlue+1);             h_Rjetg_Trkm3->SetMarkerSize(0.8);
 
-  h_Rjet_Trkm3->SetAxisRange(28, 1240,"X");
-  h_Rjetb_Trkm3->SetAxisRange(28, 1240,"X");
-  h_Rjetc_Trkm3->SetAxisRange(28, 1240,"X");
-  h_Rjets_Trkm3->SetAxisRange(28, 1240,"X");
-  h_Rjetud_Trkm3->SetAxisRange(28, 1240,"X");
-  h_Rjetg_Trkm3->SetAxisRange(28, 1240,"X");
+  h_Rjet_Trkm3->SetAxisRange(15, 1248,"X");
+  h_Rjetb_Trkm3->SetAxisRange(15, 1248,"X");
+  h_Rjetc_Trkm3->SetAxisRange(15, 1248,"X");
+  h_Rjets_Trkm3->SetAxisRange(15, 1248,"X");
+  h_Rjetud_Trkm3->SetAxisRange(15, 1248,"X");
+  h_Rjetg_Trkm3->SetAxisRange(15, 1248,"X");
 
   //Legend
-  TLegend* lz_Rjet_Trkm3 = new TLegend(0.45,0.19,0.85,0.29);
+  TLegend* lz_Rjet_Trkm3 = new TLegend(0.2,0.65,0.5,0.85);
   lz_Rjet_Trkm3->SetBorderSize(0);
-  lz_Rjet_Trkm3->AddEntry(h_Rjet_Trkm3,  "All jets Tracking-3%", "p");
-  lz_Rjet_Trkm3->AddEntry(h_Rjetb_Trkm3, "b jets Tracking-3%", "p");
-  lz_Rjet_Trkm3->AddEntry(h_Rjetc_Trkm3, "c jets Tracking-3%", "p");
-  lz_Rjet_Trkm3->AddEntry(h_Rjets_Trkm3, "s jets Tracking-3%", "p");
-  lz_Rjet_Trkm3->AddEntry(h_Rjetud_Trkm3, "ud jets Tracking-3%", "p");
-  lz_Rjet_Trkm3->AddEntry(h_Rjetg_Trkm3,  "g jets Tracking-3%", "p");
+  lz_Rjet_Trkm3->AddEntry(h_Rjet_Trkm3,  "#bf{All jets TrkEff-3%}", "p");
+  lz_Rjet_Trkm3->AddEntry(h_Rjetb_Trkm3, "#bf{b jets TrkEff-3%}", "p");
+  lz_Rjet_Trkm3->AddEntry(h_Rjetc_Trkm3, "#bf{c jets TrkEff-3%}", "p");
+  lz_Rjet_Trkm3->AddEntry(h_Rjets_Trkm3, "#bf{s jets TrkEff-3%}", "p");
+  lz_Rjet_Trkm3->AddEntry(h_Rjetud_Trkm3, "#bf{ud jets TrkEff-3%}", "p");
+  lz_Rjet_Trkm3->AddEntry(h_Rjetg_Trkm3,  "#bf{g jets TrkEff-3%}", "p");
   //lz_Rjet_Trkm3->SetNColumns(2);
 
   TH1D* setup_Trkm3 = new TH1D("setup_Trkm3","", h_Rjet_Trkm3->GetXaxis()->GetNbins(),
-  28, 1240);
+  15, 1248);
   setup_Trkm3->SetStats(0);
-  setup_Trkm3->SetAxisRange(0.9882,1.005,"Y");
+  setup_Trkm3->SetAxisRange(0.98,1.03,"Y");
   setup_Trkm3->GetXaxis()->SetMoreLogLabels();
   setup_Trkm3->GetXaxis()->SetNoExponent();
   canv_Trkm3->SetLogx();
   setup_Trkm3->GetYaxis()->SetTitleOffset(1.5); 
   setup_Trkm3->GetXaxis()->SetTitleOffset(1.1);
-  setup_Trkm3->GetYaxis()->SetTitle("F^{var}");
+  setup_Trkm3->GetYaxis()->SetTitle("Response ratio");
   setup_Trkm3->GetYaxis()->SetTitleSize(0.05);
   setup_Trkm3->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_Trkm3->GetXaxis()->SetTitleSize(0.05);
@@ -314,9 +317,10 @@ void plotTrkVar()
   h_Rjet_Trkm3->Draw("SAMEP");
   lz_Rjet_Trkm3->Draw("SAMEP");
 
+
   tex->DrawLatex(0.7,0.92,"#sqrt{s}=13 TeV");
-  tex->DrawLatex(0.23,0.25,"|#eta^{probe}|<1.3");
-  tex->DrawLatex(0.23,0.2,"#alpha<0.3");
+  tex->DrawLatex(0.25,0.21,"|#eta^{probe}|<1.3");
+  tex->DrawLatex(0.25,0.16,"#alpha<0.3");
 
   //Save plot
   canv_Trkm3->Print("./plots/varPlots/Trk/varTrkm3_all.pdf"); delete canv_Trkm3;

@@ -4,69 +4,69 @@ void plotVariants()
   double markersize = 0.8;
 
   //Variants file
-  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
+  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_P8_Zjet_5000000.root");
 
   TH1D* h_Rjet_Cp3;
   TH1D* h_Rjet_Cm3;
-  //TH1D* h_Rjet_Trk;
-  //TH1D* h_Rjet_Photon;
+  TH1D* h_Rjet_Trk;
+  TH1D* h_Rjet_Photon;
 
   TH1D* h_Rjetb_Cp3;
   TH1D* h_Rjetb_Cm3;
-  //TH1D* h_Rjetb_Trk;
-  //TH1D* h_Rjetb_Photon;
+  TH1D* h_Rjetb_Trk;
+  TH1D* h_Rjetb_Photon;
 
   TH1D* h_Rjetc_Cp3;
   TH1D* h_Rjetc_Cm3;
-  //TH1D* h_Rjetc_Trk;
-  //TH1D* h_Rjetc_Photon;
+  TH1D* h_Rjetc_Trk;
+  TH1D* h_Rjetc_Photon;
 
   TH1D* h_Rjets_Cp3;
   TH1D* h_Rjets_Cm3;
-  //TH1D* h_Rjets_Trk;
-  //TH1D* h_Rjets_Photon;
+  TH1D* h_Rjets_Trk;
+  TH1D* h_Rjets_Photon;
 
   TH1D* h_Rjetud_Cp3;
   TH1D* h_Rjetud_Cm3;
-  //TH1D* h_Rjetud_Trk;
-  //TH1D* h_Rjetud_Photon;
+  TH1D* h_Rjetud_Trk;
+  TH1D* h_Rjetud_Photon;
 
   TH1D* h_Rjetg_Cp3;
   TH1D* h_Rjetg_Cm3;
-  //TH1D* h_Rjetg_Trk;
-  //TH1D* h_Rjetg_Photon;
+  TH1D* h_Rjetg_Trk;
+  TH1D* h_Rjetg_Photon;
 
 
   //Create Histograms
   fzj->GetObject("h_Rjet_Cp3", h_Rjet_Cp3);
   fzj->GetObject("h_Rjet_Cm3", h_Rjet_Cm3);
-  //fzj->GetObject("h_Rjet_Trk", h_Rjet_Trk);
-  //fzj->GetObject("h_Rjet_Photon", h_Rjet_Photon);
+  fzj->GetObject("h_Rjet_Trk", h_Rjet_Trk);
+  fzj->GetObject("h_Rjet_Photon", h_Rjet_Photon);
 
   fzj->GetObject("h_Rjetb_Cp3", h_Rjetb_Cp3);
   fzj->GetObject("h_Rjetb_Cm3", h_Rjetb_Cm3);
-  //fzj->GetObject("h_Rjetb_Trk", h_Rjetb_Trk);
-  //fzj->GetObject("h_Rjetb_Photon", h_Rjetb_Photon);
+  fzj->GetObject("h_Rjetb_Trk", h_Rjetb_Trk);
+  fzj->GetObject("h_Rjetb_Photon", h_Rjetb_Photon);
 
   fzj->GetObject("h_Rjetc_Cp3", h_Rjetc_Cp3);
   fzj->GetObject("h_Rjetc_Cm3", h_Rjetc_Cm3);
-  //fzj->GetObject("h_Rjetc_Trk", h_Rjetc_Trk);
-  //fzj->GetObject("h_Rjetc_Photon", h_Rjetc_Photon);
+  fzj->GetObject("h_Rjetc_Trk", h_Rjetc_Trk);
+  fzj->GetObject("h_Rjetc_Photon", h_Rjetc_Photon);
 
   fzj->GetObject("h_Rjets_Cp3", h_Rjets_Cp3);
   fzj->GetObject("h_Rjets_Cm3", h_Rjets_Cm3);
-  //fzj->GetObject("h_Rjets_Trk", h_Rjets_Trk);
-  //fzj->GetObject("h_Rjets_Photon", h_Rjets_Photon);
+  fzj->GetObject("h_Rjets_Trk", h_Rjets_Trk);
+  fzj->GetObject("h_Rjets_Photon", h_Rjets_Photon);
 
   fzj->GetObject("h_Rjetud_Cp3", h_Rjetud_Cp3);
   fzj->GetObject("h_Rjetud_Cm3", h_Rjetud_Cm3);
-  //fzj->GetObject("h_Rjetud_Trk", h_Rjetud_Trk);
-  //fzj->GetObject("h_Rjetud_Photon", h_Rjetud_Photon);
+  fzj->GetObject("h_Rjetud_Trk", h_Rjetud_Trk);
+  fzj->GetObject("h_Rjetud_Photon", h_Rjetud_Photon);
 
   fzj->GetObject("h_Rjetg_Cp3", h_Rjetg_Cp3);
   fzj->GetObject("h_Rjetg_Cm3", h_Rjetg_Cm3);
-  //fzj->GetObject("h_Rjetg_Trk", h_Rjetg_Trk);
-  //fzj->GetObject("h_Rjetg_Photon", h_Rjetg_Photon);
+  fzj->GetObject("h_Rjetg_Trk", h_Rjetg_Trk);
+  fzj->GetObject("h_Rjetg_Photon", h_Rjetg_Photon);
 
 
 // C +-3%
@@ -328,7 +328,7 @@ void plotVariants()
 
   canv_C_g->Print("./plots/varPlots/SPR/varC_g.pdf"); delete canv_C_g;
 
-/*
+
 //////////////////// Tracking efficiency /////////////////////////
   TCanvas* canv_trk = new TCanvas("canv_trk","",500,400);
   canv_trk->SetLeftMargin(0.15); canv_trk->SetBottomMargin(0.13);
@@ -722,7 +722,6 @@ void plotVariants()
   lz_Photong->Draw("SAMEP");
   canv_Photong->Print("./plots/varPlots/varPhoton_g.pdf"); delete canv_Photong;
 
-  */
 
   gApplication->Terminate(0); //Exit root command prompt
 

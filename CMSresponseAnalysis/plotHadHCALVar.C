@@ -4,7 +4,7 @@ void plotHadHCALVar()
   double markersize = 0.8;
 
   //Variants file
-  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_5000000.root");
+  TFile* fzj = TFile::Open("./output_ROOT_files/varPlots_P8_Zjet_5000000.root");
 
   TH1D* h_Rjet_HadHCALp3;
   TH1D* h_Rjet_HadHCALm3;
@@ -83,7 +83,7 @@ void plotHadHCALVar()
   canv_HadHCAL->SetLogx();
   setup->GetYaxis()->SetTitleOffset(1.5);
   setup->GetXaxis()->SetTitleOffset(1.1);
-  setup->GetYaxis()->SetTitle("F^{var}");
+  setup->GetYaxis()->SetTitle("Response ratio");
   setup->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup->GetYaxis()->SetTitleSize(0.05);
   setup->GetXaxis()->SetTitleSize(0.05);
@@ -111,6 +111,9 @@ void plotHadHCALVar()
 
   //Save plot
   canv_HadHCAL->Print("./plots/varPlots/hadHCAL/varHCAL.pdf"); delete canv_HadHCAL;
+
+
+
 
   //All flavours  
 
@@ -164,45 +167,45 @@ void plotHadHCALVar()
   h_Rjetg_HadHCALm3->SetMarkerSize(markersize);
 
   //Legend
-  TLegend* lz_HadHCAL_all = new TLegend(0.2,0.65,0.55,0.87);
+  TLegend* lz_HadHCAL_all = new TLegend(0.2,0.65,0.82,0.87);
   lz_HadHCAL_all->SetBorderSize(0);
-  lz_HadHCAL_all->AddEntry(h_Rjet_HadHCALp3, "All jets Hadron HCAL+3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjet_HadHCALm3, "All jets Hadron HCAL-3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetb_HadHCALp3, "b jets Hadron HCAL+3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetb_HadHCALm3, "b jets Hadron HCAL-3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetc_HadHCALp3, "c jets Hadron HCAL+3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetc_HadHCALm3, "c jets Hadron HCAL-3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjets_HadHCALp3, "s jets Hadron HCAL+3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjets_HadHCALm3, "s jets Hadron HCAL-3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetud_HadHCALp3, "ud jets Hadron HCAL+3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetud_HadHCALm3, "ud jets Hadron HCAL-3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetg_HadHCALp3, "g jets Hadron HCAL+3%", "p");
-  lz_HadHCAL_all->AddEntry(h_Rjetg_HadHCALm3, "g jets Hadron HCAL-3%", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjet_HadHCALp3,   "#bf{All jets Hadron HCAL+3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjet_HadHCALm3,   "#bf{All jets Hadron HCAL-3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetb_HadHCALp3,  "#bf{b jets Hadron HCAL+3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetb_HadHCALm3,  "#bf{b jets Hadron HCAL-3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetc_HadHCALp3,  "#bf{c jets Hadron HCAL+3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetc_HadHCALm3,  "#bf{c jets Hadron HCAL-3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjets_HadHCALp3,  "#bf{s jets Hadron HCAL+3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjets_HadHCALm3,  "#bf{s jets Hadron HCAL-3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetud_HadHCALp3, "#bf{ud jets Hadron HCAL+3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetud_HadHCALm3, "#bf{ud jets Hadron HCAL-3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetg_HadHCALp3,  "#bf{g jets Hadron HCAL+3%}", "p");
+  lz_HadHCAL_all->AddEntry(h_Rjetg_HadHCALm3,  "#bf{g jets Hadron HCAL-3%}", "p");
   lz_HadHCAL_all->SetNColumns(2);
-  TH1D* setup_all = new TH1D("setup_all","", h_Rjet_HadHCALp3->GetXaxis()->GetNbins(), 28, 1240);
+  TH1D* setup_all = new TH1D("setup_all","", h_Rjet_HadHCALp3->GetXaxis()->GetNbins(), 15, 1248);
 
 
   //Title and axis setup
   setup_all->SetStats(0); //Suppress stat box
-  setup_all->SetAxisRange(0.978,1.028,"Y"); //Vertical axis limits
-  h_Rjetb_HadHCALp3->SetAxisRange(28, 1240,"X");
-  h_Rjetb_HadHCALm3->SetAxisRange(28, 1240,"X");
-  h_Rjetc_HadHCALp3->SetAxisRange(28, 1240,"X");
-  h_Rjetc_HadHCALm3->SetAxisRange(28, 1240,"X");
-  h_Rjets_HadHCALp3->SetAxisRange(28, 1240,"X");
-  h_Rjets_HadHCALm3->SetAxisRange(28, 1240,"X");
-  h_Rjetud_HadHCALp3->SetAxisRange(28, 1240,"X");
-  h_Rjetud_HadHCALm3->SetAxisRange(28, 1240,"X");
-  h_Rjetg_HadHCALp3->SetAxisRange(28, 1240,"X");
-  h_Rjetg_HadHCALm3->SetAxisRange(28, 1240,"X");
-  h_Rjet_HadHCALp3->SetAxisRange(28, 1240,"X");
-  h_Rjet_HadHCALm3->SetAxisRange(28, 1240,"X");
+  setup_all->SetAxisRange(0.98,1.03,"Y"); //Vertical axis limits
+  h_Rjetb_HadHCALp3->SetAxisRange(15, 31248,"X");
+  h_Rjetb_HadHCALm3->SetAxisRange(15, 1248,"X");
+  h_Rjetc_HadHCALp3->SetAxisRange(15, 1248,"X");
+  h_Rjetc_HadHCALm3->SetAxisRange(15, 1248,"X");
+  h_Rjets_HadHCALp3->SetAxisRange(15, 1248,"X");
+  h_Rjets_HadHCALm3->SetAxisRange(15, 1248,"X");
+  h_Rjetud_HadHCALp3->SetAxisRange(15, 1248,"X");
+  h_Rjetud_HadHCALm3->SetAxisRange(15, 1248,"X");
+  h_Rjetg_HadHCALp3->SetAxisRange(15, 1248,"X");
+  h_Rjetg_HadHCALm3->SetAxisRange(15, 1248,"X");
+  h_Rjet_HadHCALp3->SetAxisRange(15, 1248,"X");
+  h_Rjet_HadHCALm3->SetAxisRange(15, 1248,"X");
   setup_all->GetXaxis()->SetMoreLogLabels();
   setup_all->GetXaxis()->SetNoExponent();
   canv_HadHCAL_all->SetLogx();
   setup_all->GetYaxis()->SetTitleOffset(1.5);
   setup_all->GetXaxis()->SetTitleOffset(1.1);
-  setup_all->GetYaxis()->SetTitle("F^{var}");
+  setup_all->GetYaxis()->SetTitle("Response ratio");
   setup_all->GetXaxis()->SetTitle("p_{T,jet}^{gen} (GeV)");
   setup_all->GetYaxis()->SetTitleSize(0.05);
   setup_all->GetXaxis()->SetTitleSize(0.05);
@@ -210,7 +213,12 @@ void plotHadHCALVar()
   gPad->SetTickx(); gPad->SetTicky();
 
   //Plot
+
+  TLine *line = new TLine(15,1,1258.25,1); 
+
+
   setup_all->Draw();
+  line->Draw("SAME");
   h_Rjetb_HadHCALp3->Draw("SAMEP");
   h_Rjetb_HadHCALm3->Draw("SAMEP");
   h_Rjetc_HadHCALp3->Draw("SAMEP");
@@ -230,8 +238,8 @@ void plotHadHCALVar()
   texa->SetTextSize(0.04); 
   texa->SetTextColor(kBlack);
   texa->DrawLatex(0.7,0.92,"#sqrt{s}=13 TeV");
-  texa->DrawLatex(0.23,0.25,"|#eta^{probe}|<1.3");
-  texa->DrawLatex(0.23,0.2,"#alpha<0.3");
+  texa->DrawLatex(0.25,0.21,"|#eta^{probe}|<1.3");
+  texa->DrawLatex(0.25,0.16,"#alpha<0.3");
 
   //Save plot
   canv_HadHCAL_all->Print("./plots/varPlots/hadHCAL/varHCAL_all.pdf"); delete canv_HadHCAL_all;
