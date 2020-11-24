@@ -975,18 +975,10 @@ void CMSJES::Loop()
     sigmaTrk_curv->Reset();	//For shadowing effect
 
 
-    //Probe flavor check, prtn_tag=0 for outgoing hard process partons
-    //for (unsigned int j = 0; j != prtn_tag->size(); ++j) {
-    //  if ((*prtn_jet)[j]==i_probe && (*prtn_tag)[j]==0) {
-    //    probeFlav = abs((*prtn_pdgid)[j]);
-    //    continue;
-    //  }
-    //}
-    //if(probeFlav != 5) continue; //Uncomment to study only specific jets
 
     //****************** MET calculation *******************//
-    //Add tag object to the MET
 
+    //Tag object to the met in Z+jet events
     if (studyMode==3) {
       MET_r -= tag_r;
       sumEt += tag_r.Et();
@@ -999,9 +991,7 @@ void CMSJES::Loop()
       p4.SetPtEtaPhiE((*prtclnij_pt )[i],(*prtclnij_eta)[i],
                       (*prtclnij_phi)[i],(*prtclnij_e  )[i]);
 
-
       if (!isNeutrino(PDG)) MET_g -= p4; //Gen level MET over all particles
-
 
       Response((*prtclnij_pdgid)[i], p4.Eta(), p4.E(), p4.Pt(), Rt, Bfield, HHeFrac, 
                fr_h, resp, respA, respEHE, respHHe);
@@ -1037,7 +1027,6 @@ void CMSJES::Loop()
             p4.SetPtEtaPhiE((*prtclnij_pt )[i], (*prtclnij_eta)[i], newPhi, (*prtclnij_e)[i]);
             eCalo->Fill(p4.Phi(), p4.Eta(), p4.E()); //Fill electron calo grid
           }
-
           break;
 
         //CHARGED HADRONS
@@ -1045,7 +1034,7 @@ void CMSJES::Loop()
           trkFail = 0;
           eff = 1.0; //Initially no track failing
 
-          if (fabs(p4.Eta() < 2.5)) {
+          if (fabs(p4.Eta()) < 2.5) {
             for (int ijet=0; ijet!=njets; ++ijet) {
               if (p4.DeltaR(jets_g[ijet]) < RCone && ijet != i_mujet1 && ijet != i_mujet2) {
                 eff = htrkEff2D->GetBinContent(htrkEff2D->FindBin((*prtclnij_pt)[i],jets_g[ijet].Pt()));
@@ -2113,6 +2102,8 @@ void CMSJES::Response(int pdgid, double pseudorap, double energy, double pT, dou
   if (zero || isnan(retA)   || retA   <=0) retA   = 0.0;
   if (zero || isnan(retEHE) || retEHE <=0) retEHE = 0.0;
   if (zero || isnan(retHHe) || retHHe <=0) retHHe = 0.0;
+
+  
 
 } //Response
 
