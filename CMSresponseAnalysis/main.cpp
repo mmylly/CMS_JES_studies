@@ -22,7 +22,7 @@ int main() {
       //d.plotRjet(-1,-1);
       //d.plotF(-1,-1);
       //d.plotFF(-1,-1);
-      d.plotJEF(-1,-1);
+      //d.plotJEF(-1,-1);
       d.plotEff(-1,-1);
       break;
     case 1 :

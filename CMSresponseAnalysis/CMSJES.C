@@ -755,7 +755,7 @@ void CMSJES::Loop()
       /********************* SELECT THE PROBE JET AND 2nd JET ********************/
       i_mujet1 = -1; i_mujet2 = -1;
 
-      // If muon is found from the jet it is not acceptable
+      // If tag muon is found from the jet it is not acceptable
       // Confirm implementation
       for (int j=0; j != prtcl_pt->size(); ++j) { // Loop over all particles
         if ((*prtn_pt )[i_tag1]==(*prtcl_pt)[j]) {
@@ -1008,16 +1008,16 @@ void CMSJES::Loop()
 
         //LEPTONS
         case 13 : case 11 :
-          if (studyMode == 3) {
-            // Not one of the tag muons
-            if ((*prtclnij_pt)[i]!=(*prtn_pt)[i_tag1]&&(*prtclnij_pt )[i]!=(*prtn_pt)[i_tag2]){ 
-              MET_r -= p4; //Muons and electrons to the MET
-              sumEt += p4.Et();
-            }
-          } else if (studyMode == 1) {
+          if (studyMode == 1) {
             MET_r -= p4;
             sumEt += p4.Et();
-          }
+          } else if (studyMode == 3) {
+            // Not one of the tag muons
+            if ((*prtclnij_pt)[i]!=(*prtn_pt)[i_tag1]&&(*prtclnij_pt )[i]!=(*prtn_pt)[i_tag2]){ 
+              MET_r -= p4;
+              sumEt += p4.Et();
+            }
+          } 
 
           //Electron ECAL deposit taking into account track curvature with response = 1
           if (PDG == 11) {
@@ -1032,19 +1032,20 @@ void CMSJES::Loop()
         //CHARGED HADRONS
         case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 :
           trkFail = 0;
-          eff = 1.0; //Initially no track failing
+          eff = 1.0;
 
           if (fabs(p4.Eta()) < 2.5) {
             for (int ijet=0; ijet!=njets; ++ijet) {
               if (p4.DeltaR(jets_g[ijet]) < RCone && ijet != i_mujet1 && ijet != i_mujet2) {
                 eff = htrkEff2D->GetBinContent(htrkEff2D->FindBin((*prtclnij_pt)[i],jets_g[ijet].Pt()));
-
                 break;
+              } else if (ijet+1 == njets) {
+                eff = htrkEff1D->GetBinContent(htrkEff1D->FindBin((*prtclnij_pt)[i]));
               }
             }
+          } else {
+            eff = 0.0;
           }
-
-          if (eff == 1.0) eff = htrkEff1D->GetBinContent(htrkEff1D->FindBin((*prtclnij_pt)[i]));
 
           eff = min(eff, 1.0);
 
@@ -1052,13 +1053,13 @@ void CMSJES::Loop()
           if (varTrkEffm3) eff *= 0.97; //-3% variation to track efficiency
 
           //Tracking efficiency plot
-          if (fabs((*prtclnij_eta)[i]) < 2.5) {
+          if (fabs(p4.Eta()) < 2.5) {
             chhEff->Fill((*prtclnij_pt)[i], eff, weight);
           }
 
-          if (resp != 1) eff = 0.0; //If not in tracker
+          if (((double)rand() / (double)RAND_MAX) > eff) trkFail = 1;
 
-          if ( ((double)rand() / (double)RAND_MAX) > eff ) trkFail = 1;
+          //jäin tähän
 
           //Track resolutions
           trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P());
