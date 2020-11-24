@@ -429,6 +429,7 @@ void CMSJES::Loop()
   const double bins_chf[24] = {15, 21, 28, 37, 49, 64, 84, 114, 153, 196, 272, 330, 395, 468,
                                548, 686, 846, 1032, 1248, 1588, 2000, 2500, 3103, 3832};
 
+
   //Jet energy fraction profiles
   TProfile* prchf   =new TProfile("prchf"   ,";p_{T,reco}^{tag} [GeV]; chf",   nbins_chf,bins_chf);
   TProfile* prnhf   =new TProfile("prnhf"   ,";p_{T,reco}^{tag} [GeV]; nhf",   nbins_chf,bins_chf);
@@ -786,6 +787,7 @@ void CMSJES::Loop()
 
 
     /******** RECONSTRUCT GEN-LEVEL JETS AND ADD LEPTONS TO THE PROBE *********/
+
     for (int i=0; i != prtcl_pt->size(); ++i) {
 
       JI = (*prtcl_jet)[i]; 
@@ -799,8 +801,9 @@ void CMSJES::Loop()
       jets_g[JI] += (isNeutrino(PDG) ? 0:1)*p4; //Gen lvl
 
 
+
       if ((*prtcl_jet)[i]==i_probe) { //Probe number of particles
-        if (isChHadron(PDG)) {    
+        if (isChHadron(PDG)) {
           probe_genNch ++;
           if (resp!=0.0) probe_recoNch ++;
         } else if (PDG==11) {
@@ -816,6 +819,7 @@ void CMSJES::Loop()
           probe_genNnh    ++;
           if (resp!=0.0) probe_recoNnh ++;
         }
+
       } else if ((*prtcl_jet)[i] == i_jet2) { //2nd jet number of particles
         if (isChHadron(PDG)) {    
           jet2_genNch ++;
@@ -1281,7 +1285,6 @@ void CMSJES::Loop()
             chc_calib = 7000.0;
           }
         }
-
 
         if (delta < cellSigma) { //Shadowing
           nhHCAL_calib = 0.0;
