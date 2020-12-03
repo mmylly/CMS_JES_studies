@@ -1059,16 +1059,18 @@ void CMSJES::Loop()
 
           if (((double)rand() / (double)RAND_MAX) > eff) trkFail = 1;
 
-          //jäin tähän
+
 
           //Track resolutions
           trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P());
+
+
 
           //Phi where particle exits the tracker / enters ECAL
           newPhi = trackDeltaPhi((*prtclnij_pdgid)[i], (*prtclnij_phi)[i], 
                                  (*prtclnij_pt )[i], Rt, Bfield);
 
-          if (!trkFail) { //resp == 1.0
+          if (!trkFail) {
             cht  ->Fill(p4.Phi(), p4.Eta(), p4.E() );
             chtPt->Fill(p4.Phi(), p4.Eta(), p4.Pt());
 
@@ -1084,7 +1086,6 @@ void CMSJES::Loop()
 
           //Calorimeter deposit for the weighting
           if (!trkFail) {
-            //chc->Fill((*prtclnij_phi)[i], p4.Eta(), respA*p4.E());
             chcECAL->Fill((*prtclnij_phi)[i], p4.Eta(),
                            0.5*(1-HHeFrac)*respEHE*p4.E());
             chcHCAL->Fill((*prtclnij_phi)[i], p4.Eta(), 
@@ -1265,7 +1266,6 @@ void CMSJES::Loop()
         delta = nhECAL->GetBinContent(i,j) + ne->GetBinContent(i,j) + nhHCAL_calib;
 
         //Calibrated calorimetric energy deposit from charged hadrons
-
         chc = chcECAL->GetBinContent(i,j) + chcHCAL->GetBinContent(i,j);
 
         if (chc > 0.0) {
