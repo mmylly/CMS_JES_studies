@@ -20,7 +20,7 @@ INCLUDE := $(INCLUDE) -I.
 
 # Parameter vals:
 NUM_EVT := 3000
-MODE := 1
+MODE := 3
 NUM_PROC := 1
 START_IDX := 0
 

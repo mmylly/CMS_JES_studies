@@ -362,7 +362,7 @@ void CMSJES::Loop()
   unsigned int i_probe = 0;   //       -||-     probe jet index
   unsigned int i_jet2  = 1;   //       -||-     2nd jet index
   unsigned int i_jet3  = 2;   //       -||-     3rd jet index
-  double eta_muon      = 2.3; //Max |eta| for a single muon in Z+jet      
+  double eta_muon      = 2.3; //Max |eta| for a single muon in Z+jet      	
   double eta_tag_z     = 2.5; //Max |eta| for mumu tag object
   double eta_probe     = 1.3; //Max |eta| for probe jets
   int PDG              = 1;   //Shorthand, to store a particle's PDGID
@@ -632,12 +632,19 @@ void CMSJES::Loop()
   TF1* allTrkReso = new TF1("allTrkReso","2.006093e-05*pow(x,2)+0.00103068*x+0.0190268",0,5000);
 
   // Tracking efficiency surface
-  TFile *fePU = new TFile("./data_and_MC_input/Efficiency/effFr2D.root");
+  TFile *fEff = new TFile("./data_and_MC_input/Efficiency/effFr2D.root");
   TH1D *htrkEff1D;
   TH2D *htrkEff2D;
-  fePU->GetObject("effFr1D", htrkEff1D);
-  fePU->GetObject("effFr2D", htrkEff2D);
-  
+  fEff->GetObject("effFr1D", htrkEff1D);
+  fEff->GetObject("effFr2D", htrkEff2D);
+
+  // Resolution
+  TFile *fReso = new TFile("./data_and_MC_input/Resolution/trkReso2D.root");
+  TH1D *hdPoverP1D;
+  TH2D *hdPoverP2D;
+  fReso->GetObject("dPoverP", hdPoverP1D);
+  fReso->GetObject("dPoverP2D", hdPoverP2D);
+
 //***********************************************************************************************
   //string weight_file = "./weights.txt";
   //weight_stream.open(weight_file, std::ios::out); //Write mode
@@ -1033,14 +1040,22 @@ void CMSJES::Loop()
         case 211 : case 321 : case 2212 : case 3112 : case 3222 : case 3312 : case 3334 :
           trkFail = 0;
           eff = 1.0;
+          trkReso = 0.0;
 
           if (fabs(p4.Eta()) < 2.5) {
             for (int ijet=0; ijet!=njets; ++ijet) {
               if (p4.DeltaR(jets_g[ijet]) < RCone && ijet != i_mujet1 && ijet != i_mujet2) {
                 eff = htrkEff2D->GetBinContent(htrkEff2D->FindBin((*prtclnij_pt)[i],jets_g[ijet].Pt()));
+
+                //if(htrkEff2D->Interpolate((*prtclnij_pt)[i], jets_g[ijet].Pt()) != 0.0) {
+                //  eff = htrkEff2D->Interpolate((*prtclnij_pt)[i], jets_g[ijet].Pt());
+                //}
+
+                trkReso = hdPoverP2D->GetBinContent(hdPoverP2D->FindBin((*prtclnij_pt)[i], jets_g[ijet].Pt()));
                 break;
               } else if (ijet+1 == njets) {
                 eff = htrkEff1D->GetBinContent(htrkEff1D->FindBin((*prtclnij_pt)[i]));
+                trkReso = hdPoverP1D->GetBinContent(hdPoverP1D->FindBin((*prtclnij_pt)[i]));
               }
             }
           } else {
@@ -1059,11 +1074,10 @@ void CMSJES::Loop()
 
           if (((double)rand() / (double)RAND_MAX) > eff) trkFail = 1;
 
-
+          trkReso *= p4.P();
 
           //Track resolutions
-          trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P());
-
+          //trkReso = max(0.0, allTrkReso->Eval((*prtclnij_pt)[i]) * p4.P());
 
 
           //Phi where particle exits the tracker / enters ECAL
@@ -2231,7 +2245,7 @@ void CMSJES::plotEff(int gen, int Nevt) {
   TAxis *PFaxis = PFeff->GetXaxis();
   PFaxis->SetLimits(0.2,300);
   PFeff->SetTitle("");
-  PFeff->GetHistogram()->SetMaximum(1.4);
+  PFeff->GetHistogram()->SetMaximum(1.1);
   PFeff->GetHistogram()->SetMinimum(0.5);
   PFeff->GetXaxis()->SetMoreLogLabels();
   PFeff->GetXaxis()->SetNoExponent();
@@ -2274,6 +2288,23 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
   TProfile *prchf=0; TProfile *prnhf=0; TProfile *prgammaf=0; TProfile *pref=0;
 
+  TFile* fePU = TFile::Open("data_and_MC_input/tracking_ePU.root");
+  TDirectory* dire = fePU->GetDirectory("demo");
+  TProfile* chfePU;  TProfile* nhfePU;
+  dire->GetObject("chf", chfePU);
+  dire->GetObject("nhf", nhfePU);
+
+
+  TH1D* hchfePU = chfePU->ProjectionX(); 
+  TH1D* hnhfePU = nhfePU->ProjectionX();
+  
+  hnhfePU->Add(hchfePU);
+
+  hchfePU->SetMarkerStyle(kFullTriangleUp);
+  hnhfePU->SetMarkerStyle(kFullTriangleDown); 
+  hchfePU->SetLineColor(kBlack);
+  hnhfePU->SetLineColor(kBlack); 
+
   THStack* hstack_JEF;
   hstack_JEF = new THStack("hstackJEF","");
 
@@ -2315,8 +2346,10 @@ void CMSJES::plotJEF(int gen, int Nevt) {
   lg->AddEntry(hchf,    "CH",    "f");
 
   TLegend* lgEff = new TLegend(0.15,0.25,0.4,0.35);
-  lgEff->AddEntry(nhf,"#bf{NH Run2016GH}", "p");
-  lgEff->AddEntry(chf,"#bf{CH Run2016GH}", "p");
+  //lgEff->AddEntry(nhf,"#bf{NH Run2016GH}", "p");
+  //lgEff->AddEntry(chf,"#bf{CH Run2016GH}", "p");
+  lgEff->AddEntry(hnhfePU,"#bf{NH MiniAOD}", "p");
+  lgEff->AddEntry(hchfePU,"#bf{CH MiniAOD}", "p");
   lgEff->SetBorderSize(0); lgEff->SetFillStyle(0);
   lgEff->SetTextSize(0.035);
 
@@ -2343,8 +2376,11 @@ void CMSJES::plotJEF(int gen, int Nevt) {
 
   lg->Draw();
   lgEff->Draw();
-  chf->Draw("samep");
-  nhf->Draw("samep");
+  //chf->Draw("samep");
+  //nhf->Draw("samep");
+  hchfePU->Draw("samep");
+  hnhfePU->Draw("samep");
+
 
   TLatex *tex = new TLatex();
   tex->SetNDC();
@@ -2609,6 +2645,14 @@ void CMSJES::plotRjet(int gen, int Nevt)
   string nameAdd, zjetFile;
   plotQuery(nameAdd, zjetFile, gen, Nevt);
 
+  TFile* fePU = TFile::Open("data_and_MC_input/tracking_ePU.root");
+  TDirectory* dire = fePU->GetDirectory("demo");
+  TProfile* RjetePU;
+  dire->GetObject("Rjet", RjetePU);
+  RjetePU->SetLineColor(kBlack); 
+  RjetePU->SetLineWidth(    2);
+
+
   //Initialize histograms and open ROOT files and fetch the stored objects
   TFile* fzj = TFile::Open(zjetFile.c_str());
   TProfile *przj_Rjet=0; TProfile *przj_Rjetb=0; TProfile *przj_Rjetg=0; TProfile *przj_Rjetlq=0;
@@ -2717,7 +2761,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
 
 
   //Canvas
-  TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",500,500);
+  TCanvas* canv_Rjet = new TCanvas("canv_Rjet","",500,400);
   canv_Rjet->SetLeftMargin(0.15);
   canv_Rjet->SetBottomMargin(0.13);
 
@@ -2728,6 +2772,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjets->SetMarkerStyle(kFullTriangleUp);   hzj_Rjets->SetMarkerColor(kOrange+1);
   hzj_Rjetc->SetMarkerStyle(kFullTriangleDown); hzj_Rjetc->SetMarkerColor(kGreen+2);
 
+
   hzj_Rjet  ->SetLineColor(kBlack);              
   hzj_Rjetb ->SetLineColor(kRed+1);
   hzj_Rjetg ->SetLineColor(kBlue+1);             
@@ -2736,20 +2781,21 @@ void CMSJES::plotRjet(int gen, int Nevt)
   hzj_Rjetc ->SetLineColor(kGreen+2);
 
   //Legend
-  TLegend* lz_Rjet = new TLegend(0.62,0.75,0.87,0.87);
-  lz_Rjet->SetNColumns(2);
+  TLegend* lz_Rjet = new TLegend(0.62,0.2,0.87,0.3);
+  //lz_Rjet->SetNColumns(2);
   lz_Rjet->SetBorderSize(0);
-  lz_Rjet->AddEntry(hzj_Rjet,   "All",   "p");
-  lz_Rjet->AddEntry(hzj_Rjetb,  "b",     "p");
-  lz_Rjet->AddEntry(hzj_Rjetc,  "c",     "p");
-  lz_Rjet->AddEntry(hzj_Rjets,  "s",     "p");
-  lz_Rjet->AddEntry(hzj_Rjetud, "ud",    "p");
-  lz_Rjet->AddEntry(hzj_Rjetg,  "gluon", "p");
+  lz_Rjet->AddEntry(hzj_Rjet,  "toyPF",   "p");
+  lz_Rjet->AddEntry(RjetePU,   "MiniAOD",   "l");
+  //lz_Rjet->AddEntry(hzj_Rjetb,  "b",     "p");
+  //lz_Rjet->AddEntry(hzj_Rjetc,  "c",     "p");
+  //lz_Rjet->AddEntry(hzj_Rjets,  "s",     "p");
+  //lz_Rjet->AddEntry(hzj_Rjetud, "ud",    "p");
+  //lz_Rjet->AddEntry(hzj_Rjetg,  "gluon", "p");
 
   //Title and axis setup
   hzj_Rjet->SetStats(0); //Suppress stat box
   hzj_Rjet->SetTitle("");
-  hzj_Rjet->SetAxisRange(0.912,0.955,"Y");
+  hzj_Rjet->SetAxisRange(0.9,0.96,"Y");
   //hzj_Rjet->SetAxisRange(31.75,1258,"X");
   //hzj_Rjet->GetXaxis()->SetRangeUser(31.75,1258); 
 
@@ -2769,11 +2815,12 @@ void CMSJES::plotRjet(int gen, int Nevt)
 
   //Plot
   hzj_Rjet->Draw("P");
-  hzj_Rjetb->Draw("SAMEP");
-  hzj_Rjetg->Draw("SAMEP");
-  hzj_Rjetud->Draw("SAMEP");
-  hzj_Rjets->Draw("SAMEP");
-  hzj_Rjetc->Draw("SAMEP");
+  RjetePU->Draw("same");
+  //hzj_Rjetb->Draw("SAMEP");
+  //hzj_Rjetg->Draw("SAMEP");
+  //hzj_Rjetud->Draw("SAMEP");
+  //hzj_Rjets->Draw("SAMEP");
+  //hzj_Rjetc->Draw("SAMEP");
   lz_Rjet->Draw("SAMEP");
 
   TLatex *tex2 = new TLatex(); tex2->SetNDC();
@@ -3070,7 +3117,7 @@ void CMSJES::plotQuery(string& nameAdd, string& zjstr, int& gen, int& Nevt)
   else if (Nevt==7) num = "10000000";
 
   //Construct all-flavor filenames
-  zjstr = respStr + "Zjet_" + num + root;
+  zjstr = respStr + "dijet_" + num + root;
 
   //Additions in filename
   nameAdd = num;

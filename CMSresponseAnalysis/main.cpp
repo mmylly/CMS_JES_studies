@@ -17,12 +17,12 @@ int main() {
 
   switch (mode) {
     case 0 :
-      d.Loop();
-      d.plotMPF(-1,-1);
+      //d.Loop();
+      //d.plotMPF(-1,-1);
       //d.plotRjet(-1,-1);
       //d.plotF(-1,-1);
       //d.plotFF(-1,-1);
-      d.plotJEF(-1,-1);
+      //d.plotJEF(-1,-1);
       d.plotEff(-1,-1);
       break;
     case 1 :
