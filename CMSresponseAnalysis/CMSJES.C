@@ -2648,9 +2648,30 @@ void CMSJES::plotRjet(int gen, int Nevt)
   TFile* fePU = TFile::Open("data_and_MC_input/tracking_ePU.root");
   TDirectory* dire = fePU->GetDirectory("demo");
   TProfile* RjetePU;
-  dire->GetObject("Rjet", RjetePU);
+  TProfile* RjetudePU;
+  TProfile* RjetsePU;
+  TProfile* RjetcePU;
+  TProfile* RjetbePU;
+  TProfile* RjetgePU;
+  dire->GetObject("Rjet",   RjetePU);
+  dire->GetObject("Rjetud", RjetudePU);
+  dire->GetObject("Rjets",  RjetsePU);
+  dire->GetObject("Rjetc",  RjetcePU);
+  dire->GetObject("Rjetb",  RjetbePU);
+  dire->GetObject("Rjetg",  RjetgePU);
   RjetePU->SetLineColor(kBlack); 
   RjetePU->SetLineWidth(    2);
+
+  TH1D* diff_ud    = RjetudePU->ProjectionX();
+  TH1D* diff_s     = RjetsePU->ProjectionX();
+  TH1D* diff_c     = RjetcePU->ProjectionX();
+  TH1D* diff_b     = RjetbePU->ProjectionX();
+  TH1D* hRjetgePU  = RjetgePU->ProjectionX();
+
+  diff_ud->Add(hRjetgePU,-1);
+  diff_s->Add(hRjetgePU,-1);
+  diff_c->Add(hRjetgePU,-1);
+  diff_b->Add(hRjetgePU,-1);
 
 
   //Initialize histograms and open ROOT files and fetch the stored objects
@@ -2674,6 +2695,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   TH1D* hzj_Rjets  = przj_Rjets ->ProjectionX();
   TH1D* hzj_Rjetc  = przj_Rjetc ->ProjectionX();
 
+
   //////////////////////////// GLUON DIFFERENCE ///////////////////////////////
   TH1D* h_diffbg  = (TH1D*)hzj_Rjetb->Clone("h_diffbg");
   TH1D* h_diffudg = (TH1D*)hzj_Rjetud->Clone("h_diffudg");
@@ -2685,14 +2707,21 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffsg->Add(hzj_Rjetg,-1);  //s-response  - g-response
   h_diffcg->Add(hzj_Rjetg,-1);  //c-response  - g-response
 
-  TGraph *diff_b  = new TGraph("data_and_MC_input/Response/diffToGluon_b.txt" );
-  TGraph *diff_s  = new TGraph("data_and_MC_input/Response/diffToGluon_s.txt" );
-  TGraph *diff_c  = new TGraph("data_and_MC_input/Response/diffToGluon_c.txt" );
-  TGraph *diff_ud = new TGraph("data_and_MC_input/Response/diffToGluon_ud.txt");
+  //TGraph *diff_b  = new TGraph("data_and_MC_input/Response/diffToGluon_b.txt" );
+  //TGraph *diff_s  = new TGraph("data_and_MC_input/Response/diffToGluon_s.txt" );
+  //TGraph *diff_c  = new TGraph("data_and_MC_input/Response/diffToGluon_c.txt" );
+  //TGraph *diff_ud = new TGraph("data_and_MC_input/Response/diffToGluon_ud.txt");
+
+
+
   diff_b ->SetMarkerStyle(kOpenCircle);       diff_b ->SetMarkerColor(kRed+1);
   diff_ud->SetMarkerStyle(kOpenDiamond);      diff_ud->SetMarkerColor(kMagenta+2);
   diff_s ->SetMarkerStyle(kOpenTriangleUp);   diff_s ->SetMarkerColor(kOrange+1);
   diff_c ->SetMarkerStyle(kOpenTriangleDown); diff_c ->SetMarkerColor(kGreen+2);
+  diff_b ->SetLineColor(kRed+1);
+  diff_ud->SetLineColor(kMagenta+2);
+  diff_s ->SetLineColor(kOrange+1);
+  diff_c ->SetLineColor(kGreen+2);
 
   h_diffbg ->SetMarkerStyle(kFullCircle);       h_diffbg ->SetMarkerColor(kRed+1);
   h_diffudg->SetMarkerStyle(kFullDiamond);      h_diffudg->SetMarkerColor(kMagenta+2);
@@ -2711,14 +2740,14 @@ void CMSJES::plotRjet(int gen, int Nevt)
   TLegend* lz_diffg = new TLegend(0.5,0.7,0.85,0.85);
   lz_diffg->SetNColumns(2);
   lz_diffg->SetBorderSize(0);
-  lz_diffg->AddEntry(h_diffbg,           "b (Our)");
-  lz_diffg->AddEntry(diff_b,  "b (FullSim)",  "p");
-  lz_diffg->AddEntry(h_diffcg,           "c (Our)");
-  lz_diffg->AddEntry(diff_c,  "c (FullSim)",  "p");
-  lz_diffg->AddEntry(h_diffsg,           "s (Our)");
-  lz_diffg->AddEntry(diff_s,  "s (FullSim)",  "p");
-  lz_diffg->AddEntry(h_diffudg,         "ud (Our)");
-  lz_diffg->AddEntry(diff_ud, "ud (Fullsim)", "p");
+  lz_diffg->AddEntry(h_diffbg,           "b (toyPF)");
+  lz_diffg->AddEntry(diff_b,  "b (MiniAOD)",  "p");
+  lz_diffg->AddEntry(h_diffcg,           "c (toyPF)");
+  lz_diffg->AddEntry(diff_c,  "c (MiniAOD)",  "p");
+  lz_diffg->AddEntry(h_diffsg,           "s (toyPF)");
+  lz_diffg->AddEntry(diff_s,  "s (MiniAOD)",  "p");
+  lz_diffg->AddEntry(h_diffudg,         "ud (toyPF)");
+  lz_diffg->AddEntry(diff_ud, "ud (MiniAOD)", "p");
 
   h_diffbg->GetYaxis()->SetTitle("Difference to gluon response");
   h_diffbg->GetYaxis()->SetTitleSize(0.042);
@@ -2735,7 +2764,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffbg->SetStats(0); h_diffbg->SetTitle("");
   h_diffbg->SetAxisRange(-0.01,0.058,"Y"); //Vertical axis limits
 
-  TLine *line = new TLine(31.75,0,1258.25,0); 
+  TLine *line = new TLine(15,0,3832,0); 
 
   h_diffbg->Draw("P");
   line->Draw("SAME");
@@ -2758,6 +2787,12 @@ void CMSJES::plotRjet(int gen, int Nevt)
   string plotName = "./plots/Rjet/gluonDiff_" + ReadName + ".pdf";
   canv_diffg->Print(plotName.c_str());
   delete canv_diffg;
+
+
+
+
+
+
 
 
   //Canvas
