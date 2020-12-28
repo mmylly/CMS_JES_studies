@@ -165,6 +165,7 @@ void CMSJES::Loop()
   TProfile* prRjets  = new TProfile("prRjets",  RjetsTitle.c_str(),  nbinsMPF-1, binsxMPF);
   TProfile* prRjetc  = new TProfile("prRjetc",  RjetcTitle.c_str(),  nbinsMPF-1, binsxMPF);
 
+
   //Jet response with tag binning
   string RjetvstagTitle    = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{jet} / p_{T,gen}^{jet}";
   string RjetvstagbTitle   = ";p_{T,reco}^{tag} [GeV];p_{T,reco}^{b-jet} / p_{T,gen}^{b-jet}";
@@ -181,7 +182,7 @@ void CMSJES::Loop()
   TProfile* prRjetvstags  = new TProfile("prRjetvstags",  RjetvstagsTitle.c_str(),  nbinsMPF-1,binsxMPF);
   TProfile* prRjetvstagc  = new TProfile("prRjetvstagc",  RjetvstagcTitle.c_str(),  nbinsMPF-1,binsxMPF);
 
-  TProfile* prRjet_calo  = new TProfile("prRjet_calo",  RjetcTitle.c_str(),  nbinsMPF-1, binsxMPF);
+  TProfile* prRjet_calo  = new TProfile("prRjet_calo",  RjetTitle.c_str(),  nbinsMPF-1, binsxMPF);
 
   //gen-jet particle type number
   TProfile* prgenNch   =new TProfile("prgenNch"   ,";p_{T,reco}^{tag} [GeV]; N_{ch}^{gen}",    nbinsMPF-1, binsxMPF);
@@ -2732,7 +2733,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   h_diffsg ->SetLineColor(kOrange+1);     
   h_diffcg ->SetLineColor(kGreen+2 );
 
-  TCanvas* canv_diffg = new TCanvas("canv_diffg","",500,500);
+  TCanvas* canv_diffg = new TCanvas("canv_diffg","",500,400);
   canv_diffg->SetLeftMargin(0.15);
   canv_diffg->SetBottomMargin(0.13);
 
@@ -2762,7 +2763,7 @@ void CMSJES::plotRjet(int gen, int Nevt)
   gPad->SetTickx();   gPad->SetTicky();
 
   h_diffbg->SetStats(0); h_diffbg->SetTitle("");
-  h_diffbg->SetAxisRange(-0.01,0.058,"Y"); //Vertical axis limits
+  h_diffbg->SetAxisRange(-0.03,0.058,"Y"); //Vertical axis limits
 
   TLine *line = new TLine(15,0,3832,0); 
 
